@@ -192,6 +192,9 @@ class App {
             case 'file:getRecentFiles':
                 // Handled directly via IPC, no renderer action needed
                 break;
+            case 'edit:preferences':
+                this.menuHandler?.handlePreferences();
+                break;
             default:
                 console.warn(`Unknown external API method: ${method}`);
         }

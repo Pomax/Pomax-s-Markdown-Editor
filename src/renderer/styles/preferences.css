@@ -1,0 +1,110 @@
+/**
+ * Preferences dialog styles.
+ */
+
+/* Dialog backdrop */
+.preferences-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+/* Dialog box */
+.preferences-dialog {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0;
+    width: min(480px, 90vw);
+    max-height: 80vh;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    overflow: hidden;
+}
+
+/* Form layout */
+.preferences-form {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+/* Header */
+.preferences-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.preferences-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.preferences-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: 4px;
+}
+
+.preferences-close:hover {
+    color: var(--color-text);
+    background: var(--color-bg-secondary);
+}
+
+/* Body */
+.preferences-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.preferences-empty {
+    margin: 0;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+}
+
+/* Footer */
+.preferences-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Buttons */
+.preferences-btn {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.preferences-btn:hover {
+    background: var(--color-bg-secondary);
+}
+
+.preferences-btn--save {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
+.preferences-btn--save:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}

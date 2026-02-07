@@ -156,6 +156,12 @@ export class MenuBuilder {
                     accelerator: 'CmdOrCtrl+A',
                     role: 'selectAll',
                 },
+                { type: 'separator' },
+                {
+                    label: 'Preferences',
+                    accelerator: 'CmdOrCtrl+,',
+                    click: () => this.sendMenuAction('edit:preferences'),
+                },
             ],
         };
     }

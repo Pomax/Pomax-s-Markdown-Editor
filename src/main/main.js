@@ -9,6 +9,7 @@ import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
 import { FileManager } from './file-manager.js';
 import { IPCHandler } from './ipc-handler.js';
 import { MenuBuilder } from './menu-builder.js';
+import { SettingsManager } from './settings-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +25,9 @@ let ipcHandler;
 
 /** @type {MenuBuilder} */
 let menuBuilder;
+
+/** @type {SettingsManager} */
+let settingsManager;
 
 /**
  * Creates the main application window with A4 aspect ratio.
@@ -125,7 +129,9 @@ async function handleUnsavedChangesOnClose(window) {
  */
 async function initialize(window) {
     fileManager = new FileManager();
-    ipcHandler = new IPCHandler(fileManager);
+    settingsManager = new SettingsManager();
+    settingsManager.initialize();
+    ipcHandler = new IPCHandler(fileManager, settingsManager);
 
     // Set up the application menu
     menuBuilder = new MenuBuilder(window, fileManager);
@@ -149,6 +155,9 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
+    if (settingsManager) {
+        settingsManager.close();
+    }
     if (process.platform !== 'darwin') {
         app.quit();
     }

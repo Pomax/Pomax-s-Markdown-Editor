@@ -99,6 +99,29 @@ const electronAPI = {
      */
     getRecentFiles: () => ipcRenderer.invoke('file:getRecentFiles'),
 
+    // ========== Settings Operations ==========
+
+    /**
+     * Gets all settings as a key-value object.
+     * @returns {Promise<{success: boolean, settings: Object<string, *>}>}
+     */
+    getSettings: () => ipcRenderer.invoke('settings:getAll'),
+
+    /**
+     * Gets a single setting value by key.
+     * @param {string} key - The setting key
+     * @returns {Promise<{success: boolean, value: *}>}
+     */
+    getSetting: (key) => ipcRenderer.invoke('settings:get', key),
+
+    /**
+     * Sets a single setting value.
+     * @param {string} key - The setting key
+     * @param {*} value - The value to store
+     * @returns {Promise<{success: boolean}>}
+     */
+    setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
+
     // ========== Element Operations ==========
 
     /**

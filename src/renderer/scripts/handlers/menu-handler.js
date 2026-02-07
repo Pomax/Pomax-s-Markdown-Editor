@@ -5,6 +5,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { PreferencesModal } from '../preferences/preferences-modal.js';
+
 /**
  * Handles menu actions from the main process.
  */
@@ -79,6 +81,9 @@ export class MenuHandler {
                 break;
             case 'view:focused':
                 this.handleViewFocused();
+                break;
+            case 'edit:preferences':
+                this.handlePreferences();
                 break;
             case 'element:changeType':
                 this.handleChangeType(args[0]);
@@ -182,5 +187,15 @@ export class MenuHandler {
      */
     handleFormat(format) {
         this.editor.applyFormat(format);
+    }
+
+    /**
+     * Handles opening the Preferences modal.
+     */
+    handlePreferences() {
+        if (!this._preferencesModal) {
+            this._preferencesModal = new PreferencesModal();
+        }
+        this._preferencesModal.open();
     }
 }

@@ -13,10 +13,14 @@ import { APIRegistry } from './api-registry.js';
 export class IPCHandler {
     /**
      * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
+     * @param {import('./settings-manager.js').SettingsManager} settingsManager - The settings manager instance
      */
-    constructor(fileManager) {
+    constructor(fileManager, settingsManager) {
         /** @type {import('./file-manager.js').FileManager} */
         this.fileManager = fileManager;
+
+        /** @type {import('./settings-manager.js').SettingsManager} */
+        this.settingsManager = settingsManager;
 
         /** @type {APIRegistry} */
         this.apiRegistry = new APIRegistry();
@@ -36,6 +40,7 @@ export class IPCHandler {
         this.registerViewHandlers();
         this.registerElementHandlers();
         this.registerAppHandlers();
+        this.registerSettingsHandlers();
         this.registerAPIHandlers();
     }
 
@@ -162,6 +167,24 @@ export class IPCHandler {
             if (this.menuBuilder) {
                 await this.menuBuilder.handleReload();
             }
+            return { success: true };
+        });
+    }
+
+    /**
+     * Registers settings-related IPC handlers.
+     */
+    registerSettingsHandlers() {
+        ipcMain.handle('settings:getAll', async () => {
+            return { success: true, settings: this.settingsManager.getAll() };
+        });
+
+        ipcMain.handle('settings:get', async (_event, key) => {
+            return { success: true, value: this.settingsManager.get(key) };
+        });
+
+        ipcMain.handle('settings:set', async (_event, key, value) => {
+            this.settingsManager.set(key, value);
             return { success: true };
         });
     }
