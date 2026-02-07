@@ -5,7 +5,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { app, dialog } from 'electron';
+import { dialog } from 'electron';
 
 /**
  * Maximum number of recent files to remember.
@@ -17,7 +17,10 @@ const MAX_RECENT_FILES = 10;
  * Manages file operations for the markdown editor.
  */
 export class FileManager {
-    constructor() {
+    /**
+     * @param {import('./settings-manager.js').SettingsManager} settingsManager - The settings manager for persistence
+     */
+    constructor(settingsManager) {
         /**
          * The current file path, or null if no file is open.
          * @type {string|null}
@@ -36,11 +39,8 @@ export class FileManager {
          */
         this.recentFiles = [];
 
-        /**
-         * Path to the recent files JSON store.
-         * @type {string}
-         */
-        this.recentFilesPath = path.join(app.getPath('userData'), 'recent-files.json');
+        /** @type {import('./settings-manager.js').SettingsManager} */
+        this.settingsManager = settingsManager;
 
         this._loadRecentFiles();
     }
@@ -266,30 +266,27 @@ export class FileManager {
     }
 
     /**
-     * Loads the recent files list from disk.
+     * Loads the recent files list from the settings database.
      * @private
      */
     _loadRecentFiles() {
         try {
-            const { readFileSync } = require('node:fs');
-            const data = readFileSync(this.recentFilesPath, 'utf-8');
-            const parsed = JSON.parse(data);
-            if (Array.isArray(parsed)) {
-                this.recentFiles = parsed;
+            const stored = this.settingsManager.get('recentFiles', []);
+            if (Array.isArray(stored)) {
+                this.recentFiles = stored;
             }
         } catch {
-            // File doesn't exist yet or is invalid — start with empty list
             this.recentFiles = [];
         }
     }
 
     /**
-     * Saves the recent files list to disk.
+     * Saves the recent files list to the settings database.
      * @private
      */
-    async _saveRecentFiles() {
+    _saveRecentFiles() {
         try {
-            await fs.writeFile(this.recentFilesPath, JSON.stringify(this.recentFiles), 'utf-8');
+            this.settingsManager.set('recentFiles', this.recentFiles);
         } catch {
             // Ignore write errors for recent files
         }

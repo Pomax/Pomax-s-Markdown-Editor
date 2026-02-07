@@ -128,9 +128,9 @@ async function handleUnsavedChangesOnClose(window) {
  * @param {BrowserWindow} window - The main window
  */
 async function initialize(window) {
-    fileManager = new FileManager();
     settingsManager = new SettingsManager();
     settingsManager.initialize();
+    fileManager = new FileManager(settingsManager);
     ipcHandler = new IPCHandler(fileManager, settingsManager);
 
     // Set up the application menu
