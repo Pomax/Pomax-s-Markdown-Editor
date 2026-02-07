@@ -3,6 +3,7 @@
  * Creates the application menu with File, Edit, and View menus.
  */
 
+import path from 'node:path';
 import { BrowserWindow, Menu, dialog } from 'electron';
 
 /**
@@ -60,6 +61,10 @@ export class MenuBuilder {
                     accelerator: 'CmdOrCtrl+O',
                     click: () => this.handleLoad(),
                 },
+                {
+                    label: 'Open Recent',
+                    submenu: this.buildRecentFilesSubmenu(),
+                },
                 { type: 'separator' },
                 {
                     label: 'Save',
@@ -79,6 +84,36 @@ export class MenuBuilder {
                 },
             ],
         };
+    }
+
+    /**
+     * Builds the submenu items for the Open Recent menu.
+     * @returns {Electron.MenuItemConstructorOptions[]} The recent files submenu items
+     */
+    buildRecentFilesSubmenu() {
+        const recentFiles = this.fileManager.getRecentFiles();
+
+        if (recentFiles.length === 0) {
+            return [{ label: 'No Recent Files', enabled: false }];
+        }
+
+        /** @type {Electron.MenuItemConstructorOptions[]} */
+        const items = recentFiles.map((filePath) => ({
+            label: path.basename(filePath),
+            toolTip: filePath,
+            click: () => this.handleLoadRecent(filePath),
+        }));
+
+        items.push({ type: 'separator' });
+        items.push({
+            label: 'Clear Recent',
+            click: () => {
+                this.fileManager.clearRecentFiles();
+                this.refreshMenu();
+            },
+        });
+
+        return items;
     }
 
     /**
@@ -199,7 +234,33 @@ export class MenuBuilder {
         const result = await this.fileManager.load(this.window);
         if (result.success) {
             this.window.webContents.send('menu:action', 'file:loaded', result);
+            this.refreshMenu();
         }
+    }
+
+    /**
+     * Loads a recently opened file by path.
+     * @param {string} filePath - The file path to load
+     */
+    async handleLoadRecent(filePath) {
+        if (!this.window) return;
+
+        const result = await this.fileManager.loadRecent(filePath);
+        if (result.success) {
+            this.window.webContents.send('menu:action', 'file:loaded', result);
+        }
+        // Refresh menu in both cases: success moves file to top,
+        // failure removes a missing file from the list.
+        this.refreshMenu();
+    }
+
+    /**
+     * Rebuilds and applies the application menu.
+     * Call this after the recent files list changes.
+     */
+    refreshMenu() {
+        const menu = this.buildMenu();
+        Menu.setApplicationMenu(menu);
     }
 
     /**

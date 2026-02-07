@@ -93,6 +93,12 @@ const electronAPI = {
      */
     reload: () => ipcRenderer.invoke('app:reload'),
 
+    /**
+     * Gets the list of recently opened file paths.
+     * @returns {Promise<{success: boolean, files: string[]}>}
+     */
+    getRecentFiles: () => ipcRenderer.invoke('file:getRecentFiles'),
+
     // ========== Element Operations ==========
 
     /**

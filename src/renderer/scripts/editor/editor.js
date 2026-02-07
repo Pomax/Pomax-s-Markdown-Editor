@@ -693,11 +693,24 @@ export class Editor {
 
     /**
      * Handles click events — syncs tree cursor from wherever the user clicked.
+     * In focused view, re-renders when the cursor moves to a different node
+     * so the source-syntax decoration follows the cursor.
      * @param {MouseEvent} _event
      */
     handleClick(_event) {
+        const previousNodeId = this.treeCursor?.nodeId ?? null;
         this.syncCursorFromDOM();
         this.selectionManager.updateFromDOM();
+
+        // In focused view the active node shows raw markdown syntax, so we
+        // must re-render whenever the cursor moves to a different node.
+        if (
+            this.viewMode === 'focused' &&
+            this.treeCursor &&
+            this.treeCursor.nodeId !== previousNodeId
+        ) {
+            this.renderAndPlaceCursor();
+        }
     }
 
     /** Handles focus events. */
@@ -712,9 +725,21 @@ export class Editor {
 
     /** Handles selection change events. */
     handleSelectionChange() {
+        if (this._isRendering) return;
         if (document.activeElement === this.container) {
+            const previousNodeId = this.treeCursor?.nodeId ?? null;
             this.syncCursorFromDOM();
             this.selectionManager.updateFromDOM();
+
+            // In focused view the active node shows raw markdown syntax, so we
+            // must re-render whenever the cursor moves to a different node.
+            const newNodeId = this.treeCursor?.nodeId ?? null;
+            if (this.viewMode === 'focused' && newNodeId && newNodeId !== previousNodeId) {
+                console.log(
+                    `[selectionchange] node changed: ${previousNodeId} -> ${newNodeId}, re-rendering`,
+                );
+                this.renderAndPlaceCursor();
+            }
         }
     }
 

@@ -321,6 +321,17 @@ export class APIRegistry {
                 return { success: true };
             },
         });
+
+        this.registerCommand({
+            name: 'file.getRecentFiles',
+            description: 'Gets the list of recently opened file paths (most recent first)',
+            category: 'file',
+            params: {},
+            handler: async (params, webContents) => {
+                webContents.send('api:external', 'file:getRecentFiles');
+                return { success: true };
+            },
+        });
     }
 
     /**

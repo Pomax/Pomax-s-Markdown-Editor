@@ -25,6 +25,7 @@ interface ElectronAPI {
     loadFile(): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
     newFile(): Promise<{ success: boolean }>;
     reload(): Promise<{ success: boolean }>;
+    getRecentFiles(): Promise<{ success: boolean; files: string[] }>;
     executeAPICommand(command: string, params: object): Promise<any>;
 }
 

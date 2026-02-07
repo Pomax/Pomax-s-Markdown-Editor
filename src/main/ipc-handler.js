@@ -62,7 +62,11 @@ export class IPCHandler {
             if (!window) {
                 return { success: false, message: 'No active window' };
             }
-            return this.fileManager.save(window, content);
+            const result = await this.fileManager.save(window, content);
+            if (result.success && this.menuBuilder) {
+                this.menuBuilder.refreshMenu();
+            }
+            return result;
         });
 
         ipcMain.handle('file:saveAs', async (event, content) => {
@@ -70,12 +74,20 @@ export class IPCHandler {
             if (!window) {
                 return { success: false, message: 'No active window' };
             }
-            return this.fileManager.saveAs(window, content);
+            const result = await this.fileManager.saveAs(window, content);
+            if (result.success && this.menuBuilder) {
+                this.menuBuilder.refreshMenu();
+            }
+            return result;
         });
 
         ipcMain.handle('file:setUnsavedChanges', async (event, hasChanges) => {
             this.hasUnsavedChanges = hasChanges;
             this.fileManager.setUnsavedChanges(hasChanges);
+        });
+
+        ipcMain.handle('file:getRecentFiles', async () => {
+            return { success: true, files: this.fileManager.getRecentFiles() };
         });
     }
 

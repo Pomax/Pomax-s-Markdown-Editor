@@ -5,7 +5,13 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { dialog } from 'electron';
+import { app, dialog } from 'electron';
+
+/**
+ * Maximum number of recent files to remember.
+ * @type {number}
+ */
+const MAX_RECENT_FILES = 10;
 
 /**
  * Manages file operations for the markdown editor.
@@ -23,6 +29,20 @@ export class FileManager {
          * @type {boolean}
          */
         this.hasUnsavedChanges = false;
+
+        /**
+         * List of recently opened file paths (most recent first).
+         * @type {string[]}
+         */
+        this.recentFiles = [];
+
+        /**
+         * Path to the recent files JSON store.
+         * @type {string}
+         */
+        this.recentFilesPath = path.join(app.getPath('userData'), 'recent-files.json');
+
+        this._loadRecentFiles();
     }
 
     /**
@@ -50,6 +70,7 @@ export class FileManager {
 
             this.currentFilePath = filePath;
             this.hasUnsavedChanges = false;
+            this.addRecentFile(filePath);
 
             return {
                 success: true,
@@ -126,6 +147,7 @@ export class FileManager {
 
             this.currentFilePath = filePath;
             this.hasUnsavedChanges = false;
+            this.addRecentFile(filePath);
 
             return {
                 success: true,
@@ -175,5 +197,101 @@ export class FileManager {
      */
     getFilePath() {
         return this.currentFilePath;
+    }
+
+    /**
+     * Adds a file path to the recent files list.
+     * Moves it to the front if already present.
+     * @param {string} filePath - The file path to add
+     */
+    addRecentFile(filePath) {
+        if (!filePath) return;
+
+        // Remove if already present, then prepend
+        this.recentFiles = this.recentFiles.filter((f) => f !== filePath);
+        this.recentFiles.unshift(filePath);
+
+        // Trim to max size
+        if (this.recentFiles.length > MAX_RECENT_FILES) {
+            this.recentFiles = this.recentFiles.slice(0, MAX_RECENT_FILES);
+        }
+
+        this._saveRecentFiles();
+    }
+
+    /**
+     * Returns the list of recently opened file paths.
+     * @returns {string[]} Recent file paths (most recent first)
+     */
+    getRecentFiles() {
+        return [...this.recentFiles];
+    }
+
+    /**
+     * Clears the recent files list.
+     */
+    clearRecentFiles() {
+        this.recentFiles = [];
+        this._saveRecentFiles();
+    }
+
+    /**
+     * Loads a file directly by path (no dialog).
+     * @param {string} filePath - The file path to load
+     * @returns {Promise<{success: boolean, content?: string, filePath?: string, message?: string}>}
+     */
+    async loadRecent(filePath) {
+        try {
+            const content = await fs.readFile(filePath, 'utf-8');
+
+            this.currentFilePath = filePath;
+            this.hasUnsavedChanges = false;
+            this.addRecentFile(filePath);
+
+            return {
+                success: true,
+                content,
+                filePath,
+            };
+        } catch (err) {
+            const error = /** @type {Error} */ (err);
+            // Remove from recents if the file no longer exists
+            this.recentFiles = this.recentFiles.filter((f) => f !== filePath);
+            this._saveRecentFiles();
+            return {
+                success: false,
+                message: `Failed to load file: ${error.message}`,
+            };
+        }
+    }
+
+    /**
+     * Loads the recent files list from disk.
+     * @private
+     */
+    _loadRecentFiles() {
+        try {
+            const { readFileSync } = require('node:fs');
+            const data = readFileSync(this.recentFilesPath, 'utf-8');
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed)) {
+                this.recentFiles = parsed;
+            }
+        } catch {
+            // File doesn't exist yet or is invalid — start with empty list
+            this.recentFiles = [];
+        }
+    }
+
+    /**
+     * Saves the recent files list to disk.
+     * @private
+     */
+    async _saveRecentFiles() {
+        try {
+            await fs.writeFile(this.recentFilesPath, JSON.stringify(this.recentFiles), 'utf-8');
+        } catch {
+            // Ignore write errors for recent files
+        }
     }
 }

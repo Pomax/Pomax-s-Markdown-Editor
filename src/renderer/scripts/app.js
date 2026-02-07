@@ -189,6 +189,9 @@ class App {
                 // Trigger the reload via the main process IPC handler
                 window.electronAPI?.reload();
                 break;
+            case 'file:getRecentFiles':
+                // Handled directly via IPC, no renderer action needed
+                break;
             default:
                 console.warn(`Unknown external API method: ${method}`);
         }

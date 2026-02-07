@@ -25,8 +25,10 @@ export class FocusedRenderer {
      * @param {HTMLElement} container - The container element
      */
     render(syntaxTree, container) {
-        // Save current selection info
-        const currentNodeId = this.editor.selectionManager.getCurrentNode()?.id;
+        // Use the tree cursor (the canonical cursor position) to determine
+        // which node is focused, rather than the selection manager which
+        // may be stale when switching view modes.
+        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
 
         // Clear and rebuild content
         container.innerHTML = '';
