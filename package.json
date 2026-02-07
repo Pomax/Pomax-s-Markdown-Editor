@@ -1,0 +1,32 @@
+{
+  "name": "markdown-editor",
+  "version": "1.0.0",
+  "description": "A professional markdown editor with syntactic tree parsing and WYSIWYG editing",
+  "main": "src/main/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/unit/**/*.test.js",
+    "test:unit": "node --test test/unit/**/*.test.js",
+    "test:integration": "playwright test --project=firefox test/integration/**/*.spec.js",
+    "typecheck": "tsc -p jsconfig.json",
+    "lint": "biome check src test scripts",
+    "lint:fix": "biome check --write src test scripts",
+    "format": "biome format --write src test scripts",
+    "docs:generate": "node scripts/generate-api-docs.js"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "electron",
+    "wysiwyg"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^1.5.0",
+    "@playwright/test": "^1.40.0",
+    "electron": "^40.2.1",
+    "typescript": "^5.3.0"
+  }
+}

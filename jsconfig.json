@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "allowJs": true,
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "target": "ESNext",
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "baseUrl": ".",
+        "types": ["node"]
+    },
+    "include": [
+        "src/**/*.js",
+        "src/**/*.d.ts",
+        "test/**/*.js",
+        "scripts/**/*.js"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

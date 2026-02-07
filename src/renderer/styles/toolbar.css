@@ -1,0 +1,162 @@
+/**
+ * Toolbar styles for the Markdown Editor.
+ * Contains styles for the formatting toolbar and its buttons.
+ */
+
+/* Toolbar container */
+#toolbar-container {
+    flex-shrink: 0;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Toolbar element */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-xs);
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+}
+
+.toolbar.hidden {
+    display: none;
+}
+
+/* Toolbar button */
+.toolbar-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.toolbar-button:hover:not(:disabled) {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+.toolbar-button:active:not(:disabled) {
+    background-color: var(--color-border);
+}
+
+.toolbar-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+/* Active state (toggled on) */
+.toolbar-button.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.toolbar-button.active:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+
+/* Disabled state */
+.toolbar-button:disabled,
+.toolbar-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button content */
+.toolbar-button-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* Specific button styles */
+.toolbar-button[data-button-id="bold"] .toolbar-button-content {
+    font-weight: 700;
+}
+
+.toolbar-button[data-button-id="italic"] .toolbar-button-content {
+    font-style: italic;
+    font-family: Georgia, serif;
+}
+
+.toolbar-button[data-button-id="code"] .toolbar-button-content {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+}
+
+.toolbar-button[data-button-id="code-block"] .toolbar-button-content {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+}
+
+/* Separator */
+.toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background-color: var(--color-border);
+    margin: 0 var(--spacing-sm);
+}
+
+/* Tooltip (optional enhancement) */
+.toolbar-button[title] {
+    position: relative;
+}
+
+.toolbar-button[title]::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    font-size: 12px;
+    font-weight: normal;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.toolbar-button[title]:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .toolbar {
+        gap: 2px;
+    }
+    
+    .toolbar-button {
+        min-width: 28px;
+        height: 28px;
+        padding: 2px 4px;
+        font-size: 12px;
+    }
+    
+    .toolbar-separator {
+        height: 20px;
+        margin: 0 4px;
+    }
+}
