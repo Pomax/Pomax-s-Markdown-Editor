@@ -1,0 +1,146 @@
+/**
+ * @fileoverview Preload script for secure IPC communication between main and renderer.
+ * Exposes a limited API to the renderer process via contextBridge.
+ *
+ * NOTE: Preload scripts must use CommonJS (.cjs) because they run in a
+ * sandboxed environment that does not support ES modules.
+ */
+
+const { contextBridge, ipcRenderer } = require('electron');
+
+/**
+ * API version for the exposed interface.
+ * @type {string}
+ */
+const API_VERSION = '1.0.0';
+
+/**
+ * Exposed API for the renderer process.
+ * All interactions between renderer and main process go through this API.
+ */
+const electronAPI = {
+    /** Current API version */
+    version: API_VERSION,
+
+    // ========== File Operations ==========
+
+    /**
+     * Creates a new document.
+     * @returns {Promise<{success: boolean, message?: string}>}
+     */
+    newDocument: () => ipcRenderer.invoke('file:new'),
+
+    /**
+     * Opens a file dialog and loads the selected markdown file.
+     * @returns {Promise<{success: boolean, content?: string, filePath?: string, message?: string}>}
+     */
+    loadFile: () => ipcRenderer.invoke('file:load'),
+
+    /**
+     * Saves the current document to its file path.
+     * @param {string} content - The markdown content to save
+     * @returns {Promise<{success: boolean, filePath?: string, message?: string}>}
+     */
+    saveFile: (content) => ipcRenderer.invoke('file:save', content),
+
+    /**
+     * Opens a save dialog and saves the document to the selected path.
+     * @param {string} content - The markdown content to save
+     * @returns {Promise<{success: boolean, filePath?: string, message?: string}>}
+     */
+    saveFileAs: (content) => ipcRenderer.invoke('file:saveAs', content),
+
+    /**
+     * Notifies the main process of unsaved changes state.
+     * @param {boolean} hasChanges - Whether there are unsaved changes
+     * @returns {Promise<void>}
+     */
+    setUnsavedChanges: (hasChanges) => ipcRenderer.invoke('file:setUnsavedChanges', hasChanges),
+
+    // ========== Document Operations ==========
+
+    /**
+     * Performs an undo operation.
+     * @returns {Promise<{success: boolean, message?: string}>}
+     */
+    undo: () => ipcRenderer.invoke('document:undo'),
+
+    /**
+     * Performs a redo operation.
+     * @returns {Promise<{success: boolean, message?: string}>}
+     */
+    redo: () => ipcRenderer.invoke('document:redo'),
+
+    // ========== View Operations ==========
+
+    /**
+     * Switches to source view mode.
+     * @returns {Promise<{success: boolean}>}
+     */
+    setSourceView: () => ipcRenderer.invoke('view:source'),
+
+    /**
+     * Switches to focused writing view mode.
+     * @returns {Promise<{success: boolean}>}
+     */
+    setFocusedView: () => ipcRenderer.invoke('view:focused'),
+
+    // ========== Element Operations ==========
+
+    /**
+     * Changes the type of the current element.
+     * @param {string} elementType - The new element type (e.g., 'heading1', 'paragraph')
+     * @returns {Promise<{success: boolean, message?: string}>}
+     */
+    changeElementType: (elementType) => ipcRenderer.invoke('element:changeType', elementType),
+
+    /**
+     * Applies formatting to the current selection.
+     * @param {string} format - The format to apply (e.g., 'bold', 'italic')
+     * @returns {Promise<{success: boolean, message?: string}>}
+     */
+    applyFormat: (format) => ipcRenderer.invoke('element:format', format),
+
+    // ========== IPC Event Listeners ==========
+
+    /**
+     * Registers a callback for menu actions.
+     * @param {function(string, ...any): void} callback - The callback function
+     * @returns {function(): void} Cleanup function to remove the listener
+     */
+    onMenuAction: (callback) => {
+        const handler = (event, action, ...args) => callback(action, ...args);
+        ipcRenderer.on('menu:action', handler);
+        return () => ipcRenderer.removeListener('menu:action', handler);
+    },
+
+    /**
+     * Registers a callback for external API calls.
+     * @param {function(string, ...any): void} callback - The callback function
+     * @returns {function(): void} Cleanup function to remove the listener
+     */
+    onExternalAPI: (callback) => {
+        const handler = (event, method, ...args) => callback(method, ...args);
+        ipcRenderer.on('api:external', handler);
+        return () => ipcRenderer.removeListener('api:external', handler);
+    },
+
+    // ========== Scripting API ==========
+
+    /**
+     * Executes a scripting API command.
+     * @param {string} command - The API command to execute
+     * @param {Object} params - The command parameters
+     * @returns {Promise<Object>} The command result
+     */
+    executeCommand: (command, params) => ipcRenderer.invoke('api:execute', command, params),
+
+    /**
+     * Gets the list of available API commands.
+     * @returns {Promise<Array<{name: string, description: string, params: Object}>>}
+     */
+    getAvailableCommands: () => ipcRenderer.invoke('api:commands'),
+};
+
+// Expose the API to the renderer process
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);

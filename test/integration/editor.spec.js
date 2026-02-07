@@ -21,6 +21,16 @@ test.beforeAll(async () => {
         args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js')],
     });
     page = await electronApp.firstWindow();
+
+    // Wait for the window to become visible (it is created with show: false
+    // and shown on the ready-to-show event).
+    await page.waitForFunction(() => document.readyState === 'complete');
+    await electronApp.evaluate(async ({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (!win.isVisible()) {
+            await new Promise((resolve) => win.once('show', resolve));
+        }
+    });
 });
 
 test.afterAll(async () => {

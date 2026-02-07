@@ -83,6 +83,17 @@ export class MarkdownParser {
     }
 
     /**
+     * Parses a single line of markdown and returns the resulting node.
+     * Useful for re-parsing a line when its content changes during editing.
+     * @param {string} line - The line to parse
+     * @returns {SyntaxNode|null}
+     */
+    parseSingleLine(line) {
+        const result = this.parseLine([line], 0);
+        return result.node;
+    }
+
+    /**
      * Parses a line and returns the resulting node and next line index.
      * @param {string[]} lines - All lines
      * @param {number} index - Current line index
