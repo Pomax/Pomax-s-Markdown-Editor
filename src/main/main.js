@@ -22,6 +22,9 @@ let fileManager;
 /** @type {IPCHandler} */
 let ipcHandler;
 
+/** @type {MenuBuilder} */
+let menuBuilder;
+
 /**
  * Creates the main application window with A4 aspect ratio.
  * @returns {BrowserWindow} The created browser window
@@ -125,12 +128,12 @@ async function initialize(window) {
     ipcHandler = new IPCHandler(fileManager);
 
     // Set up the application menu
-    const menuBuilder = new MenuBuilder(window, fileManager);
+    menuBuilder = new MenuBuilder(window, fileManager);
     const menu = menuBuilder.buildMenu();
     Menu.setApplicationMenu(menu);
 
-    // Register all IPC handlers
-    ipcHandler.registerHandlers();
+    // Register all IPC handlers (pass menuBuilder for reload support)
+    ipcHandler.registerHandlers(menuBuilder);
 }
 
 // Electron app lifecycle events

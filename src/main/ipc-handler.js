@@ -27,12 +27,15 @@ export class IPCHandler {
 
     /**
      * Registers all IPC handlers.
+     * @param {import('./menu-builder.js').MenuBuilder} [menuBuilder] - The menu builder (for reload support)
      */
-    registerHandlers() {
+    registerHandlers(menuBuilder) {
+        this.menuBuilder = menuBuilder ?? null;
         this.registerFileHandlers();
         this.registerDocumentHandlers();
         this.registerViewHandlers();
         this.registerElementHandlers();
+        this.registerAppHandlers();
         this.registerAPIHandlers();
     }
 
@@ -134,6 +137,18 @@ export class IPCHandler {
             const window = BrowserWindow.fromWebContents(event.sender);
             if (window) {
                 window.webContents.send('menu:action', 'element:format', format);
+            }
+            return { success: true };
+        });
+    }
+
+    /**
+     * Registers application-level IPC handlers (reload, etc.).
+     */
+    registerAppHandlers() {
+        ipcMain.handle('app:reload', async () => {
+            if (this.menuBuilder) {
+                await this.menuBuilder.handleReload();
             }
             return { success: true };
         });

@@ -85,6 +85,14 @@ const electronAPI = {
      */
     setFocusedView: () => ipcRenderer.invoke('view:focused'),
 
+    // ========== Application Operations ==========
+
+    /**
+     * Reloads the application UI, preserving document content, cursor, and file path.
+     * @returns {Promise<{success: boolean}>}
+     */
+    reload: () => ipcRenderer.invoke('app:reload'),
+
     // ========== Element Operations ==========
 
     /**

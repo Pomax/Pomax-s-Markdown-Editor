@@ -3,12 +3,18 @@
  * Creates the application menu with File, Edit, and View menus.
  */
 
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow, Menu, dialog } from 'electron';
 
 /**
  * Builds the application menu.
  */
 export class MenuBuilder {
+    /**
+     * Cached state for reload, stored outside the BrowserWindow instance.
+     * @type {Object|null}
+     */
+    static _reloadState = null;
+
     /**
      * @param {BrowserWindow} window - The main browser window
      * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
@@ -26,7 +32,12 @@ export class MenuBuilder {
      * @returns {Menu} The built menu
      */
     buildMenu() {
-        const template = [this.buildFileMenu(), this.buildEditMenu(), this.buildViewMenu()];
+        const template = [
+            this.buildFileMenu(),
+            this.buildEditMenu(),
+            this.buildViewMenu(),
+            this.buildHelpMenu(),
+        ];
 
         return Menu.buildFromTemplate(template);
     }
@@ -147,6 +158,28 @@ export class MenuBuilder {
     }
 
     /**
+     * Builds the Help menu.
+     * @returns {Electron.MenuItemConstructorOptions} The Help menu template
+     */
+    buildHelpMenu() {
+        return {
+            label: 'Help',
+            submenu: [
+                {
+                    label: 'Reload',
+                    accelerator: 'CmdOrCtrl+Shift+R',
+                    click: () => this.handleReload(),
+                },
+                { type: 'separator' },
+                {
+                    label: 'About',
+                    click: () => this.handleAbout(),
+                },
+            ],
+        };
+    }
+
+    /**
      * Sends a menu action to the renderer process.
      * @param {string} action - The action identifier
      * @param {...any} args - Additional arguments
@@ -192,5 +225,132 @@ export class MenuBuilder {
         if (this.window) {
             this.window.close();
         }
+    }
+
+    /**
+     * Handles the Reload menu action.
+     * Caches editor state, reloads the page, and restores state afterwards.
+     */
+    async handleReload() {
+        if (!this.window) return;
+
+        // Gather editor state from the renderer before reloading
+        const state = await this.window.webContents.executeJavaScript(`
+            (function() {
+                const editor = window.editorAPI;
+                if (!editor) return null;
+
+                // Determine cursor node index by matching the node ID
+                // against the tree children (IDs won't survive the reload).
+                var cursorNodeIndex = 0;
+                var cursorOffset = window.__editorCursorOffset ?? 0;
+                var cursorNodeId = window.__editorCursorNodeId;
+                var lines = document.querySelectorAll('#editor [data-node-id]');
+                if (cursorNodeId && lines.length) {
+                    for (var i = 0; i < lines.length; i++) {
+                        if (lines[i].getAttribute('data-node-id') === cursorNodeId) {
+                            cursorNodeIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                return {
+                    content: editor.getContent(),
+                    viewMode: editor.getViewMode(),
+                    hasUnsavedChanges: editor.hasUnsavedChanges(),
+                    filePath: window.__editorFilePath ?? null,
+                    cursorNodeIndex: cursorNodeIndex,
+                    cursorOffset: cursorOffset,
+                };
+            })()
+        `);
+
+        if (state) {
+            // Store state on the class so it survives the reload
+            MenuBuilder._reloadState = state;
+            // Also preserve file path in the file manager
+            if (state.filePath) {
+                this.fileManager.currentFilePath = state.filePath;
+            }
+        }
+
+        this.window.webContents.reloadIgnoringCache();
+
+        // After the page finishes loading, restore the cached state
+        this.window.webContents.once('did-finish-load', () => {
+            const cached = MenuBuilder._reloadState;
+            if (!cached || !this.window) return;
+
+            this.window.webContents.executeJavaScript(`
+                (function() {
+                    // Wait for the app to initialise before restoring state
+                    function tryRestore() {
+                        const api = window.editorAPI;
+                        if (!api) {
+                            setTimeout(tryRestore, 50);
+                            return;
+                        }
+                        const state = ${JSON.stringify(cached)};
+
+                        // Restore document content
+                        if (state.content) {
+                            api.setContent(state.content);
+                        }
+
+                        // Restore file path (must happen after setContent
+                        // because loadMarkdown resets the path)
+                        if (state.filePath) {
+                            window.__editorFilePath = state.filePath;
+                        }
+
+                        // Restore unsaved-changes flag and title
+                        if (state.hasUnsavedChanges) {
+                            api.setUnsavedChanges(true);
+                        }
+
+                        // Restore cursor position by node index
+                        var lines = document.querySelectorAll('#editor [data-node-id]');
+                        var idx = Math.min(state.cursorNodeIndex || 0, lines.length - 1);
+                        if (idx >= 0 && lines[idx]) {
+                            var nodeId = lines[idx].getAttribute('data-node-id');
+                            if (nodeId) {
+                                window.dispatchEvent(
+                                    new CustomEvent('__restoreCursor', {
+                                        detail: { nodeId: nodeId, offset: state.cursorOffset || 0 }
+                                    })
+                                );
+                            }
+                        }
+
+                        // Restore view mode
+                        if (state.viewMode && state.viewMode !== 'source') {
+                            window.dispatchEvent(
+                                new CustomEvent('__restoreViewMode', { detail: state.viewMode })
+                            );
+                        }
+                    }
+                    tryRestore();
+                })()
+            `);
+
+            MenuBuilder._reloadState = null;
+        });
+    }
+
+    /**
+     * Handles the About menu action.
+     * Shows a modal dialog with placeholder text.
+     */
+    handleAbout() {
+        if (!this.window) return;
+
+        dialog.showMessageBox(this.window, {
+            type: 'info',
+            title: 'About Markdown Editor',
+            message: 'Markdown Editor',
+            detail: 'Work in progress',
+            buttons: ['OK'],
+        });
     }
 }

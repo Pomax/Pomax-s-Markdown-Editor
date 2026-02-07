@@ -10,6 +10,7 @@ interface EditorAPI {
     getContent(): string;
     setContent(content: string): void;
     getViewMode(): string;
+    setUnsavedChanges(hasChanges: boolean): void;
 }
 
 /**
@@ -23,6 +24,7 @@ interface ElectronAPI {
     saveFileAs(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     loadFile(): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
     newFile(): Promise<{ success: boolean }>;
+    reload(): Promise<{ success: boolean }>;
     executeAPICommand(command: string, params: object): Promise<any>;
 }
 

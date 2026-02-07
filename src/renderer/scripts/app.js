@@ -75,7 +75,46 @@ class App {
             getContent: () => this.editor?.getMarkdown() ?? '',
             setContent: (content) => this.editor?.loadMarkdown(content),
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
+            setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
         };
+
+        // Expose file path and cursor info as globals so the reload handler
+        // can read them via executeJavaScript before the page unloads.
+        Object.defineProperty(window, '__editorFilePath', {
+            get: () => this.editor?.currentFilePath ?? null,
+            set: (v) => {
+                if (this.editor) this.editor.currentFilePath = v;
+            },
+            configurable: true,
+        });
+        Object.defineProperty(window, '__editorCursorNodeId', {
+            get: () => this.editor?.treeCursor?.nodeId ?? null,
+            configurable: true,
+        });
+        Object.defineProperty(window, '__editorCursorOffset', {
+            get: () => this.editor?.treeCursor?.offset ?? 0,
+            configurable: true,
+        });
+
+        // Listen for view-mode restore after a reload
+        window.addEventListener('__restoreViewMode', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.editor && detail) {
+                this.editor.setViewMode(detail);
+            }
+        });
+
+        // Listen for cursor-position restore after a reload
+        window.addEventListener('__restoreCursor', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.editor && detail?.nodeId) {
+                this.editor.treeCursor = {
+                    nodeId: detail.nodeId,
+                    offset: detail.offset ?? 0,
+                };
+                this.editor.placeCursor();
+            }
+        });
     }
 
     /**
@@ -145,6 +184,10 @@ class App {
                 break;
             case 'selection:set':
                 this.editor.setSelection(args[0]);
+                break;
+            case 'app:reload':
+                // Trigger the reload via the main process IPC handler
+                window.electronAPI?.reload();
                 break;
             default:
                 console.warn(`Unknown external API method: ${method}`);

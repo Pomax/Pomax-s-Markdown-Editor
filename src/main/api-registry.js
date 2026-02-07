@@ -308,6 +308,19 @@ export class APIRegistry {
                 return { success: true };
             },
         });
+
+        // Application commands
+        this.registerCommand({
+            name: 'app.reload',
+            description:
+                'Reloads the application UI while preserving document content, cursor position, and file association',
+            category: 'app',
+            params: {},
+            handler: async (params, webContents) => {
+                webContents.send('api:external', 'app:reload');
+                return { success: true };
+            },
+        });
     }
 
     /**
