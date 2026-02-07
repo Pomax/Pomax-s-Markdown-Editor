@@ -14,26 +14,26 @@
     --color-primary: #0d6efd;
     --color-primary-hover: #0b5ed7;
     --color-focus: rgba(13, 110, 253, 0.25);
-    
+
     /* Syntax highlighting */
     --color-syntax: #6c757d;
     --color-heading: #212529;
     --color-code-bg: #f1f3f5;
     --color-blockquote: #495057;
-    
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-    
+
     /* Typography */
     --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     --font-size-base: 16px;
     --line-height: 1.6;
-    
+
     /* Layout */
     --toolbar-height: 48px;
     --page-max-width: 210mm; /* A4 width */
@@ -69,6 +69,7 @@ html, body {
     flex: 1;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     overflow-y: auto;
     padding: var(--spacing-lg);
 }

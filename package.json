@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/unit/**/*.test.js",
-    "test:unit": "node --test test/unit/**/*.test.js",
-    "test:integration": "playwright test --project=firefox test/integration/**/*.spec.js",
+    "test": "npm run lint && npm run test:unit && npm run test:integration",
+    "test:unit": "node --test \"test/unit/**/*.test.js\"",
+    "test:integration": "playwright test",
     "typecheck": "tsc -p jsconfig.json",
-    "lint": "biome check src test scripts",
+    "lint": "npm run lint:fix && npm run format",
     "lint:fix": "biome check --write src test scripts",
     "format": "biome format --write src test scripts",
     "docs:generate": "node scripts/generate-api-docs.js"

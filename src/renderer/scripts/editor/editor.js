@@ -628,9 +628,7 @@ export class Editor {
                 return `> ${content}`;
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
-                const marker = attributes?.ordered
-                    ? `${attributes?.number || 1}. `
-                    : '- ';
+                const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
                 return `${indent}${marker}${content}`;
             }
             default:
@@ -648,21 +646,27 @@ export class Editor {
      */
     getPrefixLength(type, attributes) {
         switch (type) {
-            case 'heading1': return 2;
-            case 'heading2': return 3;
-            case 'heading3': return 4;
-            case 'heading4': return 5;
-            case 'heading5': return 6;
-            case 'heading6': return 7;
-            case 'blockquote': return 2;
+            case 'heading1':
+                return 2;
+            case 'heading2':
+                return 3;
+            case 'heading3':
+                return 4;
+            case 'heading4':
+                return 5;
+            case 'heading5':
+                return 6;
+            case 'heading6':
+                return 7;
+            case 'blockquote':
+                return 2;
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
-                const marker = attributes?.ordered
-                    ? `${attributes?.number || 1}. `
-                    : '- ';
+                const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
                 return indent.length + marker.length;
             }
-            default: return 0;
+            default:
+                return 0;
         }
     }
 

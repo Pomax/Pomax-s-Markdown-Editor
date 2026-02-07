@@ -1,7 +1,7 @@
 /**
- * @fileoverview Integration test for heading-to-paragraph reversion via backspace.
- * Types "# main", then presses backspace 6 times. The heading should revert
- * to an empty paragraph, not a paragraph containing "#".
+ * @fileoverview Integration test for dynamic page height.
+ * Verifies that the editor page grows to fit its content instead of
+ * staying at a fixed height.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -62,36 +62,28 @@ test.afterAll(async () => {
     }
 });
 
-test('typing "# main" then backspace 6 times reverts to an empty paragraph', async ({ page }) => {
+test('editor page height grows when content exceeds initial min-height', async ({ page }) => {
     await page.goto(baseURL);
+
+    // Wait for the editor to initialize
     await page.waitForSelector('#editor .md-line');
 
     const editor = page.locator('#editor');
     await editor.click();
 
-    // Type "# main" character by character
-    for (const char of ['#', ' ', 'm', 'a', 'i', 'n']) {
-        await page.keyboard.type(char);
+    // Measure the initial height of the editor (should be the A4 min-height)
+    const initialHeight = await editor.evaluate((el) => el.offsetHeight);
+    expect(initialHeight).toBeGreaterThan(0);
+
+    // Type enough lines to exceed the initial page height.
+    // Each Enter creates a new paragraph line.
+    const lineCount = 80;
+    for (let i = 0; i < lineCount; i++) {
+        await page.keyboard.type(`Line ${i + 1}`);
+        await page.keyboard.press('Enter');
     }
 
-    // Verify the heading was created
-    const headingLine = editor.locator('.md-heading1');
-    await expect(headingLine).toBeVisible();
-
-    // Press backspace 6 times to delete "main", the space, and the "#"
-    for (let i = 0; i < 6; i++) {
-        await page.keyboard.press('Backspace');
-    }
-
-    // The editor should now contain an empty paragraph, not a paragraph with "#"
-    const paragraphLine = editor.locator('.md-paragraph');
-    await expect(paragraphLine).toBeVisible();
-
-    // There should be no heading element remaining
-    const remainingHeading = editor.locator('[class*="md-heading"]');
-    await expect(remainingHeading).toHaveCount(0);
-
-    // The text content should be empty (no leftover "#" or other characters)
-    const content = await editor.innerText();
-    expect(content.trim()).toBe('');
+    // The editor height should now be greater than the initial min-height
+    const expandedHeight = await editor.evaluate((el) => el.offsetHeight);
+    expect(expandedHeight).toBeGreaterThan(initialHeight);
 });

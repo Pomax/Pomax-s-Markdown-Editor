@@ -131,6 +131,7 @@ describe('UndoManager', () => {
 
     describe('multiple operations', () => {
         it('should handle multiple undo/redo cycles', () => {
+            undoManager.batchTimeout = 0;
             undoManager.recordChange({ type: 'input', before: '', after: 'A' });
             undoManager.recordChange({ type: 'input', before: 'A', after: 'AB' });
             undoManager.recordChange({ type: 'input', before: 'AB', after: 'ABC' });
