@@ -15,26 +15,31 @@ No on has time for that.
   - **Source View**: Shows literal markdown with syntax highlighting
   - **Focused Writing**: WYSIWYG-style editing that hides syntax unless focused
 - **WYSIWYG Toolbar**: Context-aware formatting toolbar that adapts to the current element
+- **Table of Contents**: Resizable sidebar with live-updating headings navigation (left or right)
+- **Image Support**: Insert, edit, rename, and drag & drop images; gather images into the document folder
+- **Table Support**: Insert and edit tables via a modal dialog
+- **Preferences**: Configurable page margins, page width, page colors, default view mode, and TOC settings
+- **Word Count**: Total word count and word count excluding code (File → Word Count)
 - **Unlimited Undo/Redo**: Complete edit history with no limit
 - **Scripting API**: Full IPC-based API for external automation
-- **A4 Page Layout**: Document-centric design with A4 aspect ratio
+- **A4 Page Layout**: Document-centric design with configurable page dimensions
+- **Debug Mode**: Help → Debug opens DevTools and enables context menus
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.0.0 or higher
-- npm 9.0.0 or higher
+- Node.js 22.0.0 or higher
 
 ### Installation
 
-```bash
+```sh
 npm install
 ```
 
 ### Running the Application
 
-```bash
+```sh
 npm start
 ```
 
@@ -44,10 +49,11 @@ npm start
 ├── src/
 │   ├── main/           # Electron main process
 │   │   ├── main.js     # Application entry point
-│   │   ├── preload.js  # Secure IPC bridge
+│   │   ├── preload.cjs # Secure IPC bridge
 │   │   ├── menu-builder.js
 │   │   ├── file-manager.js
 │   │   ├── ipc-handler.js
+│   │   ├── settings-manager.js
 │   │   └── api-registry.js
 │   │
 │   └── renderer/       # Electron renderer process
@@ -58,7 +64,12 @@ npm start
 │           ├── editor/
 │           ├── parser/
 │           ├── toolbar/
-│           └── handlers/
+│           ├── handlers/
+│           ├── image/
+│           ├── table/
+│           ├── toc/
+│           ├── preferences/
+│           └── word-count/
 │
 ├── test/
 │   ├── unit/           # Node.js native unit tests
@@ -105,30 +116,32 @@ npm start
 
 ### Unit Tests
 
-```bash
+```sh
 npm run test:unit
 ```
 
 ### Integration Tests
 
-```bash
+```sh
 npm run test:integration
 ```
 
 ## Code Quality
 
-### Linting and Formatting
+### Linting, Formatting, and Type Checking
 
-```bash
-npm run lint        # Check for issues
-npm run lint:fix    # Fix issues automatically
-npm run format      # Format code
+All code quality checks are run together:
+
+```sh
+npm run lint        # Runs lint:fix + lint:format + lint:typing
 ```
 
-### Type Checking
+Individual steps:
 
-```bash
-npm run typecheck
+```sh
+npm run lint:fix    # Auto-fix lint issues (Biome)
+npm run lint:format # Auto-format code (Biome)
+npm run lint:typing # Type check via tsc (JSDoc annotations)
 ```
 
 ## API Documentation
@@ -138,8 +151,8 @@ The editor exposes a comprehensive IPC-based API for external scripting. See [do
 ### Quick Example
 
 ```javascript
-// Execute a command via IPC
-await electronAPI.executeCommand('document.setContent', {
+// Execute a command via IPC (api:execute channel)
+const result = await ipcRenderer.invoke('api:execute', 'document.setContent', {
     content: '# Hello World\n\nThis is a paragraph.'
 });
 ```
@@ -170,4 +183,4 @@ await electronAPI.executeCommand('document.setContent', {
 
 ## License
 
-MIT
+Public Domain
