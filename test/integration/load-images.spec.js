@@ -16,6 +16,7 @@ const testFile = 'c:\\Users\\Mike\\Documents\\git\\released\\are-we-flying\\docs
 test('images in a loaded markdown file resolve and load successfully', async () => {
     const electronApp = await electron.launch({
         args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js'), testFile],
+        env: { ...process.env, TESTING: '1' },
     });
     const page = await electronApp.firstWindow();
 

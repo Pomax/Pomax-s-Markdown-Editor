@@ -14,6 +14,7 @@ const heading = '# main';
 test('typing "# main" then backspace 6 times results in empty document', async () => {
     const electronApp = await electron.launch({
         args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js')],
+        env: { ...process.env, TESTING: '1' },
     });
     const page = await electronApp.firstWindow();
     await page.waitForSelector('#editor .md-line');

@@ -27,6 +27,7 @@ let page;
 test.beforeAll(async () => {
     electronApp = await electron.launch({
         args: [path.join(projectRoot, 'src', 'main', 'main.js')],
+        env: { ...process.env, TESTING: '1' },
     });
     page = await electronApp.firstWindow();
 

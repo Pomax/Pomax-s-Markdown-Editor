@@ -66,6 +66,48 @@ function debounceSaveWindowBounds() {
 }
 
 /**
+ * Persists the currently open file path and cursor position so the
+ * same file can be reopened on next launch.  If no file is open the
+ * setting is removed.
+ * @param {BrowserWindow} win
+ */
+async function saveLastOpenFile(win) {
+    const filePath = fileManager?.getFilePath() ?? null;
+    if (!filePath) {
+        settingsManager.delete('lastOpenFile');
+        return;
+    }
+
+    let cursorNodeIndex = 0;
+    let cursorOffset = 0;
+    try {
+        const info = await win.webContents.executeJavaScript(`
+            (function () {
+                var nodeId = window.__editorCursorNodeId;
+                var offset = window.__editorCursorOffset ?? 0;
+                var lines = document.querySelectorAll('#editor [data-node-id]');
+                var index = 0;
+                if (nodeId && lines.length) {
+                    for (var i = 0; i < lines.length; i++) {
+                        if (lines[i].getAttribute('data-node-id') === nodeId) {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+                return { cursorNodeIndex: index, cursorOffset: offset };
+            })()
+        `);
+        cursorNodeIndex = info.cursorNodeIndex;
+        cursorOffset = info.cursorOffset;
+    } catch {
+        // Window may already be destroyed — save with defaults
+    }
+
+    settingsManager.set('lastOpenFile', { filePath, cursorNodeIndex, cursorOffset });
+}
+
+/**
  * Creates the main application window with A4 aspect ratio.
  * @returns {BrowserWindow} The created browser window
  */
@@ -127,13 +169,24 @@ function createWindow() {
         }
         saveWindowBounds();
 
+        // Prevent the window from closing until we've persisted state
+        event.preventDefault();
+
+        if (process.env.TESTING) {
+            win.destroy();
+            return;
+        }
+
+        await saveLastOpenFile(win);
+
         const hasUnsavedChanges = await win.webContents.executeJavaScript(
             'window.editorAPI?.hasUnsavedChanges() ?? false',
         );
 
         if (hasUnsavedChanges) {
-            event.preventDefault();
             handleUnsavedChangesOnClose(win);
+        } else {
+            win.destroy();
         }
     });
 
@@ -247,6 +300,58 @@ async function loadFileFromPath(window, filePath) {
     }
 }
 
+/**
+ * Restores the last-open file and cursor position from a previous session.
+ * @param {BrowserWindow} window - The main window
+ * @param {{filePath: string, cursorNodeIndex: number, cursorOffset: number}} lastOpen
+ */
+async function restoreLastOpenFile(window, lastOpen) {
+    const result = await fileManager.loadRecent(lastOpen.filePath);
+    if (!result.success) return;
+
+    const nodeIndex = lastOpen.cursorNodeIndex ?? 0;
+    const offset = lastOpen.cursorOffset ?? 0;
+    const contentJSON = JSON.stringify(result.content);
+    const filePathJSON = JSON.stringify(result.filePath);
+
+    // Load the file and restore the cursor in a single executeJavaScript
+    // call so we know the DOM is ready before we try to place the cursor.
+    window.webContents.executeJavaScript(`
+        (function () {
+            function tryRestore() {
+                var api = window.editorAPI;
+                if (!api) { setTimeout(tryRestore, 50); return; }
+
+                // Set the file path first so the title bar updates correctly
+                // when loadMarkdown calls updateWindowTitle.
+                window.__editorFilePath = ${filePathJSON};
+
+                // Load the file content (renders the DOM)
+                api.setContent(${contentJSON});
+
+                // Wait for the DOM nodes to be created by the render
+                requestAnimationFrame(function () {
+                    var lines = document.querySelectorAll('#editor [data-node-id]');
+                    var idx = Math.min(${nodeIndex}, lines.length - 1);
+                    if (idx >= 0 && lines[idx]) {
+                        var nodeId = lines[idx].getAttribute('data-node-id');
+                        if (nodeId) {
+                            window.dispatchEvent(
+                                new CustomEvent('__restoreCursor', {
+                                    detail: { nodeId: nodeId, offset: ${offset} }
+                                })
+                            );
+                        }
+                    }
+                });
+            }
+            tryRestore();
+        })()
+    `);
+
+    menuBuilder.refreshMenu();
+}
+
 // Electron app lifecycle events
 app.whenReady().then(async () => {
     // Initialize settings before creating the window so saved bounds are available
@@ -257,12 +362,24 @@ app.whenReady().then(async () => {
     await initialize(window);
 
     // If a file path was passed on the command line, load it once the
-    // renderer has finished initialising.
+    // renderer has finished initialising.  Otherwise, reopen the file
+    // that was open when the app was last closed.
     const cliFilePath = getFilePathFromArgs();
     if (cliFilePath) {
         window.webContents.once('did-finish-load', () => {
             loadFileFromPath(window, cliFilePath);
         });
+    } else if (!process.env.TESTING) {
+        const lastOpen = settingsManager.get('lastOpenFile', null);
+        // Clear immediately so it doesn't interfere with future launches
+        // (e.g. test runs).  A new value is written on close if a file
+        // is still open.
+        settingsManager.delete('lastOpenFile');
+        if (lastOpen?.filePath && fs.existsSync(lastOpen.filePath)) {
+            window.webContents.once('did-finish-load', () => {
+                restoreLastOpenFile(window, lastOpen);
+            });
+        }
     }
 
     app.on('activate', () => {
