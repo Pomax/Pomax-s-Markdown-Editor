@@ -333,6 +333,14 @@ export class FocusedRenderer {
                 contentSpan.textContent = `![${alt}](${src})`;
             }
             element.appendChild(contentSpan);
+
+            // Show a non-interactive preview below the syntax
+            const preview = document.createElement('img');
+            preview.className = 'md-image-preview md-image-preview--inert';
+            preview.src = this.resolveImageSrc(src);
+            preview.alt = alt;
+            preview.draggable = false;
+            element.appendChild(preview);
         } else {
             // Show rendered image
             const img = document.createElement('img');

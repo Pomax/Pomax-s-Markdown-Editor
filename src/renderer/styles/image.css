@@ -210,6 +210,13 @@
     display: block;
 }
 
+.md-image-preview--inert {
+    margin-top: var(--spacing-sm);
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+}
+
 .md-image a {
     display: inline-block;
 }

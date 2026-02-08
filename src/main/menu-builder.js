@@ -27,6 +27,12 @@ export class MenuBuilder {
 
         /** @type {import('./file-manager.js').FileManager} */
         this.fileManager = fileManager;
+
+        /** @type {boolean} Whether the debug context-menu listener has been registered */
+        this._debugContextMenuRegistered = false;
+
+        /** @type {boolean} Whether DevTools is currently open */
+        this._devToolsOpen = false;
     }
 
     /**
@@ -220,6 +226,11 @@ export class MenuBuilder {
                     label: 'Reload',
                     accelerator: 'CmdOrCtrl+Shift+R',
                     click: () => this.handleReload(),
+                },
+                { type: 'separator' },
+                {
+                    label: 'Debug',
+                    click: () => this.handleDebug(),
                 },
                 { type: 'separator' },
                 {
@@ -651,6 +662,49 @@ export class MenuBuilder {
         } catch {
             return false;
         }
+    }
+
+    /**
+     * Handles the Debug menu action.
+     * Opens DevTools and enables the right-click context menu.
+     * The context menu is automatically disabled when DevTools is closed.
+     */
+    handleDebug() {
+        if (!this.window) return;
+
+        const wc = this.window.webContents;
+
+        // Only register listeners once
+        if (!this._debugContextMenuRegistered) {
+            this._debugContextMenuRegistered = true;
+            this._devToolsOpen = false;
+
+            wc.on('context-menu', (_event, params) => {
+                if (!this._devToolsOpen) return;
+
+                const menu = Menu.buildFromTemplate([
+                    {
+                        label: 'Inspect Element',
+                        click: () => wc.inspectElement(params.x, params.y),
+                    },
+                    { type: 'separator' },
+                    { role: 'copy' },
+                    { role: 'paste' },
+                    { role: 'selectAll' },
+                ]);
+                menu.popup({ window: this.window });
+            });
+
+            wc.on('devtools-opened', () => {
+                this._devToolsOpen = true;
+            });
+
+            wc.on('devtools-closed', () => {
+                this._devToolsOpen = false;
+            });
+        }
+
+        wc.openDevTools();
     }
 
     /**
