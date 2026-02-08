@@ -8,53 +8,34 @@ The Markdown Editor exposes a comprehensive API for external scripting via IPC (
 
 Current Version: **1.0.0**
 
+*Generated: 2026-02-08T18:09:53.972Z*
+
 ## Connection
 
-External applications can connect to the editor via Electron's IPC mechanism. The API uses a request-response pattern where commands are sent as IPC messages and results are returned asynchronously.
+External applications can connect to the editor via Electron's IPC mechanism.
 
 ### IPC Channels
 
 - **Request Channel**: `api:execute`
-- **Response Channel**: Response is returned via the invoke mechanism
-
-### Message Format
-
-```json
-{
-    "command": "command.name",
-    "params": {
-        "param1": "value1",
-        "param2": "value2"
-    }
-}
-```
-
-### Response Format
-
-```json
-{
-    "success": true,
-    "data": {},
-    "error": null
-}
-```
+- **Response**: Returned via the invoke mechanism
 
 ## Command Categories
 
-- [File Commands](#file-commands)
-- [Document Commands](#document-commands)
-- [View Commands](#view-commands)
-- [Element Commands](#element-commands)
+- [App Commands](#app-commands)
 - [Cursor Commands](#cursor-commands)
+- [Document Commands](#document-commands)
+- [Element Commands](#element-commands)
+- [File Commands](#file-commands)
 - [Selection Commands](#selection-commands)
+- [View Commands](#view-commands)
 
 ---
 
-## File Commands
+## App Commands
 
-### `file.new`
+### `app.reload`
 
-Creates a new empty document.
+Reloads the application UI while preserving document content, cursor position, and file association
 
 **Parameters:** None
 
@@ -63,257 +44,6 @@ Creates a new empty document.
 {
     "success": true
 }
-```
-
-**Example:**
-```javascript
-await electronAPI.executeCommand('file.new', {});
-```
-
----
-
-### `file.load`
-
-Opens a file dialog to load a markdown file.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-### `file.save`
-
-Saves the current document.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-### `file.saveAs`
-
-Opens a save dialog to save the document with a new name.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-## Document Commands
-
-### `document.undo`
-
-Undoes the last action.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-### `document.redo`
-
-Redoes the last undone action.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-### `document.getContent`
-
-Gets the current document content as markdown.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true,
-    "pending": true
-}
-```
-
-Note: The actual content is delivered via a separate IPC message.
-
----
-
-### `document.setContent`
-
-Sets the document content from markdown.
-
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| content | string | Yes | The markdown content to set |
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
-**Example:**
-```javascript
-await electronAPI.executeCommand('document.setContent', {
-    content: '# Hello World\n\nThis is a paragraph.'
-});
-```
-
----
-
-### `document.insertText`
-
-Inserts text at the current cursor position.
-
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| text | string | Yes | The text to insert |
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
----
-
-## View Commands
-
-### `view.setMode`
-
-Sets the view mode.
-
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| mode | string | Yes | The view mode: "source" or "focused" |
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
-**Example:**
-```javascript
-await electronAPI.executeCommand('view.setMode', { mode: 'focused' });
-```
-
----
-
-### `view.getMode`
-
-Gets the current view mode.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-    "success": true,
-    "pending": true
-}
-```
-
----
-
-## Element Commands
-
-### `element.changeType`
-
-Changes the type of the current element.
-
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| type | string | Yes | The new element type |
-
-**Supported Types:**
-- `heading1` through `heading6`
-- `paragraph`
-- `blockquote`
-- `code-block`
-- `list-item`
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
-**Example:**
-```javascript
-await electronAPI.executeCommand('element.changeType', { type: 'heading1' });
-```
-
----
-
-### `element.applyFormat`
-
-Applies inline formatting to the current selection.
-
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| format | string | Yes | The format to apply |
-
-**Supported Formats:**
-- `bold`
-- `italic`
-- `code`
-- `strikethrough`
-- `link`
-
-**Returns:**
-```json
-{
-    "success": true
-}
-```
-
-**Example:**
-```javascript
-await electronAPI.executeCommand('element.applyFormat', { format: 'bold' });
 ```
 
 ---
@@ -322,15 +52,14 @@ await electronAPI.executeCommand('element.applyFormat', { format: 'bold' });
 
 ### `cursor.getPosition`
 
-Gets the current cursor position.
+Gets the current cursor position
 
 **Parameters:** None
 
 **Returns:**
 ```json
 {
-    "success": true,
-    "pending": true
+    "success": true
 }
 ```
 
@@ -338,7 +67,7 @@ Gets the current cursor position.
 
 ### `cursor.setPosition`
 
-Sets the cursor position.
+Sets the cursor position
 
 **Parameters:**
 
@@ -356,7 +85,229 @@ Sets the cursor position.
 
 **Example:**
 ```javascript
-await electronAPI.executeCommand('cursor.setPosition', { line: 5, column: 10 });
+await electronAPI.executeCommand('cursor.setPosition', {"line":0,"column":0});
+```
+
+---
+
+## Document Commands
+
+### `document.undo`
+
+Undoes the last action
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `document.redo`
+
+Redoes the last undone action
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `document.getContent`
+
+Gets the current document content as markdown
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `document.setContent`
+
+Sets the document content from markdown
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| content | string | Yes | The markdown content to set |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('document.setContent', {"content":"example"});
+```
+
+---
+
+### `document.insertText`
+
+Inserts text at the current cursor position
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| text | string | Yes | The text to insert |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('document.insertText', {"text":"example"});
+```
+
+---
+
+## Element Commands
+
+### `element.changeType`
+
+Changes the type of the current element
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| type | string | Yes | The new element type (heading1-6, paragraph, blockquote, code, list, etc.) |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('element.changeType', {"type":"example"});
+```
+
+---
+
+### `element.applyFormat`
+
+Applies inline formatting to the current selection
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| format | string | Yes | The format to apply (bold, italic, code, strikethrough, link) |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('element.applyFormat', {"format":"example"});
+```
+
+---
+
+## File Commands
+
+### `file.new`
+
+Creates a new empty document
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `file.load`
+
+Opens a file dialog to load a markdown file
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `file.save`
+
+Saves the current document
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `file.saveAs`
+
+Opens a save dialog to save the document with a new name
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+### `file.getRecentFiles`
+
+Gets the list of recently opened file paths (most recent first)
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
 ```
 
 ---
@@ -365,15 +316,14 @@ await electronAPI.executeCommand('cursor.setPosition', { line: 5, column: 10 });
 
 ### `selection.get`
 
-Gets the current selection.
+Gets the current selection
 
 **Parameters:** None
 
 **Returns:**
 ```json
 {
-    "success": true,
-    "pending": true
+    "success": true
 }
 ```
 
@@ -381,7 +331,7 @@ Gets the current selection.
 
 ### `selection.set`
 
-Sets the selection range.
+Sets the selection range
 
 **Parameters:**
 
@@ -401,12 +351,48 @@ Sets the selection range.
 
 **Example:**
 ```javascript
-await electronAPI.executeCommand('selection.set', {
-    startLine: 0,
-    startColumn: 0,
-    endLine: 0,
-    endColumn: 10
-});
+await electronAPI.executeCommand('selection.set', {"startLine":0,"startColumn":0,"endLine":0,"endColumn":0});
+```
+
+---
+
+## View Commands
+
+### `view.setMode`
+
+Sets the view mode
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| mode | string | Yes | The view mode: "source" or "focused" |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('view.setMode', {"mode":"example"});
+```
+
+---
+
+### `view.getMode`
+
+Gets the current view mode
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+    "success": true
+}
 ```
 
 ---
@@ -428,50 +414,14 @@ All commands return an error object when they fail:
 - `Missing required parameter: <name>` - A required parameter was not provided
 - `No active window` - No editor window is currently active
 
----
-
-## Scripting Examples
-
-### Node.js Example
-
-```javascript
-const { ipcRenderer } = require('electron');
-
-async function typeText(text) {
-    await ipcRenderer.invoke('api:execute', 'document.insertText', { text });
-}
-
-async function makeBold() {
-    await ipcRenderer.invoke('api:execute', 'element.applyFormat', { format: 'bold' });
-}
-```
-
-### Python Example (using pyautogui for IPC)
-
-```python
-import subprocess
-import json
-
-def execute_command(command, params):
-    # This would require setting up an IPC bridge
-    # Example using a hypothetical bridge
-    message = json.dumps({
-        'command': command,
-        'params': params
-    })
-    # Send via IPC mechanism
-    pass
-```
-
----
-
 ## Version History
 
-### 1.0.0 (Initial Release)
+### 1.0.0 (Current)
 
-- File operations (new, load, save, saveAs)
+- File operations (new, load, save, saveAs, getRecentFiles)
 - Document operations (undo, redo, getContent, setContent, insertText)
 - View operations (setMode, getMode)
 - Element operations (changeType, applyFormat)
 - Cursor operations (getPosition, setPosition)
 - Selection operations (get, set)
+- Application operations (reload)

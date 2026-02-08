@@ -1,6 +1,6 @@
 {
     "apiVersion": "1.0.0",
-    "generatedAt": "2026-02-07T00:00:00.000Z",
+    "generatedAt": "2026-02-08T18:09:53.970Z",
     "commands": [
         {
             "name": "file.new",
@@ -165,6 +165,18 @@
                     "required": true
                 }
             }
+        },
+        {
+            "name": "app.reload",
+            "description": "Reloads the application UI while preserving document content, cursor position, and file association",
+            "category": "app",
+            "params": {}
+        },
+        {
+            "name": "file.getRecentFiles",
+            "description": "Gets the list of recently opened file paths (most recent first)",
+            "category": "file",
+            "params": {}
         }
     ]
 }

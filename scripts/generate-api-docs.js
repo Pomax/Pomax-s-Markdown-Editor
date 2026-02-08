@@ -199,13 +199,13 @@ function generateMarkdown(commands, version) {
     lines.push('');
     lines.push(`### ${version} (Current)`);
     lines.push('');
-    lines.push('- Initial API release');
-    lines.push('- File operations (new, load, save, saveAs)');
+    lines.push('- File operations (new, load, save, saveAs, getRecentFiles)');
     lines.push('- Document operations (undo, redo, getContent, setContent, insertText)');
     lines.push('- View operations (setMode, getMode)');
     lines.push('- Element operations (changeType, applyFormat)');
     lines.push('- Cursor operations (getPosition, setPosition)');
     lines.push('- Selection operations (get, set)');
+    lines.push('- Application operations (reload)');
     lines.push('');
 
     return lines.join('\n');
