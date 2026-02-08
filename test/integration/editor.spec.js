@@ -29,7 +29,7 @@ test.beforeAll(async () => {
     await electronApp.evaluate(async ({ BrowserWindow }) => {
         const win = BrowserWindow.getAllWindows()[0];
         if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', resolve));
+            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
         }
     });
 });

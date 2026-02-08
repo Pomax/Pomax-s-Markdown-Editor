@@ -16,7 +16,7 @@ export class SettingsManager {
         /** @type {string} */
         this.dbPath = path.join(app.getPath('userData'), 'settings.db');
 
-        /** @type {Database.Database|null} */
+        /** @type {ReturnType<typeof Database>|null} */
         this.db = null;
     }
 
@@ -25,12 +25,13 @@ export class SettingsManager {
      * if it does not already exist.
      */
     initialize() {
-        this.db = new Database(this.dbPath);
+        const db = new Database(this.dbPath);
+        this.db = db;
 
         // Enable WAL mode for better concurrent read performance
-        this.db.pragma('journal_mode = WAL');
+        db.pragma('journal_mode = WAL');
 
-        this.db.exec(`
+        db.exec(`
 			CREATE TABLE IF NOT EXISTS settings (
 				key   TEXT PRIMARY KEY,
 				value TEXT NOT NULL
@@ -47,7 +48,7 @@ export class SettingsManager {
     get(key, defaultValue = null) {
         if (!this.db) this.initialize();
 
-        const db = /** @type {Database.Database} */ (this.db);
+        const db = /** @type {ReturnType<typeof Database>} */ (this.db);
         const row = /** @type {{ value: string } | undefined} */ (
             db.prepare('SELECT value FROM settings WHERE key = ?').get(key)
         );
@@ -68,7 +69,7 @@ export class SettingsManager {
     set(key, value) {
         if (!this.db) this.initialize();
 
-        const db = /** @type {Database.Database} */ (this.db);
+        const db = /** @type {ReturnType<typeof Database>} */ (this.db);
         const serialized = JSON.stringify(value);
         db.prepare(
             'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
@@ -83,7 +84,7 @@ export class SettingsManager {
     delete(key) {
         if (!this.db) this.initialize();
 
-        const db = /** @type {Database.Database} */ (this.db);
+        const db = /** @type {ReturnType<typeof Database>} */ (this.db);
         const result = db.prepare('DELETE FROM settings WHERE key = ?').run(key);
         return result.changes > 0;
     }
@@ -95,7 +96,7 @@ export class SettingsManager {
     getAll() {
         if (!this.db) this.initialize();
 
-        const db = /** @type {Database.Database} */ (this.db);
+        const db = /** @type {ReturnType<typeof Database>} */ (this.db);
         const rows = /** @type {{ key: string, value: string }[]} */ (
             db.prepare('SELECT key, value FROM settings').all()
         );

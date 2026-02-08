@@ -401,7 +401,7 @@ export class Editor {
     insertTextAtCursor(text) {
         this.syncCursorFromDOM();
         const node = this.getCurrentNode();
-        if (!node || !this.syntaxTree) return;
+        if (!node || !this.syntaxTree || !this.treeCursor) return;
 
         const before = this.syntaxTree.toMarkdown();
         const oldType = node.type;
@@ -451,7 +451,7 @@ export class Editor {
     handleBackspace() {
         this.syncCursorFromDOM();
         const node = this.getCurrentNode();
-        if (!node || !this.syntaxTree) return;
+        if (!node || !this.syntaxTree || !this.treeCursor) return;
 
         const before = this.syntaxTree.toMarkdown();
 
@@ -523,7 +523,7 @@ export class Editor {
     handleDelete() {
         this.syncCursorFromDOM();
         const node = this.getCurrentNode();
-        if (!node || !this.syntaxTree) return;
+        if (!node || !this.syntaxTree || !this.treeCursor) return;
 
         const before = this.syntaxTree.toMarkdown();
 
@@ -576,7 +576,7 @@ export class Editor {
     handleEnterKey() {
         this.syncCursorFromDOM();
         const node = this.getCurrentNode();
-        if (!node || !this.syntaxTree) return;
+        if (!node || !this.syntaxTree || !this.treeCursor) return;
 
         const before = this.syntaxTree.toMarkdown();
 

@@ -9,6 +9,7 @@ import { Editor } from './editor/editor.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
+import { TableOfContents } from './toc/toc.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
 /**
@@ -28,6 +29,9 @@ class App {
 
         /** @type {KeyboardHandler|null} */
         this.keyboardHandler = null;
+
+        /** @type {TableOfContents|null} */
+        this.toc = null;
     }
 
     /**
@@ -37,6 +41,7 @@ class App {
         // Get container elements
         const editorContainer = document.getElementById('editor');
         const toolbarContainer = document.getElementById('toolbar-container');
+        const tocContainer = document.getElementById('toc-sidebar');
 
         if (!editorContainer || !toolbarContainer) {
             console.error('Required container elements not found');
@@ -57,6 +62,21 @@ class App {
 
         this.keyboardHandler = new KeyboardHandler(this.editor);
         this.keyboardHandler.initialize();
+
+        // Initialize Table of Contents sidebar
+        if (tocContainer) {
+            this.toc = new TableOfContents(tocContainer, this.editor);
+            this.toc.initialize();
+        }
+
+        // Listen for TOC settings changes from the preferences modal
+        document.addEventListener('toc:settingsChanged', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.toc && detail) {
+                this.toc.setVisible(detail.visible);
+                this.toc.setPosition(detail.position);
+            }
+        });
 
         // Expose API for main process queries
         this.exposeEditorAPI();
@@ -111,6 +131,24 @@ class App {
             }
         } catch {
             // Use CSS defaults
+        }
+
+        try {
+            const result = await window.electronAPI.getSetting('tocVisible');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                this.toc?.setVisible(!!result.value);
+            }
+        } catch {
+            // Default is visible
+        }
+
+        try {
+            const result = await window.electronAPI.getSetting('tocPosition');
+            if (result.success && result.value) {
+                this.toc?.setPosition(result.value === 'right' ? 'right' : 'left');
+            }
+        } catch {
+            // Default is left
         }
     }
 

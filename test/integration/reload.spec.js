@@ -29,7 +29,7 @@ test.beforeAll(async () => {
     await electronApp.evaluate(async ({ BrowserWindow }) => {
         const win = BrowserWindow.getAllWindows()[0];
         if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', resolve));
+            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
         }
     });
 });
@@ -53,7 +53,7 @@ test('reload preserves document content', async () => {
     expect(contentBefore).toContain('This is a test document.');
 
     // Trigger reload via the IPC API
-    await page.evaluate(() => window.electronAPI.reload());
+    await page.evaluate(() => window.electronAPI?.reload());
 
     // Wait for the page to fully reload and the editor to re-initialise
     await page.waitForFunction(

@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const RENDERER_DIR = path.join(__dirname, '..', '..', 'src', 'renderer');
 
+/** @type {Record<string, string>} */
 const CONTENT_TYPES = {
     '.html': 'text/html',
     '.js': 'application/javascript',
@@ -51,7 +52,7 @@ test.beforeAll(async () => {
         }
     });
 
-    await new Promise((resolve) => server.listen(0, resolve));
+    await new Promise((resolve) => server.listen(0, /** @type {() => void} */ (resolve)));
     const addr = /** @type {import('node:net').AddressInfo} */ (server.address());
     baseURL = `http://localhost:${addr.port}`;
 });

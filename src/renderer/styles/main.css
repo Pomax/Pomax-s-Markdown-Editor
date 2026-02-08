@@ -84,6 +84,13 @@ html, body {
     overflow: hidden;
 }
 
+/* Content wrapper (TOC + editor) */
+#content-wrapper {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
 /* Editor container */
 #editor-container {
     flex: 1;

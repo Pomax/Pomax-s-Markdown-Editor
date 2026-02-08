@@ -336,6 +336,54 @@
     margin-top: var(--spacing-lg);
 }
 
+/* TOC settings */
+.toc-settings-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.toc-visible-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toc-visible-toggle input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.toc-position-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.toc-position-row label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.toc-position-row select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.toc-position-row select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+    border-color: var(--color-primary);
+}
+
 /* Footer */
 .preferences-footer {
     display: flex;

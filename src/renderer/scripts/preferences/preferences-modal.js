@@ -31,6 +31,18 @@ const DEFAULT_MARGINS = { top: 25, right: 25, bottom: 25, left: 25 };
 const DEFAULT_COLORS = { pageBg: '#ffffff', pageText: '#212529' };
 
 /**
+ * Default TOC visibility (enabled by default).
+ * @type {boolean}
+ */
+const DEFAULT_TOC_VISIBLE = true;
+
+/**
+ * Default TOC sidebar position.
+ * @type {import('../toc/toc.js').TocPosition}
+ */
+const DEFAULT_TOC_POSITION = 'left';
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -162,6 +174,22 @@ export class PreferencesModal {
                                     <input type="text" id="color-page-text-hex" class="color-hex-input" maxlength="7" placeholder="#212529">
                                 </div>
                             </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="preferences-fieldset">
+                        <legend>Table of Contents</legend>
+                        <div class="toc-settings-row">
+                            <label class="toc-visible-toggle">
+                                <input type="checkbox" id="toc-visible" checked>
+                                <span>Show table of contents</span>
+                            </label>
+                        </div>
+                        <div class="toc-position-row">
+                            <label for="toc-position-select">Sidebar position</label>
+                            <select id="toc-position-select" name="tocPosition">
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
                         </div>
                     </fieldset>
                 </div>
@@ -488,6 +516,19 @@ export class PreferencesModal {
         this._getInput(this.dialog, 'color-page-text').value = colors.pageText;
         this._getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
 
+        // Load TOC settings
+        const tocVisible = await this._loadTocVisible();
+        const tocVisibleCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#toc-visible')
+        );
+        tocVisibleCb.checked = tocVisible;
+
+        const tocPosition = await this._loadTocPosition();
+        const tocPositionSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#toc-position-select')
+        );
+        tocPositionSelect.value = tocPosition;
+
         this.dialog.showModal();
     }
 
@@ -589,6 +630,44 @@ export class PreferencesModal {
     }
 
     /**
+     * Loads the TOC visibility setting from the settings database.
+     * @returns {Promise<boolean>}
+     */
+    async _loadTocVisible() {
+        if (!window.electronAPI) return DEFAULT_TOC_VISIBLE;
+
+        try {
+            const result = await window.electronAPI.getSetting('tocVisible');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                return !!result.value;
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_TOC_VISIBLE;
+    }
+
+    /**
+     * Loads the TOC position setting from the settings database.
+     * @returns {Promise<import('../toc/toc.js').TocPosition>}
+     */
+    async _loadTocPosition() {
+        if (!window.electronAPI) return DEFAULT_TOC_POSITION;
+
+        try {
+            const result = await window.electronAPI.getSetting('tocPosition');
+            if (result.success && result.value) {
+                return result.value === 'right' ? 'right' : 'left';
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_TOC_POSITION;
+    }
+
+    /**
      * Saves the current form values to the settings store and applies them.
      */
     async _save() {
@@ -629,18 +708,37 @@ export class PreferencesModal {
                 this._getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
         };
 
+        const tocVisibleCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#toc-visible')
+        );
+        const tocVisible = tocVisibleCb.checked;
+
+        const tocPositionSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#toc-position-select')
+        );
+        const tocPosition = tocPositionSelect.value === 'right' ? 'right' : 'left';
+
         // Persist to database
         if (window.electronAPI) {
             await window.electronAPI.setSetting('defaultView', defaultView);
             await window.electronAPI.setSetting('pageWidth', pageWidth);
             await window.electronAPI.setSetting('margins', margins);
             await window.electronAPI.setSetting('colors', colors);
+            await window.electronAPI.setSetting('tocVisible', tocVisible);
+            await window.electronAPI.setSetting('tocPosition', tocPosition);
         }
 
         // Apply to CSS immediately
         applyPageWidth(pageWidth);
         applyMargins(margins);
         applyColors(colors);
+
+        // Apply TOC settings via custom event so the App class can handle it
+        document.dispatchEvent(
+            new CustomEvent('toc:settingsChanged', {
+                detail: { visible: tocVisible, position: tocPosition },
+            }),
+        );
 
         this.close();
     }

@@ -1,0 +1,122 @@
+/**
+ * Table of Contents sidebar styles.
+ */
+
+/* Sidebar container */
+#toc-sidebar {
+    width: 220px;
+    min-width: 180px;
+    max-width: 280px;
+    background: var(--color-bg);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+/* When positioned on the right, swap the border */
+.toc-position-right > #toc-sidebar {
+    border-right: none;
+    border-left: 1px solid var(--color-border);
+    order: 1;
+}
+
+.toc-position-right > #editor-container {
+    order: 0;
+}
+
+.toc-position-left > #toc-sidebar {
+    order: 0;
+}
+
+.toc-position-left > #editor-container {
+    order: 1;
+}
+
+/* Hidden state */
+#toc-sidebar.hidden {
+    display: none;
+}
+
+/* Title */
+.toc-title {
+    margin: 0 0 var(--spacing-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+}
+
+/* Nav wrapper */
+.toc-nav {
+    font-size: 0.8125rem;
+}
+
+/* List reset */
+.toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Nested lists get indentation */
+.toc-list .toc-list {
+    padding-left: var(--spacing-md);
+}
+
+/* List items */
+.toc-item {
+    margin-bottom: 2px;
+}
+
+/* Links */
+.toc-link {
+    display: block;
+    padding: 3px var(--spacing-sm);
+    border-radius: 4px;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.toc-link:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.toc-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+/* Level-specific weight */
+.toc-level-1 > .toc-link {
+    font-weight: 600;
+}
+
+.toc-level-2 > .toc-link {
+    font-weight: 500;
+}
+
+.toc-level-3 > .toc-link {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+}
+
+.toc-level-3 > .toc-link:hover {
+    color: var(--color-primary);
+}
+
+/* Empty message */
+.toc-empty {
+    margin: 0;
+    padding: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+    font-style: italic;
+}

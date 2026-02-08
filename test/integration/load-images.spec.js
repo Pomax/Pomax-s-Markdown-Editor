@@ -37,7 +37,7 @@ test('images in a loaded markdown file resolve and load successfully', async () 
     await page.evaluate(() =>
         Promise.all(
             [...document.querySelectorAll('img.md-image-preview')].map((img) =>
-                img.complete
+                /** @type {HTMLImageElement} */ (img).complete
                     ? Promise.resolve()
                     : new Promise((r) => {
                           img.addEventListener('load', r, { once: true });

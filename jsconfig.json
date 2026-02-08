@@ -13,7 +13,8 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "baseUrl": ".",
-        "types": ["node"]
+        "types": ["node"],
+        "maxNodeModuleJsDepth": 0
     },
     "include": [
         "src/**/*.js",
