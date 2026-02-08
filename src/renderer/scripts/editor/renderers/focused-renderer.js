@@ -372,11 +372,13 @@ export class FocusedRenderer {
         const lines = content.split('\n').filter((line) => line.trim());
 
         for (let i = 0; i < lines.length; i++) {
-            // Skip separator line
-            if (lines[i].match(/^[\s|:-]+$/)) continue;
+            // Skip separator line (must contain at least one dash)
+            if (/^[\s|:-]+$/.test(lines[i]) && lines[i].includes('-')) continue;
 
             const row = document.createElement('tr');
-            const cells = lines[i].split('|').filter((cell) => cell.trim());
+            const cells = lines[i]
+                .split('|')
+                .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
 
             for (const cellContent of cells) {
                 const cell = document.createElement(i === 0 ? 'th' : 'td');

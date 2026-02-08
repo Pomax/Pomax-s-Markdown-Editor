@@ -157,6 +157,35 @@ describe('MarkdownParser', () => {
             assert.strictEqual(tree.children.length, 1);
             assert.strictEqual(tree.children[0].type, 'table');
         });
+
+        it('should preserve table content exactly', () => {
+            const markdown = '| A | B |\n|---|---|\n| 1 | 2 |';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children[0].content, markdown);
+        });
+
+        it('should parse a table with multiple rows', () => {
+            const markdown = '| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'table');
+            assert.strictEqual(tree.children[0].content, markdown);
+        });
+
+        it('should round-trip a table through toMarkdown', () => {
+            const markdown = '| A | B |\n|---|---|\n| 1 | 2 |';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children[0].toMarkdown(), markdown);
+        });
+
+        it('should parse a table among other elements', () => {
+            const markdown = '# Title\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\nSome text';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'heading1');
+            assert.strictEqual(tree.children[1].type, 'table');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+        });
     });
 
     describe('images', () => {

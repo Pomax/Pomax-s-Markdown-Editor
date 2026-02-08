@@ -4,6 +4,7 @@
  */
 
 import { ImageModal } from '../image/image-modal.js';
+import { TableModal } from '../table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
 
 /**
@@ -41,6 +42,9 @@ export class Toolbar {
 
         /** @type {ImageModal|null} */
         this.imageModal = null;
+
+        /** @type {TableModal|null} */
+        this.tableModal = null;
 
         /** @type {ButtonConfig[]} */
         this.buttonConfigs = this.getButtonConfigs();
@@ -218,6 +222,13 @@ export class Toolbar {
                 applicableTo: ['paragraph', 'image'],
             },
             {
+                id: 'table',
+                label: 'Table',
+                icon: '▦',
+                action: 'table:insert',
+                applicableTo: ['paragraph', 'table'],
+            },
+            {
                 id: 'separator2',
                 label: '',
                 icon: '',
@@ -357,6 +368,9 @@ export class Toolbar {
             case 'image':
                 this.handleImageAction();
                 break;
+            case 'table':
+                this.handleTableAction();
+                break;
         }
     }
 
@@ -387,6 +401,30 @@ export class Toolbar {
         if (!result) return;
 
         this.editor.insertOrUpdateImage(result.alt, result.src, result.href);
+    }
+
+    /**
+     * Handles the table button action.
+     * If the cursor is on a table node, opens the modal pre-populated for editing.
+     * Otherwise opens it for insertion.
+     */
+    async handleTableAction() {
+        if (!this.tableModal) {
+            this.tableModal = new TableModal();
+        }
+
+        const currentNode = this.editor.getCurrentNode();
+        /** @type {import('../table/table-modal.js').TableData|null} */
+        let existing = null;
+
+        if (currentNode?.type === 'table') {
+            existing = TableModal.parseTableContent(currentNode.content);
+        }
+
+        const result = await this.tableModal.open(existing);
+        if (!result) return;
+
+        this.editor.insertOrUpdateTable(result);
     }
 
     /**

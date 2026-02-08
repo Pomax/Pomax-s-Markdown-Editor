@@ -910,6 +910,76 @@ export class Editor {
     }
 
     /**
+     * Inserts a new table node or updates the existing table node at the cursor.
+     * @param {{rows: number, columns: number, cells: string[][]}} tableData
+     */
+    insertOrUpdateTable(tableData) {
+        if (!this.syntaxTree) return;
+
+        // Build markdown from the cells
+        const markdown = this._buildTableMarkdown(tableData);
+
+        const before = this.syntaxTree.toMarkdown();
+        const currentNode = this.getCurrentNode();
+
+        if (currentNode?.type === 'table') {
+            // Update existing table
+            currentNode.content = markdown;
+            this.treeCursor = { nodeId: currentNode.id, offset: 0 };
+        } else {
+            // Insert a new table node
+            const tableNode = new SyntaxNode('table', markdown);
+
+            if (currentNode) {
+                const idx = this.getNodeIndex(currentNode);
+                if (currentNode.type === 'paragraph' && currentNode.content === '') {
+                    this.syntaxTree.children.splice(idx, 1, tableNode);
+                } else {
+                    this.syntaxTree.children.splice(idx + 1, 0, tableNode);
+                }
+            } else {
+                this.syntaxTree.appendChild(tableNode);
+            }
+
+            this.treeCursor = { nodeId: tableNode.id, offset: 0 };
+        }
+
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Converts table data (cells array) to markdown table text.
+     * @param {{rows: number, columns: number, cells: string[][]}} data
+     * @returns {string}
+     */
+    _buildTableMarkdown(data) {
+        const { columns, cells } = data;
+        const lines = [];
+
+        for (let r = 0; r < cells.length; r++) {
+            const row = cells[r];
+            const paddedCells = [];
+
+            for (let c = 0; c < columns; c++) {
+                paddedCells.push(` ${row[c] ?? ''} `);
+            }
+
+            lines.push(`|${paddedCells.join('|')}|`);
+
+            // After the header row, insert the separator line
+            if (r === 0) {
+                const sep = [];
+                for (let c = 0; c < columns; c++) {
+                    sep.push('---');
+                }
+                lines.push(`| ${sep.join(' | ')} |`);
+            }
+        }
+
+        return lines.join('\n');
+    }
+
+    /**
      * Changes the type of the current element.
      * @param {string} elementType
      */
