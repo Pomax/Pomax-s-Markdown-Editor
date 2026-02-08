@@ -34,10 +34,17 @@
     --font-size-base: 16px;
     --line-height: 1.6;
 
+    /* Page colors */
+    --page-bg: #ffffff;
+    --page-text: #212529;
+
     /* Layout */
     --toolbar-height: 48px;
     --page-max-width: 210mm; /* A4 width */
-    --page-padding: 25mm;
+    --page-padding-top: 25mm;
+    --page-padding-right: 25mm;
+    --page-padding-bottom: 25mm;
+    --page-padding-left: 25mm;
 }
 
 /* Reset and base styles */

@@ -8,6 +8,7 @@
 import { Editor } from './editor/editor.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
+import { applyColors, applyMargins } from './preferences/preferences-modal.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
 /**
@@ -63,7 +64,35 @@ class App {
         // Set up external API handler
         this.setupExternalAPIHandler();
 
+        // Load persisted settings (e.g. margins) and apply them
+        await this.loadSettings();
+
         console.log('Markdown Editor initialized');
+    }
+
+    /**
+     * Loads persisted settings from the database and applies them.
+     */
+    async loadSettings() {
+        if (!window.electronAPI) return;
+
+        try {
+            const result = await window.electronAPI.getSetting('margins');
+            if (result.success && result.value) {
+                applyMargins(result.value);
+            }
+        } catch {
+            // Use CSS defaults
+        }
+
+        try {
+            const result = await window.electronAPI.getSetting('colors');
+            if (result.success && result.value) {
+                applyColors(result.value);
+            }
+        } catch {
+            // Use CSS defaults
+        }
     }
 
     /**

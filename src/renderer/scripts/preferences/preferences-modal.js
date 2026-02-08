@@ -7,6 +7,18 @@
 /// <reference path="../../../types.d.ts" />
 
 /**
+ * Default margin values (in mm) matching the CSS defaults.
+ * @type {{ top: number, right: number, bottom: number, left: number }}
+ */
+const DEFAULT_MARGINS = { top: 25, right: 25, bottom: 25, left: 25 };
+
+/**
+ * Default page colors matching the CSS defaults.
+ * @type {{ pageBg: string, pageText: string }}
+ */
+const DEFAULT_COLORS = { pageBg: '#ffffff', pageText: '#212529' };
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -16,6 +28,15 @@ export class PreferencesModal {
 
         /** @type {boolean} */
         this._built = false;
+
+        /** @type {boolean} */
+        this._linkTopBottom = false;
+
+        /** @type {boolean} */
+        this._linkLeftRight = false;
+
+        /** @type {boolean} */
+        this._linkAll = false;
     }
 
     /**
@@ -30,20 +51,85 @@ export class PreferencesModal {
         dialog.setAttribute('aria-label', 'Preferences');
 
         dialog.innerHTML = `
-			<form method="dialog" class="preferences-form">
-				<header class="preferences-header">
-					<h2>Preferences</h2>
-					<button type="button" class="preferences-close" aria-label="Close">&times;</button>
-				</header>
-				<div class="preferences-body">
-					<p class="preferences-empty">No settings available yet.</p>
-				</div>
-				<footer class="preferences-footer">
-					<button type="button" class="preferences-btn preferences-btn--cancel">Cancel</button>
-					<button type="submit" class="preferences-btn preferences-btn--save">Save</button>
-				</footer>
-			</form>
-		`;
+            <form method="dialog" class="preferences-form">
+                <header class="preferences-header">
+                    <h2>Preferences</h2>
+                    <button type="button" class="preferences-close" aria-label="Close">&times;</button>
+                </header>
+                <div class="preferences-body">
+                    <fieldset class="preferences-fieldset">
+                        <legend>Margins</legend>
+                        <div class="margins-grid">
+                            <div class="margin-field margin-field--top">
+                                <label for="margin-top">Top</label>
+                                <div class="margin-input-group">
+                                    <input type="number" id="margin-top" name="marginTop" min="0" max="100" step="1">
+                                    <span class="margin-unit">mm</span>
+                                </div>
+                            </div>
+                            <div class="margin-field margin-field--left">
+                                <label for="margin-left">Left</label>
+                                <div class="margin-input-group">
+                                    <input type="number" id="margin-left" name="marginLeft" min="0" max="100" step="1">
+                                    <span class="margin-unit">mm</span>
+                                </div>
+                            </div>
+                            <div class="margin-field margin-field--right">
+                                <label for="margin-right">Right</label>
+                                <div class="margin-input-group">
+                                    <input type="number" id="margin-right" name="marginRight" min="0" max="100" step="1">
+                                    <span class="margin-unit">mm</span>
+                                </div>
+                            </div>
+                            <div class="margin-field margin-field--bottom">
+                                <label for="margin-bottom">Bottom</label>
+                                <div class="margin-input-group">
+                                    <input type="number" id="margin-bottom" name="marginBottom" min="0" max="100" step="1">
+                                    <span class="margin-unit">mm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="margins-links">
+                            <label class="link-toggle">
+                                <input type="checkbox" id="link-top-bottom">
+                                <span>Link top &amp; bottom</span>
+                            </label>
+                            <label class="link-toggle">
+                                <input type="checkbox" id="link-left-right">
+                                <span>Link left &amp; right</span>
+                            </label>
+                            <label class="link-toggle">
+                                <input type="checkbox" id="link-all">
+                                <span>Link all</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                    <fieldset class="preferences-fieldset">
+                        <legend>Colors</legend>
+                        <div class="colors-grid">
+                            <div class="color-field">
+                                <label for="color-page-bg">Page background</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="color-page-bg" name="colorPageBg">
+                                    <input type="text" id="color-page-bg-hex" class="color-hex-input" maxlength="7" placeholder="#ffffff">
+                                </div>
+                            </div>
+                            <div class="color-field">
+                                <label for="color-page-text">Text</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="color-page-text" name="colorPageText">
+                                    <input type="text" id="color-page-text-hex" class="color-hex-input" maxlength="7" placeholder="#212529">
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <footer class="preferences-footer">
+                    <button type="button" class="preferences-btn preferences-btn--cancel">Cancel</button>
+                    <button type="submit" class="preferences-btn preferences-btn--save">Save</button>
+                </footer>
+            </form>
+        `;
 
         // Close on × or Cancel
         const closeBtn = dialog.querySelector('.preferences-close');
@@ -55,7 +141,7 @@ export class PreferencesModal {
             cancelBtn.addEventListener('click', () => this.close());
         }
 
-        // Save handler (no-op for now, we have no settings yet)
+        // Save handler
         const form = dialog.querySelector('form');
         if (form) {
             form.addEventListener('submit', (e) => {
@@ -76,18 +162,251 @@ export class PreferencesModal {
             this.close();
         });
 
+        // Wire up link toggles
+        this._setupLinkToggles(dialog);
+
+        // Wire up margin input syncing
+        this._setupMarginInputs(dialog);
+
+        // Wire up color input syncing
+        this._setupColorInputs(dialog);
+
         document.body.appendChild(dialog);
         this.dialog = dialog;
     }
 
     /**
-     * Opens the preferences modal.
+     * Sets up the link-toggle checkboxes so they interact correctly.
+     * @param {HTMLDialogElement} dialog
      */
-    open() {
-        this._build();
-        if (this.dialog && !this.dialog.open) {
-            this.dialog.showModal();
+    _setupLinkToggles(dialog) {
+        const linkTB = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-top-bottom'));
+        const linkLR = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-left-right'));
+        const linkAll = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-all'));
+
+        linkTB.addEventListener('change', () => {
+            this._linkTopBottom = linkTB.checked;
+            if (linkTB.checked) {
+                this._syncValue(dialog, 'margin-top', 'margin-bottom');
+            }
+            // If both TB and LR are on, turn on All
+            if (linkTB.checked && linkLR.checked) {
+                linkAll.checked = true;
+                this._linkAll = true;
+                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+            }
+            if (!linkTB.checked && linkAll.checked) {
+                linkAll.checked = false;
+                this._linkAll = false;
+            }
+            this._updateDisabledState(dialog);
+        });
+
+        linkLR.addEventListener('change', () => {
+            this._linkLeftRight = linkLR.checked;
+            if (linkLR.checked) {
+                this._syncValue(dialog, 'margin-left', 'margin-right');
+            }
+            if (linkTB.checked && linkLR.checked) {
+                linkAll.checked = true;
+                this._linkAll = true;
+                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+            }
+            if (!linkLR.checked && linkAll.checked) {
+                linkAll.checked = false;
+                this._linkAll = false;
+            }
+            this._updateDisabledState(dialog);
+        });
+
+        linkAll.addEventListener('change', () => {
+            this._linkAll = linkAll.checked;
+            if (linkAll.checked) {
+                linkTB.checked = true;
+                linkLR.checked = true;
+                this._linkTopBottom = true;
+                this._linkLeftRight = true;
+                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+            } else {
+                linkTB.checked = false;
+                linkLR.checked = false;
+                this._linkTopBottom = false;
+                this._linkLeftRight = false;
+            }
+            this._updateDisabledState(dialog);
+        });
+    }
+
+    /**
+     * Sets up input event listeners on margin fields for linked syncing.
+     * @param {HTMLDialogElement} dialog
+     */
+    _setupMarginInputs(dialog) {
+        const ids = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'];
+        for (const id of ids) {
+            this._getInput(dialog, id).addEventListener('input', () => {
+                this._handleMarginInput(dialog, id);
+            });
         }
+    }
+
+    /**
+     * Sets up color picker ↔ hex text input syncing.
+     * @param {HTMLDialogElement} dialog
+     */
+    _setupColorInputs(dialog) {
+        const pairs = [
+            { picker: 'color-page-bg', hex: 'color-page-bg-hex' },
+            { picker: 'color-page-text', hex: 'color-page-text-hex' },
+        ];
+
+        for (const { picker, hex } of pairs) {
+            const pickerEl = this._getInput(dialog, picker);
+            const hexEl = this._getInput(dialog, hex);
+
+            pickerEl.addEventListener('input', () => {
+                hexEl.value = pickerEl.value;
+            });
+
+            hexEl.addEventListener('input', () => {
+                const expanded = this._expandHex(hexEl.value);
+                if (expanded) {
+                    pickerEl.value = expanded;
+                }
+            });
+        }
+    }
+
+    /**
+     * Enables or disables margin inputs based on the current link state.
+     * When linked, the secondary input is disabled (bottom follows top,
+     * right follows left). When "link all" is on, only top is editable.
+     * @param {HTMLDialogElement} dialog
+     */
+    _updateDisabledState(dialog) {
+        const bottomInput = this._getInput(dialog, 'margin-bottom');
+        const rightInput = this._getInput(dialog, 'margin-right');
+        const leftInput = this._getInput(dialog, 'margin-left');
+
+        bottomInput.disabled = this._linkTopBottom || this._linkAll;
+        rightInput.disabled = this._linkLeftRight || this._linkAll;
+        leftInput.disabled = this._linkAll;
+    }
+
+    /**
+     * Called when a margin input value changes.
+     * @param {HTMLDialogElement} dialog
+     * @param {string} changedId
+     */
+    _handleMarginInput(dialog, changedId) {
+        const value = this._getInput(dialog, changedId).value;
+
+        if (this._linkAll) {
+            this._syncAllToValue(dialog, value);
+            return;
+        }
+
+        if (this._linkTopBottom && (changedId === 'margin-top' || changedId === 'margin-bottom')) {
+            const other = changedId === 'margin-top' ? 'margin-bottom' : 'margin-top';
+            this._getInput(dialog, other).value = value;
+        }
+
+        if (this._linkLeftRight && (changedId === 'margin-left' || changedId === 'margin-right')) {
+            const other = changedId === 'margin-left' ? 'margin-right' : 'margin-left';
+            this._getInput(dialog, other).value = value;
+        }
+    }
+
+    /**
+     * Copies the value from one input to another.
+     * @param {HTMLDialogElement} dialog
+     * @param {string} sourceId
+     * @param {string} targetId
+     */
+    _syncValue(dialog, sourceId, targetId) {
+        this._getInput(dialog, targetId).value = this._getInput(dialog, sourceId).value;
+    }
+
+    /**
+     * Sets all four margin inputs to the same value.
+     * @param {HTMLDialogElement} dialog
+     * @param {string} value
+     */
+    _syncAllToValue(dialog, value) {
+        for (const id of ['margin-top', 'margin-right', 'margin-bottom', 'margin-left']) {
+            this._getInput(dialog, id).value = value;
+        }
+    }
+
+    /**
+     * Gets a margin input element by id.
+     * @param {HTMLDialogElement} dialog
+     * @param {string} id
+     * @returns {HTMLInputElement}
+     */
+    _getInput(dialog, id) {
+        return /** @type {HTMLInputElement} */ (dialog.querySelector(`#${id}`));
+    }
+
+    /**
+     * Expands a hex color string to its full 7-character form.
+     * Accepts `#rgb` (3-digit shorthand) and `#rrggbb` (full form).
+     * Returns the expanded string or `null` if the input is not a valid hex color.
+     * @param {string} value
+     * @returns {string|null}
+     */
+    _expandHex(value) {
+        if (/^#[0-9a-f]{6}$/i.test(value)) {
+            return value.toLowerCase();
+        }
+        if (/^#[0-9a-f]{3}$/i.test(value)) {
+            const [, r, g, b] = value;
+            return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+        }
+        return null;
+    }
+
+    /**
+     * Opens the preferences modal, loading current values from the database.
+     */
+    async open() {
+        this._build();
+        if (!this.dialog || this.dialog.open) return;
+
+        // Load saved margins (fall back to CSS defaults)
+        const margins = await this._loadMargins();
+
+        this._getInput(this.dialog, 'margin-top').value = String(margins.top);
+        this._getInput(this.dialog, 'margin-right').value = String(margins.right);
+        this._getInput(this.dialog, 'margin-bottom').value = String(margins.bottom);
+        this._getInput(this.dialog, 'margin-left').value = String(margins.left);
+
+        // Reset link toggles
+        this._linkTopBottom = false;
+        this._linkLeftRight = false;
+        this._linkAll = false;
+        const linkTB = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#link-top-bottom')
+        );
+        const linkLR = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#link-left-right')
+        );
+        const linkAllEl = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-all'));
+        linkTB.checked = false;
+        linkLR.checked = false;
+        linkAllEl.checked = false;
+
+        // Reset disabled state on all inputs
+        this._updateDisabledState(this.dialog);
+
+        // Load saved colors
+        const colors = await this._loadColors();
+        this._getInput(this.dialog, 'color-page-bg').value = colors.pageBg;
+        this._getInput(this.dialog, 'color-page-bg-hex').value = colors.pageBg;
+        this._getInput(this.dialog, 'color-page-text').value = colors.pageText;
+        this._getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
+
+        this.dialog.showModal();
     }
 
     /**
@@ -100,11 +419,105 @@ export class PreferencesModal {
     }
 
     /**
-     * Saves the current form values to the settings store.
-     * Placeholder – will be extended when settings are added.
+     * Loads the current margin values from the settings database.
+     * @returns {Promise<{ top: number, right: number, bottom: number, left: number }>}
+     */
+    async _loadMargins() {
+        if (!window.electronAPI) return { ...DEFAULT_MARGINS };
+
+        try {
+            const result = await window.electronAPI.getSetting('margins');
+            if (result.success && result.value) {
+                return {
+                    top: result.value.top ?? DEFAULT_MARGINS.top,
+                    right: result.value.right ?? DEFAULT_MARGINS.right,
+                    bottom: result.value.bottom ?? DEFAULT_MARGINS.bottom,
+                    left: result.value.left ?? DEFAULT_MARGINS.left,
+                };
+            }
+        } catch {
+            // Fall through to defaults
+        }
+
+        return { ...DEFAULT_MARGINS };
+    }
+
+    /**
+     * Loads the current color values from the settings database.
+     * @returns {Promise<{ pageBg: string, pageText: string }>}
+     */
+    async _loadColors() {
+        if (!window.electronAPI) return { ...DEFAULT_COLORS };
+
+        try {
+            const result = await window.electronAPI.getSetting('colors');
+            if (result.success && result.value) {
+                return {
+                    pageBg: result.value.pageBg ?? DEFAULT_COLORS.pageBg,
+                    pageText: result.value.pageText ?? DEFAULT_COLORS.pageText,
+                };
+            }
+        } catch {
+            // Fall through to defaults
+        }
+
+        return { ...DEFAULT_COLORS };
+    }
+
+    /**
+     * Saves the current form values to the settings store and applies them.
      */
     async _save() {
-        // No settings to persist yet.
+        if (!this.dialog) return;
+
+        const margins = {
+            top: Number(this._getInput(this.dialog, 'margin-top').value) || DEFAULT_MARGINS.top,
+            right:
+                Number(this._getInput(this.dialog, 'margin-right').value) || DEFAULT_MARGINS.right,
+            bottom:
+                Number(this._getInput(this.dialog, 'margin-bottom').value) ||
+                DEFAULT_MARGINS.bottom,
+            left: Number(this._getInput(this.dialog, 'margin-left').value) || DEFAULT_MARGINS.left,
+        };
+
+        const colors = {
+            pageBg: this._getInput(this.dialog, 'color-page-bg').value || DEFAULT_COLORS.pageBg,
+            pageText:
+                this._getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
+        };
+
+        // Persist to database
+        if (window.electronAPI) {
+            await window.electronAPI.setSetting('margins', margins);
+            await window.electronAPI.setSetting('colors', colors);
+        }
+
+        // Apply to CSS immediately
+        applyMargins(margins);
+        applyColors(colors);
+
         this.close();
     }
+}
+
+/**
+ * Applies margin values to the document's CSS custom properties.
+ * @param {{ top: number, right: number, bottom: number, left: number }} margins
+ */
+export function applyMargins(margins) {
+    const root = document.documentElement;
+    root.style.setProperty('--page-padding-top', `${margins.top}mm`);
+    root.style.setProperty('--page-padding-right', `${margins.right}mm`);
+    root.style.setProperty('--page-padding-bottom', `${margins.bottom}mm`);
+    root.style.setProperty('--page-padding-left', `${margins.left}mm`);
+}
+
+/**
+ * Applies page color values to the document's CSS custom properties.
+ * @param {{ pageBg: string, pageText: string }} colors
+ */
+export function applyColors(colors) {
+    const root = document.documentElement;
+    root.style.setProperty('--page-bg', colors.pageBg);
+    root.style.setProperty('--page-text', colors.pageText);
 }

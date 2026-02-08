@@ -8,13 +8,13 @@
     width: 100%;
     max-width: var(--page-max-width);
     min-height: calc(var(--page-max-width) * 1.414); /* A4 aspect ratio */
-    background: var(--color-bg);
-    padding: var(--page-padding);
+    background: var(--page-bg);
+    padding: var(--page-padding-top) var(--page-padding-right) var(--page-padding-bottom) var(--page-padding-left);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     font-family: var(--font-family);
     font-size: var(--font-size-base);
     line-height: var(--line-height);
-    color: var(--color-text);
+    color: var(--page-text);
     caret-color: var(--color-primary);
 }
 
