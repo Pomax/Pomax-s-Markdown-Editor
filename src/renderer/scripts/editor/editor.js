@@ -65,7 +65,7 @@ export class Editor {
         this.currentFilePath = null;
 
         /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
-        this.ensureLocalPaths = false;
+        this.ensureLocalPaths = true;
 
         /**
          * Tree-based cursor position.

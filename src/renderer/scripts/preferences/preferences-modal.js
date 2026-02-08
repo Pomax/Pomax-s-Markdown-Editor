@@ -46,7 +46,7 @@ const DEFAULT_TOC_POSITION = 'left';
  * Default setting for automatic local image path rewriting.
  * @type {boolean}
  */
-const DEFAULT_ENSURE_LOCAL_PATHS = false;
+const DEFAULT_ENSURE_LOCAL_PATHS = true;
 
 /**
  * A modal dialog for editing application preferences.
