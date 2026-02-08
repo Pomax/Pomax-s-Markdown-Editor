@@ -4,6 +4,12 @@ A "professional" markdown editor built with Electron, featuring a syntactic tree
 
 ![A screenshot of the editor](./screenshot-1.png)
 
+## Download
+
+Pre-built standalone executables for Windows, macOS, and Linux are available on the [Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest) page. No installation or Node.js required — just download and run.
+
+## what is this?
+
 This is a project that was product managed by a real human (me, Pomax!) but written by Claude Opus 4.5/4.6, which is the first LLM that seems to be alright at programming. It was written in a way to be accessible by new devs as well as other AI agents, so it should be pretty damn easy to add new functionality. If using an AI, tell it to first read the `requirements.md` and `docs/developers` files, and then get to work.
 
 PRs are of course welcome, provided it's preceded by you filing an issue to explain what it is you want to do, why you think that should be part of the codebase, and how you're going to do that: either by yourself, or by using an AI. Note that if you want to use an AI agent, the only one I'm going to even consider fixes from is Opus 4.6 - I've watched ChatGPT and Qwen literally destroy the good work Opus has produced and replace it with completely bullshit nonsense.
@@ -170,6 +176,26 @@ npm run lint:fix    # Auto-fix lint issues (Biome)
 npm run lint:format # Auto-format code (Biome)
 npm run lint:typing # Type check via tsc (JSDoc annotations)
 ```
+
+## Building Executables
+
+To build a standalone executable for the current platform:
+
+```sh
+npm run dist
+```
+
+Or target a specific platform:
+
+```sh
+npm run dist:win    # Windows portable .exe
+npm run dist:mac    # macOS .zip
+npm run dist:linux  # Linux AppImage
+```
+
+Build output goes to the `dist/` directory.
+
+Automated builds use a GitHub Actions workflow that builds all three platforms on every push to `main` and publishing them as a [GitHub Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest).
 
 ## API Documentation
 
