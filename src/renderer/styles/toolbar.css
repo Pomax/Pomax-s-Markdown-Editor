@@ -17,11 +17,13 @@
 /* Toolbar element */
 .toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: var(--spacing-xs);
     max-width: var(--page-max-width);
     margin: 0 auto;
+    width: max-content;
+    transform-origin: left center;
 }
 
 .toolbar.hidden {
@@ -123,25 +125,54 @@
     font-weight: 600;
 }
 
-/* Specific button styles */
-.toolbar-button[data-button-id="bold"] .toolbar-button-content {
-    font-weight: 700;
+.toolbar-button-content svg {
+    width: 18px;
+    height: 18px;
 }
 
-.toolbar-button[data-button-id="italic"] .toolbar-button-content {
-    font-style: italic;
-    font-family: Georgia, serif;
-}
+/* ─── Icon colours ───
+ * Each button gets a distinct hue so the toolbar is scannable at a glance.
+ * Colours are chosen for good contrast on white and light-grey backgrounds.
+ */
 
-.toolbar-button[data-button-id="code"] .toolbar-button-content {
-    font-family: var(--font-family-mono);
-    font-size: 12px;
-}
+/* Headings – blue family (structure / hierarchy) */
+.toolbar-button[data-button-id="heading1"] { color: #1d4ed8; }
+.toolbar-button[data-button-id="heading2"] { color: #2563eb; }
+.toolbar-button[data-button-id="heading3"] { color: #3b82f6; }
 
-.toolbar-button[data-button-id="code-block"] .toolbar-button-content {
-    font-family: var(--font-family-mono);
-    font-size: 11px;
-}
+/* Paragraph – neutral grey */
+.toolbar-button[data-button-id="paragraph"] { color: #6b7280; }
+
+/* Blockquote – violet (literary / decorative) */
+.toolbar-button[data-button-id="blockquote"] { color: #7c3aed; }
+
+/* Code block – emerald (technical) */
+.toolbar-button[data-button-id="code-block"] { color: #059669; }
+
+/* Bold – red (strong emphasis) */
+.toolbar-button[data-button-id="bold"] { color: #dc2626; }
+
+/* Italic – amber (warm emphasis) */
+.toolbar-button[data-button-id="italic"] { color: #d97706; }
+
+/* Strikethrough – grey (cancelled / dimmed) */
+.toolbar-button[data-button-id="strikethrough"] { color: #9ca3af; }
+
+/* Inline code – teal (same family as code block) */
+.toolbar-button[data-button-id="code"] { color: #0d9488; }
+
+/* Link – blue (web convention) */
+.toolbar-button[data-button-id="link"] { color: #2563eb; }
+
+/* Image – cyan (media / visual) */
+.toolbar-button[data-button-id="image"] { color: #0891b2; }
+
+/* Table – violet (data / structure) */
+.toolbar-button[data-button-id="table"] { color: #7c3aed; }
+
+/* Lists – orange (organisational) */
+.toolbar-button[data-button-id="unordered-list"] { color: #ea580c; }
+.toolbar-button[data-button-id="ordered-list"]   { color: #ea580c; }
 
 /* Separator */
 .toolbar-separator {
@@ -182,30 +213,4 @@
     visibility: visible;
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    .toolbar {
-        gap: 2px;
-    }
 
-    .toolbar-button {
-        min-width: 28px;
-        height: 28px;
-        padding: 2px 4px;
-        font-size: 12px;
-    }
-
-    .toolbar-view-mode {
-        height: 28px;
-        font-size: 11px;
-    }
-
-    .toolbar-view-mode-label {
-        font-size: 11px;
-    }
-
-    .toolbar-separator {
-        height: 20px;
-        margin: 0 4px;
-    }
-}

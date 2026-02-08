@@ -285,6 +285,11 @@ export class Toolbar {
 
         this.container.appendChild(this.toolbarElement);
 
+        // Scale toolbar down when container is narrower than the toolbar's
+        // natural width.  Never scale up beyond 1.
+        this._resizeObserver = new ResizeObserver(() => this._scaleToolbar());
+        this._resizeObserver.observe(this.container);
+
         // Listen for selection changes
         this.editor.container.addEventListener(
             'editor:selectionchange',
@@ -293,6 +298,34 @@ export class Toolbar {
 
         // Initial state
         this.updateButtonStates(null);
+    }
+
+    /**
+     * Scales the toolbar element down uniformly when the container is narrower
+     * than the toolbar's natural (unwrapped) width.  Never scales above 1.
+     * Uses uniform scale so icons keep their aspect ratio.
+     */
+    _scaleToolbar() {
+        if (!this.toolbarElement) return;
+
+        // Reset so we can measure the natural width
+        this.toolbarElement.style.transform = '';
+        this.container.style.height = '';
+
+        const containerWidth = this.container.clientWidth;
+        const padding =
+            Number.parseFloat(getComputedStyle(this.container).paddingLeft) +
+            Number.parseFloat(getComputedStyle(this.container).paddingRight);
+        const available = containerWidth - padding;
+        const natural = this.toolbarElement.scrollWidth;
+
+        if (natural > available && available > 0) {
+            const scale = available / natural;
+            this.toolbarElement.style.transform = `scale(${scale})`;
+            // Adjust container height since transform doesn't affect layout
+            const naturalHeight = this.toolbarElement.offsetHeight;
+            this.container.style.height = `${naturalHeight * scale + Number.parseFloat(getComputedStyle(this.container).paddingTop) + Number.parseFloat(getComputedStyle(this.container).paddingBottom)}px`;
+        }
     }
 
     /**

@@ -3,6 +3,8 @@
  * Individual button in the formatting toolbar.
  */
 
+import { icons } from './icons.js';
+
 /**
  * @typedef {import('./toolbar.js').ButtonConfig} ButtonConfig
  */
@@ -47,7 +49,12 @@ export class ToolbarButton {
         // Create icon/label content
         const content = document.createElement('span');
         content.className = 'toolbar-button-content';
-        content.textContent = this.config.icon;
+        const svg = icons[this.config.id];
+        if (svg) {
+            content.innerHTML = svg;
+        } else {
+            content.textContent = this.config.icon;
+        }
         button.appendChild(content);
 
         // Add click handler
@@ -96,7 +103,12 @@ export class ToolbarButton {
     setIcon(icon) {
         const content = this.element.querySelector('.toolbar-button-content');
         if (content) {
-            content.textContent = icon;
+            const svg = icons[icon];
+            if (svg) {
+                content.innerHTML = svg;
+            } else {
+                content.textContent = icon;
+            }
         }
     }
 
