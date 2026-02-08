@@ -4,14 +4,42 @@
 
 /* Sidebar container */
 #toc-sidebar {
-    width: 220px;
-    min-width: 180px;
-    max-width: 280px;
+    width: var(--toc-width, 220px);
+    min-width: 120px;
+    max-width: 400px;
     background: var(--color-bg);
     border-right: 1px solid var(--color-border);
     overflow-y: auto;
     padding: var(--spacing-md);
     flex-shrink: 0;
+    position: relative;
+}
+
+/* Resize handle — sits on the edge adjacent to the editor */
+.toc-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 10;
+}
+
+/* When sidebar is on the left, the handle sits on the right edge */
+.toc-position-left .toc-resize-handle {
+    right: 0;
+}
+
+/* When sidebar is on the right, the handle sits on the left edge */
+.toc-position-right .toc-resize-handle {
+    left: 0;
+}
+
+/* Subtle hover indicator */
+.toc-resize-handle:hover,
+.toc-resize-handle.dragging {
+    background: var(--color-primary);
+    opacity: 0.3;
 }
 
 /* When positioned on the right, swap the border */

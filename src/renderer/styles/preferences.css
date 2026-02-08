@@ -12,7 +12,7 @@
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 0;
-    width: min(480px, 90vw);
+    width: min(640px, 90vw);
     max-height: 80vh;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     background: var(--color-bg);
@@ -57,6 +57,51 @@
 .preferences-close:hover {
     color: var(--color-text);
     background: var(--color-bg-secondary);
+}
+
+/* Layout: sidebar nav + scrollable body */
+.preferences-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar navigation */
+.preferences-nav {
+    width: 160px;
+    flex-shrink: 0;
+    background: var(--color-bg-secondary);
+    border-right: 1px solid var(--color-border);
+    padding: var(--spacing-md) 0;
+    overflow-y: auto;
+}
+
+.preferences-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.preferences-nav-link {
+    display: block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.preferences-nav-link:hover {
+    color: var(--color-text);
+    background: var(--color-border);
+}
+
+.preferences-nav-link.active {
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    font-weight: 600;
 }
 
 /* Body */

@@ -45,7 +45,10 @@ export class TableOfContents {
      */
     initialize() {
         this.container.innerHTML =
+            '<div class="toc-resize-handle"></div>' +
             '<h3 class="toc-title">Table of Contents</h3><nav class="toc-nav"></nav>';
+
+        this._initResizeHandle();
 
         // Observe child-list changes on the editor container so we can
         // refresh the TOC whenever the document is re-rendered.
@@ -253,6 +256,90 @@ export class TableOfContents {
     }
 
     /**
+     * Sets the sidebar width via CSS custom property.
+     * @param {number} width - Width in pixels
+     */
+    setWidth(width) {
+        const clamped = Math.max(120, Math.min(400, width));
+        document.documentElement.style.setProperty('--toc-width', `${clamped}px`);
+    }
+
+    /**
+     * Returns the current sidebar width in pixels.
+     * @returns {number}
+     */
+    getWidth() {
+        return this.container.offsetWidth;
+    }
+
+    /**
+     * Sets up the drag-to-resize handle on the sidebar edge adjacent to the
+     * editor.
+     */
+    _initResizeHandle() {
+        const handle = this.container.querySelector('.toc-resize-handle');
+        if (!handle) return;
+
+        /** @type {boolean} */
+        let dragging = false;
+
+        /** @param {MouseEvent} e */
+        const onMouseMove = (e) => {
+            if (!dragging) return;
+            e.preventDefault();
+
+            const containerRect = this.container.getBoundingClientRect();
+            let newWidth;
+
+            if (this._position === 'right') {
+                // Sidebar on the right: drag the left edge
+                newWidth = containerRect.right - e.clientX;
+            } else {
+                // Sidebar on the left: drag the right edge
+                newWidth = e.clientX - containerRect.left;
+            }
+
+            this.setWidth(newWidth);
+        };
+
+        const onMouseUp = () => {
+            if (!dragging) return;
+            dragging = false;
+            handle.classList.remove('dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Persist the final width
+            this._persistWidth();
+        };
+
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            dragging = true;
+            handle.classList.add('dragging');
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    /**
+     * Saves the current sidebar width to the settings database.
+     */
+    async _persistWidth() {
+        if (!window.electronAPI) return;
+        const width = this.getWidth();
+        try {
+            await window.electronAPI.setSetting('tocWidth', width);
+        } catch {
+            // Non-critical — ignore
+        }
+    }
+
+    /**
      * Tears down the observer.
      */
     destroy() {
@@ -282,5 +369,16 @@ export function applyTocVisible(visible, toc) {
 export function applyTocPosition(position, toc) {
     if (toc) {
         toc.setPosition(position);
+    }
+}
+
+/**
+ * Applies the TOC width setting.
+ * @param {number} width - Width in pixels
+ * @param {TableOfContents|null} toc
+ */
+export function applyTocWidth(width, toc) {
+    if (toc) {
+        toc.setWidth(width);
     }
 }

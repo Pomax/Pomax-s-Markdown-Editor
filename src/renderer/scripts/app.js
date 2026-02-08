@@ -150,6 +150,15 @@ class App {
         } catch {
             // Default is left
         }
+
+        try {
+            const result = await window.electronAPI.getSetting('tocWidth');
+            if (result.success && result.value) {
+                this.toc?.setWidth(Number(result.value));
+            }
+        } catch {
+            // Default width from CSS
+        }
     }
 
     /**

@@ -80,9 +80,19 @@ export class PreferencesModal {
                     <h2>Preferences</h2>
                     <button type="button" class="preferences-close" aria-label="Close">&times;</button>
                 </header>
-                <div class="preferences-body">
-                    <fieldset class="preferences-fieldset">
-                        <legend>Default View</legend>
+                <div class="preferences-layout">
+                    <nav class="preferences-nav">
+                        <ul class="preferences-nav-list">
+                            <li><a href="#" class="preferences-nav-link active" data-section="pref-default-view">Default View</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-page-width">Page Width</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-margins">Margins</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-colors">Colors</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-toc">Table of Contents</a></li>
+                        </ul>
+                    </nav>
+                    <div class="preferences-body">
+                        <fieldset class="preferences-fieldset" id="pref-default-view">
+                            <legend>Default View</legend>
                         <div class="default-view-row">
                             <label for="default-view-select">View mode on startup</label>
                             <select id="default-view-select" name="defaultView">
@@ -91,7 +101,7 @@ export class PreferencesModal {
                             </select>
                         </div>
                     </fieldset>
-                    <fieldset class="preferences-fieldset">
+                    <fieldset class="preferences-fieldset" id="pref-page-width">
                         <legend>Page Width</legend>
                         <div class="page-width-row">
                             <label class="page-width-toggle">
@@ -110,7 +120,7 @@ export class PreferencesModal {
                             </div>
                         </div>
                     </fieldset>
-                    <fieldset class="preferences-fieldset">
+                    <fieldset class="preferences-fieldset" id="pref-margins">
                         <legend>Margins</legend>
                         <div class="margins-grid">
                             <div class="margin-field margin-field--top">
@@ -157,7 +167,7 @@ export class PreferencesModal {
                             </label>
                         </div>
                     </fieldset>
-                    <fieldset class="preferences-fieldset">
+                    <fieldset class="preferences-fieldset" id="pref-colors">
                         <legend>Colors</legend>
                         <div class="colors-grid">
                             <div class="color-field">
@@ -176,7 +186,7 @@ export class PreferencesModal {
                             </div>
                         </div>
                     </fieldset>
-                    <fieldset class="preferences-fieldset">
+                    <fieldset class="preferences-fieldset" id="pref-toc">
                         <legend>Table of Contents</legend>
                         <div class="toc-settings-row">
                             <label class="toc-visible-toggle">
@@ -192,6 +202,7 @@ export class PreferencesModal {
                             </select>
                         </div>
                     </fieldset>
+                    </div>
                 </div>
                 <footer class="preferences-footer">
                     <button type="button" class="preferences-btn preferences-btn--cancel">Cancel</button>
@@ -242,6 +253,9 @@ export class PreferencesModal {
 
         // Wire up page-width toggle
         this._setupPageWidth(dialog);
+
+        // Wire up sidebar navigation links
+        this._setupNavLinks(dialog);
 
         document.body.appendChild(dialog);
         this.dialog = dialog;
@@ -362,6 +376,74 @@ export class PreferencesModal {
                 customRow.classList.toggle('hidden', fixedCb.checked);
             }
         });
+    }
+
+    /**
+     * Sets up the sidebar navigation links so clicking a link scrolls the
+     * corresponding fieldset into view and highlights the active link.
+     * Also observes scroll position to update the active link automatically.
+     * @param {HTMLDialogElement} dialog
+     */
+    _setupNavLinks(dialog) {
+        const links = dialog.querySelectorAll('.preferences-nav-link');
+        const body = dialog.querySelector('.preferences-body');
+        if (!body) return;
+
+        // Click handler — scroll the target section to the top of the body
+        for (const link of links) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
+                if (!sectionId) return;
+                const section = dialog.querySelector(`#${sectionId}`);
+                if (!section) return;
+
+                section.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+                // Update active state
+                for (const l of links) l.classList.remove('active');
+                link.classList.add('active');
+            });
+        }
+
+        // Observe scroll to highlight whichever section is currently visible
+        body.addEventListener('scroll', () => {
+            this._updateActiveNavLink(dialog);
+        });
+    }
+
+    /**
+     * Updates the active nav link based on which fieldset is closest to the
+     * top of the scrollable body.
+     * @param {HTMLDialogElement} dialog
+     */
+    _updateActiveNavLink(dialog) {
+        const body = dialog.querySelector('.preferences-body');
+        if (!body) return;
+
+        const bodyRect = body.getBoundingClientRect();
+        const links = dialog.querySelectorAll('.preferences-nav-link');
+        /** @type {Element|null} */
+        let closest = null;
+        let closestDist = Number.POSITIVE_INFINITY;
+
+        for (const link of links) {
+            const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
+            if (!sectionId) continue;
+            const section = dialog.querySelector(`#${sectionId}`);
+            if (!section) continue;
+
+            const dist = Math.abs(section.getBoundingClientRect().top - bodyRect.top);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = link;
+            }
+        }
+
+        if (closest) {
+            for (const l of links) l.classList.remove('active');
+            closest.classList.add('active');
+        }
     }
 
     /**
