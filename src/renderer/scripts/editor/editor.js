@@ -947,9 +947,49 @@ export class Editor {
             console.warn(`Invalid view mode: ${mode}`);
             return;
         }
+
+        // Find the node element closest to the vertical centre of the visible
+        // viewport and remember its offset from the container top.  This keeps
+        // the content the user is looking at in the same place after re-render.
+        const scrollContainer = this.container.parentElement;
+        /** @type {string|null} */
+        let anchorNodeId = null;
+        let savedOffsetFromTop = null;
+
+        if (scrollContainer) {
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const centreY = containerRect.top + containerRect.height / 2;
+
+            const nodeEls = this.container.querySelectorAll('[data-node-id]');
+            let bestDistance = Number.POSITIVE_INFINITY;
+
+            for (const el of nodeEls) {
+                const rect = el.getBoundingClientRect();
+                // Distance from the element's vertical midpoint to the viewport centre
+                const mid = rect.top + rect.height / 2;
+                const dist = Math.abs(mid - centreY);
+                if (dist < bestDistance) {
+                    bestDistance = dist;
+                    anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
+                    savedOffsetFromTop = rect.top - containerRect.top;
+                }
+            }
+        }
+
         this.viewMode = mode;
         this.container.dataset.viewMode = mode;
         this.renderAndPlaceCursor();
+
+        // Restore scroll so the anchor node sits at the same viewport offset.
+        if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
+            const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
+            if (el) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const currentOffsetFromTop = elRect.top - containerRect.top;
+                scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
+            }
+        }
     }
 
     /**
