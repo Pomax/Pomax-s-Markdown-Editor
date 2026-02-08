@@ -89,6 +89,81 @@
     justify-items: center;
 }
 
+/* Page Width */
+.page-width-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.page-width-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.page-width-toggle input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.page-width-custom {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.page-width-custom.hidden {
+    display: none;
+}
+
+.page-width-custom label {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.page-width-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.page-width-input-group input[type="number"] {
+    width: 90px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.page-width-input-group input[type="number"]:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+    border-color: var(--color-primary);
+}
+
+.page-width-input-group select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.page-width-input-group select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+    border-color: var(--color-primary);
+}
+
 .margin-field--top {
     grid-column: 2;
     grid-row: 1;

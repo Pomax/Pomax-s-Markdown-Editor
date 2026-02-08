@@ -8,7 +8,7 @@
 import { Editor } from './editor/editor.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
-import { applyColors, applyMargins } from './preferences/preferences-modal.js';
+import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
 /**
@@ -75,6 +75,15 @@ class App {
      */
     async loadSettings() {
         if (!window.electronAPI) return;
+
+        try {
+            const result = await window.electronAPI.getSetting('pageWidth');
+            if (result.success && result.value) {
+                applyPageWidth(result.value);
+            }
+        } catch {
+            // Use CSS defaults
+        }
 
         try {
             const result = await window.electronAPI.getSetting('margins');

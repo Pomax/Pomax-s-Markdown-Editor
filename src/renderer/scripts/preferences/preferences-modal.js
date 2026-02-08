@@ -7,6 +7,12 @@
 /// <reference path="../../../types.d.ts" />
 
 /**
+ * Default page-width values matching the CSS default (A4 = 210 mm fixed).
+ * @type {{ useFixed: boolean, width: number, unit: 'px' | 'mm' }}
+ */
+const DEFAULT_PAGE_WIDTH = { useFixed: true, width: 210, unit: 'mm' };
+
+/**
  * Default margin values (in mm) matching the CSS defaults.
  * @type {{ top: number, right: number, bottom: number, left: number }}
  */
@@ -57,6 +63,25 @@ export class PreferencesModal {
                     <button type="button" class="preferences-close" aria-label="Close">&times;</button>
                 </header>
                 <div class="preferences-body">
+                    <fieldset class="preferences-fieldset">
+                        <legend>Page Width</legend>
+                        <div class="page-width-row">
+                            <label class="page-width-toggle">
+                                <input type="checkbox" id="page-width-fixed" checked>
+                                <span>Use fixed width (A4 – 210 mm)</span>
+                            </label>
+                        </div>
+                        <div class="page-width-custom" id="page-width-custom">
+                            <label for="page-width-value">Width</label>
+                            <div class="page-width-input-group">
+                                <input type="number" id="page-width-value" name="pageWidthValue" min="100" max="2000" step="1">
+                                <select id="page-width-unit" name="pageWidthUnit">
+                                    <option value="mm">mm</option>
+                                    <option value="px">px</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
                     <fieldset class="preferences-fieldset">
                         <legend>Margins</legend>
                         <div class="margins-grid">
@@ -171,6 +196,9 @@ export class PreferencesModal {
         // Wire up color input syncing
         this._setupColorInputs(dialog);
 
+        // Wire up page-width toggle
+        this._setupPageWidth(dialog);
+
         document.body.appendChild(dialog);
         this.dialog = dialog;
     }
@@ -278,6 +306,21 @@ export class PreferencesModal {
     }
 
     /**
+     * Sets up the page-width fixed-toggle so the custom row shows/hides.
+     * @param {HTMLDialogElement} dialog
+     */
+    _setupPageWidth(dialog) {
+        const fixedCb = /** @type {HTMLInputElement} */ (dialog.querySelector('#page-width-fixed'));
+        const customRow = dialog.querySelector('#page-width-custom');
+
+        fixedCb.addEventListener('change', () => {
+            if (customRow) {
+                customRow.classList.toggle('hidden', fixedCb.checked);
+            }
+        });
+    }
+
+    /**
      * Enables or disables margin inputs based on the current link state.
      * When linked, the secondary input is disabled (bottom follows top,
      * right follows left). When "link all" is on, only top is editable.
@@ -373,6 +416,22 @@ export class PreferencesModal {
         this._build();
         if (!this.dialog || this.dialog.open) return;
 
+        // Load saved page-width setting
+        const pageWidth = await this._loadPageWidth();
+        const fixedCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#page-width-fixed')
+        );
+        fixedCb.checked = pageWidth.useFixed;
+        this._getInput(this.dialog, 'page-width-value').value = String(pageWidth.width);
+        const unitSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#page-width-unit')
+        );
+        unitSelect.value = pageWidth.unit;
+        const customRow = this.dialog.querySelector('#page-width-custom');
+        if (customRow) {
+            customRow.classList.toggle('hidden', pageWidth.useFixed);
+        }
+
         // Load saved margins (fall back to CSS defaults)
         const margins = await this._loadMargins();
 
@@ -416,6 +475,29 @@ export class PreferencesModal {
         if (this.dialog?.open) {
             this.dialog.close();
         }
+    }
+
+    /**
+     * Loads the current page-width setting from the settings database.
+     * @returns {Promise<{ useFixed: boolean, width: number, unit: 'px' | 'mm' }>}
+     */
+    async _loadPageWidth() {
+        if (!window.electronAPI) return { ...DEFAULT_PAGE_WIDTH };
+
+        try {
+            const result = await window.electronAPI.getSetting('pageWidth');
+            if (result.success && result.value) {
+                return {
+                    useFixed: result.value.useFixed ?? DEFAULT_PAGE_WIDTH.useFixed,
+                    width: result.value.width ?? DEFAULT_PAGE_WIDTH.width,
+                    unit: result.value.unit ?? DEFAULT_PAGE_WIDTH.unit,
+                };
+            }
+        } catch {
+            // Fall through to defaults
+        }
+
+        return { ...DEFAULT_PAGE_WIDTH };
     }
 
     /**
@@ -470,6 +552,20 @@ export class PreferencesModal {
     async _save() {
         if (!this.dialog) return;
 
+        const fixedCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#page-width-fixed')
+        );
+        const unitSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#page-width-unit')
+        );
+        const pageWidth = {
+            useFixed: fixedCb.checked,
+            width:
+                Number(this._getInput(this.dialog, 'page-width-value').value) ||
+                DEFAULT_PAGE_WIDTH.width,
+            unit: /** @type {'px' | 'mm'} */ (unitSelect.value),
+        };
+
         const margins = {
             top: Number(this._getInput(this.dialog, 'margin-top').value) || DEFAULT_MARGINS.top,
             right:
@@ -488,15 +584,31 @@ export class PreferencesModal {
 
         // Persist to database
         if (window.electronAPI) {
+            await window.electronAPI.setSetting('pageWidth', pageWidth);
             await window.electronAPI.setSetting('margins', margins);
             await window.electronAPI.setSetting('colors', colors);
         }
 
         // Apply to CSS immediately
+        applyPageWidth(pageWidth);
         applyMargins(margins);
         applyColors(colors);
 
         this.close();
+    }
+}
+
+/**
+ * Applies the page-width setting to the document's CSS custom properties.
+ * When `useFixed` is true the default A4 width (210 mm) is used.
+ * @param {{ useFixed: boolean, width: number, unit: 'px' | 'mm' }} pageWidth
+ */
+export function applyPageWidth(pageWidth) {
+    const root = document.documentElement;
+    if (pageWidth.useFixed) {
+        root.style.setProperty('--page-max-width', '210mm');
+    } else {
+        root.style.setProperty('--page-max-width', `${pageWidth.width}${pageWidth.unit}`);
     }
 }
 
