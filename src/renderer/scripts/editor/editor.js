@@ -110,6 +110,10 @@ export class Editor {
         this.container.addEventListener('focus', this.handleFocus.bind(this));
         this.container.addEventListener('blur', this.handleBlur.bind(this));
 
+        // Drag-and-drop image support
+        this.container.addEventListener('dragover', this.handleDragOver.bind(this));
+        this.container.addEventListener('drop', this.handleDrop.bind(this));
+
         // Selection change listener
         document.addEventListener('selectionchange', this.handleSelectionChange.bind(this));
     }
@@ -740,6 +744,121 @@ export class Editor {
         ) {
             this.renderAndPlaceCursor();
         }
+    }
+
+    /**
+     * Handles dragover events — allows image files to be dropped.
+     * @param {DragEvent} event
+     */
+    handleDragOver(event) {
+        if (!event.dataTransfer) return;
+
+        // Check whether the drag payload contains files
+        if (event.dataTransfer.types.includes('Files')) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    }
+
+    /**
+     * Image file extensions accepted for drag-and-drop.
+     * @type {Set<string>}
+     */
+    static IMAGE_EXTENSIONS = new Set([
+        '.png',
+        '.jpg',
+        '.jpeg',
+        '.gif',
+        '.bmp',
+        '.webp',
+        '.svg',
+        '.ico',
+        '.avif',
+    ]);
+
+    /**
+     * Handles drop events — inserts dropped image files into the document.
+     *
+     * When an image file is dropped the editor:
+     * 1. Moves the cursor to an empty paragraph (creating one if needed).
+     * 2. Inserts an image node referencing the file's original path.
+     * 3. Ensures an empty paragraph follows the image for continued editing.
+     *
+     * @param {DragEvent} event
+     */
+    handleDrop(event) {
+        if (!event.dataTransfer?.files?.length || !this.syntaxTree) return;
+
+        const files = [...event.dataTransfer.files];
+        const imageFiles = files.filter((f) => {
+            const ext = f.name.includes('.') ? `.${f.name.split('.').pop()?.toLowerCase()}` : '';
+            return Editor.IMAGE_EXTENSIONS.has(ext);
+        });
+
+        if (imageFiles.length === 0) return;
+
+        // We're handling this — prevent the browser from doing anything else.
+        event.preventDefault();
+
+        const before = this.syntaxTree.toMarkdown();
+
+        for (const file of imageFiles) {
+            // Use the Electron webUtils bridge to get the real filesystem path.
+            const filePath = window.electronAPI?.getPathForFile(file) ?? file.name;
+
+            this._insertDroppedImage(filePath, file.name);
+        }
+
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Inserts a dropped image into the syntax tree at the current cursor
+     * position, ensuring the cursor is on an empty paragraph first and that
+     * an empty paragraph follows the image node.
+     *
+     * @param {string} filePath - Absolute path to the image file
+     * @param {string} fileName - The file name (used as fallback alt text)
+     */
+    _insertDroppedImage(filePath, fileName) {
+        if (!this.syntaxTree) return;
+
+        const currentNode = this.getCurrentNode();
+        const alt = fileName.replace(/\.[^.]+$/, '');
+
+        // Convert the absolute path to a file:// URL so the image resolves
+        // regardless of where the current document is saved.
+        const fileUrl = filePath.startsWith('file://')
+            ? filePath
+            : `file:///${filePath.replace(/\\/g, '/')}`;
+
+        const imageNode = new SyntaxNode('image', alt);
+        imageNode.attributes = { alt, url: fileUrl };
+
+        if (!currentNode) {
+            // No cursor node — append to the tree
+            this.syntaxTree.appendChild(imageNode);
+        } else if (currentNode.type === 'paragraph' && currentNode.content === '') {
+            // Cursor is already on an empty paragraph — replace it
+            const idx = this.getNodeIndex(currentNode);
+            this.syntaxTree.children.splice(idx, 1, imageNode);
+        } else {
+            // Cursor is on a non-empty element — insert image after it
+            const idx = this.getNodeIndex(currentNode);
+            this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+        }
+
+        // Ensure an empty paragraph follows the image for continued editing
+        const imgIdx = this.syntaxTree.children.indexOf(imageNode);
+        const nextNode = this.syntaxTree.children[imgIdx + 1];
+        if (!nextNode || !(nextNode.type === 'paragraph' && nextNode.content === '')) {
+            const trailingParagraph = new SyntaxNode('paragraph', '');
+            this.syntaxTree.children.splice(imgIdx + 1, 0, trailingParagraph);
+        }
+
+        // Place the cursor on the trailing empty paragraph
+        const afterNode = this.syntaxTree.children[imgIdx + 1];
+        this.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
     /** Handles focus events. */

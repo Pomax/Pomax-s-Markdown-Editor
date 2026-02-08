@@ -6,7 +6,7 @@
  * sandboxed environment that does not support ES modules.
  */
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 /**
  * API version for the exposed interface.
@@ -129,6 +129,14 @@ const electronAPI = {
      * @returns {Promise<{success: boolean, filePath?: string}>}
      */
     browseForImage: () => ipcRenderer.invoke('image:browse'),
+
+    /**
+     * Returns the absolute filesystem path for a File object obtained from
+     * a drag-and-drop or file-input operation.
+     * @param {File} file - The File object from a drop event
+     * @returns {string} The absolute path on disk
+     */
+    getPathForFile: (file) => webUtils.getPathForFile(file),
 
     // ========== Element Operations ==========
 
