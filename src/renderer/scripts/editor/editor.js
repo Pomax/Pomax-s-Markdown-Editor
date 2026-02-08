@@ -832,8 +832,11 @@ export class Editor {
             ? filePath
             : `file:///${filePath.replace(/\\/g, '/')}`;
 
+        // Use a relative path when the image is in the document's folder tree
+        const src = this.toRelativeImagePath(fileUrl);
+
         const imageNode = new SyntaxNode('image', alt);
-        imageNode.attributes = { alt, url: fileUrl };
+        imageNode.attributes = { alt, url: src };
 
         if (!currentNode) {
             // No cursor node — append to the tree
@@ -1038,6 +1041,41 @@ export class Editor {
      */
     insertText(text) {
         this.insertTextAtCursor(text);
+    }
+
+    /**
+     * Converts an absolute image path to a relative path when the image lives
+     * in the same directory as (or a subdirectory of) the current document.
+     * Returns the original path unchanged if no document is open or the image
+     * is not downstream of the document's folder.
+     *
+     * Handles both raw filesystem paths and `file:///` URLs.
+     *
+     * @param {string} imagePath - The absolute image path or file:// URL
+     * @returns {string} A relative path (using forward slashes) or the original value
+     */
+    toRelativeImagePath(imagePath) {
+        if (!this.currentFilePath || !imagePath) return imagePath;
+
+        // Normalise the image path: strip file:/// prefix, decode, unify slashes
+        let absImage = imagePath;
+        if (absImage.startsWith('file:///')) {
+            absImage = decodeURIComponent(absImage.slice(8));
+        }
+        absImage = absImage.replace(/\\/g, '/');
+
+        // Normalise the document directory
+        const docDir = this.currentFilePath.replace(/\\/g, '/').replace(/\/[^/]*$/, '');
+
+        // Ensure the image is at or below the document directory
+        const prefix = docDir.endsWith('/') ? docDir : `${docDir}/`;
+        if (!absImage.startsWith(prefix) && absImage !== docDir) {
+            return imagePath;
+        }
+
+        // Build the relative path (always uses forward slashes)
+        const relative = absImage.slice(prefix.length);
+        return `./${relative}`;
     }
 
     /**
