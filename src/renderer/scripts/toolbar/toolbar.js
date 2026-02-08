@@ -37,8 +37,8 @@ export class Toolbar {
         /** @type {ToolbarButton[]} */
         this.buttons = [];
 
-        /** @type {HTMLSelectElement|null} */
-        this.viewModeSelect = null;
+        /** @type {HTMLButtonElement|null} */
+        this.viewModeToggle = null;
 
         /** @type {ImageModal|null} */
         this.imageModal = null;
@@ -261,11 +261,11 @@ export class Toolbar {
         this.toolbarElement.setAttribute('role', 'toolbar');
         this.toolbarElement.setAttribute('aria-label', 'Formatting toolbar');
 
-        // Create view mode dropdown
-        const viewModeGroup = this._createViewModeSelect();
+        // Create view mode toggle
+        const viewModeGroup = this._createViewModeToggle();
         this.toolbarElement.appendChild(viewModeGroup);
 
-        // Separator after dropdown
+        // Separator after toggle
         const sep = document.createElement('div');
         sep.className = 'toolbar-separator';
         this.toolbarElement.appendChild(sep);
@@ -329,58 +329,57 @@ export class Toolbar {
     }
 
     /**
-     * Creates the view-mode dropdown with a label.
+     * View mode display labels.
+     * @type {Record<string, string>}
+     */
+    static VIEW_MODE_LABELS = {
+        focused: 'Focused Writing',
+        source: 'Source View',
+    };
+
+    /**
+     * Creates the view-mode toggle button with a label.
      * @returns {HTMLElement}
      */
-    _createViewModeSelect() {
+    _createViewModeToggle() {
         const wrapper = document.createElement('div');
         wrapper.className = 'toolbar-view-mode-group';
 
-        const label = document.createElement('label');
+        const label = document.createElement('span');
         label.className = 'toolbar-view-mode-label';
         label.textContent = 'View:';
-        label.htmlFor = 'view-mode-select';
         wrapper.appendChild(label);
 
-        const select = document.createElement('select');
-        select.className = 'toolbar-view-mode';
-        select.id = 'view-mode-select';
-        select.setAttribute('aria-label', 'View mode');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'toolbar-view-mode-toggle';
+        button.setAttribute('aria-label', 'Toggle view mode');
 
-        const modes = [
-            { value: 'source', label: 'Source' },
-            { value: 'focused', label: 'Focused' },
-        ];
+        const currentMode = this.editor.getViewMode();
+        button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
-        for (const { value, label } of modes) {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = label;
-            select.appendChild(option);
-        }
-
-        select.value = this.editor.getViewMode();
-
-        select.addEventListener('change', () => {
+        button.addEventListener('click', () => {
+            const newMode = this.editor.getViewMode() === 'focused' ? 'source' : 'focused';
             this.editor.setViewMode(
-                /** @type {import('../editor/editor.js').ViewMode} */ (select.value),
+                /** @type {import('../editor/editor.js').ViewMode} */ (newMode),
             );
+            button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
         });
 
-        wrapper.appendChild(select);
-        this.viewModeSelect = select;
+        wrapper.appendChild(button);
+        this.viewModeToggle = button;
 
         return wrapper;
     }
 
     /**
-     * Updates the view-mode dropdown to reflect the current mode.
+     * Updates the view-mode toggle to reflect the current mode.
      * Call this after the view mode changes externally (e.g. via the menu).
      * @param {string} mode
      */
     setViewMode(mode) {
-        if (this.viewModeSelect) {
-            this.viewModeSelect.value = mode;
+        if (this.viewModeToggle) {
+            this.viewModeToggle.textContent = Toolbar.VIEW_MODE_LABELS[mode] ?? mode;
         }
     }
 

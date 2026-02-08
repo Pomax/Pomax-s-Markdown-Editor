@@ -766,22 +766,23 @@ export class PreferencesModal {
         const unitSelect = /** @type {HTMLSelectElement} */ (
             this.dialog.querySelector('#page-width-unit')
         );
+        const rawWidth = Number(this._getInput(this.dialog, 'page-width-value').value);
         const pageWidth = {
             useFixed: fixedCb.checked,
-            width:
-                Number(this._getInput(this.dialog, 'page-width-value').value) ||
-                DEFAULT_PAGE_WIDTH.width,
+            width: Number.isNaN(rawWidth) ? DEFAULT_PAGE_WIDTH.width : rawWidth,
             unit: /** @type {'px' | 'mm'} */ (unitSelect.value),
         };
 
+        const rawTop = Number(this._getInput(this.dialog, 'margin-top').value);
+        const rawRight = Number(this._getInput(this.dialog, 'margin-right').value);
+        const rawBottom = Number(this._getInput(this.dialog, 'margin-bottom').value);
+        const rawLeft = Number(this._getInput(this.dialog, 'margin-left').value);
+
         const margins = {
-            top: Number(this._getInput(this.dialog, 'margin-top').value) || DEFAULT_MARGINS.top,
-            right:
-                Number(this._getInput(this.dialog, 'margin-right').value) || DEFAULT_MARGINS.right,
-            bottom:
-                Number(this._getInput(this.dialog, 'margin-bottom').value) ||
-                DEFAULT_MARGINS.bottom,
-            left: Number(this._getInput(this.dialog, 'margin-left').value) || DEFAULT_MARGINS.left,
+            top: Number.isNaN(rawTop) ? DEFAULT_MARGINS.top : rawTop,
+            right: Number.isNaN(rawRight) ? DEFAULT_MARGINS.right : rawRight,
+            bottom: Number.isNaN(rawBottom) ? DEFAULT_MARGINS.bottom : rawBottom,
+            left: Number.isNaN(rawLeft) ? DEFAULT_MARGINS.left : rawLeft,
         };
 
         const colors = {
