@@ -421,101 +421,79 @@ export class FocusedRenderer {
             return;
         }
 
-        // Parse and render formatted inline elements
-        const parts = this.parseInlineContent(content);
+        // Parse and recursively render formatted inline elements.
+        this.renderInlineParts(content, container);
+    }
 
-        for (const part of parts) {
-            if (part.type === 'text') {
-                container.appendChild(document.createTextNode(part.content));
-            } else {
-                const element = this.createInlineElement(part);
-                container.appendChild(element);
+    /**
+     * Recursively parses inline markdown and appends rendered DOM nodes.
+     * @param {string} content - The raw inline markdown text
+     * @param {HTMLElement} container - The element to append rendered nodes to
+     */
+    renderInlineParts(content, container) {
+        // Combined pattern — order matters:
+        //   1. Links first so brackets aren't consumed by other patterns.
+        //   2. ** bold before * italic so ** isn't split into two *.
+        //   3. __ emphasis before _ emphasis for the same reason.
+        //   4. Code, strikethrough last.
+        // Note: _ and __ are BOTH emphasis (<em>), only ** is bold (<strong>).
+        const combined =
+            /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+
+        let lastIndex = 0;
+
+        for (const match of content.matchAll(combined)) {
+            // Append any plain text before this match.
+            if (match.index > lastIndex) {
+                container.appendChild(
+                    document.createTextNode(content.slice(lastIndex, match.index)),
+                );
             }
-        }
-    }
 
-    /**
-     * Parses inline content into parts.
-     * @param {string} content - The content to parse
-     * @returns {Array<{type: string, content: string, raw: string, href?: string}>}
-     */
-    parseInlineContent(content) {
-        const parts = [];
-        const remaining = content;
+            if (match[1] !== undefined) {
+                // Link: [text](href)
+                const a = document.createElement('a');
+                a.href = match[2];
+                this.renderInlineParts(match[1], a);
+                container.appendChild(a);
+            } else if (match[3] !== undefined) {
+                // Bold: **text**
+                const strong = document.createElement('strong');
+                this.renderInlineParts(match[3], strong);
+                container.appendChild(strong);
+            } else if (match[4] !== undefined) {
+                // Emphasis: __text__
+                const em = document.createElement('em');
+                this.renderInlineParts(match[4], em);
+                container.appendChild(em);
+            } else if (match[5] !== undefined) {
+                // Emphasis: *text*
+                const em = document.createElement('em');
+                this.renderInlineParts(match[5], em);
+                container.appendChild(em);
+            } else if (match[6] !== undefined) {
+                // Emphasis: _text_
+                const em = document.createElement('em');
+                this.renderInlineParts(match[6], em);
+                container.appendChild(em);
+            } else if (match[7] !== undefined) {
+                // Strikethrough: ~~text~~
+                const del = document.createElement('del');
+                this.renderInlineParts(match[7], del);
+                container.appendChild(del);
+            } else if (match[8] !== undefined) {
+                // Inline code: `text` — no recursion (code is literal).
+                const code = document.createElement('code');
+                code.textContent = match[8];
+                container.appendChild(code);
+            }
 
-        // Simplified inline parsing - would be more complex in production
-        const patterns = [
-            { type: 'bold', regex: /\*\*(.+?)\*\*/g },
-            { type: 'bold', regex: /__(.+?)__/g },
-            { type: 'italic', regex: /(?<!\*)\*([^*]+)\*(?!\*)/g },
-            { type: 'italic', regex: /(?<!\w)_([^_]+)_(?!\w)/g },
-            { type: 'code', regex: /`([^`]+)`/g },
-            { type: 'strikethrough', regex: /~~(.+?)~~/g },
-            { type: 'link', regex: /\[([^\]]+)\]\(([^)]+)\)/g },
-        ];
-
-        // For simplicity, just return plain text for now
-        // Full implementation would parse each pattern
-        parts.push({
-            type: 'text',
-            content: this.stripMarkdownSyntax(content),
-            raw: content,
-        });
-
-        return parts;
-    }
-
-    /**
-     * Strips markdown syntax from content for display.
-     * @param {string} content - The content to strip
-     * @returns {string}
-     */
-    stripMarkdownSyntax(content) {
-        return content
-            .replace(/\*\*(.+?)\*\*/g, '$1')
-            .replace(/__(.+?)__/g, '$1')
-            .replace(/\*(.+?)\*/g, '$1')
-            .replace(/(?<!\w)_(.+?)_(?!\w)/g, '$1')
-            .replace(/~~(.+?)~~/g, '$1')
-            .replace(/`([^`]+)`/g, '$1')
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    }
-
-    /**
-     * Creates an inline element for a parsed part.
-     * @param {{type: string, content: string, raw: string, href?: string}} part
-     * @returns {HTMLElement}
-     */
-    createInlineElement(part) {
-        let element;
-
-        switch (part.type) {
-            case 'bold':
-                element = document.createElement('strong');
-                element.textContent = part.content;
-                break;
-            case 'italic':
-                element = document.createElement('em');
-                element.textContent = part.content;
-                break;
-            case 'code':
-                element = document.createElement('code');
-                element.textContent = part.content;
-                break;
-            case 'strikethrough':
-                element = document.createElement('del');
-                element.textContent = part.content;
-                break;
-            case 'link':
-                element = document.createElement('a');
-                element.href = part.href || '#';
-                element.textContent = part.content;
-                break;
-            default:
-                element = document.createElement('span');
-                element.textContent = part.content;
+            lastIndex = match.index + match[0].length;
         }
 
-        return element;
+        // Append any trailing plain text.
+        if (lastIndex < content.length) {
+            container.appendChild(document.createTextNode(content.slice(lastIndex)));
+        }
     }
 }
