@@ -85,7 +85,8 @@ src/
 │   ├── menu-builder.js       # Menu construction
 │   ├── file-manager.js       # File operations
 │   ├── ipc-handler.js        # IPC routing
-│   └── api-registry.js       # External API
+│   ├── api-registry.js       # External API
+│   └── settings-manager.js   # Settings persistence (SQLite)
 │
 └── renderer/                  # Electron renderer
     ├── index.html            # HTML entry
@@ -95,7 +96,8 @@ src/
     │   ├── toolbar.css      # Toolbar styles
     │   ├── image.css        # Image dialog and element styles
     │   ├── table.css        # Table dialog and element styles
-    │   └── preferences.css  # Preferences modal styles
+    │   ├── preferences.css  # Preferences modal styles
+    │   └── toc.css          # Table of Contents sidebar styles
     │
     └── scripts/              # JavaScript
         ├── app.js           # App entry
@@ -105,7 +107,8 @@ src/
         ├── handlers/        # Event handlers
         ├── image/           # Image modal
         ├── table/           # Table modal
-        └── preferences/     # Preferences modal
+        ├── preferences/     # Preferences modal
+        └── toc/             # Table of Contents sidebar
 ```
 
 ### Test Structure
@@ -129,7 +132,9 @@ test/
     ├── image.spec.js
     ├── load-images.spec.js
     ├── table.spec.js
+    ├── toc-scroll.spec.js
     ├── toolbar-tooltip.spec.js
+    ├── underscore-emphasis.spec.js
     ├── view-mode-dropdown.spec.js
     ├── view-mode-switch.spec.js
     ├── page-height.spec.js

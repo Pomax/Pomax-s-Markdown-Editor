@@ -38,9 +38,12 @@ The application follows Electron's multi-process architecture:
 │  │ FileManager │  │ MenuBuilder │  │   IPCHandler    │ │
 │  └─────────────┘  └─────────────┘  └─────────────────┘ │
 │                          │                              │
-│                    ┌─────┴─────┐                       │
-│                    │ APIRegistry│                       │
-│                    └───────────┘                       │
+│              ┌───────────┼───────────┐                  │
+│              │           │           │                  │
+│        ┌─────┴─────┐ ┌──┴────────┐  │                  │
+│        │ APIRegistry│ │ Settings  │  │                  │
+│        └───────────┘ │  Manager  │  │                  │
+│                      └───────────┘  │                  │
 └────────────────────────┬────────────────────────────────┘
                          │ IPC
 ┌────────────────────────┴────────────────────────────────┐
@@ -56,6 +59,10 @@ The application follows Electron's multi-process architecture:
 │  ┌────────────┐ ┌────────────┐ ┌───────────────────┐   │
 │  │ ImageModal │ │ TableModal │ │ SelectionManager  │   │
 │  └────────────┘ └────────────┘ └───────────────────┘   │
+│                                                          │
+│  ┌───────────────────┐  ┌──────────────────────────┐   │
+│  │ TableOfContents   │  │   PreferencesModal       │   │
+│  └───────────────────┘  └──────────────────────────┘   │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -99,6 +106,14 @@ Manages the external scripting API:
 - Command execution
 - Parameter validation
 - API documentation generation
+
+### SettingsManager
+
+Persists and retrieves user preferences:
+- Uses SQLite (better-sqlite3) for storage in the user data directory
+- Key-value store with JSON serialization
+- Exposes `getSetting` / `setSetting` IPC handlers
+- Stores page width, margins, colors, view mode, TOC settings, etc.
 
 ### preload.cjs
 
@@ -160,6 +175,24 @@ Tracks and manipulates text selection:
 - Converts between DOM and logical positions
 - Tracks current node at cursor
 - Dispatches selection change events
+
+### TableOfContents
+
+Sidebar showing a navigable document outline:
+- Extracts h1–h3 headings from the syntax tree
+- Renders a nested, clickable tree of links
+- Scrolls the editor to the clicked heading
+- Auto-refreshes via MutationObserver when the document changes
+- Supports show/hide toggle and left/right positioning
+- Resizable width via drag handle, persisted to settings
+
+### PreferencesModal
+
+Settings dialog for user preferences:
+- Sidebar navigation with section links
+- Sections: Default View, Page Width, Margins, Colors, Table of Contents
+- Reads and writes settings via IPC to the SettingsManager
+- Applies CSS custom property changes immediately on save
 
 ### Toolbar
 

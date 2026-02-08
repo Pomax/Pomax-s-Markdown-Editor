@@ -57,6 +57,7 @@ markdown-editor/
 |------|---------|
 | `src/main/main.js` | Application entry point |
 | `src/main/preload.cjs` | Secure IPC bridge |
+| `src/main/settings-manager.js` | Settings persistence (SQLite) |
 | `src/renderer/index.html` | UI entry point |
 | `src/renderer/scripts/app.js` | Renderer entry point |
 
@@ -90,17 +91,16 @@ npm run test:integration
 
 ### Linting and Formatting
 
-We use Biome for linting and code formatting:
+We use Biome for linting and code formatting, and TypeScript for type checking. The `lint` script runs all three:
 
 ```bash
-# Check for lint errors
+# Run all checks (lint + format + type check)
 npm run lint
 
-# Fix lint errors automatically
-npm run lint:fix
-
-# Format code
-npm run format
+# Individual steps:
+npm run lint:fix       # Biome lint with auto-fix
+npm run lint:format    # Biome format
+npm run lint:typing    # TypeScript type checking (tsc)
 ```
 
 ### Type Checking
