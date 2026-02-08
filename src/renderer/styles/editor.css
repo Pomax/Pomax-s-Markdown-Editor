@@ -135,6 +135,19 @@
     padding: 0;
 }
 
+/* ========== Code Syntax Highlighting ========== */
+.sh-keyword    { color: var(--sh-keyword); font-weight: 600; }
+.sh-string     { color: var(--sh-string); }
+.sh-comment    { color: var(--sh-comment); font-style: italic; }
+.sh-number     { color: var(--sh-number); }
+.sh-operator   { color: var(--sh-operator); }
+.sh-punctuation { color: var(--sh-punctuation); }
+.sh-function   { color: var(--sh-function); }
+.sh-type       { color: var(--sh-type); }
+.sh-constant   { color: var(--sh-constant); }
+.sh-attribute  { color: var(--sh-attribute); }
+.sh-tag        { color: var(--sh-tag); font-weight: 600; }
+
 /* Inline code */
 .md-inline.md-code {
     background-color: var(--color-code-bg);

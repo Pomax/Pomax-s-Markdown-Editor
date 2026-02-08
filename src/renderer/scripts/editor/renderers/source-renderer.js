@@ -1,5 +1,5 @@
 /**
- * @fileoverview Source Renderer for displaying markdown with syntax highlighting.
+ * @fileoverview Source Renderer for displaying raw markdown.
  * Shows the literal markdown text with minimal styling to distinguish element types.
  */
 

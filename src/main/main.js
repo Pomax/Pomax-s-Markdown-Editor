@@ -66,9 +66,8 @@ function debounceSaveWindowBounds() {
 }
 
 /**
- * Persists the currently open file path and cursor position so the
- * same file can be reopened on next launch.  If no file is open the
- * setting is removed.
+ * Persists the currently open file path so the same file can be
+ * reopened on next launch.  If no file is open the setting is removed.
  * @param {BrowserWindow} win
  */
 async function saveLastOpenFile(win) {
@@ -78,33 +77,7 @@ async function saveLastOpenFile(win) {
         return;
     }
 
-    let cursorNodeIndex = 0;
-    let cursorOffset = 0;
-    try {
-        const info = await win.webContents.executeJavaScript(`
-            (function () {
-                var nodeId = window.__editorCursorNodeId;
-                var offset = window.__editorCursorOffset ?? 0;
-                var lines = document.querySelectorAll('#editor [data-node-id]');
-                var index = 0;
-                if (nodeId && lines.length) {
-                    for (var i = 0; i < lines.length; i++) {
-                        if (lines[i].getAttribute('data-node-id') === nodeId) {
-                            index = i;
-                            break;
-                        }
-                    }
-                }
-                return { cursorNodeIndex: index, cursorOffset: offset };
-            })()
-        `);
-        cursorNodeIndex = info.cursorNodeIndex;
-        cursorOffset = info.cursorOffset;
-    } catch {
-        // Window may already be destroyed — save with defaults
-    }
-
-    settingsManager.set('lastOpenFile', { filePath, cursorNodeIndex, cursorOffset });
+    settingsManager.set('lastOpenFile', { filePath });
 }
 
 /**
@@ -301,21 +274,20 @@ async function loadFileFromPath(window, filePath) {
 }
 
 /**
- * Restores the last-open file and cursor position from a previous session.
+ * Restores the last-open file from a previous session.
+ * The cursor is placed at the start of the document by loadMarkdown.
  * @param {BrowserWindow} window - The main window
- * @param {{filePath: string, cursorNodeIndex: number, cursorOffset: number}} lastOpen
+ * @param {{filePath: string}} lastOpen
  */
 async function restoreLastOpenFile(window, lastOpen) {
     const result = await fileManager.loadRecent(lastOpen.filePath);
     if (!result.success) return;
 
-    const nodeIndex = lastOpen.cursorNodeIndex ?? 0;
-    const offset = lastOpen.cursorOffset ?? 0;
     const contentJSON = JSON.stringify(result.content);
     const filePathJSON = JSON.stringify(result.filePath);
 
-    // Load the file and restore the cursor in a single executeJavaScript
-    // call so we know the DOM is ready before we try to place the cursor.
+    // Load the file in a single executeJavaScript call so we know the
+    // editor API is ready before we set content.
     window.webContents.executeJavaScript(`
         (function () {
             function tryRestore() {
@@ -326,24 +298,9 @@ async function restoreLastOpenFile(window, lastOpen) {
                 // when loadMarkdown calls updateWindowTitle.
                 window.__editorFilePath = ${filePathJSON};
 
-                // Load the file content (renders the DOM)
+                // Load the file content (renders the DOM and places cursor
+                // at the start of the document)
                 api.setContent(${contentJSON});
-
-                // Wait for the DOM nodes to be created by the render
-                requestAnimationFrame(function () {
-                    var lines = document.querySelectorAll('#editor [data-node-id]');
-                    var idx = Math.min(${nodeIndex}, lines.length - 1);
-                    if (idx >= 0 && lines[idx]) {
-                        var nodeId = lines[idx].getAttribute('data-node-id');
-                        if (nodeId) {
-                            window.dispatchEvent(
-                                new CustomEvent('__restoreCursor', {
-                                    detail: { nodeId: nodeId, offset: ${offset} }
-                                })
-                            );
-                        }
-                    }
-                });
             }
             tryRestore();
         })()

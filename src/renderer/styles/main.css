@@ -21,6 +21,19 @@
     --color-code-bg: #f1f3f5;
     --color-blockquote: #495057;
 
+    /* Code syntax highlighting tokens */
+    --sh-keyword: #d73a49;
+    --sh-string: #032f62;
+    --sh-comment: #6a737d;
+    --sh-number: #005cc5;
+    --sh-operator: #d73a49;
+    --sh-punctuation: #24292e;
+    --sh-function: #6f42c1;
+    --sh-type: #e36209;
+    --sh-constant: #005cc5;
+    --sh-attribute: #6f42c1;
+    --sh-tag: #22863a;
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;

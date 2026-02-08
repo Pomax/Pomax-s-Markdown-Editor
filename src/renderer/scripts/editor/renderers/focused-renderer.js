@@ -7,6 +7,8 @@
  * @typedef {import('../../parser/syntax-tree.js').NodeAttributes} NodeAttributes
  */
 
+import { highlight } from '../syntax-highlighter.js';
+
 /**
  * Renders the syntax tree in focused writing mode.
  */
@@ -225,7 +227,11 @@ export class FocusedRenderer {
         codeContent.className = 'md-code-content';
 
         const code = document.createElement('code');
-        code.textContent = node.content;
+        if (isFocused) {
+            code.textContent = node.content;
+        } else {
+            code.appendChild(highlight(node.content, language));
+        }
         codeContent.appendChild(code);
         element.appendChild(codeContent);
 
