@@ -1,6 +1,7 @@
-node_modules/
-dist/
 .cache/
+dist/
+node_modules/
+test-results/
 *.log
 .DS_Store
 Thumbs.db

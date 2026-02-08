@@ -52,6 +52,10 @@ The application follows Electron's multi-process architecture:
 │  ┌────┴────┐  ┌───────────┐  ┌───────────────────────┐ │
 │  │ Toolbar │  │ Renderers │  │      UndoManager      │ │
 │  └─────────┘  └───────────┘  └───────────────────────┘ │
+│                                                          │
+│  ┌────────────┐ ┌────────────┐ ┌───────────────────┐   │
+│  │ ImageModal │ │ TableModal │ │ SelectionManager  │   │
+│  └────────────┘ └────────────┘ └───────────────────┘   │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -76,9 +80,10 @@ Handles all file system operations:
 ### MenuBuilder
 
 Constructs the application menu:
-- File menu (New, Load, Save, Save As, Exit)
+- File menu (New, Load, Open Recent, Save, Save As, Exit)
 - Edit menu (Undo, Redo, Cut, Copy, Paste)
 - View menu (Source View, Focused Writing)
+- Help menu (About, Keyboard Shortcuts)
 
 ### IPCHandler
 
@@ -95,7 +100,7 @@ Manages the external scripting API:
 - Parameter validation
 - API documentation generation
 
-### preload.js
+### preload.cjs
 
 Secure bridge between main and renderer:
 - Exposes limited API via contextBridge
@@ -138,8 +143,9 @@ Displays markdown with syntax highlighting:
 #### FocusedRenderer
 WYSIWYG-style display:
 - Hides syntax when not focused
-- Shows formatted output
-- Reveals syntax on element focus
+- Shows formatted output (rendered images, tables, horizontal rules, etc.)
+- Reveals raw markdown syntax on element focus (click any element to edit)
+- Supports click-to-focus on non-text elements like images and horizontal rules
 
 ### UndoManager
 
@@ -158,9 +164,11 @@ Tracks and manipulates text selection:
 ### Toolbar
 
 WYSIWYG formatting toolbar:
+- Lucide SVG icons with per-button coloring
 - Context-aware button visibility
 - Element-specific formatting options
 - Keyboard shortcut indicators
+- Automatic scaling on narrow windows via ResizeObserver
 
 ## Data Flow
 
@@ -200,7 +208,7 @@ Renderer.render()
 User types character
        │
        ▼
-Editor.handleInput()
+Editor.handleKeyDown()
        │
        ▼
 Get current content
@@ -254,8 +262,9 @@ Renderer.render()
 ### Focused Writing View
 
 - Hides markdown syntax for unfocused elements
-- Shows formatted preview
+- Shows formatted preview (rendered images, tables, horizontal rules)
 - Reveals syntax only for the active element
+- Click any element (including non-text elements like images) to focus and edit
 - Best for distraction-free writing
 
 ## External API

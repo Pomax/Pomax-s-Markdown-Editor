@@ -56,7 +56,7 @@ markdown-editor/
 | File | Purpose |
 |------|---------|
 | `src/main/main.js` | Application entry point |
-| `src/main/preload.js` | Secure IPC bridge |
+| `src/main/preload.cjs` | Secure IPC bridge |
 | `src/renderer/index.html` | UI entry point |
 | `src/renderer/scripts/app.js` | Renderer entry point |
 
@@ -161,7 +161,15 @@ function parse(markdown) {
        applicableTo: ['paragraph'],
    }
    ```
-3. Handle the action in `Editor.applyFormat()` if needed
+3. Add a Lucide SVG icon entry in `src/renderer/scripts/toolbar/icons.js`:
+   ```javascript
+   'my-button': '<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>',
+   ```
+4. Add a button color rule in `src/renderer/styles/toolbar.css`:
+   ```css
+   .toolbar-button[data-button-id="my-button"] { color: #0d6efd; }
+   ```
+5. Handle the action in `Editor.applyFormat()` if needed
 
 ### Adding a New Markdown Element
 

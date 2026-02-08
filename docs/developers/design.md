@@ -81,7 +81,7 @@ array.filter(item => item.active);
 src/
 ├── main/                      # Electron main process
 │   ├── main.js               # Entry point
-│   ├── preload.js            # Secure bridge
+│   ├── preload.cjs           # Secure bridge
 │   ├── menu-builder.js       # Menu construction
 │   ├── file-manager.js       # File operations
 │   ├── ipc-handler.js        # IPC routing
@@ -92,14 +92,20 @@ src/
     ├── styles/               # CSS files
     │   ├── main.css         # Base styles
     │   ├── editor.css       # Editor styles
-    │   └── toolbar.css      # Toolbar styles
+    │   ├── toolbar.css      # Toolbar styles
+    │   ├── image.css        # Image dialog and element styles
+    │   ├── table.css        # Table dialog and element styles
+    │   └── preferences.css  # Preferences modal styles
     │
     └── scripts/              # JavaScript
         ├── app.js           # App entry
         ├── editor/          # Editor components
         ├── parser/          # Markdown parser
         ├── toolbar/         # Toolbar UI
-        └── handlers/        # Event handlers
+        ├── handlers/        # Event handlers
+        ├── image/           # Image modal
+        ├── table/           # Table modal
+        └── preferences/     # Preferences modal
 ```
 
 ### Test Structure
@@ -110,11 +116,24 @@ test/
 │   ├── parser/
 │   │   ├── markdown-parser.test.js
 │   │   └── syntax-tree.test.js
-│   └── editor/
-│       └── undo-manager.test.js
+│   ├── editor/
+│   │   └── undo-manager.test.js
+│   └── table/
+│       └── table-modal.test.js
 │
 └── integration/              # Integration tests (Playwright)
-    └── editor.spec.js
+    ├── editor.spec.js
+    ├── heading-input.spec.js
+    ├── backspace-heading.spec.js
+    ├── backspace-heading-to-paragraph.spec.js
+    ├── image.spec.js
+    ├── load-images.spec.js
+    ├── table.spec.js
+    ├── toolbar-tooltip.spec.js
+    ├── view-mode-dropdown.spec.js
+    ├── view-mode-switch.spec.js
+    ├── page-height.spec.js
+    └── reload.spec.js
 ```
 
 ## Coding Conventions
@@ -419,9 +438,11 @@ test('should allow typing in the editor', async () => {
 3. Add `toMarkdown()` case in `SyntaxNode`
 4. Add render method in `SourceRenderer`
 5. Add render method in `FocusedRenderer`
-6. Add button config in `Toolbar`
-7. Add tests for parser and rendering
-8. Update documentation
+6. Add button config in `Toolbar.getButtonConfigs()`
+7. Add a Lucide SVG icon entry in `toolbar/icons.js`
+8. Add a button color rule in `toolbar.css`
+9. Add tests for parser and rendering
+10. Update documentation
 
 ### Adding a New API Command
 
