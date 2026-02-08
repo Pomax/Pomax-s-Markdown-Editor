@@ -1,4 +1,4 @@
-# Markdown Editor
+# Pomax's Markdown Editor
 
 A "professional" markdown editor built with Electron, featuring a syntactic tree-based document model for fast editing of large documents.
 
