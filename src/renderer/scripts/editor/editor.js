@@ -705,11 +705,30 @@ export class Editor {
      * Handles click events — syncs tree cursor from wherever the user clicked.
      * In focused view, re-renders when the cursor moves to a different node
      * so the source-syntax decoration follows the cursor.
-     * @param {MouseEvent} _event
+     * @param {MouseEvent} event
      */
-    handleClick(_event) {
+    handleClick(event) {
         const previousNodeId = this.treeCursor?.nodeId ?? null;
         this.syncCursorFromDOM();
+
+        // Clicking on replaced/void elements like <img> or <hr> doesn't
+        // create a text selection, so syncCursorFromDOM won't update the
+        // cursor.  Fall back to walking up from the click target to find
+        // the nearest element with a data-node-id attribute.
+        if (
+            (!this.treeCursor || this.treeCursor.nodeId === previousNodeId) &&
+            event.target instanceof HTMLElement
+        ) {
+            let el = /** @type {HTMLElement|null} */ (event.target);
+            while (el && el !== this.container) {
+                if (el.dataset?.nodeId) {
+                    this.treeCursor = { nodeId: el.dataset.nodeId, offset: 0 };
+                    break;
+                }
+                el = el.parentElement;
+            }
+        }
+
         this.selectionManager.updateFromDOM();
 
         // In focused view the active node shows raw markdown syntax, so we
