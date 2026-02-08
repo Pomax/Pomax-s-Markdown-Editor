@@ -4,6 +4,8 @@
  * as well as external scripting API calls.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { APIRegistry } from './api-registry.js';
 
@@ -217,6 +219,30 @@ export class IPCHandler {
             }
 
             return { success: true, filePath: result.filePaths[0] };
+        });
+
+        ipcMain.handle('image:rename', async (_event, oldPath, newName) => {
+            try {
+                const dir = path.dirname(oldPath);
+                const newPath = path.join(dir, newName);
+
+                if (oldPath === newPath) {
+                    return { success: true, newPath: oldPath };
+                }
+
+                // Check if the target already exists
+                try {
+                    await fs.access(newPath);
+                    return { success: false, message: `A file named "${newName}" already exists.` };
+                } catch {
+                    // Target doesn't exist, safe to rename
+                }
+
+                await fs.rename(oldPath, newPath);
+                return { success: true, newPath };
+            } catch (err) {
+                return { success: false, message: /** @type {Error} */ (err).message };
+            }
         });
     }
 

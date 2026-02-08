@@ -4,6 +4,9 @@
  * This registry is used for IPC-based scripting from external processes.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 /**
  * @typedef {Object} APICommand
  * @property {string} name - The command name
@@ -330,6 +333,50 @@ export class APIRegistry {
             handler: async (params, webContents) => {
                 webContents.send('api:external', 'file:getRecentFiles');
                 return { success: true };
+            },
+        });
+
+        // Image commands
+        this.registerCommand({
+            name: 'image.rename',
+            description: 'Renames an image file on disk',
+            category: 'image',
+            params: {
+                oldPath: {
+                    type: 'string',
+                    description: 'The current absolute file path of the image',
+                    required: true,
+                },
+                newName: {
+                    type: 'string',
+                    description: 'The new filename (not a full path)',
+                    required: true,
+                },
+            },
+            handler: async (params) => {
+                try {
+                    const dir = path.dirname(params.oldPath);
+                    const newPath = path.join(dir, params.newName);
+
+                    if (params.oldPath === newPath) {
+                        return { success: true, newPath: params.oldPath };
+                    }
+
+                    try {
+                        await fs.access(newPath);
+                        return {
+                            success: false,
+                            error: `A file named "${params.newName}" already exists.`,
+                        };
+                    } catch {
+                        // Target doesn't exist, safe to rename
+                    }
+
+                    await fs.rename(params.oldPath, newPath);
+                    return { success: true, newPath };
+                } catch (err) {
+                    return { success: false, error: /** @type {Error} */ (err).message };
+                }
             },
         });
     }

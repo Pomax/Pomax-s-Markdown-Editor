@@ -138,6 +138,14 @@ const electronAPI = {
      */
     getPathForFile: (file) => webUtils.getPathForFile(file),
 
+    /**
+     * Renames an image file on disk.
+     * @param {string} oldPath - The current absolute file path
+     * @param {string} newName - The new filename (not a full path)
+     * @returns {Promise<{success: boolean, newPath?: string, message?: string}>}
+     */
+    renameImage: (oldPath, newName) => ipcRenderer.invoke('image:rename', oldPath, newName),
+
     // ========== Element Operations ==========
 
     /**

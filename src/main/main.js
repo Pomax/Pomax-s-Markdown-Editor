@@ -328,10 +328,6 @@ app.whenReady().then(async () => {
         });
     } else if (!process.env.TESTING) {
         const lastOpen = settingsManager.get('lastOpenFile', null);
-        // Clear immediately so it doesn't interfere with future launches
-        // (e.g. test runs).  A new value is written on close if a file
-        // is still open.
-        settingsManager.delete('lastOpenFile');
         if (lastOpen?.filePath && fs.existsSync(lastOpen.filePath)) {
             window.webContents.once('did-finish-load', () => {
                 restoreLastOpenFile(window, lastOpen);

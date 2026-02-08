@@ -433,7 +433,65 @@ export class Toolbar {
         const result = await this.imageModal.open(existing);
         if (!result) return;
 
-        this.editor.insertOrUpdateImage(result.alt, result.src, result.href);
+        let src = result.src;
+
+        // Handle file rename if the filename changed
+        if (result.rename && window.electronAPI) {
+            const originalFilename = this._extractFilename(src);
+            if (result.rename !== originalFilename) {
+                const renameResult = await window.electronAPI.renameImage(
+                    this._resolveImagePath(src),
+                    result.rename,
+                );
+                if (renameResult.success && renameResult.newPath) {
+                    // Update the src to reflect the new filename
+                    src = this._replaceFilename(src, result.rename);
+                }
+            }
+        }
+
+        this.editor.insertOrUpdateImage(result.alt, src, result.href);
+    }
+
+    /**
+     * Extracts the filename from a path or URL.
+     * @param {string} src
+     * @returns {string}
+     */
+    _extractFilename(src) {
+        if (!src) return '';
+        const clean = src.split('?')[0].split('#')[0];
+        const parts = clean.split(/[/\\]/);
+        return parts[parts.length - 1] || '';
+    }
+
+    /**
+     * Replaces the filename portion of a path or URL.
+     * @param {string} src - Original path
+     * @param {string} newName - New filename
+     * @returns {string}
+     */
+    _replaceFilename(src, newName) {
+        const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
+        if (lastSlash === -1) return newName;
+        return src.substring(0, lastSlash + 1) + newName;
+    }
+
+    /**
+     * Resolves an image src to an absolute file path for rename operations.
+     * Strips file:/// prefix and decodes URI encoding.
+     * @param {string} src
+     * @returns {string}
+     */
+    _resolveImagePath(src) {
+        let resolved = src;
+        if (resolved.startsWith('file:///')) {
+            resolved = resolved.slice(8); // Remove 'file:///'
+        }
+        resolved = decodeURIComponent(resolved);
+        // Convert forward slashes back to backslashes on Windows
+        resolved = resolved.replace(/\//g, '\\');
+        return resolved;
     }
 
     /**

@@ -3,6 +3,8 @@
  * Creates the application menu with File, Edit, and View menus.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { BrowserWindow, Menu, dialog } from 'electron';
 
 /**
@@ -153,6 +155,16 @@ export class MenuBuilder {
                     label: 'Select All',
                     accelerator: 'CmdOrCtrl+A',
                     role: 'selectAll',
+                },
+                { type: 'separator' },
+                {
+                    label: 'Images',
+                    submenu: [
+                        {
+                            label: 'Gather',
+                            click: () => this.handleGatherImages(),
+                        },
+                    ],
                 },
                 { type: 'separator' },
                 {
@@ -401,6 +413,244 @@ export class MenuBuilder {
 
             MenuBuilder._reloadState = null;
         });
+    }
+
+    /**
+     * Handles the "Images → Gather" menu action.
+     *
+     * Finds every image in the document whose path is not relative to the
+     * document's directory, copies those files into the document's directory,
+     * and rewrites the image references to use relative paths.
+     *
+     * If the document has not been saved yet, prompts the user to save first.
+     */
+    async handleGatherImages() {
+        if (!this.window) return;
+
+        // ── 1. Ensure the document has been saved ──
+        if (!this.fileManager.currentFilePath) {
+            const { response } = await dialog.showMessageBox(this.window, {
+                type: 'info',
+                title: 'Gather Images',
+                message: 'Please save your document first',
+                buttons: ['Cancel', 'Save'],
+                defaultId: 1,
+                cancelId: 0,
+            });
+
+            if (response === 0) return; // Cancel
+
+            // Trigger a save and wait for the renderer to complete it
+            this.sendMenuAction('file:save');
+
+            // Wait briefly for the save to complete and check again
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Poll for up to 10 seconds waiting for the file path to be set
+            let waited = 0;
+            while (!this.fileManager.currentFilePath && waited < 10000) {
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                waited += 200;
+            }
+
+            if (!this.fileManager.currentFilePath) return;
+        }
+
+        // ── 2. Confirm the gather operation ──
+        const { response } = await dialog.showMessageBox(this.window, {
+            type: 'question',
+            title: 'Gather Images',
+            message: 'Gather all images?',
+            detail:
+                'This will copy all externally-referenced images into the ' +
+                "document's folder and update image paths to be relative.",
+            buttons: ['No', 'Yes'],
+            defaultId: 1,
+            cancelId: 0,
+        });
+
+        if (response === 0) return; // No
+
+        // ── 3. Get the current document content from the renderer ──
+        const markdown = await this.window.webContents.executeJavaScript(
+            'window.editorAPI?.getContent() ?? ""',
+        );
+
+        if (!markdown) return;
+
+        const docDir = path.dirname(this.fileManager.currentFilePath);
+
+        // ── 4. Find and gather images ──
+        const result = await this._gatherImages(markdown, docDir);
+
+        if (result.changedCount === 0) {
+            await dialog.showMessageBox(this.window, {
+                type: 'info',
+                title: 'Gather Images',
+                message: 'Nothing to gather',
+                detail: 'All images are already relative to the document.',
+                buttons: ['OK'],
+            });
+            return;
+        }
+
+        // ── 5. Push the updated content back into the editor ──
+        const escaped = result.updatedMarkdown
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$/g, '\\$');
+
+        await this.window.webContents.executeJavaScript(
+            `window.editorAPI?.setContent(\`${escaped}\`)`,
+        );
+
+        // Mark as unsaved since the content changed
+        await this.window.webContents.executeJavaScript(
+            'window.editorAPI?.setUnsavedChanges(true)',
+        );
+
+        await dialog.showMessageBox(this.window, {
+            type: 'info',
+            title: 'Gather Images',
+            message: `Gathered ${result.changedCount} image${result.changedCount === 1 ? '' : 's'}`,
+            detail: result.details.join('\n'),
+            buttons: ['OK'],
+        });
+    }
+
+    /**
+     * Scans the markdown for image references that are not relative to
+     * `docDir`, copies them into `docDir`, and returns the updated markdown.
+     *
+     * @param {string} markdown - The document content
+     * @param {string} docDir  - The directory the document lives in
+     * @returns {Promise<{updatedMarkdown: string, changedCount: number, details: string[]}>}
+     */
+    async _gatherImages(markdown, docDir) {
+        // Match both ![alt](src) and [![alt](src)](href) image syntaxes.
+        // We only care about the image source (the inner `src`).
+        const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+
+        let updatedMarkdown = markdown;
+        let changedCount = 0;
+        /** @type {string[]} */
+        const details = [];
+
+        // Collect all matches first (to avoid mutating the string mid-iteration)
+        /** @type {{match: string, src: string}[]} */
+        const matches = [];
+        for (const m of markdown.matchAll(imageRegex)) {
+            matches.push({ match: m[0], src: m[2] });
+        }
+
+        for (const { match, src } of matches) {
+            // Skip URLs (http://, https://, data:, etc.)
+            if (/^(https?:|data:|blob:)/i.test(src)) continue;
+
+            // Normalise the source path for comparison
+            let srcPath = src;
+
+            // Strip file:// prefix if present
+            if (srcPath.startsWith('file:///')) {
+                srcPath = srcPath.slice('file:///'.length);
+            } else if (srcPath.startsWith('file://')) {
+                srcPath = srcPath.slice('file://'.length);
+            }
+
+            // Decode URI-encoded characters (e.g. %20 → space)
+            srcPath = decodeURIComponent(srcPath);
+
+            // On Windows, normalise forward slashes to backslashes
+            srcPath = path.normalize(srcPath);
+
+            // If the path is already relative, check if it resolves inside docDir
+            if (!path.isAbsolute(srcPath)) {
+                const resolved = path.resolve(docDir, srcPath);
+                if (resolved.startsWith(docDir + path.sep) || resolved === docDir) {
+                    // Already relative to the document directory — skip
+                    continue;
+                }
+                // Relative but pointing outside the doc dir — treat as needing gather
+                srcPath = resolved;
+            }
+
+            // At this point, srcPath is absolute. Check if it's already in docDir.
+            if (
+                srcPath.startsWith(docDir + path.sep) ||
+                srcPath.toLowerCase().startsWith(docDir.toLowerCase() + path.sep)
+            ) {
+                // Already in the document's directory — just update the reference
+                // to be relative.
+                const relativePath = path.relative(docDir, srcPath).replace(/\\/g, '/');
+                updatedMarkdown = updatedMarkdown.replace(match, match.replace(src, relativePath));
+                changedCount++;
+                details.push(`${path.basename(srcPath)} → ${relativePath}`);
+                continue;
+            }
+
+            // Copy the file into docDir
+            const baseName = path.basename(srcPath);
+            let destPath = path.join(docDir, baseName);
+
+            // Handle name collisions by appending -2, -3, etc.
+            let counter = 2;
+            const ext = path.extname(baseName);
+            const stem = path.basename(baseName, ext);
+            while (await this._fileExists(destPath)) {
+                // If it's the exact same file (same size), reuse it
+                if (await this._filesMatch(srcPath, destPath)) break;
+                destPath = path.join(docDir, `${stem}-${counter}${ext}`);
+                counter++;
+            }
+
+            try {
+                if (
+                    !(await this._fileExists(destPath)) ||
+                    !(await this._filesMatch(srcPath, destPath))
+                ) {
+                    await fs.copyFile(srcPath, destPath);
+                }
+
+                const relativePath = path.relative(docDir, destPath).replace(/\\/g, '/');
+                updatedMarkdown = updatedMarkdown.replace(match, match.replace(src, relativePath));
+                changedCount++;
+                details.push(`${srcPath} → ${relativePath}`);
+            } catch (err) {
+                const error = /** @type {Error} */ (err);
+                details.push(`Failed to copy ${srcPath}: ${error.message}`);
+            }
+        }
+
+        return { updatedMarkdown, changedCount, details };
+    }
+
+    /**
+     * Checks whether a file exists.
+     * @param {string} filePath
+     * @returns {Promise<boolean>}
+     */
+    async _fileExists(filePath) {
+        try {
+            await fs.access(filePath);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Checks whether two files have the same size (quick equality check).
+     * @param {string} fileA
+     * @param {string} fileB
+     * @returns {Promise<boolean>}
+     */
+    async _filesMatch(fileA, fileB) {
+        try {
+            const [statA, statB] = await Promise.all([fs.stat(fileA), fs.stat(fileB)]);
+            return statA.size === statB.size;
+        } catch {
+            return false;
+        }
     }
 
     /**

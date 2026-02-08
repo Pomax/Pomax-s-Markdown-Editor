@@ -1,6 +1,6 @@
 {
     "apiVersion": "1.0.0",
-    "generatedAt": "2026-02-08T18:09:53.970Z",
+    "generatedAt": "2026-02-08T19:18:46.547Z",
     "commands": [
         {
             "name": "file.new",
@@ -177,6 +177,23 @@
             "description": "Gets the list of recently opened file paths (most recent first)",
             "category": "file",
             "params": {}
+        },
+        {
+            "name": "image.rename",
+            "description": "Renames an image file on disk",
+            "category": "image",
+            "params": {
+                "oldPath": {
+                    "type": "string",
+                    "description": "The current absolute file path of the image",
+                    "required": true
+                },
+                "newName": {
+                    "type": "string",
+                    "description": "The new filename (not a full path)",
+                    "required": true
+                }
+            }
         }
     ]
 }

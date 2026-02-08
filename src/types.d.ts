@@ -30,6 +30,7 @@ interface ElectronAPI {
     getSetting(key: string): Promise<{ success: boolean; value: any }>;
     setSetting(key: string, value: any): Promise<{ success: boolean }>;
     browseForImage(): Promise<{ success: boolean; filePath?: string }>;
+    renameImage(oldPath: string, newName: string): Promise<{ success: boolean; newPath?: string; message?: string }>;
     getPathForFile(file: File): string;
     executeAPICommand(command: string, params: object): Promise<any>;
     setSourceView(): Promise<{ success: boolean }>;

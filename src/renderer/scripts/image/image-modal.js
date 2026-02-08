@@ -12,6 +12,7 @@
  * @property {string} alt - Alt text for the image
  * @property {string} src - Image file path or URL
  * @property {string} href - Optional link URL for linked images
+ * @property {string} rename - New filename for the image (empty string if unchanged)
  */
 
 /**
@@ -56,6 +57,10 @@ export class ImageModal {
                             <input type="text" id="image-src" name="imageSrc" placeholder="Path or URL" autocomplete="off">
                             <button type="button" class="image-browse-btn">Browse…</button>
                         </div>
+                    </div>
+                    <div class="image-field">
+                        <label for="image-rename">Filename</label>
+                        <input type="text" id="image-rename" name="imageRename" placeholder="Rename the image file" autocomplete="off">
                     </div>
                     <div class="image-field">
                         <label for="image-alt">Alt text</label>
@@ -117,7 +122,10 @@ export class ImageModal {
         // Image preview on src change
         const srcInput = /** @type {HTMLInputElement} */ (dialog.querySelector('#image-src'));
         if (srcInput) {
-            srcInput.addEventListener('input', () => this._updatePreview());
+            srcInput.addEventListener('input', () => {
+                this._updatePreview();
+                this._updateRename();
+            });
         }
 
         document.body.appendChild(dialog);
@@ -137,6 +145,7 @@ export class ImageModal {
         if (!this.dialog || this.dialog.open) return Promise.resolve(null);
 
         const srcInput = this._getInput('image-src');
+        const renameInput = this._getInput('image-rename');
         const altInput = this._getInput('image-alt');
         const hrefInput = this._getInput('image-href');
         const insertBtn = /** @type {HTMLButtonElement} */ (
@@ -146,12 +155,14 @@ export class ImageModal {
 
         if (existing?.src || existing?.alt || existing?.href) {
             srcInput.value = existing.src ?? '';
+            renameInput.value = this._extractFilename(existing.src ?? '');
             altInput.value = existing.alt ?? '';
             hrefInput.value = existing.href ?? '';
             if (insertBtn) insertBtn.textContent = 'Update';
             if (heading) heading.textContent = 'Edit Image';
         } else {
             srcInput.value = '';
+            renameInput.value = '';
             altInput.value = '';
             hrefInput.value = '';
             if (insertBtn) insertBtn.textContent = 'Insert';
@@ -185,6 +196,7 @@ export class ImageModal {
      */
     _submit() {
         const src = this._getInput('image-src').value.trim();
+        const rename = this._getInput('image-rename').value.trim();
         const alt = this._getInput('image-alt').value.trim();
         const href = this._getInput('image-href').value.trim();
 
@@ -198,7 +210,7 @@ export class ImageModal {
             this.dialog.close();
         }
 
-        this._resolve({ alt, src, href });
+        this._resolve({ alt, src, href, rename });
     }
 
     /**
@@ -210,6 +222,7 @@ export class ImageModal {
         const result = await window.electronAPI.browseForImage();
         if (result.success && result.filePath) {
             this._getInput('image-src').value = result.filePath;
+            this._updateRename();
             this._updatePreview();
         }
     }
@@ -243,6 +256,29 @@ export class ImageModal {
         } else {
             previewContainer.classList.remove('visible');
         }
+    }
+
+    /**
+     * Updates the rename field with the filename from the current src value.
+     */
+    _updateRename() {
+        if (!this.dialog) return;
+        const src = this._getInput('image-src').value.trim();
+        this._getInput('image-rename').value = this._extractFilename(src);
+    }
+
+    /**
+     * Extracts the filename from a path or URL.
+     * @param {string} src - Image source path or URL
+     * @returns {string} The filename portion, or empty string if none
+     */
+    _extractFilename(src) {
+        if (!src) return '';
+        // Strip query string and fragment
+        const clean = src.split('?')[0].split('#')[0];
+        // Handle both forward and back slashes
+        const parts = clean.split(/[/\\]/);
+        return parts[parts.length - 1] || '';
     }
 
     /**

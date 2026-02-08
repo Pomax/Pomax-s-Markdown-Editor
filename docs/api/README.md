@@ -8,7 +8,7 @@ The Markdown Editor exposes a comprehensive API for external scripting via IPC (
 
 Current Version: **1.0.0**
 
-*Generated: 2026-02-08T18:09:53.972Z*
+*Generated: 2026-02-08T19:18:46.549Z*
 
 ## Connection
 
@@ -26,6 +26,7 @@ External applications can connect to the editor via Electron's IPC mechanism.
 - [Document Commands](#document-commands)
 - [Element Commands](#element-commands)
 - [File Commands](#file-commands)
+- [Image Commands](#image-commands)
 - [Selection Commands](#selection-commands)
 - [View Commands](#view-commands)
 
@@ -308,6 +309,33 @@ Gets the list of recently opened file paths (most recent first)
 {
     "success": true
 }
+```
+
+---
+
+## Image Commands
+
+### `image.rename`
+
+Renames an image file on disk
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| oldPath | string | Yes | The current absolute file path of the image |
+| newName | string | Yes | The new filename (not a full path) |
+
+**Returns:**
+```json
+{
+    "success": true
+}
+```
+
+**Example:**
+```javascript
+await electronAPI.executeCommand('image.rename', {"oldPath":"example","newName":"example"});
 ```
 
 ---
