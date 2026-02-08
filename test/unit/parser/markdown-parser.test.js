@@ -159,6 +159,64 @@ describe('MarkdownParser', () => {
         });
     });
 
+    describe('images', () => {
+        it('should parse a bare image', () => {
+            const tree = parser.parse('![alt text](image.png)');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].content, 'alt text');
+            assert.strictEqual(tree.children[0].attributes.alt, 'alt text');
+            assert.strictEqual(tree.children[0].attributes.url, 'image.png');
+            assert.strictEqual(tree.children[0].attributes.href, undefined);
+        });
+
+        it('should parse an image with empty alt text', () => {
+            const tree = parser.parse('![](photo.jpg)');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].content, '');
+            assert.strictEqual(tree.children[0].attributes.alt, '');
+            assert.strictEqual(tree.children[0].attributes.url, 'photo.jpg');
+        });
+
+        it('should parse a linked image', () => {
+            const tree = parser.parse('[![logo](logo.png)](https://example.com)');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].content, 'logo');
+            assert.strictEqual(tree.children[0].attributes.alt, 'logo');
+            assert.strictEqual(tree.children[0].attributes.url, 'logo.png');
+            assert.strictEqual(tree.children[0].attributes.href, 'https://example.com');
+        });
+
+        it('should round-trip a bare image through toMarkdown', () => {
+            const markdown = '![alt text](image.png)';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children[0].toMarkdown(), markdown);
+        });
+
+        it('should round-trip a linked image through toMarkdown', () => {
+            const markdown = '[![logo](logo.png)](https://example.com)';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children[0].toMarkdown(), markdown);
+        });
+
+        it('should parse an image with a full URL', () => {
+            const tree = parser.parse('![photo](https://example.com/img.jpg)');
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].attributes.url, 'https://example.com/img.jpg');
+        });
+
+        it('should parse an image among other elements', () => {
+            const markdown = '# Title\n\n![photo](img.png)\n\nSome text';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'heading1');
+            assert.strictEqual(tree.children[1].type, 'image');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+        });
+    });
+
     describe('complex documents', () => {
         it('should parse a document with mixed elements', () => {
             const markdown = `# Title

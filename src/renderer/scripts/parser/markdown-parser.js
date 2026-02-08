@@ -54,6 +54,16 @@ export class MarkdownParser {
                 handler: this.parseHorizontalRule.bind(this),
             },
             {
+                type: 'linked-image',
+                pattern: /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/,
+                handler: this.parseLinkedImage.bind(this),
+            },
+            {
+                type: 'image',
+                pattern: /^!\[([^\]]*)\]\(([^)]+)\)$/,
+                handler: this.parseImage.bind(this),
+            },
+            {
                 type: 'table-row',
                 pattern: /^\|(.+)\|$/,
                 handler: this.parseTableRow.bind(this),
@@ -244,6 +254,45 @@ export class MarkdownParser {
      */
     parseHorizontalRule(lines, index, match) {
         const node = new SyntaxNode('horizontal-rule', '');
+        node.startLine = index;
+        node.endLine = index;
+
+        return { node, nextIndex: index + 1 };
+    }
+
+    /**
+     * Parses an image.
+     * @param {string[]} lines
+     * @param {number} index
+     * @param {RegExpMatchArray} match
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseImage(lines, index, match) {
+        const alt = match[1];
+        const src = match[2];
+
+        const node = new SyntaxNode('image', alt);
+        node.attributes = { alt, url: src };
+        node.startLine = index;
+        node.endLine = index;
+
+        return { node, nextIndex: index + 1 };
+    }
+
+    /**
+     * Parses a linked image.
+     * @param {string[]} lines
+     * @param {number} index
+     * @param {RegExpMatchArray} match
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseLinkedImage(lines, index, match) {
+        const alt = match[1];
+        const src = match[2];
+        const href = match[3];
+
+        const node = new SyntaxNode('image', alt);
+        node.attributes = { alt, url: src, href };
         node.startLine = index;
         node.endLine = index;
 

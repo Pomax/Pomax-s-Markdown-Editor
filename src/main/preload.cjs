@@ -122,6 +122,14 @@ const electronAPI = {
      */
     setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
 
+    // ========== Image Operations ==========
+
+    /**
+     * Opens a file dialog to browse for an image.
+     * @returns {Promise<{success: boolean, filePath?: string}>}
+     */
+    browseForImage: () => ipcRenderer.invoke('image:browse'),
+
     // ========== Element Operations ==========
 
     /**

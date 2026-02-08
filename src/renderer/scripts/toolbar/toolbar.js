@@ -3,6 +3,7 @@
  * Provides element-specific formatting buttons.
  */
 
+import { ImageModal } from '../image/image-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
 
 /**
@@ -37,6 +38,9 @@ export class Toolbar {
 
         /** @type {HTMLSelectElement|null} */
         this.viewModeSelect = null;
+
+        /** @type {ImageModal|null} */
+        this.imageModal = null;
 
         /** @type {ButtonConfig[]} */
         this.buttonConfigs = this.getButtonConfigs();
@@ -207,6 +211,13 @@ export class Toolbar {
                 ],
             },
             {
+                id: 'image',
+                label: 'Image',
+                icon: '🖼',
+                action: 'image:insert',
+                applicableTo: ['paragraph', 'image'],
+            },
+            {
                 id: 'separator2',
                 label: '',
                 icon: '',
@@ -343,7 +354,39 @@ export class Toolbar {
             case 'format':
                 this.editor.applyFormat(actionValue);
                 break;
+            case 'image':
+                this.handleImageAction();
+                break;
         }
+    }
+
+    /**
+     * Handles the image button action.
+     * If the cursor is on an image node, opens the modal for editing.
+     * Otherwise opens it for insertion.
+     */
+    async handleImageAction() {
+        if (!this.imageModal) {
+            this.imageModal = new ImageModal();
+        }
+
+        // Check if cursor is on an image node
+        const currentNode = this.editor.getCurrentNode();
+        /** @type {Partial<import('../image/image-modal.js').ImageData>|undefined} */
+        let existing;
+
+        if (currentNode?.type === 'image') {
+            existing = {
+                alt: currentNode.attributes.alt ?? currentNode.content,
+                src: currentNode.attributes.url ?? '',
+                href: currentNode.attributes.href ?? '',
+            };
+        }
+
+        const result = await this.imageModal.open(existing);
+        if (!result) return;
+
+        this.editor.insertOrUpdateImage(result.alt, result.src, result.href);
     }
 
     /**

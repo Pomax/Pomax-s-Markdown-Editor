@@ -113,6 +113,18 @@ describe('SyntaxNode', () => {
             const node = new SyntaxNode('horizontal-rule', '');
             assert.strictEqual(node.toMarkdown(), '---');
         });
+
+        it('should convert bare image to markdown', () => {
+            const node = new SyntaxNode('image', 'alt text');
+            node.attributes = { alt: 'alt text', url: 'image.png' };
+            assert.strictEqual(node.toMarkdown(), '![alt text](image.png)');
+        });
+
+        it('should convert linked image to markdown', () => {
+            const node = new SyntaxNode('image', 'logo');
+            node.attributes = { alt: 'logo', url: 'logo.png', href: 'https://example.com' };
+            assert.strictEqual(node.toMarkdown(), '[![logo](logo.png)](https://example.com)');
+        });
     });
 
     describe('clone', () => {

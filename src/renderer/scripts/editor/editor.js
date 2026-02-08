@@ -631,6 +631,14 @@ export class Editor {
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
                 return `${indent}${marker}${content}`;
             }
+            case 'image': {
+                const imgAlt = attributes?.alt ?? content;
+                const imgSrc = attributes?.url ?? '';
+                if (attributes?.href) {
+                    return `[![${imgAlt}](${imgSrc})](${attributes.href})`;
+                }
+                return `![${imgAlt}](${imgSrc})`;
+            }
             default:
                 return content;
         }
@@ -665,6 +673,8 @@ export class Editor {
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
                 return indent.length + marker.length;
             }
+            case 'image':
+                return 0;
             default:
                 return 0;
         }
@@ -850,6 +860,53 @@ export class Editor {
      */
     insertText(text) {
         this.insertTextAtCursor(text);
+    }
+
+    /**
+     * Inserts a new image node or updates the existing image node at the cursor.
+     * @param {string} alt - Alt text
+     * @param {string} src - Image source path or URL
+     * @param {string} href - Optional link URL (empty string for no link)
+     */
+    insertOrUpdateImage(alt, src, href) {
+        if (!this.syntaxTree) return;
+
+        const before = this.syntaxTree.toMarkdown();
+        const currentNode = this.getCurrentNode();
+
+        if (currentNode?.type === 'image') {
+            // Update existing image node
+            currentNode.content = alt;
+            currentNode.attributes = { alt, url: src };
+            if (href) {
+                currentNode.attributes.href = href;
+            }
+            this.treeCursor = { nodeId: currentNode.id, offset: alt.length };
+        } else {
+            // Insert a new image node
+            const imageNode = new SyntaxNode('image', alt);
+            imageNode.attributes = { alt, url: src };
+            if (href) {
+                imageNode.attributes.href = href;
+            }
+
+            if (currentNode) {
+                const idx = this.getNodeIndex(currentNode);
+                // If the current node is an empty paragraph, replace it
+                if (currentNode.type === 'paragraph' && currentNode.content === '') {
+                    this.syntaxTree.children.splice(idx, 1, imageNode);
+                } else {
+                    // Insert after current node
+                    this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+                }
+            } else {
+                this.syntaxTree.appendChild(imageNode);
+            }
+
+            this.treeCursor = { nodeId: imageNode.id, offset: alt.length };
+        }
+
+        this.recordAndRender(before);
     }
 
     /**

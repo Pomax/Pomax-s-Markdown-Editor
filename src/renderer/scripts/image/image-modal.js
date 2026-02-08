@@ -1,0 +1,256 @@
+/**
+ * @fileoverview Image insertion/editing modal dialog.
+ * Displays a modal overlay for inserting or editing an image in the document.
+ * Allows the user to type an image path or browse for one, specify alt text,
+ * and optionally provide a link URL for a linked image.
+ */
+
+/// <reference path="../../../types.d.ts" />
+
+/**
+ * @typedef {Object} ImageData
+ * @property {string} alt - Alt text for the image
+ * @property {string} src - Image file path or URL
+ * @property {string} href - Optional link URL for linked images
+ */
+
+/**
+ * A modal dialog for inserting or editing images.
+ */
+export class ImageModal {
+    constructor() {
+        /** @type {HTMLDialogElement|null} */
+        this.dialog = null;
+
+        /** @type {boolean} */
+        this._built = false;
+
+        /**
+         * Resolve function for the current open() promise.
+         * @type {function(ImageData|null): void}
+         */
+        this._resolve = () => {};
+    }
+
+    /**
+     * Lazily builds the dialog DOM the first time it is needed.
+     */
+    _build() {
+        if (this._built) return;
+        this._built = true;
+
+        const dialog = document.createElement('dialog');
+        dialog.className = 'image-dialog';
+        dialog.setAttribute('aria-label', 'Insert Image');
+
+        dialog.innerHTML = `
+            <form method="dialog" class="image-form">
+                <header class="image-dialog-header">
+                    <h2>Insert Image</h2>
+                    <button type="button" class="image-dialog-close" aria-label="Close">&times;</button>
+                </header>
+                <div class="image-dialog-body">
+                    <div class="image-field">
+                        <label for="image-src">Image location</label>
+                        <div class="image-src-group">
+                            <input type="text" id="image-src" name="imageSrc" placeholder="Path or URL" autocomplete="off">
+                            <button type="button" class="image-browse-btn">Browse…</button>
+                        </div>
+                    </div>
+                    <div class="image-field">
+                        <label for="image-alt">Alt text</label>
+                        <input type="text" id="image-alt" name="imageAlt" placeholder="Describe the image" autocomplete="off">
+                    </div>
+                    <div class="image-field">
+                        <label for="image-href">Link URL <span class="image-field-hint">(optional)</span></label>
+                        <input type="text" id="image-href" name="imageHref" placeholder="https://example.com" autocomplete="off">
+                    </div>
+                    <div class="image-preview-container" id="image-preview-container">
+                        <img id="image-preview" class="image-preview" alt="">
+                    </div>
+                </div>
+                <footer class="image-dialog-footer">
+                    <button type="button" class="image-btn image-btn--cancel">Cancel</button>
+                    <button type="submit" class="image-btn image-btn--insert">Insert</button>
+                </footer>
+            </form>
+        `;
+
+        // Close on × or Cancel
+        const closeBtn = dialog.querySelector('.image-dialog-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this._cancel());
+        }
+        const cancelBtn = dialog.querySelector('.image-btn--cancel');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this._cancel());
+        }
+
+        // Save/insert handler
+        const form = dialog.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this._submit();
+            });
+        }
+
+        // Close on backdrop click
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                this._cancel();
+            }
+        });
+
+        // Close on Escape key
+        dialog.addEventListener('cancel', (e) => {
+            e.preventDefault();
+            this._cancel();
+        });
+
+        // Browse button
+        const browseBtn = dialog.querySelector('.image-browse-btn');
+        if (browseBtn) {
+            browseBtn.addEventListener('click', () => this._browse());
+        }
+
+        // Image preview on src change
+        const srcInput = /** @type {HTMLInputElement} */ (dialog.querySelector('#image-src'));
+        if (srcInput) {
+            srcInput.addEventListener('input', () => this._updatePreview());
+        }
+
+        document.body.appendChild(dialog);
+        this.dialog = dialog;
+    }
+
+    /**
+     * Opens the image modal.
+     * If `existing` is provided, the fields are pre-populated for editing.
+     * Returns a promise that resolves with the image data, or null if cancelled.
+     *
+     * @param {Partial<ImageData>} [existing] - Existing image data for editing
+     * @returns {Promise<ImageData|null>}
+     */
+    open(existing) {
+        this._build();
+        if (!this.dialog || this.dialog.open) return Promise.resolve(null);
+
+        const srcInput = this._getInput('image-src');
+        const altInput = this._getInput('image-alt');
+        const hrefInput = this._getInput('image-href');
+        const insertBtn = /** @type {HTMLButtonElement} */ (
+            this.dialog.querySelector('.image-btn--insert')
+        );
+        const heading = this.dialog.querySelector('.image-dialog-header h2');
+
+        if (existing?.src || existing?.alt || existing?.href) {
+            srcInput.value = existing.src ?? '';
+            altInput.value = existing.alt ?? '';
+            hrefInput.value = existing.href ?? '';
+            if (insertBtn) insertBtn.textContent = 'Update';
+            if (heading) heading.textContent = 'Edit Image';
+        } else {
+            srcInput.value = '';
+            altInput.value = '';
+            hrefInput.value = '';
+            if (insertBtn) insertBtn.textContent = 'Insert';
+            if (heading) heading.textContent = 'Insert Image';
+        }
+
+        this._updatePreview();
+
+        this.dialog.showModal();
+
+        // Focus the src input
+        srcInput.focus();
+
+        return new Promise((resolve) => {
+            this._resolve = resolve;
+        });
+    }
+
+    /**
+     * Closes the modal without submitting.
+     */
+    _cancel() {
+        if (this.dialog?.open) {
+            this.dialog.close();
+        }
+        this._resolve(null);
+    }
+
+    /**
+     * Submits the modal data.
+     */
+    _submit() {
+        const src = this._getInput('image-src').value.trim();
+        const alt = this._getInput('image-alt').value.trim();
+        const href = this._getInput('image-href').value.trim();
+
+        if (!src) {
+            // Focus the src input if empty
+            this._getInput('image-src').focus();
+            return;
+        }
+
+        if (this.dialog?.open) {
+            this.dialog.close();
+        }
+
+        this._resolve({ alt, src, href });
+    }
+
+    /**
+     * Opens a file dialog to browse for an image.
+     */
+    async _browse() {
+        if (!window.electronAPI) return;
+
+        const result = await window.electronAPI.browseForImage();
+        if (result.success && result.filePath) {
+            this._getInput('image-src').value = result.filePath;
+            this._updatePreview();
+        }
+    }
+
+    /**
+     * Updates the image preview.
+     */
+    _updatePreview() {
+        if (!this.dialog) return;
+
+        const src = this._getInput('image-src').value.trim();
+        const previewContainer = this.dialog.querySelector('#image-preview-container');
+        const previewImg = /** @type {HTMLImageElement} */ (
+            this.dialog.querySelector('#image-preview')
+        );
+
+        if (!previewContainer || !previewImg) return;
+
+        if (src) {
+            previewImg.src = src;
+            previewImg.alt = this._getInput('image-alt').value.trim() || 'Preview';
+            previewContainer.classList.add('visible');
+
+            // Hide on error
+            previewImg.onerror = () => {
+                previewContainer.classList.remove('visible');
+            };
+            previewImg.onload = () => {
+                previewContainer.classList.add('visible');
+            };
+        } else {
+            previewContainer.classList.remove('visible');
+        }
+    }
+
+    /**
+     * Gets an input element by id.
+     * @param {string} id
+     * @returns {HTMLInputElement}
+     */
+    _getInput(id) {
+        return /** @type {HTMLInputElement} */ (this.dialog?.querySelector(`#${id}`));
+    }
+}

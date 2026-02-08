@@ -4,7 +4,7 @@
  * as well as external scripting API calls.
  */
 
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { APIRegistry } from './api-registry.js';
 
 /**
@@ -41,6 +41,7 @@ export class IPCHandler {
         this.registerElementHandlers();
         this.registerAppHandlers();
         this.registerSettingsHandlers();
+        this.registerImageHandlers();
         this.registerAPIHandlers();
     }
 
@@ -186,6 +187,36 @@ export class IPCHandler {
         ipcMain.handle('settings:set', async (_event, key, value) => {
             this.settingsManager.set(key, value);
             return { success: true };
+        });
+    }
+
+    /**
+     * Registers image-related IPC handlers.
+     */
+    registerImageHandlers() {
+        ipcMain.handle('image:browse', async (event) => {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            if (!window) {
+                return { success: false };
+            }
+
+            const result = await dialog.showOpenDialog(window, {
+                title: 'Select Image',
+                filters: [
+                    {
+                        name: 'Images',
+                        extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'],
+                    },
+                    { name: 'All Files', extensions: ['*'] },
+                ],
+                properties: ['openFile'],
+            });
+
+            if (result.canceled || result.filePaths.length === 0) {
+                return { success: false };
+            }
+
+            return { success: true, filePath: result.filePaths[0] };
         });
     }
 

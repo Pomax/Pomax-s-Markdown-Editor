@@ -29,6 +29,7 @@ interface ElectronAPI {
     getSettings(): Promise<{ success: boolean; settings: Record<string, any> }>;
     getSetting(key: string): Promise<{ success: boolean; value: any }>;
     setSetting(key: string, value: any): Promise<{ success: boolean }>;
+    browseForImage(): Promise<{ success: boolean; filePath?: string }>;
     executeAPICommand(command: string, params: object): Promise<any>;
 }
 
@@ -43,6 +44,7 @@ interface NodeAttributes {
     url?: string;
     title?: string;
     alt?: string;
+    href?: string;
 }
 
 declare global {

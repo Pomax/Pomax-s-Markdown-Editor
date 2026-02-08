@@ -101,6 +101,9 @@ export class SourceRenderer {
             case 'horizontal-rule':
                 return this.renderHorizontalRule(node, element);
 
+            case 'image':
+                return this.renderImage(node, element);
+
             case 'table':
                 return this.renderTable(node, element);
 
@@ -216,6 +219,31 @@ export class SourceRenderer {
         this.renderInlineContent(node.content, contentSpan);
 
         element.appendChild(prefixSpan);
+        element.appendChild(contentSpan);
+
+        return element;
+    }
+
+    /**
+     * Renders an image node.
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element
+     * @returns {HTMLElement}
+     */
+    renderImage(node, element) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const alt = attrs.alt ?? node.content;
+        const src = attrs.url ?? '';
+
+        const contentSpan = document.createElement('span');
+        contentSpan.className = 'md-content';
+
+        if (attrs.href) {
+            contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
+        } else {
+            contentSpan.textContent = `![${alt}](${src})`;
+        }
+
         element.appendChild(contentSpan);
 
         return element;

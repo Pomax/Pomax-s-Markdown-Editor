@@ -95,6 +95,9 @@ export class FocusedRenderer {
             case 'horizontal-rule':
                 return this.renderHorizontalRule(node, element, isFocused);
 
+            case 'image':
+                return this.renderImage(node, element, isFocused);
+
             case 'table':
                 return this.renderTable(node, element, isFocused);
 
@@ -243,6 +246,49 @@ export class FocusedRenderer {
         contentSpan.className = 'md-content';
         this.renderInlineContent(node.content, contentSpan, isFocused);
         element.appendChild(contentSpan);
+
+        return element;
+    }
+
+    /**
+     * Renders an image node.
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element
+     * @param {boolean} isFocused
+     * @returns {HTMLElement}
+     */
+    renderImage(node, element, isFocused) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const alt = attrs.alt ?? node.content;
+        const src = attrs.url ?? '';
+
+        if (isFocused) {
+            // Show raw syntax when focused
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'md-content';
+            if (attrs.href) {
+                contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
+            } else {
+                contentSpan.textContent = `![${alt}](${src})`;
+            }
+            element.appendChild(contentSpan);
+        } else {
+            // Show rendered image
+            const img = document.createElement('img');
+            img.className = 'md-image-preview';
+            img.src = src;
+            img.alt = alt;
+            img.title = alt;
+
+            if (attrs.href) {
+                const link = document.createElement('a');
+                link.href = attrs.href;
+                link.appendChild(img);
+                element.appendChild(link);
+            } else {
+                element.appendChild(img);
+            }
+        }
 
         return element;
     }

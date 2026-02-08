@@ -30,17 +30,56 @@ let menuBuilder;
 let settingsManager;
 
 /**
+ * Debounce timeout handle for saving window bounds.
+ * @type {ReturnType<typeof setTimeout>|null}
+ */
+let boundsDebounce = null;
+
+/**
+ * Saves the current window bounds and maximized state to the database.
+ * Called on move/resize (debounced) and before close.
+ */
+function saveWindowBounds() {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    const isMaximized = mainWindow.isMaximized();
+    // When maximized, persist the *restore* bounds so we remember the
+    // non-maximized size/position for the next launch.
+    const bounds = isMaximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
+
+    settingsManager.set('windowBounds', {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        isMaximized,
+    });
+}
+
+/**
+ * Debounced version of saveWindowBounds — waits 500 ms of inactivity.
+ */
+function debounceSaveWindowBounds() {
+    if (boundsDebounce) clearTimeout(boundsDebounce);
+    boundsDebounce = setTimeout(saveWindowBounds, 500);
+}
+
+/**
  * Creates the main application window with A4 aspect ratio.
  * @returns {BrowserWindow} The created browser window
  */
 function createWindow() {
     // A4 aspect ratio is approximately 1:1.414
-    const baseWidth = 800;
-    const height = Math.round(baseWidth * Math.SQRT2);
+    const defaultWidth = 800;
+    const defaultHeight = Math.round(defaultWidth * Math.SQRT2);
 
-    mainWindow = new BrowserWindow({
-        width: baseWidth,
-        height: height,
+    // Load saved window bounds from settings
+    const saved = settingsManager.get('windowBounds');
+
+    /** @type {Electron.BrowserWindowConstructorOptions} */
+    const windowOptions = {
+        width: saved?.width ?? defaultWidth,
+        height: saved?.height ?? defaultHeight,
         minWidth: 600,
         minHeight: 848,
         webPreferences: {
@@ -49,7 +88,20 @@ function createWindow() {
             nodeIntegration: false,
         },
         show: false,
-    });
+    };
+
+    // Only set position if we have saved values (otherwise let the OS decide)
+    if (saved?.x != null && saved?.y != null) {
+        windowOptions.x = saved.x;
+        windowOptions.y = saved.y;
+    }
+
+    mainWindow = new BrowserWindow(windowOptions);
+
+    // Restore maximized state after the window is created
+    if (saved?.isMaximized) {
+        mainWindow.maximize();
+    }
 
     mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
@@ -59,7 +111,18 @@ function createWindow() {
         win.show();
     });
 
+    // Persist window bounds on move/resize (debounced)
+    win.on('resize', debounceSaveWindowBounds);
+    win.on('move', debounceSaveWindowBounds);
+
     win.on('close', async (event) => {
+        // Flush any pending debounced save immediately
+        if (boundsDebounce) {
+            clearTimeout(boundsDebounce);
+            boundsDebounce = null;
+        }
+        saveWindowBounds();
+
         const hasUnsavedChanges = await win.webContents.executeJavaScript(
             'window.editorAPI?.hasUnsavedChanges() ?? false',
         );
@@ -128,8 +191,6 @@ async function handleUnsavedChangesOnClose(window) {
  * @param {BrowserWindow} window - The main window
  */
 async function initialize(window) {
-    settingsManager = new SettingsManager();
-    settingsManager.initialize();
     fileManager = new FileManager(settingsManager);
     ipcHandler = new IPCHandler(fileManager, settingsManager);
 
@@ -144,6 +205,10 @@ async function initialize(window) {
 
 // Electron app lifecycle events
 app.whenReady().then(async () => {
+    // Initialize settings before creating the window so saved bounds are available
+    settingsManager = new SettingsManager();
+    settingsManager.initialize();
+
     const window = createWindow();
     await initialize(window);
 
