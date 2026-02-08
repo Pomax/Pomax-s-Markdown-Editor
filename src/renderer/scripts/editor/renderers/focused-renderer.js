@@ -64,9 +64,35 @@ export class FocusedRenderer {
 
         const fragment = document.createDocumentFragment();
 
-        for (const node of syntaxTree.children) {
+        // Pre-compute 1-based visual positions for ordered list items so
+        // that each consecutive run of ordered items at the same indent
+        // level always numbers from 1.
+        const children = syntaxTree.children;
+        /** @type {Map<string, number>} nodeId → visual number */
+        const listNumbers = new Map();
+        let runCount = 0;
+        let runIndent = -1;
+        for (let i = 0; i < children.length; i++) {
+            const node = children[i];
+            const attrs = node.attributes;
+            if (node.type === 'list-item' && attrs.ordered) {
+                const indent = attrs.indent || 0;
+                if (indent === runIndent) {
+                    runCount++;
+                } else {
+                    runCount = 1;
+                    runIndent = indent;
+                }
+                listNumbers.set(node.id, runCount);
+            } else {
+                runCount = 0;
+                runIndent = -1;
+            }
+        }
+
+        for (const node of children) {
             const isFocused = node.id === currentNodeId;
-            const element = this.renderNode(node, isFocused);
+            const element = this.renderNode(node, isFocused, listNumbers.get(node.id));
             if (element) {
                 fragment.appendChild(element);
             }
@@ -87,9 +113,10 @@ export class FocusedRenderer {
      * Renders a syntax tree node to an HTML element.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node - The node to render
      * @param {boolean} isFocused - Whether this node has focus
+     * @param {number} [visualNumber] - 1-based position for ordered list items
      * @returns {HTMLElement|null}
      */
-    renderNode(node, isFocused) {
+    renderNode(node, isFocused, visualNumber) {
         const element = document.createElement('div');
         element.className = `md-line md-${node.type}`;
         element.dataset.nodeId = node.id;
@@ -117,7 +144,7 @@ export class FocusedRenderer {
                 return this.renderCodeBlock(node, element, isFocused);
 
             case 'list-item':
-                return this.renderListItem(node, element, isFocused);
+                return this.renderListItem(node, element, isFocused, visualNumber);
 
             case 'horizontal-rule':
                 return this.renderHorizontalRule(node, element, isFocused);
@@ -250,9 +277,10 @@ export class FocusedRenderer {
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
      * @param {boolean} isFocused
+     * @param {number} [visualNumber] - 1-based position within the list run
      * @returns {HTMLElement}
      */
-    renderListItem(node, element, isFocused) {
+    renderListItem(node, element, isFocused, visualNumber) {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const indent = attrs.indent || 0;
         const isOrdered = attrs.ordered;
@@ -267,10 +295,12 @@ export class FocusedRenderer {
             element.appendChild(prefixSpan);
         } else {
             // Show bullet/number in formatted view
-            element.style.marginLeft = `${indent * 1.5}em`;
             element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
             element.style.display = 'list-item';
             element.style.marginLeft = `${(indent + 1) * 1.5}em`;
+            if (isOrdered && visualNumber != null) {
+                element.style.counterSet = `list-item ${visualNumber}`;
+            }
         }
 
         const contentSpan = document.createElement('span');
