@@ -318,7 +318,9 @@ export class SourceRenderer {
         // Regular expressions for inline elements
         const patterns = [
             { type: 'bold', regex: /\*\*(.+?)\*\*/g },
+            { type: 'bold', regex: /__(.+?)__/g },
             { type: 'italic', regex: /\*(.+?)\*/g },
+            { type: 'italic', regex: /(?<!\w)_([^_]+)_(?!\w)/g },
             { type: 'code', regex: /`([^`]+)`/g },
             { type: 'link', regex: /\[([^\]]+)\]\(([^)]+)\)/g },
             { type: 'strikethrough', regex: /~~(.+?)~~/g },

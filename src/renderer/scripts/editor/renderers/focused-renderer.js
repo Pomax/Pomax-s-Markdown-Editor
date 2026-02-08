@@ -446,7 +446,9 @@ export class FocusedRenderer {
         // Simplified inline parsing - would be more complex in production
         const patterns = [
             { type: 'bold', regex: /\*\*(.+?)\*\*/g },
+            { type: 'bold', regex: /__(.+?)__/g },
             { type: 'italic', regex: /(?<!\*)\*([^*]+)\*(?!\*)/g },
+            { type: 'italic', regex: /(?<!\w)_([^_]+)_(?!\w)/g },
             { type: 'code', regex: /`([^`]+)`/g },
             { type: 'strikethrough', regex: /~~(.+?)~~/g },
             { type: 'link', regex: /\[([^\]]+)\]\(([^)]+)\)/g },
@@ -471,7 +473,9 @@ export class FocusedRenderer {
     stripMarkdownSyntax(content) {
         return content
             .replace(/\*\*(.+?)\*\*/g, '$1')
+            .replace(/__(.+?)__/g, '$1')
             .replace(/\*(.+?)\*/g, '$1')
+            .replace(/(?<!\w)_(.+?)_(?!\w)/g, '$1')
             .replace(/~~(.+?)~~/g, '$1')
             .replace(/`([^`]+)`/g, '$1')
             .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
