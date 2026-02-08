@@ -85,6 +85,11 @@ export class MenuBuilder {
                 },
                 { type: 'separator' },
                 {
+                    label: 'Word Count',
+                    click: () => this.sendMenuAction('file:wordCount'),
+                },
+                { type: 'separator' },
+                {
                     label: 'Exit',
                     accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Alt+F4',
                     click: () => this.handleExit(),

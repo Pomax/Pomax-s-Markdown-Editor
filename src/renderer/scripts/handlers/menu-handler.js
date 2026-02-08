@@ -6,6 +6,7 @@
 /// <reference path="../../../types.d.ts" />
 
 import { PreferencesModal } from '../preferences/preferences-modal.js';
+import { WordCountModal } from '../word-count/word-count-modal.js';
 
 /**
  * Handles menu actions from the main process.
@@ -69,6 +70,9 @@ export class MenuHandler {
                 break;
             case 'file:saveAs':
                 this.handleSaveAs();
+                break;
+            case 'file:wordCount':
+                this.handleWordCount();
                 break;
             case 'edit:undo':
                 this.handleUndo();
@@ -199,5 +203,15 @@ export class MenuHandler {
             this._preferencesModal = new PreferencesModal();
         }
         this._preferencesModal.open();
+    }
+
+    /**
+     * Handles opening the Word Count modal.
+     */
+    handleWordCount() {
+        if (!this._wordCountModal) {
+            this._wordCountModal = new WordCountModal();
+        }
+        this._wordCountModal.open(this.editor.syntaxTree);
     }
 }
