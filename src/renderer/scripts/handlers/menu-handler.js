@@ -164,6 +164,7 @@ export class MenuHandler {
      */
     handleViewSource() {
         this.editor.setViewMode('source');
+        this.toolbar.setViewMode('source');
     }
 
     /**
@@ -171,6 +172,7 @@ export class MenuHandler {
      */
     handleViewFocused() {
         this.editor.setViewMode('focused');
+        this.toolbar.setViewMode('focused');
     }
 
     /**

@@ -35,6 +35,9 @@ export class Toolbar {
         /** @type {ToolbarButton[]} */
         this.buttons = [];
 
+        /** @type {HTMLSelectElement|null} */
+        this.viewModeSelect = null;
+
         /** @type {ButtonConfig[]} */
         this.buttonConfigs = this.getButtonConfigs();
     }
@@ -236,6 +239,15 @@ export class Toolbar {
         this.toolbarElement.setAttribute('role', 'toolbar');
         this.toolbarElement.setAttribute('aria-label', 'Formatting toolbar');
 
+        // Create view mode dropdown
+        const viewModeGroup = this._createViewModeSelect();
+        this.toolbarElement.appendChild(viewModeGroup);
+
+        // Separator after dropdown
+        const sep = document.createElement('div');
+        sep.className = 'toolbar-separator';
+        this.toolbarElement.appendChild(sep);
+
         // Create buttons
         for (const config of this.buttonConfigs) {
             if (config.action === 'separator') {
@@ -259,6 +271,62 @@ export class Toolbar {
 
         // Initial state
         this.updateButtonStates(null);
+    }
+
+    /**
+     * Creates the view-mode dropdown with a label.
+     * @returns {HTMLElement}
+     */
+    _createViewModeSelect() {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'toolbar-view-mode-group';
+
+        const label = document.createElement('label');
+        label.className = 'toolbar-view-mode-label';
+        label.textContent = 'View:';
+        label.htmlFor = 'view-mode-select';
+        wrapper.appendChild(label);
+
+        const select = document.createElement('select');
+        select.className = 'toolbar-view-mode';
+        select.id = 'view-mode-select';
+        select.setAttribute('aria-label', 'View mode');
+
+        const modes = [
+            { value: 'source', label: 'Source' },
+            { value: 'focused', label: 'Focused' },
+        ];
+
+        for (const { value, label } of modes) {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        }
+
+        select.value = this.editor.getViewMode();
+
+        select.addEventListener('change', () => {
+            this.editor.setViewMode(
+                /** @type {import('../editor/editor.js').ViewMode} */ (select.value),
+            );
+        });
+
+        wrapper.appendChild(select);
+        this.viewModeSelect = select;
+
+        return wrapper;
+    }
+
+    /**
+     * Updates the view-mode dropdown to reflect the current mode.
+     * Call this after the view mode changes externally (e.g. via the menu).
+     * @param {string} mode
+     */
+    setViewMode(mode) {
+        if (this.viewModeSelect) {
+            this.viewModeSelect.value = mode;
+        }
     }
 
     /**
