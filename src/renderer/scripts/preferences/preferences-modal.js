@@ -43,6 +43,12 @@ const DEFAULT_TOC_VISIBLE = true;
 const DEFAULT_TOC_POSITION = 'left';
 
 /**
+ * Default setting for automatic local image path rewriting.
+ * @type {boolean}
+ */
+const DEFAULT_ENSURE_LOCAL_PATHS = false;
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -88,6 +94,7 @@ export class PreferencesModal {
                             <li><a href="#" class="preferences-nav-link" data-section="pref-margins">Margins</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-colors">Colors</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-toc">Table of Contents</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-images">Image Handling</a></li>
                         </ul>
                     </nav>
                     <div class="preferences-body">
@@ -200,6 +207,16 @@ export class PreferencesModal {
                                 <option value="left">Left</option>
                                 <option value="right">Right</option>
                             </select>
+                        </div>
+                    </fieldset>
+                    <fieldset class="preferences-fieldset" id="pref-images">
+                        <legend>Image Handling</legend>
+                        <div class="image-handling-row">
+                            <label class="image-handling-toggle">
+                                <input type="checkbox" id="ensure-local-paths">
+                                <span>Ensure local paths</span>
+                            </label>
+                            <p class="preferences-hint">When enabled, absolute image paths that point to files inside the document's folder are automatically rewritten to relative paths.</p>
                         </div>
                     </fieldset>
                     </div>
@@ -611,6 +628,13 @@ export class PreferencesModal {
         );
         tocPositionSelect.value = tocPosition;
 
+        // Load image handling settings
+        const ensureLocalPaths = await this._loadEnsureLocalPaths();
+        const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#ensure-local-paths')
+        );
+        ensureLocalPathsCb.checked = ensureLocalPaths;
+
         this.dialog.showModal();
     }
 
@@ -750,6 +774,25 @@ export class PreferencesModal {
     }
 
     /**
+     * Loads the "ensure local paths" setting from the settings database.
+     * @returns {Promise<boolean>}
+     */
+    async _loadEnsureLocalPaths() {
+        if (!window.electronAPI) return DEFAULT_ENSURE_LOCAL_PATHS;
+
+        try {
+            const result = await window.electronAPI.getSetting('ensureLocalPaths');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                return !!result.value;
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_ENSURE_LOCAL_PATHS;
+    }
+
+    /**
      * Saves the current form values to the settings store and applies them.
      */
     async _save() {
@@ -801,6 +844,11 @@ export class PreferencesModal {
         );
         const tocPosition = tocPositionSelect.value === 'right' ? 'right' : 'left';
 
+        const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#ensure-local-paths')
+        );
+        const ensureLocalPaths = ensureLocalPathsCb.checked;
+
         // Persist to database
         if (window.electronAPI) {
             await window.electronAPI.setSetting('defaultView', defaultView);
@@ -809,6 +857,7 @@ export class PreferencesModal {
             await window.electronAPI.setSetting('colors', colors);
             await window.electronAPI.setSetting('tocVisible', tocVisible);
             await window.electronAPI.setSetting('tocPosition', tocPosition);
+            await window.electronAPI.setSetting('ensureLocalPaths', ensureLocalPaths);
         }
 
         // Apply to CSS immediately
@@ -820,6 +869,13 @@ export class PreferencesModal {
         document.dispatchEvent(
             new CustomEvent('toc:settingsChanged', {
                 detail: { visible: tocVisible, position: tocPosition },
+            }),
+        );
+
+        // Notify listeners about image handling settings
+        document.dispatchEvent(
+            new CustomEvent('imageHandling:settingsChanged', {
+                detail: { ensureLocalPaths },
             }),
         );
 

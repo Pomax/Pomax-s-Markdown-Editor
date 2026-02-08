@@ -146,6 +146,19 @@ const electronAPI = {
      */
     renameImage: (oldPath, newName) => ipcRenderer.invoke('image:rename', oldPath, newName),
 
+    // ========== Path Operations ==========
+
+    /**
+     * Converts an absolute image path to a relative path if it sits at or
+     * below the document's directory.  Uses Node's `path` module in the main
+     * process so comparisons are filesystem-correct.
+     * @param {string} imagePath  - Absolute image path or file:// URL
+     * @param {string} documentPath - Absolute path of the current document
+     * @returns {Promise<string>} The relative path (./…) or the original value
+     */
+    toRelativeImagePath: (imagePath, documentPath) =>
+        ipcRenderer.invoke('path:toRelative', imagePath, documentPath),
+
     // ========== Element Operations ==========
 
     /**

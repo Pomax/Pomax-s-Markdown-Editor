@@ -449,8 +449,10 @@ export class Toolbar {
             }
         }
 
-        // Use a relative path when the image is in the document's folder tree
-        src = this.editor.toRelativeImagePath(src);
+        // Use a relative path when the setting is enabled
+        if (this.editor.ensureLocalPaths) {
+            src = await this.editor.toRelativeImagePath(src);
+        }
 
         this.editor.insertOrUpdateImage(result.alt, src, result.href);
     }

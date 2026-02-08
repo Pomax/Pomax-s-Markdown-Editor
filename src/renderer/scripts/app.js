@@ -78,6 +78,19 @@ class App {
             }
         });
 
+        // Listen for image handling settings changes from the preferences modal
+        document.addEventListener('imageHandling:settingsChanged', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.editor && detail) {
+                this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
+                if (this.editor.ensureLocalPaths) {
+                    this.editor.rewriteImagePaths().then(() => {
+                        this.editor?.renderAndPlaceCursor();
+                    });
+                }
+            }
+        });
+
         // Expose API for main process queries
         this.exposeEditorAPI();
 
@@ -158,6 +171,17 @@ class App {
             }
         } catch {
             // Default width from CSS
+        }
+
+        try {
+            const result = await window.electronAPI.getSetting('ensureLocalPaths');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                if (this.editor) {
+                    this.editor.ensureLocalPaths = !!result.value;
+                }
+            }
+        } catch {
+            // Default is false
         }
     }
 

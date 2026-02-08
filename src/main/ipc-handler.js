@@ -44,6 +44,7 @@ export class IPCHandler {
         this.registerAppHandlers();
         this.registerSettingsHandlers();
         this.registerImageHandlers();
+        this.registerPathHandlers();
         this.registerAPIHandlers();
     }
 
@@ -243,6 +244,34 @@ export class IPCHandler {
             } catch (err) {
                 return { success: false, message: /** @type {Error} */ (err).message };
             }
+        });
+    }
+
+    /**
+     * Registers path-related IPC handlers.
+     */
+    registerPathHandlers() {
+        ipcMain.handle('path:toRelative', (_event, imagePath, documentPath) => {
+            if (!imagePath || !documentPath) return imagePath;
+
+            // Normalise the image path: strip file:/// prefix, decode
+            let absImage = imagePath;
+            if (absImage.startsWith('file:///')) {
+                absImage = decodeURIComponent(absImage.slice(8));
+            }
+
+            // Resolve both to absolute, normalised paths
+            const resolved = path.resolve(absImage);
+            const docDir = path.dirname(path.resolve(documentPath));
+
+            // Check whether the image sits at or below the document directory
+            const rel = path.relative(docDir, resolved);
+            if (rel.startsWith('..') || path.isAbsolute(rel)) {
+                return imagePath;
+            }
+
+            // Return a POSIX-style relative path prefixed with ./
+            return `./${rel.replace(/\\/g, '/')}`;
         });
     }
 

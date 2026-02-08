@@ -429,6 +429,32 @@
     border-color: var(--color-primary);
 }
 
+/* Image Handling settings */
+.image-handling-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.image-handling-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.image-handling-toggle input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.preferences-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin: var(--spacing-xs) 0 0 0;
+    line-height: 1.4;
+}
+
 /* Footer */
 .preferences-footer {
     display: flex;

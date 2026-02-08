@@ -2,7 +2,7 @@
 
 A "professional" markdown editor built with Electron, featuring a syntactic tree-based document model for fast editing of large documents.
 
-![A screenshot of the editor](C:\Users\Mike\Documents\Git\projects\markdown editor\screenshot-1.png)
+![A screenshot of the editor](./screenshot-1.png)
 
 This is a project that was product managed by a real human (me, Pomax!) but written by Claude Opus 4.5/4.6, which is the first LLM that seems to be alright at programming. It was written in a way to be accessible by new devs as well as other AI agents, so it should be pretty damn easy to add new functionality. If using an AI, tell it to first read the `requirements.md` and `docs/developers` files, and then get to work.
 

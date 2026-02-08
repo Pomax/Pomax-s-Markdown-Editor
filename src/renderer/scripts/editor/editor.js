@@ -64,6 +64,9 @@ export class Editor {
         /** @type {string|null} */
         this.currentFilePath = null;
 
+        /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
+        this.ensureLocalPaths = false;
+
         /**
          * Tree-based cursor position.
          * @type {TreeCursor|null}
@@ -786,7 +789,7 @@ export class Editor {
      *
      * @param {DragEvent} event
      */
-    handleDrop(event) {
+    async handleDrop(event) {
         if (!event.dataTransfer?.files?.length || !this.syntaxTree) return;
 
         const files = [...event.dataTransfer.files];
@@ -806,7 +809,7 @@ export class Editor {
             // Use the Electron webUtils bridge to get the real filesystem path.
             const filePath = window.electronAPI?.getPathForFile(file) ?? file.name;
 
-            this._insertDroppedImage(filePath, file.name);
+            await this._insertDroppedImage(filePath, file.name);
         }
 
         this.recordAndRender(before);
@@ -820,7 +823,7 @@ export class Editor {
      * @param {string} filePath - Absolute path to the image file
      * @param {string} fileName - The file name (used as fallback alt text)
      */
-    _insertDroppedImage(filePath, fileName) {
+    async _insertDroppedImage(filePath, fileName) {
         if (!this.syntaxTree) return;
 
         const currentNode = this.getCurrentNode();
@@ -832,8 +835,8 @@ export class Editor {
             ? filePath
             : `file:///${filePath.replace(/\\/g, '/')}`;
 
-        // Use a relative path when the image is in the document's folder tree
-        const src = this.toRelativeImagePath(fileUrl);
+        // Use a relative path when the setting is enabled
+        const src = this.ensureLocalPaths ? await this.toRelativeImagePath(fileUrl) : fileUrl;
 
         const imageNode = new SyntaxNode('image', alt);
         imageNode.attributes = { alt, url: src };
@@ -916,7 +919,12 @@ export class Editor {
 
         this.undoManager.clear();
         this.setUnsavedChanges(false);
+
+        // Rewrite absolute image paths to relative when the setting is enabled,
+        // then render.  Because the rewrite is async (IPC round-trip) we render
+        // once immediately and a second time after paths have been rewritten.
         this.renderAndPlaceCursor();
+        this.rewriteImagePaths().then(() => this.renderAndPlaceCursor());
     }
 
     /**
@@ -1050,32 +1058,37 @@ export class Editor {
      * is not downstream of the document's folder.
      *
      * Handles both raw filesystem paths and `file:///` URLs.
+     * Delegates to the main process which uses Node's `path` module for
+     * filesystem-correct comparison.
      *
      * @param {string} imagePath - The absolute image path or file:// URL
-     * @returns {string} A relative path (using forward slashes) or the original value
+     * @returns {Promise<string>} A relative path (using forward slashes) or the original value
      */
-    toRelativeImagePath(imagePath) {
-        if (!this.currentFilePath || !imagePath) return imagePath;
+    async toRelativeImagePath(imagePath) {
+        if (!this.currentFilePath || !imagePath || !window.electronAPI) return imagePath;
+        return window.electronAPI.toRelativeImagePath(imagePath, this.currentFilePath);
+    }
 
-        // Normalise the image path: strip file:/// prefix, decode, unify slashes
-        let absImage = imagePath;
-        if (absImage.startsWith('file:///')) {
-            absImage = decodeURIComponent(absImage.slice(8));
+    /**
+     * Walks every image node in the syntax tree and rewrites absolute paths
+     * that are downstream-relative to the current document to their minimal
+     * relative form.  Only runs when `this.ensureLocalPaths` is true and the
+     * document has been saved to disk.
+     */
+    async rewriteImagePaths() {
+        if (!this.ensureLocalPaths || !this.currentFilePath || !this.syntaxTree) return;
+
+        for (const node of this.syntaxTree.children) {
+            if (node.type !== 'image' && node.type !== 'linked-image') continue;
+
+            const url = node.attributes.url;
+            if (!url) continue;
+
+            const rewritten = await this.toRelativeImagePath(url);
+            if (rewritten !== url) {
+                node.attributes.url = rewritten;
+            }
         }
-        absImage = absImage.replace(/\\/g, '/');
-
-        // Normalise the document directory
-        const docDir = this.currentFilePath.replace(/\\/g, '/').replace(/\/[^/]*$/, '');
-
-        // Ensure the image is at or below the document directory
-        const prefix = docDir.endsWith('/') ? docDir : `${docDir}/`;
-        if (!absImage.startsWith(prefix) && absImage !== docDir) {
-            return imagePath;
-        }
-
-        // Build the relative path (always uses forward slashes)
-        const relative = absImage.slice(prefix.length);
-        return `./${relative}`;
     }
 
     /**
