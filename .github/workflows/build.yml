@@ -1,0 +1,103 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "dist/**"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run dist:win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-windows
+          path: dist/*
+          retention-days: 1
+
+  build-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run dist:mac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-macos
+          path: dist/*
+          retention-days: 1
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run dist:linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-linux
+          path: dist/*
+          retention-days: 1
+
+  commit-builds:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clean dist directory
+        run: rm -rf dist && mkdir dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-windows
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-macos
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-linux
+          path: dist
+
+      - name: Commit build artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add --force dist/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Update dist builds [skip ci]"
+          git push

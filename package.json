@@ -15,7 +15,12 @@
     "lint:fix": "biome check --write src test scripts",
     "lint:typing": "tsc -p jsconfig.json",
     "lint:format": "biome format --write src test scripts",
-    "docs:generate": "node scripts/generate-api-docs.js"
+    "docs:generate": "node scripts/generate-api-docs.js",
+    "dist": "electron-builder --publish never && node scripts/clean-dist.js",
+    "dist:win": "electron-builder --win --publish never && node scripts/clean-dist.js",
+    "dist:mac": "electron-builder --mac --publish never && node scripts/clean-dist.js",
+    "dist:linux": "electron-builder --linux --publish never && node scripts/clean-dist.js",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "markdown",
@@ -30,6 +35,7 @@
     "@electron/rebuild": "^4.0.3",
     "@playwright/test": "^1.40.0",
     "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
     "typescript": "^5.3.0"
   },
   "dependencies": {
@@ -38,5 +44,31 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "build": {
+    "appId": "com.pomax.markdown-editor",
+    "productName": "Markdown Editor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "!src/**/*.d.ts"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": null
+    },
+    "mac": {
+      "target": "zip",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    },
+    "asar": true,
+    "npmRebuild": true,
+    "removePackageScripts": true
   }
 }
