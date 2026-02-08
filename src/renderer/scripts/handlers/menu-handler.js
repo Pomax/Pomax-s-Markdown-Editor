@@ -109,8 +109,8 @@ export class MenuHandler {
      */
     handleLoaded(result) {
         if (result.success && result.content !== undefined) {
-            this.editor.loadMarkdown(result.content);
             this.editor.currentFilePath = result.filePath || null;
+            this.editor.loadMarkdown(result.content);
             this.editor.updateWindowTitle();
         }
     }

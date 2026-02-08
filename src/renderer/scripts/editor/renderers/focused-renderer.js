@@ -20,6 +20,31 @@ export class FocusedRenderer {
     }
 
     /**
+     * Resolves a potentially-relative image `src` to an absolute file:// URL
+     * based on the directory of the currently loaded markdown file.
+     * @param {string} src - The raw src attribute from the markdown
+     * @returns {string} An absolute file:// URL, or the original src if
+     *     it is already absolute or no file is loaded.
+     */
+    resolveImageSrc(src) {
+        // Already a full URL (http, https, data, file, etc.) — leave it alone.
+        if (/^[a-z][a-z0-9+.-]*:/i.test(src)) return src;
+
+        const filePath = this.editor.currentFilePath;
+        if (!filePath) return src;
+
+        // Derive the directory that contains the markdown file, then
+        // resolve the relative src against it.
+        const fileDir = filePath.replace(/[\\/][^\\/]+$/, '');
+        // Normalise to forward-slashes for the file:// URL.
+        const resolved = `${fileDir}/${src}`.replace(/\\/g, '/');
+
+        // On Windows paths start with a drive letter (C:/…), so we need
+        // three slashes: file:///C:/…
+        return resolved.startsWith('/') ? `file://${resolved}` : `file:///${resolved}`;
+    }
+
+    /**
      * Renders the syntax tree to the container.
      * @param {import('../../parser/syntax-tree.js').SyntaxTree} syntaxTree - The syntax tree to render
      * @param {HTMLElement} container - The container element
@@ -276,7 +301,7 @@ export class FocusedRenderer {
             // Show rendered image
             const img = document.createElement('img');
             img.className = 'md-image-preview';
-            img.src = src;
+            img.src = this.resolveImageSrc(src);
             img.alt = alt;
             img.title = alt;
 

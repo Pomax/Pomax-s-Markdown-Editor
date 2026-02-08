@@ -3,6 +3,7 @@
  * Initializes the application, creates windows, and sets up IPC handlers.
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
@@ -86,6 +87,9 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
             nodeIntegration: false,
+            // Allow the renderer to load file:// resources (e.g. images)
+            // from any directory, not just the application's own folder.
+            webSecurity: false,
         },
         show: false,
     };
@@ -203,6 +207,46 @@ async function initialize(window) {
     ipcHandler.registerHandlers(menuBuilder);
 }
 
+/**
+ * Extracts a file path from process.argv.
+ *
+ * argv[0] is the Electron binary, argv[1] is the entry script (in dev)
+ * or the app itself (when packaged).  User-supplied arguments start at
+ * argv[2] in dev mode and argv[1] in a packaged app.
+ *
+ * @returns {string|null} The resolved absolute path, or null if none provided
+ */
+function getFilePathFromArgs() {
+    // In dev: [electron, main.js, ...userArgs]
+    // Packaged: [app, ...userArgs]
+    const userArgs = process.argv.slice(app.isPackaged ? 1 : 2);
+
+    for (const arg of userArgs) {
+        if (arg.startsWith('-')) continue;
+        const resolved = path.resolve(arg);
+        try {
+            if (fs.statSync(resolved).isFile()) return resolved;
+        } catch {
+            // Not a real file – keep looking
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Loads a file from the given path and sends it to the renderer.
+ * @param {BrowserWindow} window - The main window
+ * @param {string} filePath - The absolute file path to load
+ */
+async function loadFileFromPath(window, filePath) {
+    const result = await fileManager.loadRecent(filePath);
+    if (result.success) {
+        window.webContents.send('menu:action', 'file:loaded', result);
+        menuBuilder.refreshMenu();
+    }
+}
+
 // Electron app lifecycle events
 app.whenReady().then(async () => {
     // Initialize settings before creating the window so saved bounds are available
@@ -211,6 +255,15 @@ app.whenReady().then(async () => {
 
     const window = createWindow();
     await initialize(window);
+
+    // If a file path was passed on the command line, load it once the
+    // renderer has finished initialising.
+    const cliFilePath = getFilePathFromArgs();
+    if (cliFilePath) {
+        window.webContents.once('did-finish-load', () => {
+            loadFileFromPath(window, cliFilePath);
+        });
+    }
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
