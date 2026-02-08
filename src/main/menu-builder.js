@@ -3,7 +3,6 @@
  * Creates the application menu with File, Edit, and View menus.
  */
 
-import path from 'node:path';
 import { BrowserWindow, Menu, dialog } from 'electron';
 
 /**
@@ -99,8 +98,7 @@ export class MenuBuilder {
 
         /** @type {Electron.MenuItemConstructorOptions[]} */
         const items = recentFiles.map((filePath) => ({
-            label: path.basename(filePath),
-            toolTip: filePath,
+            label: filePath,
             click: () => this.handleLoadRecent(filePath),
         }));
 

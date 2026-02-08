@@ -56,7 +56,7 @@ export class Editor {
         this.selectionManager = new SelectionManager(this);
 
         /** @type {ViewMode} */
-        this.viewMode = 'source';
+        this.viewMode = 'focused';
 
         /** @type {boolean} */
         this._hasUnsavedChanges = false;

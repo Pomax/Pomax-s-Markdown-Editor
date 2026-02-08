@@ -187,7 +187,7 @@
     .toolbar {
         gap: 2px;
     }
-    
+
     .toolbar-button {
         min-width: 28px;
         height: 28px;
@@ -203,7 +203,7 @@
     .toolbar-view-mode-label {
         font-size: 11px;
     }
-    
+
     .toolbar-separator {
         height: 20px;
         margin: 0 4px;

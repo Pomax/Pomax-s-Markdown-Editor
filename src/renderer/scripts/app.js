@@ -77,6 +77,16 @@ class App {
         if (!window.electronAPI) return;
 
         try {
+            const result = await window.electronAPI.getSetting('defaultView');
+            if (result.success && result.value) {
+                this.editor?.setViewMode(result.value);
+                this.toolbar?.setViewMode(result.value);
+            }
+        } catch {
+            // Use hardcoded default (focused)
+        }
+
+        try {
             const result = await window.electronAPI.getSetting('pageWidth');
             if (result.success && result.value) {
                 applyPageWidth(result.value);

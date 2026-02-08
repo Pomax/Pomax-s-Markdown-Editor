@@ -49,10 +49,10 @@ test('view mode dropdown has a visible label', async () => {
     await expect(label).toHaveText('View:');
 });
 
-test('view mode dropdown defaults to Source', async () => {
+test('view mode dropdown defaults to Focused', async () => {
     const select = page.locator('#view-mode-select');
     await expect(select).toBeVisible();
-    await expect(select).toHaveValue('source');
+    await expect(select).toHaveValue('focused');
 });
 
 test('selecting Focused in dropdown switches editor to focused mode', async () => {

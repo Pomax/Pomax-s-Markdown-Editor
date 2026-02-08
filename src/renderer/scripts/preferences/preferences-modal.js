@@ -7,6 +7,12 @@
 /// <reference path="../../../types.d.ts" />
 
 /**
+ * Default view mode for the editor on startup.
+ * @type {import('../editor/editor.js').ViewMode}
+ */
+const DEFAULT_VIEW_MODE = 'focused';
+
+/**
  * Default page-width values matching the CSS default (A4 = 210 mm fixed).
  * @type {{ useFixed: boolean, width: number, unit: 'px' | 'mm' }}
  */
@@ -63,6 +69,16 @@ export class PreferencesModal {
                     <button type="button" class="preferences-close" aria-label="Close">&times;</button>
                 </header>
                 <div class="preferences-body">
+                    <fieldset class="preferences-fieldset">
+                        <legend>Default View</legend>
+                        <div class="default-view-row">
+                            <label for="default-view-select">View mode on startup</label>
+                            <select id="default-view-select" name="defaultView">
+                                <option value="focused">Focused</option>
+                                <option value="source">Source</option>
+                            </select>
+                        </div>
+                    </fieldset>
                     <fieldset class="preferences-fieldset">
                         <legend>Page Width</legend>
                         <div class="page-width-row">
@@ -416,6 +432,13 @@ export class PreferencesModal {
         this._build();
         if (!this.dialog || this.dialog.open) return;
 
+        // Load saved default view setting
+        const defaultView = await this._loadDefaultView();
+        const viewSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#default-view-select')
+        );
+        viewSelect.value = defaultView;
+
         // Load saved page-width setting
         const pageWidth = await this._loadPageWidth();
         const fixedCb = /** @type {HTMLInputElement} */ (
@@ -475,6 +498,25 @@ export class PreferencesModal {
         if (this.dialog?.open) {
             this.dialog.close();
         }
+    }
+
+    /**
+     * Loads the default view mode from the settings database.
+     * @returns {Promise<import('../editor/editor.js').ViewMode>}
+     */
+    async _loadDefaultView() {
+        if (!window.electronAPI) return DEFAULT_VIEW_MODE;
+
+        try {
+            const result = await window.electronAPI.getSetting('defaultView');
+            if (result.success && result.value) {
+                return result.value === 'source' ? 'source' : 'focused';
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_VIEW_MODE;
     }
 
     /**
@@ -552,6 +594,11 @@ export class PreferencesModal {
     async _save() {
         if (!this.dialog) return;
 
+        const viewSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#default-view-select')
+        );
+        const defaultView = viewSelect.value === 'source' ? 'source' : 'focused';
+
         const fixedCb = /** @type {HTMLInputElement} */ (
             this.dialog.querySelector('#page-width-fixed')
         );
@@ -584,6 +631,7 @@ export class PreferencesModal {
 
         // Persist to database
         if (window.electronAPI) {
+            await window.electronAPI.setSetting('defaultView', defaultView);
             await window.electronAPI.setSetting('pageWidth', pageWidth);
             await window.electronAPI.setSetting('margins', margins);
             await window.electronAPI.setSetting('colors', colors);
