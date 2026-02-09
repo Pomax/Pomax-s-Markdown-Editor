@@ -95,6 +95,23 @@ export class IPCHandler {
             this.fileManager.setUnsavedChanges(hasChanges);
         });
 
+        ipcMain.handle('file:confirmClose', async (event) => {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            if (!window) {
+                return { action: 'cancel' };
+            }
+            const result = await dialog.showMessageBox(window, {
+                type: 'warning',
+                buttons: ['Save', 'Save As...', 'Discard', 'Cancel'],
+                defaultId: 0,
+                cancelId: 3,
+                title: 'Unsaved Changes',
+                message: 'You have unsaved changes. What would you like to do?',
+            });
+            const actions = ['save', 'saveAs', 'discard', 'cancel'];
+            return { action: actions[result.response] };
+        });
+
         ipcMain.handle('file:getRecentFiles', async () => {
             return { success: true, files: this.fileManager.getRecentFiles() };
         });
@@ -137,6 +154,20 @@ export class IPCHandler {
             const window = BrowserWindow.fromWebContents(event.sender);
             if (window) {
                 window.webContents.send('menu:action', 'view:focused');
+            }
+            return { success: true };
+        });
+
+        ipcMain.handle('view:openFilesChanged', async (_event, files) => {
+            if (this.menuBuilder) {
+                this.menuBuilder.openFiles = files ?? [];
+                this.menuBuilder.refreshMenu();
+            }
+            // Keep fileManager.currentFilePath in sync with the active tab
+            const fileList = files ?? [];
+            const activeFile = fileList.find(/** @param {{active: boolean}} f */ (f) => f.active);
+            if (activeFile) {
+                this.fileManager.currentFilePath = activeFile.filePath ?? null;
             }
             return { success: true };
         });

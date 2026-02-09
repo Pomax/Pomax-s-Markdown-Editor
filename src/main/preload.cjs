@@ -57,6 +57,12 @@ const electronAPI = {
      */
     setUnsavedChanges: (hasChanges) => ipcRenderer.invoke('file:setUnsavedChanges', hasChanges),
 
+    /**
+     * Shows a save/discard/cancel dialog for unsaved changes.
+     * @returns {Promise<{action: 'save'|'saveAs'|'discard'|'cancel'}>}
+     */
+    confirmClose: () => ipcRenderer.invoke('file:confirmClose'),
+
     // ========== Document Operations ==========
 
     /**
@@ -84,6 +90,14 @@ const electronAPI = {
      * @returns {Promise<{success: boolean}>}
      */
     setFocusedView: () => ipcRenderer.invoke('view:focused'),
+
+    /**
+     * Sends the current list of open files to the main process so the
+     * View menu can be rebuilt.
+     * @param {Array<{id: string, filePath: string|null, active: boolean}>} files
+     * @returns {Promise<{success: boolean}>}
+     */
+    notifyOpenFiles: (files) => ipcRenderer.invoke('view:openFilesChanged', files),
 
     // ========== Application Operations ==========
 

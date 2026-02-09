@@ -33,6 +33,12 @@ export class MenuBuilder {
 
         /** @type {boolean} Whether DevTools is currently open */
         this._devToolsOpen = false;
+
+        /**
+         * List of currently open files, sent from the renderer.
+         * @type {Array<{id: string, filePath: string|null, label: string, active: boolean}>}
+         */
+        this.openFiles = [];
     }
 
     /**
@@ -82,6 +88,12 @@ export class MenuBuilder {
                     label: 'Save As...',
                     accelerator: 'CmdOrCtrl+Shift+S',
                     click: () => this.handleSaveAs(),
+                },
+                { type: 'separator' },
+                {
+                    label: 'Close',
+                    accelerator: 'CmdOrCtrl+W',
+                    click: () => this.sendMenuAction('file:close'),
                 },
                 { type: 'separator' },
                 {
@@ -192,30 +204,36 @@ export class MenuBuilder {
      * @returns {Electron.MenuItemConstructorOptions} The View menu template
      */
     buildViewMenu() {
+        /** @type {Electron.MenuItemConstructorOptions[]} */
+        const submenu = [
+            {
+                label: 'Source View',
+                accelerator: 'CmdOrCtrl+1',
+                click: () => this.sendMenuAction('view:source'),
+            },
+            {
+                label: 'Focused Writing',
+                accelerator: 'CmdOrCtrl+2',
+                click: () => this.sendMenuAction('view:focused'),
+            },
+        ];
+
+        // Add an entry for each open file
+        if (this.openFiles.length > 0) {
+            submenu.push({ type: 'separator' });
+            for (const file of this.openFiles) {
+                submenu.push({
+                    label: file.label ?? 'Untitled',
+                    type: 'checkbox',
+                    checked: file.active,
+                    click: () => this.sendMenuAction('view:switchFile', file.id),
+                });
+            }
+        }
+
         return {
             label: 'View',
-            submenu: [
-                {
-                    label: 'Source View',
-                    accelerator: 'CmdOrCtrl+1',
-                    click: () => this.sendMenuAction('view:source'),
-                },
-                {
-                    label: 'Focused Writing',
-                    accelerator: 'CmdOrCtrl+2',
-                    click: () => this.sendMenuAction('view:focused'),
-                },
-                { type: 'separator' },
-                {
-                    label: 'Toggle Developer Tools',
-                    accelerator: 'F12',
-                    click: () => {
-                        if (this.window) {
-                            this.window.webContents.toggleDevTools();
-                        }
-                    },
-                },
-            ],
+            submenu,
         };
     }
 

@@ -38,6 +38,8 @@ No on has time for that.
 
 - **Word Count**: Total word count and word count excluding code (File → Word Count)
 
+- **Multi-file Editing**: Open multiple documents in tabs; tab bar at bottom, switchable via View menu
+
 - **Unlimited Undo/Redo**: Complete edit history with no limit
 
 - **Scripting API**: Full IPC-based API for external automation
@@ -88,6 +90,7 @@ npm start
 │           ├── handlers/
 │           ├── image/
 │           ├── table/
+│           ├── tab-bar/
 │           ├── toc/
 │           ├── preferences/
 │           └── word-count/
@@ -114,6 +117,8 @@ npm start
 - **Save**: `Ctrl+S` - Save the current document
 
 - **Save As**: `Ctrl+Shift+S` - Save with a new filename
+
+- **Close**: `Ctrl+W` - Close the current document
 
 ### View Modes
 

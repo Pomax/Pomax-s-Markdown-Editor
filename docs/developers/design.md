@@ -80,51 +80,78 @@ array.filter(item => item.active);
 ```
 src/
 ├── main/                      # Electron main process
-│   ├── main.js               # Entry point
-│   ├── preload.cjs           # Secure bridge
-│   ├── menu-builder.js       # Menu construction
-│   ├── file-manager.js       # File operations
-│   ├── ipc-handler.js        # IPC routing
-│   ├── api-registry.js       # External API
+│   ├── main.js               # Entry point, window creation, lifecycle
+│   ├── preload.cjs           # Secure IPC bridge (must be CommonJS)
+│   ├── menu-builder.js       # Application menu construction
+│   ├── file-manager.js       # File load/save/recent files
+│   ├── ipc-handler.js        # IPC routing and handler registration
+│   ├── api-registry.js       # External scripting API
 │   └── settings-manager.js   # Settings persistence (SQLite)
 │
-└── renderer/                  # Electron renderer
-    ├── index.html            # HTML entry
-    ├── styles/               # CSS files
-    │   ├── main.css         # Base styles
-    │   ├── editor.css       # Editor styles
-    │   ├── toolbar.css      # Toolbar styles
-    │   ├── image.css        # Image dialog and element styles
-    │   ├── table.css        # Table dialog and element styles
-    │   ├── preferences.css  # Preferences modal styles
-    │   └── toc.css          # Table of Contents sidebar styles
-    │
-    └── scripts/              # JavaScript
-        ├── app.js           # App entry
-        ├── editor/          # Editor components
-        ├── parser/          # Markdown parser
-        ├── toolbar/         # Toolbar UI
-        ├── handlers/        # Event handlers
-        ├── image/           # Image modal
-        ├── table/           # Table modal
-        ├── preferences/     # Preferences modal
-        └── toc/             # Table of Contents sidebar
+├── renderer/                  # Electron renderer process
+│   ├── index.html            # HTML entry
+│   ├── icons/                # Lucide SVG icons
+│   ├── styles/               # CSS files
+│   │   ├── main.css         # Base styles, CSS custom properties
+│   │   ├── editor.css       # Editor and syntax highlighting styles
+│   │   ├── toolbar.css      # Toolbar styles
+│   │   ├── image.css        # Image dialog and element styles
+│   │   ├── table.css        # Table dialog and element styles
+│   │   ├── toc.css          # Table of Contents sidebar styles
+│   │   ├── preferences.css  # Preferences modal styles
+│   │   └── word-count.css   # Word count modal styles
+│   │
+│   └── scripts/              # JavaScript
+│       ├── app.js           # App entry, wires components together
+│       ├── editor/          # Core editor components
+│       │   ├── editor.js          # Editor class
+│       │   ├── undo-manager.js    # UndoManager class
+│       │   ├── selection-manager.js # SelectionManager class
+│       │   ├── syntax-highlighter.js # Inline syntax highlighting
+│       │   ├── parse-tree.js      # Parse tree cursor helper
+│       │   └── renderers/
+│       │       ├── source-renderer.js
+│       │       └── focused-renderer.js
+│       ├── parser/          # Markdown parser
+│       │   ├── markdown-parser.js
+│       │   └── syntax-tree.js
+│       ├── toolbar/         # Toolbar UI
+│       │   ├── toolbar.js
+│       │   ├── toolbar-button.js
+│       │   └── icons.js
+│       ├── handlers/        # Event handlers
+│       │   ├── keyboard-handler.js
+│       │   └── menu-handler.js
+│       ├── image/           # Image modal
+│       │   └── image-modal.js
+│       ├── table/           # Table modal
+│       │   └── table-modal.js
+│       ├── toc/             # Table of Contents sidebar
+│       │   └── toc.js
+│       ├── preferences/     # Preferences modal
+│       │   └── preferences-modal.js
+│       └── word-count/      # Word count modal
+│           └── word-count-modal.js
+│
+└── types.d.ts                # Global TypeScript type declarations
 ```
 
 ### Test Structure
 
 ```
 test/
-├── unit/                     # Unit tests (Node.js native)
+├── unit/                     # Unit tests (Node.js native test runner)
 │   ├── parser/
 │   │   ├── markdown-parser.test.js
 │   │   └── syntax-tree.test.js
 │   ├── editor/
 │   │   └── undo-manager.test.js
-│   └── table/
-│       └── table-modal.test.js
+│   ├── table/
+│   │   └── table-modal.test.js
+│   └── word-count/
+│       └── word-count-modal.test.js
 │
-└── integration/              # Integration tests (Playwright)
+└── integration/              # Integration tests (Playwright + Firefox)
     ├── editor.spec.js
     ├── heading-input.spec.js
     ├── backspace-heading.spec.js
@@ -443,7 +470,7 @@ test('should allow typing in the editor', async () => {
 3. Add `toMarkdown()` case in `SyntaxNode`
 4. Add render method in `SourceRenderer`
 5. Add render method in `FocusedRenderer`
-6. Add button config in `Toolbar.getButtonConfigs()`
+6. Add button config in `Toolbar.getButtonConfigs()` (if it should appear in the toolbar)
 7. Add a Lucide SVG icon entry in `toolbar/icons.js`
 8. Add a button color rule in `toolbar.css`
 9. Add tests for parser and rendering
@@ -452,7 +479,17 @@ test('should allow typing in the editor', async () => {
 ### Adding a New API Command
 
 1. Add command in `APIRegistry.registerBuiltInCommands()`
-2. Update `docs/api/README.md`
-3. Update `docs/api/api-v*.json`
-4. Add tests for the command
-5. Increment API version if breaking change
+2. Handle the action in the renderer via the `onExternalAPI` listener in `app.js`
+3. Update `docs/api/README.md`
+4. Update `docs/api/api-v*.json`
+5. Add tests for the command
+
+### Adding a New Preference
+
+1. Add a default constant in `preferences-modal.js`
+2. Add a nav link (`data-section`) and fieldset with controls
+3. Add a load method (called from `open()`)
+4. Add save logic that persists via `setSetting` and dispatches a custom event
+5. Add CSS styles in `preferences.css`
+6. Wire the custom event listener in `app.js` to update runtime state
+7. Add tests if the preference has complex logic

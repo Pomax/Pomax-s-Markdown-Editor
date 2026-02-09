@@ -1,0 +1,46 @@
+name: Ensure all tests pass
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: |
+        npm ci
+        npx playwright install firefox --with-deps
+        npm test
+
+  test-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: |
+        npm ci
+        npx playwright install firefox --with-deps
+        npm test
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: |
+        npm ci
+        npx playwright install firefox --with-deps
+        npm test

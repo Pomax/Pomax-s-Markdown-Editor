@@ -66,18 +66,30 @@ function debounceSaveWindowBounds() {
 }
 
 /**
- * Persists the currently open file path so the same file can be
- * reopened on next launch.  If no file is open the setting is removed.
- * @param {BrowserWindow} win
+ * Persists the list of currently open file paths so they can be
+ * reopened on next launch.  Only files that have been saved to disk
+ * are recorded; untitled documents are skipped.
  */
-async function saveLastOpenFile(win) {
-    const filePath = fileManager?.getFilePath() ?? null;
-    if (!filePath) {
-        settingsManager.delete('lastOpenFile');
+function saveOpenFiles() {
+    if (!menuBuilder) {
+        settingsManager.delete('openFiles');
         return;
     }
 
-    settingsManager.set('lastOpenFile', { filePath });
+    const entries = menuBuilder.openFiles
+        .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
+        .map(
+            /** @param {{filePath: string|null, active: boolean}} f */ (f) => ({
+                filePath: f.filePath,
+                active: f.active,
+            }),
+        );
+
+    if (entries.length === 0) {
+        settingsManager.delete('openFiles');
+    } else {
+        settingsManager.set('openFiles', entries);
+    }
 }
 
 /**
@@ -150,7 +162,7 @@ function createWindow() {
             return;
         }
 
-        await saveLastOpenFile(win);
+        saveOpenFiles();
 
         const hasUnsavedChanges = await win.webContents.executeJavaScript(
             'window.editorAPI?.hasUnsavedChanges() ?? false',
@@ -274,37 +286,76 @@ async function loadFileFromPath(window, filePath) {
 }
 
 /**
- * Restores the last-open file from a previous session.
- * The cursor is placed at the start of the document by loadMarkdown.
+ * Restores previously open files from a prior session.
+ * The first file is loaded directly via executeJavaScript (so it
+ * replaces the initial pristine tab), and subsequent files are sent
+ * as `file:loaded` menu actions so the renderer creates new tabs.
  * @param {BrowserWindow} window - The main window
- * @param {{filePath: string}} lastOpen
+ * @param {Array<{filePath: string, active: boolean}>} entries
  */
-async function restoreLastOpenFile(window, lastOpen) {
-    const result = await fileManager.loadRecent(lastOpen.filePath);
-    if (!result.success) return;
+async function restoreOpenFiles(window, entries) {
+    // Read all files up-front, dropping any that can no longer be loaded
+    /** @type {Array<{filePath: string, content: string, active: boolean}>} */
+    const loaded = [];
+    for (const entry of entries) {
+        const result = await fileManager.loadRecent(entry.filePath);
+        if (result.success && result.content !== undefined) {
+            loaded.push({
+                filePath: result.filePath ?? entry.filePath,
+                content: result.content,
+                active: entry.active,
+            });
+        }
+    }
 
-    const contentJSON = JSON.stringify(result.content);
-    const filePathJSON = JSON.stringify(result.filePath);
+    if (loaded.length === 0) return;
 
-    // Load the file in a single executeJavaScript call so we know the
-    // editor API is ready before we set content.
-    window.webContents.executeJavaScript(`
+    // Load the first file directly into the initial tab
+    const first = loaded[0];
+    const contentJSON = JSON.stringify(first.content);
+    const filePathJSON = JSON.stringify(first.filePath);
+
+    await window.webContents.executeJavaScript(`
         (function () {
             function tryRestore() {
                 var api = window.editorAPI;
                 if (!api) { setTimeout(tryRestore, 50); return; }
-
-                // Set the file path first so the title bar updates correctly
-                // when loadMarkdown calls updateWindowTitle.
                 window.__editorFilePath = ${filePathJSON};
-
-                // Load the file content (renders the DOM and places cursor
-                // at the start of the document)
                 api.setContent(${contentJSON});
             }
             tryRestore();
         })()
     `);
+
+    // Send remaining files as loaded events so the renderer creates
+    // additional tabs for each one
+    for (let i = 1; i < loaded.length; i++) {
+        window.webContents.send('menu:action', 'file:loaded', {
+            success: true,
+            content: loaded[i].content,
+            filePath: loaded[i].filePath,
+        });
+    }
+
+    // If the previously active file is not the first one, tell the
+    // renderer to switch to it
+    const activeEntry = loaded.find((e) => e.active);
+    if (activeEntry && activeEntry !== first) {
+        // The renderer will receive a switchFile event once the tabs
+        // exist.  We use a short delay to let the tab creation settle.
+        const activePathJSON = JSON.stringify(activeEntry.filePath);
+        window.webContents.executeJavaScript(`
+            setTimeout(function () {
+                var tabs = document.querySelectorAll('.tab-button');
+                for (var i = 0; i < tabs.length; i++) {
+                    if (tabs[i].title === ${activePathJSON}) {
+                        tabs[i].click();
+                        break;
+                    }
+                }
+            }, 100);
+        `);
+    }
 
     menuBuilder.refreshMenu();
 }
@@ -327,11 +378,17 @@ app.whenReady().then(async () => {
             loadFileFromPath(window, cliFilePath);
         });
     } else if (!process.env.TESTING) {
-        const lastOpen = settingsManager.get('lastOpenFile', null);
-        if (lastOpen?.filePath && fs.existsSync(lastOpen.filePath)) {
-            window.webContents.once('did-finish-load', () => {
-                restoreLastOpenFile(window, lastOpen);
-            });
+        const openFiles = settingsManager.get('openFiles', null);
+        if (Array.isArray(openFiles) && openFiles.length > 0) {
+            // Filter to files that still exist on disk
+            const valid = openFiles.filter(
+                /** @param {{filePath: string}} f */ (f) => f.filePath && fs.existsSync(f.filePath),
+            );
+            if (valid.length > 0) {
+                window.webContents.once('did-finish-load', () => {
+                    restoreOpenFiles(window, valid);
+                });
+            }
         }
     }
 

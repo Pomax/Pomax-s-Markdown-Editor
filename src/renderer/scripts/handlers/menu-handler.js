@@ -71,6 +71,9 @@ export class MenuHandler {
             case 'file:saveAs':
                 this.handleSaveAs();
                 break;
+            case 'file:close':
+                this.handleClose();
+                break;
             case 'file:wordCount':
                 this.handleWordCount();
                 break;
@@ -89,6 +92,9 @@ export class MenuHandler {
             case 'edit:preferences':
                 this.handlePreferences();
                 break;
+            case 'view:switchFile':
+                this.handleSwitchFile(args[0]);
+                break;
             case 'element:changeType':
                 this.handleChangeType(args[0]);
                 break;
@@ -102,20 +108,28 @@ export class MenuHandler {
 
     /**
      * Handles the New action.
+     * Dispatches a 'file:new' event so the app can create a new tab.
      */
     handleNew() {
-        this.editor.reset();
+        document.dispatchEvent(new CustomEvent('file:new'));
+    }
+
+    /**
+     * Handles the Close action.
+     * Dispatches a 'file:close' event so the app can close the active tab.
+     */
+    handleClose() {
+        document.dispatchEvent(new CustomEvent('file:close'));
     }
 
     /**
      * Handles the Loaded action.
+     * Dispatches a 'file:loaded' event so the app can create or switch tabs.
      * @param {{success: boolean, content?: string, filePath?: string}} result
      */
     handleLoaded(result) {
         if (result.success && result.content !== undefined) {
-            this.editor.currentFilePath = result.filePath || null;
-            this.editor.loadMarkdown(result.content);
-            this.editor.updateWindowTitle();
+            document.dispatchEvent(new CustomEvent('file:loaded', { detail: result }));
         }
     }
 
@@ -203,6 +217,14 @@ export class MenuHandler {
             this._preferencesModal = new PreferencesModal();
         }
         this._preferencesModal.open();
+    }
+
+    /**
+     * Handles switching to a different open file tab.
+     * @param {string} tabId - The tab identifier to switch to
+     */
+    handleSwitchFile(tabId) {
+        document.dispatchEvent(new CustomEvent('view:switchFile', { detail: { tabId } }));
     }
 
     /**
