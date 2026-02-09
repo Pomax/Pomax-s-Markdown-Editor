@@ -17,10 +17,7 @@ for (const entry of readdirSync(dist)) {
     const full = join(dist, entry);
     const isDir = statSync(full).isDirectory();
     const isArtifact =
-        entry.endsWith('.yml') ||
-        entry.endsWith('.yaml') ||
-        entry.endsWith('.blockmap') ||
-        isDir;
+        entry.endsWith('.yml') || entry.endsWith('.yaml') || entry.endsWith('.blockmap') || isDir;
 
     if (isArtifact) {
         rmSync(full, { recursive: true, force: true });

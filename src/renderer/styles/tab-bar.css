@@ -1,0 +1,119 @@
+/**
+ * Tab bar styles for multi-file tab switching.
+ * The tab bar sits at the bottom of the application window.
+ */
+
+/* Tab bar container */
+#tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: var(--tab-bar-height);
+    min-height: var(--tab-bar-height);
+    background-color: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 var(--spacing-xs);
+    user-select: none;
+}
+
+/* Hide scrollbar but allow scrolling */
+#tab-bar::-webkit-scrollbar {
+    height: 0;
+}
+
+/* Individual tab button */
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    height: calc(var(--tab-bar-height) - 4px);
+    padding: 0 var(--spacing-sm);
+    margin: 2px 0;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    background: none;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 200px;
+    flex-shrink: 0;
+    transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.tab-button:hover {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.tab-button:focus {
+    outline: none;
+}
+
+.tab-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+/* Active tab */
+.tab-button.active {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    border-color: var(--color-border);
+    border-bottom-color: var(--color-bg);
+    font-weight: 500;
+}
+
+/* Tab label (filename) */
+.tab-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Modified indicator */
+.tab-modified {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-text-secondary);
+    flex-shrink: 0;
+    display: none;
+}
+
+.tab-button.modified .tab-modified {
+    display: block;
+}
+
+/* Close button on tab */
+.tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s ease, background-color 0.1s ease;
+}
+
+.tab-button:hover .tab-close,
+.tab-button.active .tab-close {
+    opacity: 1;
+}
+
+.tab-close:hover {
+    background-color: var(--color-border);
+    color: var(--color-text);
+}

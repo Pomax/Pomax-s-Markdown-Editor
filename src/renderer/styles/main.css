@@ -53,6 +53,7 @@
 
     /* Layout */
     --toolbar-height: 48px;
+    --tab-bar-height: 32px;
     --page-max-width: 210mm; /* A4 width */
     --page-padding-top: 25mm;
     --page-padding-right: 25mm;

@@ -9,6 +9,7 @@ import { Editor } from './editor/editor.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
+import { TabBar } from './tab-bar/tab-bar.js';
 import { TableOfContents } from './toc/toc.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
@@ -32,6 +33,9 @@ class App {
 
         /** @type {TableOfContents|null} */
         this.toc = null;
+
+        /** @type {TabBar|null} */
+        this.tabBar = null;
     }
 
     /**
@@ -67,6 +71,14 @@ class App {
         if (tocContainer) {
             this.toc = new TableOfContents(tocContainer, this.editor);
             this.toc.initialize();
+        }
+
+        // Initialize tab bar
+        const tabBarContainer = document.getElementById('tab-bar');
+        if (tabBarContainer) {
+            this.tabBar = new TabBar(tabBarContainer);
+            this.tabBar.initialize();
+            this.tabBar.addTab('tab-1', null, true);
         }
 
         // Listen for TOC settings changes from the preferences modal

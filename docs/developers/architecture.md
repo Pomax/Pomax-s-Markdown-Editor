@@ -6,26 +6,13 @@ This document describes the high-level architecture of the Markdown Editor appli
 
 ## Technology Stack
 
-- **Runtime**: Electron (Node.js + Chromium)
-- **Language**: JavaScript (ES Modules)
-- **Type Checking**: JSDoc type annotations
-- **Testing**: Node.js native test runner (unit), Playwright (integration)
-
-## Project Structure
-
-```
-markdown-editor/
-├── src/
-│   ├── main/           # Electron main process
-│   └── renderer/       # Electron renderer process (UI)
-├── test/
-│   ├── unit/           # Unit tests
-│   └── integration/    # Playwright integration tests
-├── docs/
-│   ├── api/            # API documentation
-│   └── developers/     # Developer documentation
-└── scripts/            # Build and utility scripts
-```
+- **Runtime**: Electron 40+ (Node.js + Chromium)
+- **Language**: JavaScript (ES Modules) with JSDoc type annotations
+- **Type Checking**: TypeScript (`tsc`) via `jsconfig.json`, checking `.js` files
+- **Linting / Formatting**: Biome
+- **Testing**: Node.js native test runner (unit), Playwright with Firefox (integration)
+- **Native Modules**: `better-sqlite3` for settings persistence
+- **Packaging**: `electron-builder` for standalone executables
 
 ## Process Model
 
@@ -33,37 +20,47 @@ The application follows Electron's multi-process architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Main Process                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │
-│  │ FileManager │  │ MenuBuilder │  │   IPCHandler    │ │
-│  └─────────────┘  └─────────────┘  └─────────────────┘ │
+│                    Main Process                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
+│  │ FileManager │  │ MenuBuilder │  │   IPCHandler    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────┘  │
 │                          │                              │
-│              ┌───────────┼───────────┐                  │
-│              │           │           │                  │
-│        ┌─────┴─────┐ ┌──┴────────┐  │                  │
-│        │ APIRegistry│ │ Settings  │  │                  │
-│        └───────────┘ │  Manager  │  │                  │
-│                      └───────────┘  │                  │
+│              ┌───────────┴───────────┐                  │
+│              │                       │                  │
+│        ┌─────┴─────┐  ┌──────────────┴──┐               │
+│        │APIRegistry│  │ SettingsManager │               │
+│        └───────────┘  └─────────────────┘               │
 └────────────────────────┬────────────────────────────────┘
-                         │ IPC
-┌────────────────────────┴────────────────────────────────┐
-│                   Renderer Process                       │
-│  ┌────────┐  ┌─────────┐  ┌──────────────────────────┐ │
-│  │ Editor │──│ Parser  │──│      SyntaxTree          │ │
-│  └────────┘  └─────────┘  └──────────────────────────┘ │
-│       │                                                  │
-│  ┌────┴────┐  ┌───────────┐  ┌───────────────────────┐ │
-│  │ Toolbar │  │ Renderers │  │      UndoManager      │ │
-│  └─────────┘  └───────────┘  └───────────────────────┘ │
-│                                                          │
-│  ┌────────────┐ ┌────────────┐ ┌───────────────────┐   │
-│  │ ImageModal │ │ TableModal │ │ SelectionManager  │   │
-│  └────────────┘ └────────────┘ └───────────────────┘   │
-│                                                          │
-│  ┌───────────────────┐  ┌──────────────────────────┐   │
-│  │ TableOfContents   │  │   PreferencesModal       │   │
-│  └───────────────────┘  └──────────────────────────┘   │
-└──────────────────────────────────────────────────────────┘
+                         │
+                         │ IPC (via preload.cjs)
+                         │
+┌────────────────────────┴─────────────────────────────────────┐
+│                     Renderer Process (app.js)                │
+│    ┌── Editor ──────────────────────────────────────────┐    │
+│    │  ┌────────────────┐  ┌──────────────────────────┐  │    │
+│    │  │ MarkdownParser │──│       SyntaxTree         │  │    │
+│    │  └────────────────┘  └──────────────────────────┘  │    │
+│    │  ┌─────────────────┐ ┌────────────────┐            │    │
+│    │  │ FocusedRenderer │ │ SourceRenderer │            │    │
+│    │  └─────────────────┘ └────────────────┘            │    │
+│    │  ┌──────────────────┐ ┌─────────────┐              │    │
+│    │  │ SelectionManager │ │ UndoManager │              │    │
+│    │  └──────────────────┘ └─────────────┘              │    │
+│    └────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌── Toolbar ──────────────────┐  ┌── MenuHandler ─────────┐ │
+│  │  ┌────────────┐             │  │  ┌──────────────────┐  │ │
+│  │  │ ImageModal │ (on demand) │  │  │ PreferencesModal │  │ │
+│  │  └────────────┘             │  │  └──────────────────┘  │ │
+│  │  ┌────────────┐             │  │  ┌────────────────┐    │ │
+│  │  │ TableModal │ (on demand) │  │  │ WordCountModal │    │ │
+│  │  └────────────┘             │  │  └────────────────┘    │ │
+│  └─────────────────────────────┘  └────────────────────────┘ │
+│                                                              │
+│          ┌─────────────────┐  ┌───────────────────┐          │
+│          │ KeyboardHandler │  │ TableOfContents   │          │
+│          └─────────────────┘  └───────────────────┘          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Main Process Components
@@ -71,110 +68,164 @@ The application follows Electron's multi-process architecture:
 ### main.js
 
 Entry point for the Electron main process. Responsibilities:
-- Application lifecycle management
-- Window creation and management
-- Menu setup
+- Application lifecycle management (`app.whenReady`, `window-all-closed`, etc.)
+- Window creation with security settings (`contextIsolation: true`, `nodeIntegration: false`)
+- Menu setup via MenuBuilder
 - IPC handler registration
+- Restoring the last-opened file on launch
 
 ### FileManager
 
 Handles all file system operations:
-- Loading markdown files
-- Saving documents
-- File dialogs
+- Loading and saving markdown files
+- File dialogs (open, save as)
 - Tracking current file path and unsaved changes
+- Recent files list (persisted via SettingsManager)
+- Image gathering (copying referenced images into the document folder)
 
 ### MenuBuilder
 
 Constructs the application menu:
-- File menu (New, Load, Open Recent, Save, Save As, Exit)
-- Edit menu (Undo, Redo, Cut, Copy, Paste)
-- View menu (Source View, Focused Writing)
-- Help menu (About, Keyboard Shortcuts)
+- **File**: New, Load, Open Recent, Save, Save As, Word Count, Exit
+- **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
+- **View**: Source View (`Ctrl+1`), Focused Writing (`Ctrl+2`), Toggle Developer Tools
+- **Help**: Reload, Debug, About
+
+Menu actions are sent to the renderer via the `menu:action` IPC channel.
 
 ### IPCHandler
 
-Central hub for IPC communication:
-- Registers all IPC handlers
-- Routes messages to appropriate handlers
-- Bridges main process services with renderer
+Central hub for IPC communication. Registers handlers for:
+- File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, etc.)
+- Document operations (`document:undo`, `document:redo`)
+- View operations (`view:source`, `view:focused`)
+- Element operations (`element:changeType`, `element:format`)
+- Settings operations (`settings:get`, `settings:set`, `settings:getAll`)
+- Image operations (`image:browse`, `image:rename`)
+- Path operations (`path:toRelative` — uses `node:path` for filesystem-correct relative path computation)
+- API operations (`api:execute`, `api:commands`)
+- App operations (`app:reload`)
 
 ### APIRegistry
 
 Manages the external scripting API:
-- Command registration
-- Command execution
+
+- Command registration with parameter schemas
+- Command execution via IPC
 - Parameter validation
-- API documentation generation
+- API documentation generation (used by `scripts/generate-api-docs.js`)
 
 ### SettingsManager
 
 Persists and retrieves user preferences:
-- Uses SQLite (better-sqlite3) for storage in the user data directory
+
+- Uses SQLite (`better-sqlite3`) for storage in the user's OS-defined data directory
 - Key-value store with JSON serialization
-- Exposes `getSetting` / `setSetting` IPC handlers
-- Stores page width, margins, colors, view mode, TOC settings, etc.
+- Stores: page width, margins, colors, default view mode, TOC settings, ensure-local-paths, etc.
 
 ### preload.cjs
 
 Secure bridge between main and renderer:
-- Exposes limited API via contextBridge
-- Provides type-safe interface
-- Ensures security through context isolation
+
+- Must be CommonJS (`.cjs`) due to Electron's sandboxed preload environment
+- Exposes a typed `electronAPI` object via `contextBridge.exposeInMainWorld`
+- Provides file operations, settings, image operations, path utilities, and IPC event listeners
+- The full API surface is defined in `src/types.d.ts`
 
 ## Renderer Process Components
 
+### App (`app.js`)
+
+The renderer entry point. Wires together all renderer components:
+
+- Creates Editor, Toolbar, TableOfContents, PreferencesModal, WordCountModal
+- Registers IPC listeners for menu actions and external API calls
+- Loads persisted settings and applies them to the editor
+- Listens for custom events from modals (e.g. `toc:settingsChanged`, `imageHandling:settingsChanged`)
+- Exposes `editorAPI` to the main process for querying editor state
+
 ### Editor
 
-Core editing component:
-- Manages document state
-- Coordinates parsing and rendering
-- Handles user input
-- Manages undo/redo
+Core editing component (~1300 lines):
+
+- Manages the document as a `SyntaxTree`
+- Coordinates parsing, rendering, and cursor placement
+- Handles keyboard input, drag & drop, clipboard operations
+- Manages undo/redo via `UndoManager`
+- Supports two view modes via swappable renderers (`SourceRenderer`, `FocusedRenderer`)
+- Provides `toRelativeImagePath()` (async, IPC-based) and `rewriteImagePaths()` for the ensure-local-paths feature
 
 ### MarkdownParser
 
-Converts markdown text to syntax tree:
-- Block-level parsing (headings, paragraphs, code blocks, etc.)
-- Pattern-based recognition
-- Position tracking for each node
+Converts markdown text to a syntax tree:
+- Block-level parsing (headings, paragraphs, code blocks, blockquotes, lists, images, tables, horizontal rules)
+- Pattern-based recognition with ordered priority
+- Position tracking (start/end line) for each node
+- Multi-line block handling (code blocks, tables)
 
-### SyntaxTree
+### SyntaxTree / SyntaxNode
 
 Data structure for parsed documents:
-- Tree of SyntaxNode objects
-- Fast node lookup by ID or position
-- Serialization to markdown
-- Deep cloning for undo/redo
+- `SyntaxTree`: root container with `children` array of `SyntaxNode`
+- `SyntaxNode`: type, content, attributes, children, unique ID, position info
+- `toMarkdown()`: serializes back to markdown text
+- `clone()`: deep cloning for undo/redo snapshots
+- Node lookup by ID or position
 
 ### Renderers
 
 #### SourceRenderer
 Displays markdown with syntax highlighting:
 - Shows literal markdown syntax
-- Color-codes different element types
+- Color-codes different element types (headings, code, emphasis, etc.)
+- Uses `SyntaxHighlighter` for inline syntax coloring
 - Maintains editability
 
 #### FocusedRenderer
 WYSIWYG-style display:
 - Hides syntax when not focused
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
-- Reveals raw markdown syntax on element focus (click any element to edit)
+- Reveals raw markdown syntax on element focus (click to edit)
 - Supports click-to-focus on non-text elements like images and horizontal rules
 
 ### UndoManager
 
 Unlimited undo/redo history:
-- Maintains undo and redo stacks
-- Batches rapid changes
-- No memory limit (as per requirements)
+- Maintains undo and redo stacks of markdown snapshots
+- Batches rapid changes (debounced)
+- No memory limit
 
 ### SelectionManager
 
 Tracks and manipulates text selection:
-- Converts between DOM and logical positions
+- Converts between DOM positions and logical tree cursor positions
 - Tracks current node at cursor
 - Dispatches selection change events
+
+### SyntaxHighlighter
+
+Inline syntax highlighting for source view:
+- Colors markdown syntax characters (e.g. `**`, `_`, `` ` ``, `[`, `]`)
+- Handles nested formatting
+- Applied per-line within the source renderer
+
+### ParseTree
+
+Lightweight helper used during keyboard input processing:
+- Tracks cursor position across parse/re-render cycles
+- Maps between text offsets and tree node positions
+
+### Toolbar
+
+WYSIWYG formatting toolbar:
+- Lucide SVG icons with per-button coloring
+- Context-aware button visibility (buttons only shown when applicable to current element type)
+- Element type buttons (H1–H3, paragraph, blockquote, code block)
+- Format buttons (bold, italic, strikethrough, inline code, link, image, table)
+- List buttons (unordered, ordered)
+- View mode dropdown selector
+- Keyboard shortcut indicators in tooltips
+- Automatic scaling on narrow windows via ResizeObserver
 
 ### TableOfContents
 
@@ -190,97 +241,102 @@ Sidebar showing a navigable document outline:
 
 Settings dialog for user preferences:
 - Sidebar navigation with section links
-- Sections: Default View, Page Width, Margins, Colors, Table of Contents
+- Sections: Default View, Page Width, Margins, Colors, Table of Contents, Image Handling
+- Image Handling: "Ensure local paths" checkbox (auto-rewrites downstream image paths to relative form)
 - Reads and writes settings via IPC to the SettingsManager
 - Applies CSS custom property changes immediately on save
+- Dispatches custom events so `app.js` can update runtime state
 
-### Toolbar
+### ImageModal
 
-WYSIWYG formatting toolbar:
-- Lucide SVG icons with per-button coloring
-- Context-aware button visibility
-- Element-specific formatting options
-- Keyboard shortcut indicators
-- Automatic scaling on narrow windows via ResizeObserver
+Modal for inserting and editing images:
+- Browse for image file
+- Set alt text and optional link URL
+- Rename image file on disk
+- Shows live image preview
+
+### TableModal
+
+Modal for inserting and editing tables:
+- Set row and column counts
+- Edit cell contents in a grid
+- Generates markdown table syntax
+
+### WordCountModal
+
+Modal displaying document statistics:
+- Total word count
+- Word count excluding code blocks and inline code
 
 ## Data Flow
 
 ### Document Loading
 
 ```
-User clicks Load
+User clicks File → Load
        │
        ▼
-MenuBuilder.handleLoad()
+IPC: file:load → FileManager → File Dialog
        │
        ▼
-FileManager.load() ──► File Dialog
+Returns { content, filePath } to renderer
        │
        ▼
-IPC: file:loaded
+MenuHandler → Editor.loadMarkdown()
        │
        ▼
-MenuHandler.handleLoaded()
+MarkdownParser.parse() → SyntaxTree
        │
        ▼
-Editor.loadMarkdown()
+rewriteImagePaths() (async, if ensureLocalPaths enabled)
        │
        ▼
-MarkdownParser.parse()
-       │
-       ▼
-SyntaxTree created
-       │
-       ▼
-Renderer.render()
+Renderer.render() → DOM
 ```
 
 ### User Input
 
 ```
-User types character
+User types a character
        │
        ▼
-Editor.handleKeyDown()
+Editor.handleKeyDown() / handleInput()
        │
        ▼
-Get current content
-       │
-       ▼
-MarkdownParser.parse()
-       │
-       ▼
-Update SyntaxTree
+Update current node content
        │
        ▼
 UndoManager.recordChange()
        │
        ▼
-Renderer.render() (if focused mode)
-```
-
-### Undo Operation
-
-```
-User presses Ctrl+Z
-       │
-       ▼
-KeyboardHandler or Menu
-       │
-       ▼
-Editor.undo()
-       │
-       ▼
-UndoManager.undo()
-       │
-       ▼
-Restore previous content
-       │
-       ▼
-MarkdownParser.parse()
+Re-parse affected node if needed
        │
        ▼
 Renderer.render()
+```
+
+### Settings Change
+
+```
+User opens Edit → Preferences
+       │
+       ▼
+PreferencesModal loads current settings via IPC
+       │
+       ▼
+User changes values and clicks Save
+       │
+       ▼
+PreferencesModal saves via IPC (settings:set)
+       │
+       ▼
+Dispatches custom event (e.g. imageHandling:settingsChanged)
+       │
+       ▼
+App.js listener updates Editor properties
+       │
+       ▼
+CSS custom properties updated → immediate visual change
 ```
 
 ## View Modes
@@ -289,7 +345,7 @@ Renderer.render()
 
 - Displays raw markdown with syntax highlighting
 - All markdown syntax is visible
-- Syntax characters are styled differently
+- Syntax characters are styled with distinct colors
 - Best for users who know markdown
 
 ### Focused Writing View
@@ -312,17 +368,18 @@ The application exposes an IPC-based API for external scripting:
 
 See `docs/api/README.md` for full API documentation.
 
-## Memory Management
-
-As per requirements, the application runs with unlimited memory:
-- Node.js flag `--max-old-space-size=0` removes heap limit
-- Undo history has no cap
-- Large documents are supported
-
 ## Security Model
 
-- Context isolation enabled
-- Node integration disabled in renderer
-- All IPC goes through preload script
-- Limited API surface exposed to renderer
-- Content Security Policy enforced
+- `contextIsolation: true` — renderer runs in a separate JavaScript context
+- `nodeIntegration: false` — no `require()` or `process` in renderer
+- `webSecurity: false` — allows loading local `file://` images
+- All IPC goes through the preload script
+- Limited API surface exposed to renderer (defined in `preload.cjs` and `types.d.ts`)
+
+## Build & CI
+
+- **Local builds**: `npm run dist:win`, `dist:mac`, `dist:linux`
+- **CI**: GitHub Actions workflow (`.github/workflows/build.yml`) builds all three platforms on push to `main`
+- **Packaging**: `electron-builder` creates standalone executables (portable `.exe`, `.zip`, `AppImage`)
+- **Native modules**: `better-sqlite3` is rebuilt per-platform via `@electron/rebuild`
+- **Artifacts**: Published as GitHub Releases
