@@ -14,6 +14,16 @@ import { TableOfContents } from './toc/toc.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
 /**
+ * @typedef {Object} DocumentState
+ * @property {string} content - The markdown content
+ * @property {string|null} filePath - Full file path or null for untitled
+ * @property {boolean} modified - Whether there are unsaved changes
+ * @property {import('./editor/editor.js').TreeCursor|null} cursor - Cursor position
+ * @property {any[]} undoStack - Undo history
+ * @property {any[]} redoStack - Redo history
+ */
+
+/**
  * Main application class.
  * Coordinates all editor components.
  */
@@ -36,6 +46,15 @@ class App {
 
         /** @type {TabBar|null} */
         this.tabBar = null;
+
+        /**
+         * Per-tab document state storage.
+         * @type {Map<string, DocumentState>}
+         */
+        this._documentStates = new Map();
+
+        /** @type {number} Counter for generating unique tab IDs */
+        this._tabCounter = 0;
     }
 
     /**
@@ -78,8 +97,55 @@ class App {
         if (tabBarContainer) {
             this.tabBar = new TabBar(tabBarContainer);
             this.tabBar.initialize();
-            this.tabBar.addTab('tab-1', null, true);
+
+            const firstTabId = this._nextTabId();
+            this.tabBar.addTab(firstTabId, null, true);
+
+            this.tabBar.onTabSelect = (tabId) => this._switchToTab(tabId);
+            this.tabBar.onTabClose = (tabId) => this._closeTab(tabId);
         }
+
+        // Keep tab bar in sync with editor file state
+        document.addEventListener('editor:fileStateChanged', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.tabBar?.activeTabId && detail) {
+                this.tabBar.updateTabPath(this.tabBar.activeTabId, detail.filePath);
+                this.tabBar.setModified(this.tabBar.activeTabId, detail.modified);
+                this._notifyOpenFiles();
+            }
+        });
+
+        // Handle file switching from the View menu
+        document.addEventListener('view:switchFile', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (detail?.tabId) {
+                this._switchToTab(detail.tabId);
+            }
+        });
+
+        // Handle File → New: create a new tab with an empty document
+        document.addEventListener('file:new', () => {
+            this._createNewTab(null, '');
+        });
+
+        // Handle File → Load / Open Recent: open in a new tab (or switch
+        // to an existing tab if the file is already open)
+        document.addEventListener('file:loaded', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (!detail) return;
+            const filePath = detail.filePath || null;
+
+            // If this file is already open in another tab, switch to it
+            if (filePath && this.tabBar) {
+                const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
+                if (existing) {
+                    this._switchToTab(existing.id);
+                    return;
+                }
+            }
+
+            this._createNewTab(filePath, detail.content ?? '');
+        });
 
         // Listen for TOC settings changes from the preferences modal
         document.addEventListener('toc:settingsChanged', (e) => {
@@ -113,6 +179,146 @@ class App {
         await this.loadSettings();
 
         console.log('Markdown Editor initialized');
+    }
+
+    // ──────────────────────────────────────────────
+    //  Multi-file tab management
+    // ──────────────────────────────────────────────
+
+    /**
+     * Generates a unique tab identifier.
+     * @returns {string}
+     */
+    _nextTabId() {
+        this._tabCounter++;
+        return `tab-${this._tabCounter}`;
+    }
+
+    /**
+     * Saves the current editor state for the active tab.
+     */
+    _saveCurrentState() {
+        const tabId = this.tabBar?.activeTabId;
+        if (!tabId || !this.editor) return;
+
+        this._documentStates.set(tabId, {
+            content: this.editor.getMarkdown(),
+            filePath: this.editor.currentFilePath,
+            modified: this.editor.hasUnsavedChanges(),
+            cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
+            undoStack: [...this.editor.undoManager.undoStack],
+            redoStack: [...this.editor.undoManager.redoStack],
+        });
+    }
+
+    /**
+     * Restores the editor state for a given tab.
+     * @param {string} tabId
+     */
+    _restoreState(tabId) {
+        if (!this.editor) return;
+
+        const state = this._documentStates.get(tabId);
+        if (state) {
+            this.editor.currentFilePath = state.filePath;
+            this.editor.loadMarkdown(state.content);
+            this.editor.undoManager.undoStack = [...state.undoStack];
+            this.editor.undoManager.redoStack = [...state.redoStack];
+            if (state.cursor) {
+                this.editor.treeCursor = { ...state.cursor };
+                this.editor.placeCursor();
+            }
+            this.editor.setUnsavedChanges(state.modified);
+        } else {
+            this.editor.reset();
+        }
+    }
+
+    /**
+     * Creates a new tab and loads content into it.
+     * @param {string|null} filePath - File path, or null for untitled
+     * @param {string} content - Markdown content to load
+     */
+    _createNewTab(filePath, content) {
+        if (!this.editor || !this.tabBar) return;
+
+        // Save the current tab's state before switching
+        this._saveCurrentState();
+
+        const tabId = this._nextTabId();
+        this.tabBar.addTab(tabId, filePath, true);
+
+        // Load the new content into the editor
+        this.editor.currentFilePath = filePath;
+        this.editor.loadMarkdown(content);
+        this.editor.updateWindowTitle();
+
+        this._notifyOpenFiles();
+    }
+
+    /**
+     * Switches to a different tab, saving and restoring state.
+     * @param {string} tabId
+     */
+    _switchToTab(tabId) {
+        if (!this.editor || !this.tabBar) return;
+        if (tabId === this.tabBar.activeTabId) return;
+
+        // Save current tab's state
+        this._saveCurrentState();
+
+        // Activate the new tab
+        this.tabBar.setActiveTab(tabId);
+
+        // Restore the target tab's state
+        this._restoreState(tabId);
+
+        this._notifyOpenFiles();
+    }
+
+    /**
+     * Closes a tab. If it's the last tab, resets to a fresh untitled document.
+     * @param {string} tabId
+     */
+    _closeTab(tabId) {
+        if (!this.tabBar || !this.editor) return;
+
+        const tab = this.tabBar.tabs.find((t) => t.id === tabId);
+        if (!tab) return;
+
+        // TODO: prompt to save if modified
+        this._documentStates.delete(tabId);
+
+        const wasActive = tabId === this.tabBar.activeTabId;
+        this.tabBar.removeTab(tabId);
+
+        if (this.tabBar.tabs.length === 0) {
+            // Last tab was closed — create a fresh untitled tab
+            const newId = this._nextTabId();
+            this.tabBar.addTab(newId, null, true);
+            this.editor.reset();
+        } else if (wasActive && this.tabBar.activeTabId) {
+            // removeTab already picked a new active tab; restore its state
+            this._restoreState(this.tabBar.activeTabId);
+        }
+
+        this._notifyOpenFiles();
+    }
+
+    /**
+     * Sends the current list of open files to the main process
+     * so the View menu can be rebuilt.
+     */
+    _notifyOpenFiles() {
+        if (!this.tabBar || !window.electronAPI) return;
+
+        const files = this.tabBar.tabs.map((tab) => ({
+            id: tab.id,
+            filePath: tab.filePath,
+            active: tab.active,
+        }));
+
+        window.electronAPI.notifyOpenFiles(files);
     }
 
     /**
@@ -275,7 +481,7 @@ class App {
 
         switch (method) {
             case 'file:new':
-                this.editor.reset();
+                this._createNewTab(null, '');
                 break;
             case 'file:save':
                 this.menuHandler.handleSave();

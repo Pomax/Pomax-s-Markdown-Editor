@@ -140,6 +140,20 @@ export class IPCHandler {
             }
             return { success: true };
         });
+
+        ipcMain.handle('view:openFilesChanged', async (_event, files) => {
+            if (this.menuBuilder) {
+                this.menuBuilder.openFiles = files ?? [];
+                this.menuBuilder.refreshMenu();
+            }
+            // Keep fileManager.currentFilePath in sync with the active tab
+            const fileList = files ?? [];
+            const activeFile = fileList.find(/** @param {{active: boolean}} f */ (f) => f.active);
+            if (activeFile) {
+                this.fileManager.currentFilePath = activeFile.filePath ?? null;
+            }
+            return { success: true };
+        });
     }
 
     /**

@@ -1289,6 +1289,7 @@ export class Editor {
 
     /**
      * Updates the window title to reflect the current state.
+     * Dispatches a 'editor:fileStateChanged' event for other components.
      */
     updateWindowTitle() {
         const fileName = this.currentFilePath
@@ -1296,5 +1297,14 @@ export class Editor {
             : 'Untitled';
         const modified = this._hasUnsavedChanges ? ' •' : '';
         document.title = `${fileName}${modified} - Markdown Editor`;
+
+        document.dispatchEvent(
+            new CustomEvent('editor:fileStateChanged', {
+                detail: {
+                    filePath: this.currentFilePath,
+                    modified: this._hasUnsavedChanges,
+                },
+            }),
+        );
     }
 }

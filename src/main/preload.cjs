@@ -85,6 +85,14 @@ const electronAPI = {
      */
     setFocusedView: () => ipcRenderer.invoke('view:focused'),
 
+    /**
+     * Sends the current list of open files to the main process so the
+     * View menu can be rebuilt.
+     * @param {Array<{id: string, filePath: string|null, active: boolean}>} files
+     * @returns {Promise<{success: boolean}>}
+     */
+    notifyOpenFiles: (files) => ipcRenderer.invoke('view:openFilesChanged', files),
+
     // ========== Application Operations ==========
 
     /**

@@ -40,6 +40,7 @@ interface ElectronAPI {
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
+    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; active: boolean }>): Promise<{ success: boolean }>;
 }
 
 /**
