@@ -23,6 +23,83 @@ function getFileName(filePath) {
 }
 
 /**
+ * Splits a file path into its segments.
+ * @param {string} filePath
+ * @returns {string[]}
+ */
+function getPathSegments(filePath) {
+    return filePath.split(/[\\/]/);
+}
+
+/**
+ * Computes disambiguated display labels for a list of tabs.
+ * Tabs with unique filenames get just the filename.  Tabs whose filenames
+ * collide get the minimum number of parent directory segments appended
+ * (e.g. "README.md — docs") to make them unique.
+ * @param {TabInfo[]} tabs
+ * @returns {Map<string, string>} Map of tab ID → display label
+ */
+export function getDisambiguatedLabels(tabs) {
+    /** @type {Map<string, string>} */
+    const labels = new Map();
+
+    // Group tabs by their base filename
+    /** @type {Map<string, TabInfo[]>} */
+    const groups = new Map();
+    for (const tab of tabs) {
+        const name = getFileName(tab.filePath);
+        const group = groups.get(name) ?? [];
+        group.push(tab);
+        groups.set(name, group);
+    }
+
+    for (const [name, group] of groups) {
+        if (group.length === 1) {
+            // Unique filename — no disambiguation needed
+            labels.set(group[0].id, name);
+            continue;
+        }
+
+        // Multiple tabs share the same filename — find the minimum
+        // number of parent segments needed to distinguish each one
+        const segmentsList = group.map((tab) =>
+            tab.filePath ? getPathSegments(tab.filePath) : [name],
+        );
+
+        for (let i = 0; i < group.length; i++) {
+            const segments = segmentsList[i];
+            let depth = 1;
+            const maxDepth = segments.length - 1;
+
+            while (depth < maxDepth) {
+                const suffix = segments
+                    .slice(segments.length - 1 - depth, segments.length - 1)
+                    .join('/');
+                const isUnique = segmentsList.every(
+                    (other, j) =>
+                        j === i ||
+                        other.slice(other.length - 1 - depth, other.length - 1).join('/') !==
+                            suffix,
+                );
+                if (isUnique) break;
+                depth++;
+            }
+
+            if (maxDepth > 0) {
+                const suffix = segments
+                    .slice(segments.length - 1 - depth, segments.length - 1)
+                    .join('/');
+                labels.set(group[i].id, `${name} — ${suffix}`);
+            } else {
+                labels.set(group[i].id, name);
+            }
+        }
+    }
+
+    return labels;
+}
+
+/**
  * Creates a close button element for a tab.
  * @returns {HTMLButtonElement}
  */
@@ -144,9 +221,11 @@ export class TabBar {
      * Renders all tabs into the container.
      */
     render() {
+        const labels = getDisambiguatedLabels(this.tabs);
         this.container.innerHTML = '';
         for (const tab of this.tabs) {
-            const button = this._createTabElement(tab);
+            const displayLabel = labels.get(tab.id) ?? tab.label;
+            const button = this._createTabElement(tab, displayLabel);
             this.container.appendChild(button);
         }
     }
@@ -154,12 +233,14 @@ export class TabBar {
     /**
      * Creates a DOM element for a single tab.
      * @param {TabInfo} tab
+     * @param {string} displayLabel - The disambiguated label to show
      * @returns {HTMLButtonElement}
      */
-    _createTabElement(tab) {
+    _createTabElement(tab, displayLabel) {
         const button = document.createElement('button');
         button.className = 'tab-button';
         button.dataset.tabId = tab.id;
+        button.title = tab.filePath ?? 'Untitled';
         if (tab.active) button.classList.add('active');
         if (tab.modified) button.classList.add('modified');
 
@@ -169,7 +250,7 @@ export class TabBar {
 
         const label = document.createElement('span');
         label.className = 'tab-label';
-        label.textContent = tab.label;
+        label.textContent = displayLabel;
         button.appendChild(label);
 
         const close = createCloseButton();

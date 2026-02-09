@@ -60,7 +60,8 @@ markdown-editor/
 │       │   ├── table.css
 │       │   ├── toc.css
 │       │   ├── preferences.css
-│       │   └── word-count.css
+│       │   ├── word-count.css
+│       │   └── tab-bar.css
 │       └── scripts/
 │           ├── app.js           # Renderer entry point
 │           ├── editor/          # Core editor, undo, selection, renderers
@@ -69,6 +70,7 @@ markdown-editor/
 │           ├── handlers/        # Keyboard + menu event handlers
 │           ├── image/           # Image insert/edit modal
 │           ├── table/           # Table insert/edit modal
+│           ├── tab-bar/         # Multi-file tab bar
 │           ├── toc/             # Table of Contents sidebar
 │           ├── preferences/     # Preferences modal
 │           └── word-count/      # Word count modal

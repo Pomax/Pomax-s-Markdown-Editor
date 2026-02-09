@@ -20,6 +20,7 @@ interface ElectronAPI {
     onMenuAction(callback: (action: string, ...args: any[]) => void): () => void;
     onExternalAPI(callback: (method: string, ...args: any[]) => void): () => void;
     setUnsavedChanges(hasChanges: boolean): void;
+    confirmClose(): Promise<{ action: 'save' | 'saveAs' | 'discard' | 'cancel' }>;
     saveFile(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     saveFileAs(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     loadFile(): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
@@ -40,7 +41,7 @@ interface ElectronAPI {
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
-    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; active: boolean }>): Promise<{ success: boolean }>;
+    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
 }
 
 /**

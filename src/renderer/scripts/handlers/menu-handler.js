@@ -71,6 +71,9 @@ export class MenuHandler {
             case 'file:saveAs':
                 this.handleSaveAs();
                 break;
+            case 'file:close':
+                this.handleClose();
+                break;
             case 'file:wordCount':
                 this.handleWordCount();
                 break;
@@ -109,6 +112,14 @@ export class MenuHandler {
      */
     handleNew() {
         document.dispatchEvent(new CustomEvent('file:new'));
+    }
+
+    /**
+     * Handles the Close action.
+     * Dispatches a 'file:close' event so the app can close the active tab.
+     */
+    handleClose() {
+        document.dispatchEvent(new CustomEvent('file:close'));
     }
 
     /**

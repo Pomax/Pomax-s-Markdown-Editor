@@ -60,6 +60,10 @@ The application follows Electron's multi-process architecture:
 │          ┌─────────────────┐  ┌───────────────────┐          │
 │          │ KeyboardHandler │  │ TableOfContents   │          │
 │          └─────────────────┘  └───────────────────┘          │
+│                                                              │
+│                         ┌────────┐                           │
+│                         │ TabBar │                           │
+│                         └────────┘                           │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -72,7 +76,7 @@ Entry point for the Electron main process. Responsibilities:
 - Window creation with security settings (`contextIsolation: true`, `nodeIntegration: false`)
 - Menu setup via MenuBuilder
 - IPC handler registration
-- Restoring the last-opened file on launch
+- Persisting and restoring all open files across sessions
 
 ### FileManager
 
@@ -86,9 +90,9 @@ Handles all file system operations:
 ### MenuBuilder
 
 Constructs the application menu:
-- **File**: New, Load, Open Recent, Save, Save As, Word Count, Exit
+- **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Exit
 - **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
-- **View**: Source View (`Ctrl+1`), Focused Writing (`Ctrl+2`), Toggle Developer Tools
+- **View**: Source View (`Ctrl+1`), Focused Writing (`Ctrl+2`), open file list with checkmarks
 - **Help**: Reload, Debug, About
 
 Menu actions are sent to the renderer via the `menu:action` IPC channel.
@@ -96,9 +100,9 @@ Menu actions are sent to the renderer via the `menu:action` IPC channel.
 ### IPCHandler
 
 Central hub for IPC communication. Registers handlers for:
-- File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, etc.)
+- File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
 - Document operations (`document:undo`, `document:redo`)
-- View operations (`view:source`, `view:focused`)
+- View operations (`view:source`, `view:focused`, `view:openFilesChanged`)
 - Element operations (`element:changeType`, `element:format`)
 - Settings operations (`settings:get`, `settings:set`, `settings:getAll`)
 - Image operations (`image:browse`, `image:rename`)
@@ -121,7 +125,7 @@ Persists and retrieves user preferences:
 
 - Uses SQLite (`better-sqlite3`) for storage in the user's OS-defined data directory
 - Key-value store with JSON serialization
-- Stores: page width, margins, colors, default view mode, TOC settings, ensure-local-paths, etc.
+- Stores: page width, margins, colors, default view mode, TOC settings, ensure-local-paths, open files list, etc.
 
 ### preload.cjs
 
@@ -138,10 +142,13 @@ Secure bridge between main and renderer:
 
 The renderer entry point. Wires together all renderer components:
 
-- Creates Editor, Toolbar, TableOfContents, PreferencesModal, WordCountModal
+- Creates Editor, Toolbar, TabBar, TableOfContents, PreferencesModal, WordCountModal
+- Manages multi-file document state (content, cursor, undo/redo stacks per tab)
+- Handles tab creation, switching, and closing (with unsaved-changes prompts)
 - Registers IPC listeners for menu actions and external API calls
 - Loads persisted settings and applies them to the editor
 - Listens for custom events from modals (e.g. `toc:settingsChanged`, `imageHandling:settingsChanged`)
+- Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
 
 ### Editor
@@ -268,6 +275,16 @@ Modal displaying document statistics:
 - Total word count
 - Word count excluding code blocks and inline code
 
+### TabBar
+
+Bottom tab bar for multi-file editing:
+- Displays one tab button per open document
+- Active tab is visually highlighted; modified tabs show a dot indicator
+- Click to switch tabs; close button on each tab (with unsaved-changes prompt)
+- Tooltips show the full absolute file path
+- Disambiguates tabs with identical filenames by appending the minimum parent directory path (e.g. "README.md — docs")
+- Exports `getDisambiguatedLabels()` utility used by both the tab bar and the View menu
+
 ## Data Flow
 
 ### Document Loading
@@ -282,7 +299,13 @@ IPC: file:load → FileManager → File Dialog
 Returns { content, filePath } to renderer
        │
        ▼
-MenuHandler → Editor.loadMarkdown()
+MenuHandler dispatches 'file:loaded' event
+       │
+       ▼
+App: reuse pristine tab or create new tab
+       │
+       ▼
+Editor.loadMarkdown()
        │
        ▼
 MarkdownParser.parse() → SyntaxTree
@@ -292,6 +315,9 @@ rewriteImagePaths() (async, if ensureLocalPaths enabled)
        │
        ▼
 Renderer.render() → DOM
+       │
+       ▼
+App._notifyOpenFiles() → IPC → View menu rebuild
 ```
 
 ### User Input

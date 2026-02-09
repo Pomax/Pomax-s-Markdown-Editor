@@ -36,7 +36,7 @@ export class MenuBuilder {
 
         /**
          * List of currently open files, sent from the renderer.
-         * @type {Array<{id: string, filePath: string|null, active: boolean}>}
+         * @type {Array<{id: string, filePath: string|null, label: string, active: boolean}>}
          */
         this.openFiles = [];
     }
@@ -88,6 +88,12 @@ export class MenuBuilder {
                     label: 'Save As...',
                     accelerator: 'CmdOrCtrl+Shift+S',
                     click: () => this.handleSaveAs(),
+                },
+                { type: 'separator' },
+                {
+                    label: 'Close',
+                    accelerator: 'CmdOrCtrl+W',
+                    click: () => this.sendMenuAction('file:close'),
                 },
                 { type: 'separator' },
                 {
@@ -216,11 +222,8 @@ export class MenuBuilder {
         if (this.openFiles.length > 0) {
             submenu.push({ type: 'separator' });
             for (const file of this.openFiles) {
-                const label = file.filePath
-                    ? (file.filePath.split(/[\\/]/).pop() ?? 'Untitled')
-                    : 'Untitled';
                 submenu.push({
-                    label,
+                    label: file.label ?? 'Untitled',
                     type: 'checkbox',
                     checked: file.active,
                     click: () => this.sendMenuAction('view:switchFile', file.id),

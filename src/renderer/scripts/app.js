@@ -9,7 +9,7 @@ import { Editor } from './editor/editor.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
-import { TabBar } from './tab-bar/tab-bar.js';
+import { TabBar, getDisambiguatedLabels } from './tab-bar/tab-bar.js';
 import { TableOfContents } from './toc/toc.js';
 import { Toolbar } from './toolbar/toolbar.js';
 
@@ -144,7 +144,20 @@ class App {
                 }
             }
 
-            this._createNewTab(filePath, detail.content ?? '');
+            // If the active tab is a pristine empty document, reuse it
+            // instead of opening a new tab alongside it
+            if (this._isActiveTabPristine()) {
+                this._loadIntoCurrentTab(filePath, detail.content ?? '');
+            } else {
+                this._createNewTab(filePath, detail.content ?? '');
+            }
+        });
+
+        // Handle File → Close: close the active tab
+        document.addEventListener('file:close', () => {
+            if (this.tabBar?.activeTabId) {
+                this._closeTab(this.tabBar.activeTabId);
+            }
         });
 
         // Listen for TOC settings changes from the preferences modal
@@ -235,6 +248,43 @@ class App {
     }
 
     /**
+     * Returns true when the active tab is an untouched empty document —
+     * no file path, no unsaved changes, and no content.  Loading a file
+     * into such a tab should reuse it rather than opening a second tab.
+     * @returns {boolean}
+     */
+    _isActiveTabPristine() {
+        if (!this.editor || !this.tabBar?.activeTabId) return false;
+
+        const tab = this.tabBar.tabs.find((t) => t.id === this.tabBar?.activeTabId);
+        if (!tab) return false;
+
+        return (
+            tab.filePath === null &&
+            !this.editor.hasUnsavedChanges() &&
+            this.editor.getMarkdown().trim() === ''
+        );
+    }
+
+    /**
+     * Loads a file into the current (active) tab, replacing its content
+     * without creating a new tab.
+     * @param {string|null} filePath
+     * @param {string} content
+     */
+    _loadIntoCurrentTab(filePath, content) {
+        if (!this.editor || !this.tabBar?.activeTabId) return;
+
+        this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
+
+        this.editor.currentFilePath = filePath;
+        this.editor.loadMarkdown(content);
+        this.editor.updateWindowTitle();
+
+        this._notifyOpenFiles();
+    }
+
+    /**
      * Creates a new tab and loads content into it.
      * @param {string|null} filePath - File path, or null for untitled
      * @param {string} content - Markdown content to load
@@ -277,18 +327,51 @@ class App {
     }
 
     /**
-     * Closes a tab. If it's the last tab, resets to a fresh untitled document.
+     * Closes a tab. If the document has unsaved changes, prompts the
+     * user to save, discard, or cancel before closing.
+     * If it's the last tab, resets to a fresh untitled document.
      * @param {string} tabId
      */
-    _closeTab(tabId) {
+    async _closeTab(tabId) {
         if (!this.tabBar || !this.editor) return;
 
         const tab = this.tabBar.tabs.find((t) => t.id === tabId);
         if (!tab) return;
 
-        // TODO: prompt to save if modified
+        // Check whether this tab has unsaved changes.  For the active
+        // tab we ask the editor directly; for background tabs we check
+        // the saved document-state snapshot.
+        const isActive = tabId === this.tabBar.activeTabId;
+        const isModified = isActive
+            ? this.editor.hasUnsavedChanges()
+            : (this._documentStates.get(tabId)?.modified ?? false);
+
+        if (isModified && window.electronAPI) {
+            // If we're closing a background tab, switch to it first so
+            // the user can see what they're being asked about.
+            if (!isActive) {
+                this._switchToTab(tabId);
+            }
+
+            const { action } = await window.electronAPI.confirmClose();
+
+            if (action === 'cancel') return;
+
+            if (action === 'save') {
+                const content = this.editor.getMarkdown();
+                const result = await window.electronAPI.saveFile(content);
+                if (!result.success) return; // save dialog was cancelled
+            } else if (action === 'saveAs') {
+                const content = this.editor.getMarkdown();
+                const result = await window.electronAPI.saveFileAs(content);
+                if (!result.success) return;
+            }
+            // 'discard' falls through to the removal below
+        }
+
         this._documentStates.delete(tabId);
 
+        // Re-check active state — it may have changed if we switched above
         const wasActive = tabId === this.tabBar.activeTabId;
         this.tabBar.removeTab(tabId);
 
@@ -312,9 +395,12 @@ class App {
     _notifyOpenFiles() {
         if (!this.tabBar || !window.electronAPI) return;
 
+        const labels = getDisambiguatedLabels(this.tabBar.tabs);
+
         const files = this.tabBar.tabs.map((tab) => ({
             id: tab.id,
             filePath: tab.filePath,
+            label: labels.get(tab.id) ?? tab.label,
             active: tab.active,
         }));
 

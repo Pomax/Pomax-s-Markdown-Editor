@@ -57,6 +57,12 @@ const electronAPI = {
      */
     setUnsavedChanges: (hasChanges) => ipcRenderer.invoke('file:setUnsavedChanges', hasChanges),
 
+    /**
+     * Shows a save/discard/cancel dialog for unsaved changes.
+     * @returns {Promise<{action: 'save'|'saveAs'|'discard'|'cancel'}>}
+     */
+    confirmClose: () => ipcRenderer.invoke('file:confirmClose'),
+
     // ========== Document Operations ==========
 
     /**
