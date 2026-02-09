@@ -86,6 +86,14 @@ const HTML_BLOCK_TAGS = new Set([
 const HTML_OPEN_TAG_RE = /^<([a-zA-Z][a-zA-Z0-9-]*)(?:\s[^>]*)?>(.*)$/;
 
 /**
+ * Matches a self-closed HTML block tag on a single line.
+ * e.g. `<summary>Some text</summary>` or `<summary class="x">text</summary>`
+ * Captures: (1) tag name, (2) attributes (if any), (3) inner text content.
+ * @type {RegExp}
+ */
+const HTML_SELF_CLOSED_RE = /^<([a-zA-Z][a-zA-Z0-9-]*)((?:\s[^>]*)?)>(.*?)<\/\1\s*>$/;
+
+/**
  * Matches a closing HTML block tag.
  * Captures: (1) tag name.
  * @type {RegExp}
@@ -430,6 +438,17 @@ export class MarkdownParser {
      */
     tryParseHtmlBlock(lines, index) {
         const line = lines[index];
+
+        // Check for a self-closed tag on a single line first,
+        // e.g. `<summary>Some text</summary>`.
+        const selfClosed = line.match(HTML_SELF_CLOSED_RE);
+        if (selfClosed) {
+            const tagName = selfClosed[1].toLowerCase();
+            if (HTML_BLOCK_TAGS.has(tagName)) {
+                return this.parseSelfClosedHtmlBlock(index, tagName, line, selfClosed[3]);
+            }
+        }
+
         const match = line.match(HTML_OPEN_TAG_RE);
         if (!match) return null;
 
@@ -437,6 +456,34 @@ export class MarkdownParser {
         if (!HTML_BLOCK_TAGS.has(tagName)) return null;
 
         return this.parseHtmlBlock(lines, index, tagName, line);
+    }
+
+    /**
+     * Parses a self-closed HTML block element where the opening and closing
+     * tags are on the same line (e.g. `<summary>Text here</summary>`).
+     *
+     * The inner text is stored as the node's content and the full line
+     * is preserved in `openingTag` (with `closingTag` empty since both
+     * tags are on the same line).
+     *
+     * @param {number} index - Line index
+     * @param {string} tagName - Lower-cased tag name
+     * @param {string} fullLine - The full source line
+     * @param {string} innerText - Text content between the tags
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseSelfClosedHtmlBlock(index, tagName, fullLine, innerText) {
+        const node = new SyntaxNode('html-block', innerText.trim());
+        node.attributes = {
+            tagName,
+            openingTag: fullLine,
+            closingTag: '',
+            selfClosed: true,
+        };
+        node.startLine = index;
+        node.endLine = index;
+
+        return { node, nextIndex: index + 1 };
     }
 
     /**

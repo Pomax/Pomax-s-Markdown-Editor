@@ -16,6 +16,7 @@
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {boolean} [selfClosed] - Whether the tag is self-closed on a single line
  */
 
 /**

@@ -135,13 +135,25 @@ export class Editor {
     }
 
     /**
-     * Returns the index of a node inside the tree's children array.
+     * Returns the sibling list that contains the given node.
+     * For top-level nodes this is `syntaxTree.children`; for nodes
+     * inside a container (e.g. html-block) it is `node.parent.children`.
+     * @param {SyntaxNode} node
+     * @returns {SyntaxNode[]}
+     */
+    getSiblings(node) {
+        if (node.parent) return node.parent.children;
+        return this.syntaxTree?.children ?? [];
+    }
+
+    /**
+     * Returns the index of a node inside its sibling list.
+     * Works for both top-level nodes and nodes nested inside containers.
      * @param {SyntaxNode} node
      * @returns {number}
      */
     getNodeIndex(node) {
-        if (!this.syntaxTree) return -1;
-        return this.syntaxTree.children.indexOf(node);
+        return this.getSiblings(node).indexOf(node);
     }
 
     /**
@@ -418,34 +430,48 @@ export class Editor {
         const right = node.content.substring(this.treeCursor.offset);
         const newContent = left + text + right;
 
-        // Re-parse the full markdown line to detect type changes
-        const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-        const parsed = this.parser.parseSingleLine(fullLine);
-
-        if (parsed) {
-            node.type = parsed.type;
-            node.content = parsed.content;
-            node.attributes = parsed.attributes;
-        } else {
-            node.content = newContent;
-        }
-
-        // Compute cursor position in the new content.
-        // If the type didn't change, the cursor is simply after the inserted text.
-        // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
-        // for the prefix that was absorbed by the type change.
+        // Self-closed html-block nodes (e.g. <summary>text</summary>) contain
+        // bare text that should never be re-parsed: there is no markdown prefix
+        // that could trigger a type change, and re-parsing would destroy the
+        // html-block attributes (tagName, openingTag, selfClosed).
         let newOffset;
-        if (oldType === node.type) {
+        if (node.type === 'html-block' && node.attributes?.selfClosed) {
+            node.content = newContent;
+            // Keep the openingTag attribute in sync with the new content
+            const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+                node.attributes
+            );
+            attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
             newOffset = left.length + text.length;
         } else {
-            // The old content up to cursor was `left + text`.  In the old type's
-            // markdown line, that corresponds to `oldPrefix + left + text`.
-            // In the new type's markdown line, the prefix changed.  The cursor
-            // position in the new content = old raw cursor pos − new prefix len.
-            const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-            const newPrefix = this.getPrefixLength(node.type, node.attributes);
-            const rawCursorPos = oldPrefix + left.length + text.length;
-            newOffset = Math.max(0, rawCursorPos - newPrefix);
+            // Re-parse the full markdown line to detect type changes
+            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+            const parsed = this.parser.parseSingleLine(fullLine);
+
+            if (parsed) {
+                node.type = parsed.type;
+                node.content = parsed.content;
+                node.attributes = parsed.attributes;
+            } else {
+                node.content = newContent;
+            }
+
+            // Compute cursor position in the new content.
+            // If the type didn't change, the cursor is simply after the inserted text.
+            // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
+            // for the prefix that was absorbed by the type change.
+            if (oldType === node.type) {
+                newOffset = left.length + text.length;
+            } else {
+                // The old content up to cursor was `left + text`.  In the old type's
+                // markdown line, that corresponds to `oldPrefix + left + text`.
+                // In the new type's markdown line, the prefix changed.  The cursor
+                // position in the new content = old raw cursor pos − new prefix len.
+                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+                const newPrefix = this.getPrefixLength(node.type, node.attributes);
+                const rawCursorPos = oldPrefix + left.length + text.length;
+                newOffset = Math.max(0, rawCursorPos - newPrefix);
+            }
         }
 
         this.treeCursor = { nodeId: node.id, offset: newOffset };
@@ -469,26 +495,36 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
-            // Re-parse to detect type changes
-            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-            const parsed = this.parser.parseSingleLine(fullLine);
-
-            if (parsed) {
-                node.type = parsed.type;
-                node.content = parsed.content;
-                node.attributes = parsed.attributes;
-            } else {
-                node.content = newContent;
-            }
-
-            // Compute new cursor offset
+            // Self-closed html-block: update content directly, skip re-parse.
             let newOffset;
-            if (oldType === node.type) {
+            if (node.type === 'html-block' && node.attributes?.selfClosed) {
+                node.content = newContent;
+                const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+                    node.attributes
+                );
+                attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
                 newOffset = left.length;
             } else {
-                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-                const newPrefix = this.getPrefixLength(node.type, node.attributes);
-                newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
+                // Re-parse to detect type changes
+                const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+                const parsed = this.parser.parseSingleLine(fullLine);
+
+                if (parsed) {
+                    node.type = parsed.type;
+                    node.content = parsed.content;
+                    node.attributes = parsed.attributes;
+                } else {
+                    node.content = newContent;
+                }
+
+                // Compute new cursor offset
+                if (oldType === node.type) {
+                    newOffset = left.length;
+                } else {
+                    const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+                    const newPrefix = this.getPrefixLength(node.type, node.attributes);
+                    newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
+                }
             }
 
             this.treeCursor = { nodeId: node.id, offset: newOffset };
@@ -509,12 +545,14 @@ export class Editor {
                 this.treeCursor = { nodeId: node.id, offset: 0 };
             } else {
                 // Merge with the previous node (if any)
-                const idx = this.getNodeIndex(node);
+                const siblings = this.getSiblings(node);
+                const idx = siblings.indexOf(node);
                 if (idx > 0) {
-                    const prev = this.syntaxTree.children[idx - 1];
+                    const prev = siblings[idx - 1];
                     const prevLen = prev.content.length;
                     prev.content += node.content;
-                    this.syntaxTree.removeChild(node);
+                    siblings.splice(idx, 1);
+                    node.parent = null;
                     this.treeCursor = { nodeId: prev.id, offset: prevLen };
                 }
                 // If idx === 0 there is nothing to merge into — do nothing.
@@ -541,35 +579,47 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
-            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-            const parsed = this.parser.parseSingleLine(fullLine);
-
-            if (parsed) {
-                node.type = parsed.type;
-                node.content = parsed.content;
-                node.attributes = parsed.attributes;
-            } else {
-                node.content = newContent;
-            }
-
+            // Self-closed html-block: update content directly, skip re-parse.
             let newOffset;
-            if (oldType === node.type) {
+            if (node.type === 'html-block' && node.attributes?.selfClosed) {
+                node.content = newContent;
+                const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+                    node.attributes
+                );
+                attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
                 newOffset = left.length;
             } else {
-                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-                const newPrefix = this.getPrefixLength(node.type, node.attributes);
-                newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
+                const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+                const parsed = this.parser.parseSingleLine(fullLine);
+
+                if (parsed) {
+                    node.type = parsed.type;
+                    node.content = parsed.content;
+                    node.attributes = parsed.attributes;
+                } else {
+                    node.content = newContent;
+                }
+
+                if (oldType === node.type) {
+                    newOffset = left.length;
+                } else {
+                    const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+                    const newPrefix = this.getPrefixLength(node.type, node.attributes);
+                    newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
+                }
             }
 
             this.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the end — merge with the next node
-            const idx = this.getNodeIndex(node);
-            if (idx < this.syntaxTree.children.length - 1) {
-                const next = this.syntaxTree.children[idx + 1];
+            const siblings = this.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            if (idx < siblings.length - 1) {
+                const next = siblings[idx + 1];
                 const curLen = node.content.length;
                 node.content += next.content;
-                this.syntaxTree.removeChild(next);
+                siblings.splice(idx + 1, 1);
+                next.parent = null;
                 this.treeCursor = { nodeId: node.id, offset: curLen };
             }
         }
@@ -595,8 +645,10 @@ export class Editor {
 
         // New node is always a paragraph
         const newNode = new SyntaxNode('paragraph', contentAfter);
-        const idx = this.getNodeIndex(node);
-        this.syntaxTree.children.splice(idx + 1, 0, newNode);
+        const siblings = this.getSiblings(node);
+        const idx = siblings.indexOf(node);
+        siblings.splice(idx + 1, 0, newNode);
+        if (node.parent) newNode.parent = node.parent;
 
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
@@ -846,24 +898,31 @@ export class Editor {
             this.syntaxTree.appendChild(imageNode);
         } else if (currentNode.type === 'paragraph' && currentNode.content === '') {
             // Cursor is already on an empty paragraph — replace it
-            const idx = this.getNodeIndex(currentNode);
-            this.syntaxTree.children.splice(idx, 1, imageNode);
+            const siblings = this.getSiblings(currentNode);
+            const idx = siblings.indexOf(currentNode);
+            siblings.splice(idx, 1, imageNode);
+            imageNode.parent = currentNode.parent;
+            currentNode.parent = null;
         } else {
             // Cursor is on a non-empty element — insert image after it
-            const idx = this.getNodeIndex(currentNode);
-            this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+            const siblings = this.getSiblings(currentNode);
+            const idx = siblings.indexOf(currentNode);
+            siblings.splice(idx + 1, 0, imageNode);
+            imageNode.parent = currentNode.parent;
         }
 
         // Ensure an empty paragraph follows the image for continued editing
-        const imgIdx = this.syntaxTree.children.indexOf(imageNode);
-        const nextNode = this.syntaxTree.children[imgIdx + 1];
+        const imgSiblings = this.getSiblings(imageNode);
+        const imgIdx = imgSiblings.indexOf(imageNode);
+        const nextNode = imgSiblings[imgIdx + 1];
         if (!nextNode || !(nextNode.type === 'paragraph' && nextNode.content === '')) {
             const trailingParagraph = new SyntaxNode('paragraph', '');
-            this.syntaxTree.children.splice(imgIdx + 1, 0, trailingParagraph);
+            imgSiblings.splice(imgIdx + 1, 0, trailingParagraph);
+            trailingParagraph.parent = imageNode.parent;
         }
 
         // Place the cursor on the trailing empty paragraph
-        const afterNode = this.syntaxTree.children[imgIdx + 1];
+        const afterNode = imgSiblings[imgIdx + 1];
         this.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
@@ -1120,13 +1179,17 @@ export class Editor {
             }
 
             if (currentNode) {
-                const idx = this.getNodeIndex(currentNode);
+                const siblings = this.getSiblings(currentNode);
+                const idx = siblings.indexOf(currentNode);
                 // If the current node is an empty paragraph, replace it
                 if (currentNode.type === 'paragraph' && currentNode.content === '') {
-                    this.syntaxTree.children.splice(idx, 1, imageNode);
+                    siblings.splice(idx, 1, imageNode);
+                    imageNode.parent = currentNode.parent;
+                    currentNode.parent = null;
                 } else {
                     // Insert after current node
-                    this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+                    siblings.splice(idx + 1, 0, imageNode);
+                    imageNode.parent = currentNode.parent;
                 }
             } else {
                 this.syntaxTree.appendChild(imageNode);
@@ -1160,11 +1223,15 @@ export class Editor {
             const tableNode = new SyntaxNode('table', markdown);
 
             if (currentNode) {
-                const idx = this.getNodeIndex(currentNode);
+                const siblings = this.getSiblings(currentNode);
+                const idx = siblings.indexOf(currentNode);
                 if (currentNode.type === 'paragraph' && currentNode.content === '') {
-                    this.syntaxTree.children.splice(idx, 1, tableNode);
+                    siblings.splice(idx, 1, tableNode);
+                    tableNode.parent = currentNode.parent;
+                    currentNode.parent = null;
                 } else {
-                    this.syntaxTree.children.splice(idx + 1, 0, tableNode);
+                    siblings.splice(idx + 1, 0, tableNode);
+                    tableNode.parent = currentNode.parent;
                 }
             } else {
                 this.syntaxTree.appendChild(tableNode);

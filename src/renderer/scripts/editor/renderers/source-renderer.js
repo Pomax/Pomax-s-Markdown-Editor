@@ -293,6 +293,12 @@ export class SourceRenderer {
     renderHtmlBlock(node, element) {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
 
+        // Self-closed tag on a single line: render the full line as-is.
+        if (attrs.selfClosed) {
+            element.textContent = attrs.openingTag || '';
+            return element;
+        }
+
         // Opening tag line
         const openLine = document.createElement('div');
         openLine.className = 'md-html-tag';
@@ -308,10 +314,12 @@ export class SourceRenderer {
         }
 
         // Closing tag line
-        const closeLine = document.createElement('div');
-        closeLine.className = 'md-html-tag';
-        closeLine.textContent = attrs.closingTag || '';
-        element.appendChild(closeLine);
+        if (attrs.closingTag) {
+            const closeLine = document.createElement('div');
+            closeLine.className = 'md-html-tag';
+            closeLine.textContent = attrs.closingTag;
+            element.appendChild(closeLine);
+        }
 
         return element;
     }

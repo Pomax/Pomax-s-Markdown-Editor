@@ -536,7 +536,12 @@ export class Toolbar {
      * @param {import('../parser/syntax-tree.js').SyntaxNode|null} node - The current node
      */
     updateButtonStates(node) {
-        const nodeType = node?.type || 'paragraph';
+        // A self-closed html-block (e.g. <summary>text</summary>) contains
+        // bare text that behaves like a paragraph from the user's perspective.
+        const nodeType =
+            node?.type === 'html-block' && node.attributes?.selfClosed
+                ? 'paragraph'
+                : node?.type || 'paragraph';
 
         for (const button of this.buttons) {
             const config = button.config;

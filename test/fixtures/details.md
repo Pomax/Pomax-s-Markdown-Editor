@@ -8,8 +8,12 @@ with some text and then a div. Content in the div should be parsed as  "this is 
 
 ## and this an h2
 
+better
+
 </details>
 
 And then this is the main doc again.
 
 ## with another heading
+
+wow

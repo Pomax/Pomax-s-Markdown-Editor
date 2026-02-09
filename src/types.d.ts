@@ -59,6 +59,7 @@ interface NodeAttributes {
     tagName?: string;
     openingTag?: string;
     closingTag?: string;
+    selfClosed?: boolean;
 }
 
 declare global {

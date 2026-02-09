@@ -457,6 +457,11 @@ export class FocusedRenderer {
      * actual HTML element and the child nodes are rendered inside it as
      * normal markdown nodes.
      *
+     * For `<details>` blocks the element is rendered open by default so
+     * the user can see and edit the content.  A self-closed `<summary>`
+     * child is rendered as a native `<summary>` element with editable
+     * inline content.
+     *
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element - The wrapper div with data-node-id
      * @param {boolean} isFocused
@@ -466,12 +471,24 @@ export class FocusedRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const tagName = attrs.tagName || 'div';
 
+        // Self-closed html-block (e.g. <summary>text</summary>):
+        // render as the actual element with inline content.
+        if (attrs.selfClosed) {
+            return this.renderSelfClosedHtmlBlock(node, element, isFocused);
+        }
+
         // Create the actual HTML container element
         const container = document.createElement(tagName);
         container.className = 'md-html-container';
 
         // Copy attributes from the opening tag onto the container element
         this.applyHtmlAttributes(container, attrs.openingTag || '');
+
+        // <details> blocks are rendered open so the user can always
+        // see and edit the nested content.
+        if (tagName === 'details') {
+            container.setAttribute('open', '');
+        }
 
         // Determine which child (if any) is focused
         const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
@@ -488,6 +505,31 @@ export class FocusedRenderer {
         if (node.children.length === 0) {
             container.appendChild(document.createElement('br'));
         }
+
+        element.appendChild(container);
+        return element;
+    }
+
+    /**
+     * Renders a self-closed html-block node (e.g. `<summary>text</summary>`)
+     * as the actual HTML element with editable inline content inside.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element - The wrapper div with data-node-id
+     * @param {boolean} isFocused
+     * @returns {HTMLElement}
+     */
+    renderSelfClosedHtmlBlock(node, element, isFocused) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const tagName = attrs.tagName || 'span';
+
+        const container = document.createElement(tagName);
+        container.className = 'md-html-inline';
+
+        const contentSpan = document.createElement('span');
+        contentSpan.className = 'md-content';
+        this.renderInlineContent(node.content, contentSpan, isFocused);
+        container.appendChild(contentSpan);
 
         element.appendChild(container);
         return element;

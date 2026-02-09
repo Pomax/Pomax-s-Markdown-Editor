@@ -43,6 +43,8 @@
 .md-line {
     margin-bottom: var(--spacing-sm);
     min-height: 1.6em;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .md-line:last-child {
@@ -265,6 +267,25 @@
     content: 'Start typing...';
     color: var(--color-text-secondary);
     font-style: italic;
+}
+
+/* ========== HTML block containers ========== */
+
+/* Details/summary disclosure widget */
+.md-html-container:is(details) {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-xs) 0;
+}
+
+.md-html-container:is(details) > .md-line:is(.md-html-block) {
+    margin: 0;
+}
+
+.md-html-container:is(details) summary.md-html-inline {
+    cursor: pointer;
+    font-weight: 600;
 }
 
 /* ========== Content within elements ========== */
