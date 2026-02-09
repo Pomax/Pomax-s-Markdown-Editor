@@ -56,6 +56,9 @@ interface NodeAttributes {
     title?: string;
     alt?: string;
     href?: string;
+    tagName?: string;
+    openingTag?: string;
+    closingTag?: string;
 }
 
 declare global {

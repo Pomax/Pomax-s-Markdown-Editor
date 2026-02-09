@@ -155,6 +155,9 @@ export class FocusedRenderer {
             case 'table':
                 return this.renderTable(node, element, isFocused);
 
+            case 'html-block':
+                return this.renderHtmlBlock(node, element, isFocused);
+
             default:
                 return this.renderParagraph(node, element, isFocused);
         }
@@ -445,6 +448,75 @@ export class FocusedRenderer {
         }
 
         return table;
+    }
+
+    /**
+     * Renders an HTML block container node.
+     *
+     * The container's tag (e.g. `<div>`, `<details>`) is rendered as an
+     * actual HTML element and the child nodes are rendered inside it as
+     * normal markdown nodes.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element - The wrapper div with data-node-id
+     * @param {boolean} isFocused
+     * @returns {HTMLElement}
+     */
+    renderHtmlBlock(node, element, isFocused) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const tagName = attrs.tagName || 'div';
+
+        // Create the actual HTML container element
+        const container = document.createElement(tagName);
+        container.className = 'md-html-container';
+
+        // Copy attributes from the opening tag onto the container element
+        this.applyHtmlAttributes(container, attrs.openingTag || '');
+
+        // Determine which child (if any) is focused
+        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+
+        for (const child of node.children) {
+            const childFocused = child.id === currentNodeId;
+            const childElement = this.renderNode(child, childFocused);
+            if (childElement) {
+                container.appendChild(childElement);
+            }
+        }
+
+        // If no children, add a placeholder so the element is visible
+        if (node.children.length === 0) {
+            container.appendChild(document.createElement('br'));
+        }
+
+        element.appendChild(container);
+        return element;
+    }
+
+    /**
+     * Parses HTML attributes from an opening tag string and applies them
+     * to a DOM element (excluding the tag name itself).
+     *
+     * @param {HTMLElement} el - The element to apply attributes to
+     * @param {string} openingTag - e.g. `<div class="note">`
+     */
+    applyHtmlAttributes(el, openingTag) {
+        // Strip `<tagName` from the front and `>` from the end
+        const withoutBrackets = openingTag
+            .replace(/^<[a-zA-Z][a-zA-Z0-9-]*/, '')
+            .replace(/>$/, '')
+            .trim();
+        if (!withoutBrackets) return;
+
+        // Use a temporary element to parse attributes safely
+        const tmp = document.createElement('div');
+        tmp.innerHTML = `<span ${withoutBrackets}></span>`;
+        const parsed = tmp.firstElementChild;
+        if (!parsed) return;
+
+        for (const attr of parsed.attributes) {
+            el.setAttribute(attr.name, attr.value);
+        }
     }
 
     /**

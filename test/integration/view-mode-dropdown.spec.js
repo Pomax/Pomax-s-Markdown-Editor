@@ -77,7 +77,7 @@ test('clicking toggle switches editor to source mode', async () => {
     // In source mode, headings always show their `#` syntax.
     const firstLine = page.locator('#editor .md-line').first();
     const text = await firstLine.innerText();
-    expect(text).toContain('# Markdown Editor');
+    expect(text).toContain("# Pomax's Markdown Editor");
 });
 
 test('clicking toggle again switches editor back to focused mode', async () => {
@@ -101,7 +101,7 @@ test('clicking toggle again switches editor back to focused mode', async () => {
     const firstLine = page.locator('#editor .md-line').first();
     const text = await firstLine.innerText();
     expect(text).not.toContain('#');
-    expect(text).toContain('Markdown Editor');
+    expect(text).toContain("Pomax's Markdown Editor");
 });
 
 test('toggle stays in sync when view mode changes via menu', async () => {

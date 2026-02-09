@@ -13,6 +13,9 @@
  * @property {string} [title] - Title for links and images
  * @property {string} [alt] - Alt text for images
  * @property {string} [href] - Link URL for linked images
+ * @property {string} [tagName] - HTML tag name for html-block nodes
+ * @property {string} [openingTag] - Full opening tag line for html-block nodes
+ * @property {string} [closingTag] - Full closing tag line for html-block nodes
  */
 
 /**
@@ -173,6 +176,16 @@ export class SyntaxNode {
             }
             case 'table':
                 return this.content;
+            case 'html-block': {
+                const parts = [this.attributes.openingTag || ''];
+                for (const child of this.children) {
+                    parts.push(child.toMarkdown());
+                }
+                if (this.attributes.closingTag) {
+                    parts.push(this.attributes.closingTag);
+                }
+                return parts.join('\n\n');
+            }
             default:
                 return this.content;
         }
@@ -271,6 +284,8 @@ export class SyntaxTree {
 
     /**
      * Finds the node at a given position.
+     * Recurses into container nodes (e.g. html-block) to find the
+     * deepest (leaf) node that contains the position.
      * @param {number} line - The line number (0-based)
      * @param {number} column - The column number (0-based)
      * @returns {SyntaxNode|null}
@@ -278,10 +293,29 @@ export class SyntaxTree {
     findNodeAtPosition(line, column) {
         for (const child of this.children) {
             if (line >= child.startLine && line <= child.endLine) {
-                return child;
+                return this.findDeepestNodeAtPosition(child, line, column);
             }
         }
         return null;
+    }
+
+    /**
+     * Recursively descends into a node's children to find the deepest
+     * node that contains the given line position.
+     * @param {SyntaxNode} node
+     * @param {number} line
+     * @param {number} column
+     * @returns {SyntaxNode}
+     */
+    findDeepestNodeAtPosition(node, line, column) {
+        if (node.children.length > 0) {
+            for (const child of node.children) {
+                if (line >= child.startLine && line <= child.endLine) {
+                    return this.findDeepestNodeAtPosition(child, line, column);
+                }
+            }
+        }
+        return node;
     }
 
     /**

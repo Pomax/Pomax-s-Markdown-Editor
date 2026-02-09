@@ -107,6 +107,9 @@ export class SourceRenderer {
             case 'table':
                 return this.renderTable(node, element);
 
+            case 'html-block':
+                return this.renderHtmlBlock(node, element);
+
             default:
                 return this.renderParagraph(node, element);
         }
@@ -276,6 +279,40 @@ export class SourceRenderer {
             lineDiv.textContent = line;
             element.appendChild(lineDiv);
         }
+        return element;
+    }
+
+    /**
+     * Renders an HTML block container node in source view.
+     * Shows the opening/closing tags and child nodes as raw markdown.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element
+     * @returns {HTMLElement}
+     */
+    renderHtmlBlock(node, element) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+
+        // Opening tag line
+        const openLine = document.createElement('div');
+        openLine.className = 'md-html-tag';
+        openLine.textContent = attrs.openingTag || '';
+        element.appendChild(openLine);
+
+        // Render children as normal nodes
+        for (const child of node.children) {
+            const childElement = this.renderNode(child);
+            if (childElement) {
+                element.appendChild(childElement);
+            }
+        }
+
+        // Closing tag line
+        const closeLine = document.createElement('div');
+        closeLine.className = 'md-html-tag';
+        closeLine.textContent = attrs.closingTag || '';
+        element.appendChild(closeLine);
+
         return element;
     }
 
