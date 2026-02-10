@@ -605,11 +605,29 @@ export class Editor {
                 const idx = siblings.indexOf(node);
                 if (idx > 0) {
                     const prev = siblings[idx - 1];
-                    const prevLen = prev.content.length;
-                    prev.content += node.content;
-                    siblings.splice(idx, 1);
-                    node.parent = null;
-                    this.treeCursor = { nodeId: prev.id, offset: prevLen };
+
+                    if (prev.type === 'html-block' && prev.children.length > 0) {
+                        // Previous sibling is a container html-block.
+                        if (this.viewMode === 'source') {
+                            // In source view the container boundary is
+                            // structural — backspace is a no-op.
+                        } else {
+                            // In focused view, merge into the last child
+                            // of the html-block container.
+                            const lastChild = prev.children[prev.children.length - 1];
+                            const lastChildLen = lastChild.content.length;
+                            lastChild.content += node.content;
+                            siblings.splice(idx, 1);
+                            node.parent = null;
+                            this.treeCursor = { nodeId: lastChild.id, offset: lastChildLen };
+                        }
+                    } else {
+                        const prevLen = prev.content.length;
+                        prev.content += node.content;
+                        siblings.splice(idx, 1);
+                        node.parent = null;
+                        this.treeCursor = { nodeId: prev.id, offset: prevLen };
+                    }
                 }
                 // If idx === 0 there is nothing to merge into — do nothing.
             }
@@ -692,11 +710,34 @@ export class Editor {
             const idx = siblings.indexOf(node);
             if (idx < siblings.length - 1) {
                 const next = siblings[idx + 1];
-                const curLen = node.content.length;
-                node.content += next.content;
-                siblings.splice(idx + 1, 1);
-                next.parent = null;
-                this.treeCursor = { nodeId: node.id, offset: curLen };
+
+                if (next.type === 'html-block' && next.children.length > 0) {
+                    // Next sibling is a container html-block.
+                    if (this.viewMode === 'source') {
+                        // In source view the container boundary is
+                        // structural — delete is a no-op.
+                    } else {
+                        // In focused view, merge the first child of the
+                        // html-block container into this node.
+                        const firstChild = next.children[0];
+                        const curLen = node.content.length;
+                        node.content += firstChild.content;
+                        next.children.splice(0, 1);
+                        firstChild.parent = null;
+                        // If the html-block is now empty, remove it too.
+                        if (next.children.length === 0) {
+                            siblings.splice(idx + 1, 1);
+                            next.parent = null;
+                        }
+                        this.treeCursor = { nodeId: node.id, offset: curLen };
+                    }
+                } else {
+                    const curLen = node.content.length;
+                    node.content += next.content;
+                    siblings.splice(idx + 1, 1);
+                    next.parent = null;
+                    this.treeCursor = { nodeId: node.id, offset: curLen };
+                }
             }
         }
 
