@@ -24,6 +24,8 @@ import { UndoManager } from './undo-manager.js';
  * @typedef {Object} TreeCursor
  * @property {string} nodeId - The ID of the node the cursor is in
  * @property {number} offset - The character offset within the node's content
+ * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
+ *     html-block container's opening or closing tag line (source view only).
  */
 
 /**
@@ -66,6 +68,9 @@ export class Editor {
 
         /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
         this.ensureLocalPaths = true;
+
+        /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in focused view. */
+        this.detailsClosed = false;
 
         /**
          * Tree-based cursor position.
@@ -135,13 +140,25 @@ export class Editor {
     }
 
     /**
-     * Returns the index of a node inside the tree's children array.
+     * Returns the sibling list that contains the given node.
+     * For top-level nodes this is `syntaxTree.children`; for nodes
+     * inside a container (e.g. html-block) it is `node.parent.children`.
+     * @param {SyntaxNode} node
+     * @returns {SyntaxNode[]}
+     */
+    getSiblings(node) {
+        if (node.parent) return node.parent.children;
+        return this.syntaxTree?.children ?? [];
+    }
+
+    /**
+     * Returns the index of a node inside its sibling list.
+     * Works for both top-level nodes and nodes nested inside containers.
      * @param {SyntaxNode} node
      * @returns {number}
      */
     getNodeIndex(node) {
-        if (!this.syntaxTree) return -1;
-        return this.syntaxTree.children.indexOf(node);
+        return this.getSiblings(node).indexOf(node);
     }
 
     /**
@@ -170,7 +187,16 @@ export class Editor {
                         range.startContainer,
                         range.startOffset,
                     );
-                    this.treeCursor = { nodeId, offset };
+                    /** @type {TreeCursor} */
+                    const cursor = { nodeId, offset };
+                    // If this element represents an html-block tag line in
+                    // source view, record which part so edit methods can
+                    // route changes to the correct attribute.
+                    const tagPart = htmlEl.dataset?.tagPart;
+                    if (tagPart === 'opening' || tagPart === 'closing') {
+                        cursor.tagPart = tagPart;
+                    }
+                    this.treeCursor = cursor;
                     return;
                 }
             }
@@ -267,9 +293,21 @@ export class Editor {
     placeCursor() {
         if (!this.treeCursor) return;
 
-        const nodeElement = this.container.querySelector(
-            `[data-node-id="${this.treeCursor.nodeId}"]`,
-        );
+        // When the cursor targets a tag line (source view), there may be
+        // multiple elements with the same data-node-id (opening & closing).
+        // Select the one matching the tagPart.
+        /** @type {Element|null} */
+        let nodeElement = null;
+        if (this.treeCursor.tagPart) {
+            nodeElement = this.container.querySelector(
+                `[data-node-id="${this.treeCursor.nodeId}"][data-tag-part="${this.treeCursor.tagPart}"]`,
+            );
+        }
+        if (!nodeElement) {
+            nodeElement = this.container.querySelector(
+                `[data-node-id="${this.treeCursor.nodeId}"]`,
+            );
+        }
         if (!nodeElement) return;
 
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
@@ -410,6 +448,27 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            const before = this.syntaxTree.toMarkdown();
+            const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+            const old = node.attributes[attr] || '';
+            const left = old.substring(0, this.treeCursor.offset);
+            const right = old.substring(this.treeCursor.offset);
+            node.attributes[attr] = left + text + right;
+            this.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                tagPart: this.treeCursor.tagPart,
+            };
+            this.recordAndRender(before);
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
         const oldType = node.type;
 
@@ -419,6 +478,8 @@ export class Editor {
         const newContent = left + text + right;
 
         // Re-parse the full markdown line to detect type changes
+        let newOffset;
+        const wasBareText = !!node.attributes.bareText;
         const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
         const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -430,11 +491,16 @@ export class Editor {
             node.content = newContent;
         }
 
+        // Preserve the bareText flag — it is not part of the markdown syntax
+        // that parseSingleLine can reconstruct, so it would be lost.
+        if (wasBareText) {
+            node.attributes.bareText = true;
+        }
+
         // Compute cursor position in the new content.
         // If the type didn't change, the cursor is simply after the inserted text.
         // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
         // for the prefix that was absorbed by the type change.
-        let newOffset;
         if (oldType === node.type) {
             newOffset = left.length + text.length;
         } else {
@@ -460,6 +526,29 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            if (this.treeCursor.offset > 0) {
+                const before = this.syntaxTree.toMarkdown();
+                const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+                const old = node.attributes[attr] || '';
+                const left = old.substring(0, this.treeCursor.offset - 1);
+                const right = old.substring(this.treeCursor.offset);
+                node.attributes[attr] = left + right;
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.treeCursor.tagPart,
+                };
+                this.recordAndRender(before);
+            }
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset > 0) {
@@ -470,6 +559,8 @@ export class Editor {
             const oldType = node.type;
 
             // Re-parse to detect type changes
+            let newOffset;
+            const wasBareText = !!node.attributes.bareText;
             const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
             const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -481,8 +572,12 @@ export class Editor {
                 node.content = newContent;
             }
 
+            // Preserve the bareText flag (see insertTextAtCursor).
+            if (wasBareText) {
+                node.attributes.bareText = true;
+            }
+
             // Compute new cursor offset
-            let newOffset;
             if (oldType === node.type) {
                 newOffset = left.length;
             } else {
@@ -509,13 +604,33 @@ export class Editor {
                 this.treeCursor = { nodeId: node.id, offset: 0 };
             } else {
                 // Merge with the previous node (if any)
-                const idx = this.getNodeIndex(node);
+                const siblings = this.getSiblings(node);
+                const idx = siblings.indexOf(node);
                 if (idx > 0) {
-                    const prev = this.syntaxTree.children[idx - 1];
-                    const prevLen = prev.content.length;
-                    prev.content += node.content;
-                    this.syntaxTree.removeChild(node);
-                    this.treeCursor = { nodeId: prev.id, offset: prevLen };
+                    const prev = siblings[idx - 1];
+
+                    if (prev.type === 'html-block' && prev.children.length > 0) {
+                        // Previous sibling is a container html-block.
+                        if (this.viewMode === 'source') {
+                            // In source view the container boundary is
+                            // structural — backspace is a no-op.
+                        } else {
+                            // In focused view, merge into the last child
+                            // of the html-block container.
+                            const lastChild = prev.children[prev.children.length - 1];
+                            const lastChildLen = lastChild.content.length;
+                            lastChild.content += node.content;
+                            siblings.splice(idx, 1);
+                            node.parent = null;
+                            this.treeCursor = { nodeId: lastChild.id, offset: lastChildLen };
+                        }
+                    } else {
+                        const prevLen = prev.content.length;
+                        prev.content += node.content;
+                        siblings.splice(idx, 1);
+                        node.parent = null;
+                        this.treeCursor = { nodeId: prev.id, offset: prevLen };
+                    }
                 }
                 // If idx === 0 there is nothing to merge into — do nothing.
             }
@@ -532,6 +647,29 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+            const old = node.attributes[attr] || '';
+            if (this.treeCursor.offset < old.length) {
+                const before = this.syntaxTree.toMarkdown();
+                const left = old.substring(0, this.treeCursor.offset);
+                const right = old.substring(this.treeCursor.offset + 1);
+                node.attributes[attr] = left + right;
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.treeCursor.tagPart,
+                };
+                this.recordAndRender(before);
+            }
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset < node.content.length) {
@@ -541,6 +679,9 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
+            // Re-parse to detect type changes
+            let newOffset;
+            const wasBareText = !!node.attributes.bareText;
             const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
             const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -552,7 +693,11 @@ export class Editor {
                 node.content = newContent;
             }
 
-            let newOffset;
+            // Preserve the bareText flag (see insertTextAtCursor).
+            if (wasBareText) {
+                node.attributes.bareText = true;
+            }
+
             if (oldType === node.type) {
                 newOffset = left.length;
             } else {
@@ -564,13 +709,38 @@ export class Editor {
             this.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the end — merge with the next node
-            const idx = this.getNodeIndex(node);
-            if (idx < this.syntaxTree.children.length - 1) {
-                const next = this.syntaxTree.children[idx + 1];
-                const curLen = node.content.length;
-                node.content += next.content;
-                this.syntaxTree.removeChild(next);
-                this.treeCursor = { nodeId: node.id, offset: curLen };
+            const siblings = this.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            if (idx < siblings.length - 1) {
+                const next = siblings[idx + 1];
+
+                if (next.type === 'html-block' && next.children.length > 0) {
+                    // Next sibling is a container html-block.
+                    if (this.viewMode === 'source') {
+                        // In source view the container boundary is
+                        // structural — delete is a no-op.
+                    } else {
+                        // In focused view, merge the first child of the
+                        // html-block container into this node.
+                        const firstChild = next.children[0];
+                        const curLen = node.content.length;
+                        node.content += firstChild.content;
+                        next.children.splice(0, 1);
+                        firstChild.parent = null;
+                        // If the html-block is now empty, remove it too.
+                        if (next.children.length === 0) {
+                            siblings.splice(idx + 1, 1);
+                            next.parent = null;
+                        }
+                        this.treeCursor = { nodeId: node.id, offset: curLen };
+                    }
+                } else {
+                    const curLen = node.content.length;
+                    node.content += next.content;
+                    siblings.splice(idx + 1, 1);
+                    next.parent = null;
+                    this.treeCursor = { nodeId: node.id, offset: curLen };
+                }
             }
         }
 
@@ -585,6 +755,11 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // html-block tag lines and containers are not splittable.
+        if (node.type === 'html-block' && (this.treeCursor.tagPart || node.children.length > 0)) {
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         const contentBefore = node.content.substring(0, this.treeCursor.offset);
@@ -593,10 +768,18 @@ export class Editor {
         // Current node keeps the text before the cursor
         node.content = contentBefore;
 
+        // If the node was bare text inside an HTML container, splitting it
+        // means it is no longer a single bare-text line — clear the flag.
+        if (node.attributes?.bareText) {
+            node.attributes.bareText = undefined;
+        }
+
         // New node is always a paragraph
         const newNode = new SyntaxNode('paragraph', contentAfter);
-        const idx = this.getNodeIndex(node);
-        this.syntaxTree.children.splice(idx + 1, 0, newNode);
+        const siblings = this.getSiblings(node);
+        const idx = siblings.indexOf(node);
+        siblings.splice(idx + 1, 0, newNode);
+        if (node.parent) newNode.parent = node.parent;
 
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
@@ -695,6 +878,8 @@ export class Editor {
     recordAndRender(before) {
         if (!this.syntaxTree) return;
 
+        this._ensureTrailingParagraph();
+
         const after = this.syntaxTree.toMarkdown();
         if (before !== after) {
             this.undoManager.recordChange({ type: 'input', before, after });
@@ -702,6 +887,23 @@ export class Editor {
         }
 
         this.renderAndPlaceCursor();
+    }
+
+    /**
+     * Ensures that the document does not end with an html-block container.
+     * In focused view there is no way to place the cursor after a trailing
+     * `</details>` block, so we append an empty paragraph whenever the last
+     * top-level node is a container html-block.
+     */
+    _ensureTrailingParagraph() {
+        if (!this.syntaxTree) return;
+        const children = this.syntaxTree.children;
+        if (children.length === 0) return;
+        const last = children[children.length - 1];
+        if (last.type === 'html-block' && last.children.length > 0) {
+            const para = new SyntaxNode('paragraph', '');
+            this.syntaxTree.appendChild(para);
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -846,24 +1048,31 @@ export class Editor {
             this.syntaxTree.appendChild(imageNode);
         } else if (currentNode.type === 'paragraph' && currentNode.content === '') {
             // Cursor is already on an empty paragraph — replace it
-            const idx = this.getNodeIndex(currentNode);
-            this.syntaxTree.children.splice(idx, 1, imageNode);
+            const siblings = this.getSiblings(currentNode);
+            const idx = siblings.indexOf(currentNode);
+            siblings.splice(idx, 1, imageNode);
+            imageNode.parent = currentNode.parent;
+            currentNode.parent = null;
         } else {
             // Cursor is on a non-empty element — insert image after it
-            const idx = this.getNodeIndex(currentNode);
-            this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+            const siblings = this.getSiblings(currentNode);
+            const idx = siblings.indexOf(currentNode);
+            siblings.splice(idx + 1, 0, imageNode);
+            imageNode.parent = currentNode.parent;
         }
 
         // Ensure an empty paragraph follows the image for continued editing
-        const imgIdx = this.syntaxTree.children.indexOf(imageNode);
-        const nextNode = this.syntaxTree.children[imgIdx + 1];
+        const imgSiblings = this.getSiblings(imageNode);
+        const imgIdx = imgSiblings.indexOf(imageNode);
+        const nextNode = imgSiblings[imgIdx + 1];
         if (!nextNode || !(nextNode.type === 'paragraph' && nextNode.content === '')) {
             const trailingParagraph = new SyntaxNode('paragraph', '');
-            this.syntaxTree.children.splice(imgIdx + 1, 0, trailingParagraph);
+            imgSiblings.splice(imgIdx + 1, 0, trailingParagraph);
+            trailingParagraph.parent = imageNode.parent;
         }
 
         // Place the cursor on the trailing empty paragraph
-        const afterNode = this.syntaxTree.children[imgIdx + 1];
+        const afterNode = imgSiblings[imgIdx + 1];
         this.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
@@ -872,9 +1081,19 @@ export class Editor {
         this.container.classList.add('focused');
     }
 
-    /** Handles blur events. */
+    /** Handles blur events — clears the active node highlight. */
     handleBlur() {
         this.container.classList.remove('focused');
+
+        // In focused view the active node shows raw markdown syntax.
+        // When the user clicks outside the editor we clear the tree
+        // cursor and re-render so every node shows its "unfocused"
+        // presentation.  Clicking back into the editor will restore
+        // the cursor via handleClick / handleSelectionChange.
+        if (this.viewMode === 'focused' && this.treeCursor) {
+            this.treeCursor = null;
+            this.render();
+        }
     }
 
     /** Handles selection change events. */
@@ -914,6 +1133,11 @@ export class Editor {
             this.syntaxTree.appendChild(node);
         }
 
+        // Ensure the document doesn't end with a container html-block
+        // (the user would have no way to place the cursor after it in
+        // focused view).
+        this._ensureTrailingParagraph();
+
         const first = this.syntaxTree.children[0];
         this.treeCursor = { nodeId: first.id, offset: 0 };
 
@@ -924,6 +1148,7 @@ export class Editor {
         // then render.  Because the rewrite is async (IPC round-trip) we render
         // once immediately and a second time after paths have been rewritten.
         this.renderAndPlaceCursor();
+        this.container.focus();
         this.rewriteImagePaths().then(() => this.renderAndPlaceCursor());
     }
 
@@ -1120,13 +1345,17 @@ export class Editor {
             }
 
             if (currentNode) {
-                const idx = this.getNodeIndex(currentNode);
+                const siblings = this.getSiblings(currentNode);
+                const idx = siblings.indexOf(currentNode);
                 // If the current node is an empty paragraph, replace it
                 if (currentNode.type === 'paragraph' && currentNode.content === '') {
-                    this.syntaxTree.children.splice(idx, 1, imageNode);
+                    siblings.splice(idx, 1, imageNode);
+                    imageNode.parent = currentNode.parent;
+                    currentNode.parent = null;
                 } else {
                     // Insert after current node
-                    this.syntaxTree.children.splice(idx + 1, 0, imageNode);
+                    siblings.splice(idx + 1, 0, imageNode);
+                    imageNode.parent = currentNode.parent;
                 }
             } else {
                 this.syntaxTree.appendChild(imageNode);
@@ -1160,11 +1389,15 @@ export class Editor {
             const tableNode = new SyntaxNode('table', markdown);
 
             if (currentNode) {
-                const idx = this.getNodeIndex(currentNode);
+                const siblings = this.getSiblings(currentNode);
+                const idx = siblings.indexOf(currentNode);
                 if (currentNode.type === 'paragraph' && currentNode.content === '') {
-                    this.syntaxTree.children.splice(idx, 1, tableNode);
+                    siblings.splice(idx, 1, tableNode);
+                    tableNode.parent = currentNode.parent;
+                    currentNode.parent = null;
                 } else {
-                    this.syntaxTree.children.splice(idx + 1, 0, tableNode);
+                    siblings.splice(idx + 1, 0, tableNode);
+                    tableNode.parent = currentNode.parent;
                 }
             } else {
                 this.syntaxTree.appendChild(tableNode);
@@ -1215,6 +1448,9 @@ export class Editor {
     changeElementType(elementType) {
         const currentNode = this.selectionManager.getCurrentNode();
         if (!currentNode || !this.syntaxTree) return;
+
+        // html-block containers are structural nodes, not type-changeable.
+        if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
 
         const beforeContent = this.getMarkdown();
         this.syntaxTree.changeNodeType(currentNode, elementType);

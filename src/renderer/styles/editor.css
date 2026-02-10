@@ -43,6 +43,8 @@
 .md-line {
     margin-bottom: var(--spacing-sm);
     min-height: 1.6em;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .md-line:last-child {
@@ -265,6 +267,84 @@
     content: 'Start typing...';
     color: var(--color-text-secondary);
     font-style: italic;
+}
+
+/* ========== HTML block containers ========== */
+
+/* ── Fake details/summary disclosure widget ── */
+.md-details {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0;
+    margin: var(--spacing-xs) 0;
+}
+
+/* Summary row: disclosure triangle + summary content */
+.md-details-summary {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+    background: color-mix(in srgb, var(--color-border) 30%, transparent);
+    border-radius: 6px 6px 0 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* When collapsed, the summary gets bottom-radius too */
+.md-details:not(.md-details--open) .md-details-summary {
+    border-radius: 6px;
+}
+
+/* When open, separate summary from body */
+.md-details--open .md-details-summary {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Clickable disclosure triangle */
+.md-details-triangle {
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    font-size: 0.65em;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    padding: 2px;
+}
+
+.md-details-triangle:hover {
+    color: var(--color-text);
+}
+
+/* Summary content fills remaining space */
+.md-details-summary-content {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.md-details-summary-content .md-line {
+    margin-bottom: 0;
+}
+
+/* Collapsible body */
+.md-details-body {
+    overflow: hidden;
+}
+
+.md-details:not(.md-details--open) .md-details-body {
+    display: none;
+}
+
+.md-details-body > .md-line {
+    padding: 0 var(--spacing-md);
+    margin-bottom: 0;
+}
+
+.md-details-body > .md-line:first-child {
+    padding-top: var(--spacing-sm);
+}
+
+.md-details-body > .md-line:last-child {
+    padding-bottom: var(--spacing-sm);
 }
 
 /* ========== Content within elements ========== */

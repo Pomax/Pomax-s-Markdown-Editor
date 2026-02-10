@@ -6,6 +6,101 @@
 import { SyntaxNode, SyntaxTree } from './syntax-tree.js';
 
 /**
+ * GFM type 6 block-level HTML tag names (case-insensitive).
+ * @see https://github.github.com/gfm/#html-blocks
+ * @type {Set<string>}
+ */
+const HTML_BLOCK_TAGS = new Set([
+    'address',
+    'article',
+    'aside',
+    'base',
+    'basefont',
+    'blockquote',
+    'body',
+    'caption',
+    'center',
+    'col',
+    'colgroup',
+    'dd',
+    'details',
+    'dialog',
+    'dir',
+    'div',
+    'dl',
+    'dt',
+    'fieldset',
+    'figcaption',
+    'figure',
+    'footer',
+    'form',
+    'frame',
+    'frameset',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'head',
+    'header',
+    'hr',
+    'html',
+    'iframe',
+    'legend',
+    'li',
+    'link',
+    'main',
+    'menu',
+    'menuitem',
+    'nav',
+    'noframes',
+    'ol',
+    'optgroup',
+    'option',
+    'p',
+    'param',
+    'search',
+    'section',
+    'source',
+    'summary',
+    'table',
+    'tbody',
+    'td',
+    'tfoot',
+    'th',
+    'thead',
+    'title',
+    'tr',
+    'track',
+    'ul',
+]);
+
+/**
+ * Matches an opening HTML block tag at the start of a line.
+ * Captures: (1) tag name, (2) rest of line after the tag.
+ * Handles self-contained tags like `<div>`, `<div class="x">`, and
+ * opening-only tags like `<details open>`.
+ * @type {RegExp}
+ */
+const HTML_OPEN_TAG_RE = /^<([a-zA-Z][a-zA-Z0-9-]*)(?:\s[^>]*)?>(.*)$/;
+
+/**
+ * Matches a self-closed HTML block tag on a single line.
+ * e.g. `<summary>Some text</summary>` or `<summary class="x">text</summary>`
+ * Captures: (1) tag name, (2) attributes (if any), (3) inner text content.
+ * @type {RegExp}
+ */
+const HTML_SELF_CLOSED_RE = /^<([a-zA-Z][a-zA-Z0-9-]*)((?:\s[^>]*)?)>(.*?)<\/\1\s*>$/;
+
+/**
+ * Matches a closing HTML block tag.
+ * Captures: (1) tag name.
+ * @type {RegExp}
+ */
+const HTML_CLOSE_TAG_RE = /^<\/([a-zA-Z][a-zA-Z0-9-]*)\s*>/;
+
+/**
  * Parses markdown text into a syntax tree.
  */
 export class MarkdownParser {
@@ -115,6 +210,12 @@ export class MarkdownParser {
         // Empty line
         if (line.trim() === '') {
             return { node: null, nextIndex: index + 1 };
+        }
+
+        // Check for HTML block-level opening tag
+        const htmlResult = this.tryParseHtmlBlock(lines, index);
+        if (htmlResult) {
+            return htmlResult;
         }
 
         // Try each block pattern
@@ -328,6 +429,148 @@ export class MarkdownParser {
     }
 
     /**
+     * Tries to parse an HTML block-level element at the given line.
+     * Returns null if the line does not start with a recognised block tag.
+     *
+     * @param {string[]} lines - All lines
+     * @param {number} index - Current line index
+     * @returns {{node: SyntaxNode, nextIndex: number}|null}
+     */
+    tryParseHtmlBlock(lines, index) {
+        const line = lines[index];
+
+        // Check for a self-closed tag on a single line first,
+        // e.g. `<summary>Some text</summary>`.
+        const selfClosed = line.match(HTML_SELF_CLOSED_RE);
+        if (selfClosed) {
+            const tagName = selfClosed[1].toLowerCase();
+            if (HTML_BLOCK_TAGS.has(tagName)) {
+                return this.parseSelfClosedHtmlBlock(index, tagName, line, selfClosed[3]);
+            }
+        }
+
+        const match = line.match(HTML_OPEN_TAG_RE);
+        if (!match) return null;
+
+        const tagName = match[1].toLowerCase();
+        if (!HTML_BLOCK_TAGS.has(tagName)) return null;
+
+        return this.parseHtmlBlock(lines, index, tagName, line);
+    }
+
+    /**
+     * Parses a self-closed HTML block element where the opening and closing
+     * tags are on the same line (e.g. `<summary>Text here</summary>`).
+     *
+     * Rather than storing this as a leaf node, we create a normal container
+     * html-block with separate opening/closing tags and a single child
+     * paragraph whose `bareText` attribute is set.  When serialised back
+     * to markdown, a container whose only child is `bareText` collapses
+     * to the single-line form `<tag>content</tag>`.
+     *
+     * @param {number} index - Line index
+     * @param {string} tagName - Lower-cased tag name
+     * @param {string} fullLine - The full source line
+     * @param {string} innerText - Text content between the tags
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseSelfClosedHtmlBlock(index, tagName, fullLine, innerText) {
+        // Extract the opening tag portion (everything up to and including the first '>').
+        const gtPos = fullLine.indexOf('>');
+        const openingTag = fullLine.substring(0, gtPos + 1);
+
+        const node = new SyntaxNode('html-block', '');
+        node.attributes = {
+            tagName,
+            openingTag,
+            closingTag: `</${tagName}>`,
+        };
+        node.startLine = index;
+        node.endLine = index;
+
+        // The inner text becomes a bare-text paragraph child.
+        const child = new SyntaxNode('paragraph', innerText.trim());
+        child.attributes = { bareText: true };
+        child.startLine = index;
+        child.endLine = index;
+        node.appendChild(child);
+
+        return { node, nextIndex: index + 1 };
+    }
+
+    /**
+     * Parses an HTML block-level container element.
+     *
+     * The opening tag line is stored as `openingTag`, the closing tag as
+     * `closingTag`, and everything in between is recursively parsed as
+     * markdown, producing child nodes.
+     *
+     * @param {string[]} lines - All lines
+     * @param {number} index - Index of the opening-tag line
+     * @param {string} tagName - Lower-cased tag name
+     * @param {string} openingTagLine - The full opening-tag line
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseHtmlBlock(lines, index, tagName, openingTagLine) {
+        const closingPattern = new RegExp(`^</${tagName}\\s*>`, 'i');
+        let endIndex = index + 1;
+        const bodyLines = [];
+
+        // Collect lines until we find the matching closing tag or EOF
+        while (endIndex < lines.length) {
+            if (lines[endIndex].match(closingPattern)) {
+                break;
+            }
+            bodyLines.push(lines[endIndex]);
+            endIndex++;
+        }
+
+        const closingTagLine = endIndex < lines.length ? lines[endIndex] : '';
+        const nextIndex = endIndex < lines.length ? endIndex + 1 : endIndex;
+
+        // Create the container node
+        const node = new SyntaxNode('html-block', '');
+        node.attributes = {
+            tagName,
+            openingTag: openingTagLine,
+            closingTag: closingTagLine,
+        };
+        node.startLine = index;
+        node.endLine = nextIndex - 1;
+
+        // Recursively parse body content as markdown, producing child nodes
+        let i = 0;
+        while (i < bodyLines.length) {
+            const result = this.parseLine(bodyLines, i);
+            if (result.node) {
+                // Adjust line numbers to be document-relative
+                const offset = index + 1; // body starts one line after opening tag
+                this.adjustLineNumbers(result.node, offset);
+                node.appendChild(result.node);
+            }
+            i = result.nextIndex;
+        }
+
+        return { node, nextIndex };
+    }
+
+    /**
+     * Recursively adjusts startLine/endLine on a node and its children
+     * by adding an offset. Used when parsing body content of an HTML block
+     * so that line numbers are document-relative.
+     *
+     * @param {SyntaxNode} node
+     * @param {number} offset
+     */
+    adjustLineNumbers(node, offset) {
+        node.startLine += offset;
+        node.endLine += offset;
+        for (const child of node.children) {
+            this.adjustLineNumbers(child, offset);
+        }
+    }
+
+    /**
      * Parses a paragraph.
      * @param {string[]} lines
      * @param {number} index
@@ -352,6 +595,14 @@ export class MarkdownParser {
                 if (nextLine.match(pattern.pattern)) {
                     isBlock = true;
                     break;
+                }
+            }
+
+            // Also check for HTML block tags
+            if (!isBlock) {
+                const htmlMatch = nextLine.match(HTML_OPEN_TAG_RE);
+                if (htmlMatch && HTML_BLOCK_TAGS.has(htmlMatch[1].toLowerCase())) {
+                    isBlock = true;
                 }
             }
 

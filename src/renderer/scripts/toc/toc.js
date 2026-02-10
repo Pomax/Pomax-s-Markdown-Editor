@@ -91,8 +91,19 @@ export class TableOfContents {
 
         /** @type {TocHeading[]} */
         const headings = [];
+        this._collectHeadings(tree.children, headings);
+        return headings;
+    }
 
-        for (const node of tree.children) {
+    /**
+     * Recursively collects h1–h3 headings from a list of nodes.
+     * Descends into container nodes (e.g. html-block) so that headings
+     * nested inside HTML elements appear in the table of contents.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} nodes
+     * @param {TocHeading[]} headings
+     */
+    _collectHeadings(nodes, headings) {
+        for (const node of nodes) {
             const level = this._headingLevel(node.type);
             if (level >= 1 && level <= 3) {
                 headings.push({
@@ -101,9 +112,11 @@ export class TableOfContents {
                     text: node.content || '(empty)',
                 });
             }
+            // Recurse into container nodes
+            if (node.children.length > 0) {
+                this._collectHeadings(node.children, headings);
+            }
         }
-
-        return headings;
     }
 
     /**
@@ -147,6 +160,11 @@ export class TableOfContents {
             link.href = '#';
             link.textContent = heading.text;
             link.dataset.nodeId = heading.id;
+            // Prevent mousedown from stealing focus away from the editor.
+            // Without this, clicking a TOC link fires the editor's
+            // handleBlur (which clears treeCursor and re-renders) before
+            // _scrollToHeading runs, disrupting the scroll.
+            link.addEventListener('mousedown', (e) => e.preventDefault());
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 this._scrollToHeading(heading.id);

@@ -128,7 +128,16 @@ export class SelectionManager {
             return;
         }
 
-        // Find the node at the current cursor position
+        // Prefer the editor's treeCursor (set by syncCursorFromDOM via a
+        // DOM data-node-id walk) because the text-offset-based line
+        // calculation can be thrown off by html-block container elements.
+        const cursorNodeId = this.editor.treeCursor?.nodeId;
+        if (cursorNodeId) {
+            this.currentNode = this.editor.syntaxTree.findNodeById(cursorNodeId);
+            if (this.currentNode) return;
+        }
+
+        // Fallback: find the node at the current cursor position
         this.currentNode = this.editor.syntaxTree.findNodeAtPosition(
             this.currentSelection.startLine,
             this.currentSelection.startColumn,

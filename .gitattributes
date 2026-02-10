@@ -1,0 +1,3 @@
+# Normalise line endings to LF on all platforms so that fixture files
+# and snapshot comparisons are consistent across Windows, macOS, and Linux.
+* text=auto eol=lf

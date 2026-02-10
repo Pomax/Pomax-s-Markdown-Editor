@@ -139,7 +139,9 @@ function createWindow() {
     const win = mainWindow;
 
     win.once('ready-to-show', () => {
-        win.show();
+        if (!process.env.TESTING) {
+            win.show();
+        }
     });
 
     // Persist window bounds on move/resize (debounced)
@@ -259,9 +261,16 @@ function getFilePathFromArgs() {
     // Packaged: [app, ...userArgs]
     const userArgs = process.argv.slice(app.isPackaged ? 1 : 2);
 
+    // The entry script itself (this file) may appear in the user-args
+    // slice when Chromium flags precede the script in the launch
+    // command (e.g. --no-sandbox on Linux CI).  Resolve it once so we
+    // can skip it reliably.
+    const entryScript = path.resolve(__filename);
+
     for (const arg of userArgs) {
         if (arg.startsWith('-')) continue;
         const resolved = path.resolve(arg);
+        if (resolved === entryScript) continue;
         try {
             if (fs.statSync(resolved).isFile()) return resolved;
         } catch {

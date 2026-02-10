@@ -1,24 +1,20 @@
 /**
- * @fileoverview Integration test for loading a real markdown file with images.
+ * @fileoverview Integration test for loading a markdown file with images.
  * Launches the editor with a CLI file path argument, waits for the document
  * to load, and verifies that the referenced images actually load.
  */
 
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { _electron as electron, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { launchApp, projectRoot } from './test-utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const testFile = 'c:\\Users\\Mike\\Documents\\git\\released\\are-we-flying\\docs\\index.md';
+const testFile = path.join(projectRoot, 'test', 'fixtures', 'images.md');
 
 test('images in a loaded markdown file resolve and load successfully', async () => {
-    const electronApp = await electron.launch({
-        args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js'), testFile],
-        env: { ...process.env, TESTING: '1' },
-    });
-    const page = await electronApp.firstWindow();
+    // Give CI runners extra time for image loading.
+    test.setTimeout(60_000);
+
+    const { electronApp, page } = await launchApp([testFile]);
 
     // Wait for the editor to finish rendering the loaded document.
     await page.waitForSelector('#editor .md-line');

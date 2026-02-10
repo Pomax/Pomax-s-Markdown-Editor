@@ -4,13 +4,8 @@
  * underneath the window's title / menu bar.
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { _electron as electron } from '@playwright/test';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -19,19 +14,7 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    electronApp = await electron.launch({
-        args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    page = await electronApp.firstWindow();
-
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await electronApp.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
-        }
-    });
+    ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {

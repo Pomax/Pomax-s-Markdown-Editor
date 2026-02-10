@@ -57,6 +57,12 @@ export class ToolbarButton {
         }
         button.appendChild(content);
 
+        // Prevent mousedown from stealing focus away from the editor.
+        // Without this, clicking a toolbar button fires the editor's
+        // handleBlur (which clears treeCursor) before the click handler
+        // runs, so the toolbar can no longer tell which node was active.
+        button.addEventListener('mousedown', (e) => e.preventDefault());
+
         // Add click handler
         button.addEventListener('click', this.handleClick.bind(this));
 

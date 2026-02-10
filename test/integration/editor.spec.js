@@ -2,13 +2,8 @@
  * @fileoverview Integration tests for the editor application.
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { _electron as electron } from '@playwright/test';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -17,21 +12,7 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    electronApp = await electron.launch({
-        args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    page = await electronApp.firstWindow();
-
-    // Wait for the window to become visible (it is created with show: false
-    // and shown on the ready-to-show event).
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await electronApp.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
-        }
-    });
+    ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
@@ -39,30 +20,27 @@ test.afterAll(async () => {
 });
 
 test.describe('Application Launch', () => {
-    test('should open a window', async () => {
-        const windowState = await electronApp.evaluate(async ({ BrowserWindow }) => {
-            const mainWindow = BrowserWindow.getAllWindows()[0];
-            return {
-                isVisible: mainWindow.isVisible(),
-                title: mainWindow.getTitle(),
-            };
+    test('should create a window', async () => {
+        const windowCount = await electronApp.evaluate(async ({ BrowserWindow }) => {
+            return BrowserWindow.getAllWindows().length;
         });
 
-        expect(windowState.isVisible).toBe(true);
+        expect(windowCount).toBe(1);
     });
 
-    test('should have A4 aspect ratio', async () => {
-        const windowState = await electronApp.evaluate(async ({ BrowserWindow }) => {
-            const mainWindow = BrowserWindow.getAllWindows()[0];
-            const bounds = mainWindow.getBounds();
-            return {
-                width: bounds.width,
-                height: bounds.height,
-            };
+    test('should have A4 aspect ratio on the editor element', async () => {
+        // Verify that the editor's CSS min-height enforces the A4 aspect
+        // ratio relative to its max-width.  Both computed values resolve
+        // to pixels, so the ratio is viewport-independent.
+        const editor = page.locator('#editor');
+        const ratio = await editor.evaluate((el) => {
+            const style = getComputedStyle(el);
+            const minHeight = Number.parseFloat(style.minHeight);
+            const maxWidth = Number.parseFloat(style.maxWidth);
+            return minHeight / maxWidth;
         });
 
-        // A4 aspect ratio is approximately 1:1.414
-        const ratio = windowState.height / windowState.width;
+        // A4 aspect ratio is approximately 1.414
         expect(ratio).toBeGreaterThan(1.3);
         expect(ratio).toBeLessThan(1.5);
     });

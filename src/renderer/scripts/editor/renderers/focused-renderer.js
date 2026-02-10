@@ -155,6 +155,9 @@ export class FocusedRenderer {
             case 'table':
                 return this.renderTable(node, element, isFocused);
 
+            case 'html-block':
+                return this.renderHtmlBlock(node, element, isFocused);
+
             default:
                 return this.renderParagraph(node, element, isFocused);
         }
@@ -445,6 +448,201 @@ export class FocusedRenderer {
         }
 
         return table;
+    }
+
+    /**
+     * Renders an HTML block container node.
+     *
+     * The container's tag (e.g. `<div>`, `<details>`) is rendered as an
+     * actual HTML element and the child nodes are rendered inside it as
+     * normal markdown nodes.
+     *
+     * For `<details>` blocks the element is rendered open by default so
+     * the user can see and edit the content.  A self-closed `<summary>`
+     * child is rendered as a native `<summary>` element with editable
+     * inline content.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element - The wrapper div with data-node-id
+     * @param {boolean} isFocused
+     * @returns {HTMLElement}
+     */
+    renderHtmlBlock(node, element, isFocused) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const tagName = attrs.tagName || 'div';
+
+        // For <details> blocks we use a fake disclosure widget built from
+        // plain <div>s so we have full control over collapsing without any
+        // of the quirky browser behaviour of the native <details> element.
+        if (tagName === 'details') {
+            return this.renderFakeDetails(node, element, isFocused);
+        }
+
+        // Create the actual HTML container element
+        const container = document.createElement(tagName);
+        container.className = 'md-html-container';
+
+        // Copy attributes from the opening tag onto the container element
+        this.applyHtmlAttributes(container, attrs.openingTag || '');
+
+        // Determine which child (if any) is focused
+        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+
+        for (const child of node.children) {
+            const childFocused = child.id === currentNodeId;
+            const childElement = this.renderNode(child, childFocused);
+            if (childElement) {
+                container.appendChild(childElement);
+            }
+        }
+
+        // If no children, add a placeholder so the element is visible
+        if (node.children.length === 0) {
+            container.appendChild(document.createElement('br'));
+        }
+
+        element.appendChild(container);
+        return element;
+    }
+
+    /**
+     * Renders a fake &lt;details&gt; disclosure widget using plain divs.
+     * The first child that is itself an html-block with tagName "summary"
+     * is rendered as the summary row (with a clickable disclosure triangle).
+     * All remaining children form the collapsible body.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLElement} element
+     * @param {boolean} isFocused
+     * @returns {HTMLElement}
+     */
+    renderFakeDetails(node, element, isFocused) {
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
+        const defaultOpen = !this.editor.detailsClosed;
+
+        // Check runtime toggle state stored on the node; fall back to the
+        // user preference on first render.
+        if (node.attributes._detailsOpen === undefined) {
+            node.attributes._detailsOpen = defaultOpen;
+        }
+        const isOpen = !!node.attributes._detailsOpen;
+
+        const container = document.createElement('div');
+        container.className = 'md-html-container md-details';
+        if (isOpen) {
+            container.classList.add('md-details--open');
+        }
+
+        // Copy any extra attributes from the original opening tag
+        this.applyHtmlAttributes(container, attrs.openingTag || '');
+
+        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+
+        // Split children into summary child and body children
+        /** @type {import('../../parser/syntax-tree.js').SyntaxNode|null} */
+        let summaryNode = null;
+        /** @type {import('../../parser/syntax-tree.js').SyntaxNode[]} */
+        const bodyChildren = [];
+
+        for (const child of node.children) {
+            if (
+                !summaryNode &&
+                child.type === 'html-block' &&
+                child.attributes.tagName === 'summary'
+            ) {
+                summaryNode = child;
+            } else {
+                bodyChildren.push(child);
+            }
+        }
+
+        // ── Summary row ──
+        if (summaryNode) {
+            const summaryRow = document.createElement('div');
+            summaryRow.className = 'md-details-summary';
+
+            // Disclosure triangle
+            const triangle = document.createElement('span');
+            triangle.className = 'md-details-triangle';
+            triangle.textContent = isOpen ? '▼' : '▶';
+            triangle.setAttribute('role', 'button');
+            triangle.setAttribute('aria-label', isOpen ? 'Collapse' : 'Expand');
+            // Intercept mousedown to prevent the browser from moving the
+            // caret into the details body.  Without this, mousedown fires
+            // before click, the caret moves, selectionchange triggers a
+            // full re-render (destroying this element), and the click
+            // handler never runs on the live DOM.
+            triangle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            triangle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                node.attributes._detailsOpen = !node.attributes._detailsOpen;
+                this.editor.render();
+                this.editor.placeCursor();
+            });
+            summaryRow.appendChild(triangle);
+
+            // Render summary content
+            const summaryContent = document.createElement('div');
+            summaryContent.className = 'md-details-summary-content';
+            const summaryFocused = summaryNode.id === currentNodeId;
+            // Render summary's own children (the bareText paragraph)
+            for (const sc of summaryNode.children) {
+                const scFocused = sc.id === currentNodeId;
+                const scEl = this.renderNode(sc, scFocused);
+                if (scEl) summaryContent.appendChild(scEl);
+            }
+            summaryRow.appendChild(summaryContent);
+            container.appendChild(summaryRow);
+        }
+
+        // ── Collapsible body ──
+        const body = document.createElement('div');
+        body.className = 'md-details-body';
+
+        for (const child of bodyChildren) {
+            const childFocused = child.id === currentNodeId;
+            const childElement = this.renderNode(child, childFocused);
+            if (childElement) {
+                body.appendChild(childElement);
+            }
+        }
+
+        if (bodyChildren.length === 0) {
+            body.appendChild(document.createElement('br'));
+        }
+
+        container.appendChild(body);
+        element.appendChild(container);
+        return element;
+    }
+
+    /**
+     * Parses HTML attributes from an opening tag string and applies them
+     * to a DOM element (excluding the tag name itself).
+     *
+     * @param {HTMLElement} el - The element to apply attributes to
+     * @param {string} openingTag - e.g. `<div class="note">`
+     */
+    applyHtmlAttributes(el, openingTag) {
+        // Strip `<tagName` from the front and `>` from the end
+        const withoutBrackets = openingTag
+            .replace(/^<[a-zA-Z][a-zA-Z0-9-]*/, '')
+            .replace(/>$/, '')
+            .trim();
+        if (!withoutBrackets) return;
+
+        // Use a temporary element to parse attributes safely
+        const tmp = document.createElement('div');
+        tmp.innerHTML = `<span ${withoutBrackets}></span>`;
+        const parsed = tmp.firstElementChild;
+        if (!parsed) return;
+
+        for (const attr of parsed.attributes) {
+            el.setAttribute(attr.name, attr.value);
+        }
     }
 
     /**
