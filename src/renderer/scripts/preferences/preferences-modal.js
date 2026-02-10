@@ -49,6 +49,12 @@ const DEFAULT_TOC_POSITION = 'left';
 const DEFAULT_ENSURE_LOCAL_PATHS = true;
 
 /**
+ * Default setting for whether &lt;details&gt; blocks load closed.
+ * @type {boolean}
+ */
+const DEFAULT_DETAILS_CLOSED = false;
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -95,6 +101,7 @@ export class PreferencesModal {
                             <li><a href="#" class="preferences-nav-link" data-section="pref-colors">Colors</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-toc">Table of Contents</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-images">Image Handling</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-content">Content</a></li>
                         </ul>
                     </nav>
                     <div class="preferences-body">
@@ -217,6 +224,16 @@ export class PreferencesModal {
                                 <span>Ensure local paths</span>
                             </label>
                             <p class="preferences-hint">When enabled, absolute image paths that point to files inside the document's folder are automatically rewritten to relative paths.</p>
+                        </div>
+                    </fieldset>
+                    <fieldset class="preferences-fieldset" id="pref-content">
+                        <legend>Content</legend>
+                        <div class="content-settings-row">
+                            <label class="content-toggle">
+                                <input type="checkbox" id="details-closed">
+                                <span>Load &lt;details&gt; closed</span>
+                            </label>
+                            <p class="preferences-hint">When enabled, &lt;details&gt; blocks are initially collapsed in focused view. Click the disclosure triangle to expand or collapse them.</p>
                         </div>
                     </fieldset>
                     </div>
@@ -635,6 +652,13 @@ export class PreferencesModal {
         );
         ensureLocalPathsCb.checked = ensureLocalPaths;
 
+        // Load content settings
+        const detailsClosed = await this._loadDetailsClosed();
+        const detailsClosedCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#details-closed')
+        );
+        detailsClosedCb.checked = detailsClosed;
+
         this.dialog.showModal();
     }
 
@@ -793,6 +817,25 @@ export class PreferencesModal {
     }
 
     /**
+     * Loads the details-closed setting from the settings database.
+     * @returns {Promise<boolean>}
+     */
+    async _loadDetailsClosed() {
+        if (!window.electronAPI) return DEFAULT_DETAILS_CLOSED;
+
+        try {
+            const result = await window.electronAPI.getSetting('detailsClosed');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                return !!result.value;
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_DETAILS_CLOSED;
+    }
+
+    /**
      * Saves the current form values to the settings store and applies them.
      */
     async _save() {
@@ -849,6 +892,11 @@ export class PreferencesModal {
         );
         const ensureLocalPaths = ensureLocalPathsCb.checked;
 
+        const detailsClosedCb = /** @type {HTMLInputElement} */ (
+            this.dialog.querySelector('#details-closed')
+        );
+        const detailsClosed = detailsClosedCb.checked;
+
         // Persist to database
         if (window.electronAPI) {
             await window.electronAPI.setSetting('defaultView', defaultView);
@@ -858,6 +906,7 @@ export class PreferencesModal {
             await window.electronAPI.setSetting('tocVisible', tocVisible);
             await window.electronAPI.setSetting('tocPosition', tocPosition);
             await window.electronAPI.setSetting('ensureLocalPaths', ensureLocalPaths);
+            await window.electronAPI.setSetting('detailsClosed', detailsClosed);
         }
 
         // Apply to CSS immediately
@@ -876,6 +925,13 @@ export class PreferencesModal {
         document.dispatchEvent(
             new CustomEvent('imageHandling:settingsChanged', {
                 detail: { ensureLocalPaths },
+            }),
+        );
+
+        // Notify listeners about content settings
+        document.dispatchEvent(
+            new CustomEvent('content:settingsChanged', {
+                detail: { detailsClosed },
             }),
         );
 

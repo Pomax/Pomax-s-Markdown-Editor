@@ -271,41 +271,79 @@
 
 /* ========== HTML block containers ========== */
 
-/* Details/summary disclosure widget */
-.md-html-container:is(details) {
+/* ── Fake details/summary disclosure widget ── */
+.md-details {
     border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 0;
     margin: var(--spacing-xs) 0;
 }
 
-/* Summary wrapper: the first child is the .md-html-block that holds the
-   <summary> container.  Give it a tinted background and a bottom border
-   so it reads as a distinct header. */
-.md-html-container:is(details) > .md-line:first-child {
+/* Summary row: disclosure triangle + summary content */
+.md-details-summary {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
     background: color-mix(in srgb, var(--color-border) 30%, transparent);
-    border-bottom: 1px solid var(--color-border);
     border-radius: 6px 6px 0 0;
     padding: var(--spacing-sm) var(--spacing-md);
-    margin: 0;
 }
 
-.md-html-container:is(details) summary.md-html-container {
+/* When collapsed, the summary gets bottom-radius too */
+.md-details:not(.md-details--open) .md-details-summary {
+    border-radius: 6px;
+}
+
+/* When open, separate summary from body */
+.md-details--open .md-details-summary {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Clickable disclosure triangle */
+.md-details-triangle {
     cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    font-size: 0.65em;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    padding: 2px;
+}
+
+.md-details-triangle:hover {
+    color: var(--color-text);
+}
+
+/* Summary content fills remaining space */
+.md-details-summary-content {
+    flex: 1;
+    min-width: 0;
     font-weight: 600;
 }
 
-/* Details body: children after the summary wrapper */
-.md-html-container:is(details) > .md-line:not(:first-child) {
+.md-details-summary-content .md-line {
+    margin-bottom: 0;
+}
+
+/* Collapsible body */
+.md-details-body {
+    overflow: hidden;
+}
+
+.md-details:not(.md-details--open) .md-details-body {
+    display: none;
+}
+
+.md-details-body > .md-line {
     padding: 0 var(--spacing-md);
     margin-bottom: 0;
 }
 
-.md-html-container:is(details) > .md-line:nth-child(2) {
+.md-details-body > .md-line:first-child {
     padding-top: var(--spacing-sm);
 }
 
-.md-html-container:is(details) > .md-line:last-child {
+.md-details-body > .md-line:last-child {
     padding-bottom: var(--spacing-sm);
 }
 

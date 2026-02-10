@@ -123,8 +123,8 @@ test('focused view: backspace at start of paragraph after </details> merges with
     await page.waitForTimeout(300);
 
     // The merged text should now be "betterAnd then this is the main doc again."
-    // located inside the <details> block.
-    const mergedLine = page.locator('#editor details .md-line', {
+    // located inside the fake details block.
+    const mergedLine = page.locator('#editor .md-details .md-line', {
         hasText: 'betterAnd then this is the main doc again.',
     });
     const mergedCount = await mergedLine.count();

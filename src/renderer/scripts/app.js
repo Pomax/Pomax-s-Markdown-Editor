@@ -182,6 +182,15 @@ class App {
             }
         });
 
+        // Listen for content settings changes from the preferences modal
+        document.addEventListener('content:settingsChanged', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (this.editor && detail) {
+                this.editor.detailsClosed = !!detail.detailsClosed;
+                this.editor.renderAndPlaceCursor();
+            }
+        });
+
         // Expose API for main process queries
         this.exposeEditorAPI();
 
@@ -486,6 +495,17 @@ class App {
             }
         } catch {
             // Default is false
+        }
+
+        try {
+            const result = await window.electronAPI.getSetting('detailsClosed');
+            if (result.success && result.value !== undefined && result.value !== null) {
+                if (this.editor) {
+                    this.editor.detailsClosed = !!result.value;
+                }
+            }
+        } catch {
+            // Default is false (open)
         }
     }
 

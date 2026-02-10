@@ -69,6 +69,9 @@ export class Editor {
         /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
         this.ensureLocalPaths = true;
 
+        /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in focused view. */
+        this.detailsClosed = false;
+
         /**
          * Tree-based cursor position.
          * @type {TreeCursor|null}
