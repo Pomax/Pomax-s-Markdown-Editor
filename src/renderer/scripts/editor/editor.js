@@ -476,6 +476,7 @@ export class Editor {
 
         // Re-parse the full markdown line to detect type changes
         let newOffset;
+        const wasBareText = !!node.attributes.bareText;
         const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
         const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -485,6 +486,12 @@ export class Editor {
             node.attributes = parsed.attributes;
         } else {
             node.content = newContent;
+        }
+
+        // Preserve the bareText flag — it is not part of the markdown syntax
+        // that parseSingleLine can reconstruct, so it would be lost.
+        if (wasBareText) {
+            node.attributes.bareText = true;
         }
 
         // Compute cursor position in the new content.
@@ -550,6 +557,7 @@ export class Editor {
 
             // Re-parse to detect type changes
             let newOffset;
+            const wasBareText = !!node.attributes.bareText;
             const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
             const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -559,6 +567,11 @@ export class Editor {
                 node.attributes = parsed.attributes;
             } else {
                 node.content = newContent;
+            }
+
+            // Preserve the bareText flag (see insertTextAtCursor).
+            if (wasBareText) {
+                node.attributes.bareText = true;
             }
 
             // Compute new cursor offset
@@ -647,6 +660,7 @@ export class Editor {
 
             // Re-parse to detect type changes
             let newOffset;
+            const wasBareText = !!node.attributes.bareText;
             const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
             const parsed = this.parser.parseSingleLine(fullLine);
 
@@ -656,6 +670,11 @@ export class Editor {
                 node.attributes = parsed.attributes;
             } else {
                 node.content = newContent;
+            }
+
+            // Preserve the bareText flag (see insertTextAtCursor).
+            if (wasBareText) {
+                node.attributes.bareText = true;
             }
 
             if (oldType === node.type) {
