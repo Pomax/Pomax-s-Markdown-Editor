@@ -34,4 +34,5 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci && npx playwright install firefox --with-deps && npm test
+      - run: npm ci && npx playwright install firefox --with-deps
+      - run: xvfb-run --auto-servernum npm test
