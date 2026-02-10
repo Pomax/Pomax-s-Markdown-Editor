@@ -79,7 +79,7 @@ test('clicking the disclosure triangle collapses and expands the details body', 
     // bugs where the DOM is destroyed before the click handler fires.
     const triangleLoc = page.locator('#editor .md-details-triangle');
     const triangleBox = await triangleLoc.boundingBox();
-    expect(triangleBox).not.toBeNull();
+    if (!triangleBox) throw new Error('triangle bounding box is null');
     const tx = triangleBox.x + triangleBox.width / 2;
     const ty = triangleBox.y + triangleBox.height / 2;
     await page.mouse.click(tx, ty);
@@ -105,7 +105,7 @@ test('clicking the disclosure triangle collapses and expands the details body', 
     // ── Step 3: Click the triangle again to expand ──
     // Re-query the bounding box because the DOM was re-rendered.
     const triangleBox2 = await triangleLoc.boundingBox();
-    expect(triangleBox2).not.toBeNull();
+    if (!triangleBox2) throw new Error('triangle bounding box is null after collapse');
     const tx2 = triangleBox2.x + triangleBox2.width / 2;
     const ty2 = triangleBox2.y + triangleBox2.height / 2;
     await page.mouse.click(tx2, ty2);

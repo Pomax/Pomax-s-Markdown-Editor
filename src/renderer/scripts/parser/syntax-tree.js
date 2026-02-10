@@ -17,6 +17,7 @@
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
+ * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
  */
 
 /**
