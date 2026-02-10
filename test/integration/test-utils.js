@@ -31,7 +31,11 @@ export const VIEWPORT = { width: 800, height: 1132 };
  */
 export async function launchApp(extraArgs = []) {
     const electronApp = await electron.launch({
-        args: [path.join(projectRoot, 'src', 'main', 'main.js'), ...extraArgs],
+        args: [
+            ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
+            path.join(projectRoot, 'src', 'main', 'main.js'),
+            ...extraArgs,
+        ],
         env: { ...process.env, TESTING: '1' },
     });
     const page = await electronApp.firstWindow();
