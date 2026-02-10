@@ -8,7 +8,11 @@ A "professional" markdown editor built with Electron, featuring a syntactic tree
 
 Pre-built standalone executables for Windows, macOS, and Linux are available on the [Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest) page. No installation or Node.js required — just download and run.
 
-## what is this?
+## Eww, Electron?
+
+Sorry, did you not have 8+GB if RAM and 1TB+ of disk space? Stop pretending you care about Electron, you care about whether the tools are useful or not. Yes, it's dumb that 2 MB of resources needs 100MB of UI runner, but on the other hand, it's literally a browser, and have you looked at what browsers need to support these days? Can you even _count_ the number of web APIs? =P
+
+## Fine... so what is this?
 
 This is a project that was product managed by a real human (me, Pomax!) but written by Claude Opus 4.5/4.6, which is the first LLM that seems to be alright at programming. It was written in a way to be accessible by new devs as well as other AI agents, so it should be pretty damn easy to add new functionality. If using an AI, tell it to first read the `requirements.md` and `docs/developers` files, and then get to work.
 
