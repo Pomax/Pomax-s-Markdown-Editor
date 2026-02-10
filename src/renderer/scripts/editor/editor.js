@@ -878,6 +878,8 @@ export class Editor {
     recordAndRender(before) {
         if (!this.syntaxTree) return;
 
+        this._ensureTrailingParagraph();
+
         const after = this.syntaxTree.toMarkdown();
         if (before !== after) {
             this.undoManager.recordChange({ type: 'input', before, after });
@@ -885,6 +887,23 @@ export class Editor {
         }
 
         this.renderAndPlaceCursor();
+    }
+
+    /**
+     * Ensures that the document does not end with an html-block container.
+     * In focused view there is no way to place the cursor after a trailing
+     * `</details>` block, so we append an empty paragraph whenever the last
+     * top-level node is a container html-block.
+     */
+    _ensureTrailingParagraph() {
+        if (!this.syntaxTree) return;
+        const children = this.syntaxTree.children;
+        if (children.length === 0) return;
+        const last = children[children.length - 1];
+        if (last.type === 'html-block' && last.children.length > 0) {
+            const para = new SyntaxNode('paragraph', '');
+            this.syntaxTree.appendChild(para);
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -1113,6 +1132,11 @@ export class Editor {
             const node = new SyntaxNode('paragraph', '');
             this.syntaxTree.appendChild(node);
         }
+
+        // Ensure the document doesn't end with a container html-block
+        // (the user would have no way to place the cursor after it in
+        // focused view).
+        this._ensureTrailingParagraph();
 
         const first = this.syntaxTree.children[0];
         this.treeCursor = { nodeId: first.id, offset: 0 };

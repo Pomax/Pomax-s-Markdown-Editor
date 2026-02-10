@@ -1,13 +1,14 @@
 /**
- * @fileoverview Integration test for loading a real markdown file with images.
+ * @fileoverview Integration test for loading a markdown file with images.
  * Launches the editor with a CLI file path argument, waits for the document
  * to load, and verifies that the referenced images actually load.
  */
 
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { launchApp, projectRoot } from './test-utils.js';
 
-const testFile = 'c:\\Users\\Mike\\Documents\\git\\released\\are-we-flying\\docs\\index.md';
+const testFile = path.join(projectRoot, 'test', 'fixtures', 'images.md');
 
 test('images in a loaded markdown file resolve and load successfully', async () => {
     // Give CI runners extra time for image loading.
