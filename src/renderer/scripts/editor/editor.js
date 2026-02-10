@@ -24,6 +24,8 @@ import { UndoManager } from './undo-manager.js';
  * @typedef {Object} TreeCursor
  * @property {string} nodeId - The ID of the node the cursor is in
  * @property {number} offset - The character offset within the node's content
+ * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
+ *     html-block container's opening or closing tag line (source view only).
  */
 
 /**
@@ -182,7 +184,16 @@ export class Editor {
                         range.startContainer,
                         range.startOffset,
                     );
-                    this.treeCursor = { nodeId, offset };
+                    /** @type {TreeCursor} */
+                    const cursor = { nodeId, offset };
+                    // If this element represents an html-block tag line in
+                    // source view, record which part so edit methods can
+                    // route changes to the correct attribute.
+                    const tagPart = htmlEl.dataset?.tagPart;
+                    if (tagPart === 'opening' || tagPart === 'closing') {
+                        cursor.tagPart = tagPart;
+                    }
+                    this.treeCursor = cursor;
                     return;
                 }
             }
@@ -279,9 +290,21 @@ export class Editor {
     placeCursor() {
         if (!this.treeCursor) return;
 
-        const nodeElement = this.container.querySelector(
-            `[data-node-id="${this.treeCursor.nodeId}"]`,
-        );
+        // When the cursor targets a tag line (source view), there may be
+        // multiple elements with the same data-node-id (opening & closing).
+        // Select the one matching the tagPart.
+        /** @type {Element|null} */
+        let nodeElement = null;
+        if (this.treeCursor.tagPart) {
+            nodeElement = this.container.querySelector(
+                `[data-node-id="${this.treeCursor.nodeId}"][data-tag-part="${this.treeCursor.tagPart}"]`,
+            );
+        }
+        if (!nodeElement) {
+            nodeElement = this.container.querySelector(
+                `[data-node-id="${this.treeCursor.nodeId}"]`,
+            );
+        }
         if (!nodeElement) return;
 
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
@@ -422,6 +445,27 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            const before = this.syntaxTree.toMarkdown();
+            const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+            const old = node.attributes[attr] || '';
+            const left = old.substring(0, this.treeCursor.offset);
+            const right = old.substring(this.treeCursor.offset);
+            node.attributes[attr] = left + text + right;
+            this.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                tagPart: this.treeCursor.tagPart,
+            };
+            this.recordAndRender(before);
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
         const oldType = node.type;
 
@@ -430,48 +474,34 @@ export class Editor {
         const right = node.content.substring(this.treeCursor.offset);
         const newContent = left + text + right;
 
-        // Self-closed html-block nodes (e.g. <summary>text</summary>) contain
-        // bare text that should never be re-parsed: there is no markdown prefix
-        // that could trigger a type change, and re-parsing would destroy the
-        // html-block attributes (tagName, openingTag, selfClosed).
+        // Re-parse the full markdown line to detect type changes
         let newOffset;
-        if (node.type === 'html-block' && node.attributes?.selfClosed) {
+        const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+        const parsed = this.parser.parseSingleLine(fullLine);
+
+        if (parsed) {
+            node.type = parsed.type;
+            node.content = parsed.content;
+            node.attributes = parsed.attributes;
+        } else {
             node.content = newContent;
-            // Keep the openingTag attribute in sync with the new content
-            const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-                node.attributes
-            );
-            attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
+        }
+
+        // Compute cursor position in the new content.
+        // If the type didn't change, the cursor is simply after the inserted text.
+        // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
+        // for the prefix that was absorbed by the type change.
+        if (oldType === node.type) {
             newOffset = left.length + text.length;
         } else {
-            // Re-parse the full markdown line to detect type changes
-            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-            const parsed = this.parser.parseSingleLine(fullLine);
-
-            if (parsed) {
-                node.type = parsed.type;
-                node.content = parsed.content;
-                node.attributes = parsed.attributes;
-            } else {
-                node.content = newContent;
-            }
-
-            // Compute cursor position in the new content.
-            // If the type didn't change, the cursor is simply after the inserted text.
-            // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
-            // for the prefix that was absorbed by the type change.
-            if (oldType === node.type) {
-                newOffset = left.length + text.length;
-            } else {
-                // The old content up to cursor was `left + text`.  In the old type's
-                // markdown line, that corresponds to `oldPrefix + left + text`.
-                // In the new type's markdown line, the prefix changed.  The cursor
-                // position in the new content = old raw cursor pos − new prefix len.
-                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-                const newPrefix = this.getPrefixLength(node.type, node.attributes);
-                const rawCursorPos = oldPrefix + left.length + text.length;
-                newOffset = Math.max(0, rawCursorPos - newPrefix);
-            }
+            // The old content up to cursor was `left + text`.  In the old type's
+            // markdown line, that corresponds to `oldPrefix + left + text`.
+            // In the new type's markdown line, the prefix changed.  The cursor
+            // position in the new content = old raw cursor pos − new prefix len.
+            const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+            const newPrefix = this.getPrefixLength(node.type, node.attributes);
+            const rawCursorPos = oldPrefix + left.length + text.length;
+            newOffset = Math.max(0, rawCursorPos - newPrefix);
         }
 
         this.treeCursor = { nodeId: node.id, offset: newOffset };
@@ -486,6 +516,29 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            if (this.treeCursor.offset > 0) {
+                const before = this.syntaxTree.toMarkdown();
+                const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+                const old = node.attributes[attr] || '';
+                const left = old.substring(0, this.treeCursor.offset - 1);
+                const right = old.substring(this.treeCursor.offset);
+                node.attributes[attr] = left + right;
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.treeCursor.tagPart,
+                };
+                this.recordAndRender(before);
+            }
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset > 0) {
@@ -495,36 +548,26 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
-            // Self-closed html-block: update content directly, skip re-parse.
+            // Re-parse to detect type changes
             let newOffset;
-            if (node.type === 'html-block' && node.attributes?.selfClosed) {
+            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+            const parsed = this.parser.parseSingleLine(fullLine);
+
+            if (parsed) {
+                node.type = parsed.type;
+                node.content = parsed.content;
+                node.attributes = parsed.attributes;
+            } else {
                 node.content = newContent;
-                const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-                    node.attributes
-                );
-                attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
+            }
+
+            // Compute new cursor offset
+            if (oldType === node.type) {
                 newOffset = left.length;
             } else {
-                // Re-parse to detect type changes
-                const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-                const parsed = this.parser.parseSingleLine(fullLine);
-
-                if (parsed) {
-                    node.type = parsed.type;
-                    node.content = parsed.content;
-                    node.attributes = parsed.attributes;
-                } else {
-                    node.content = newContent;
-                }
-
-                // Compute new cursor offset
-                if (oldType === node.type) {
-                    newOffset = left.length;
-                } else {
-                    const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-                    const newPrefix = this.getPrefixLength(node.type, node.attributes);
-                    newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
-                }
+                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+                const newPrefix = this.getPrefixLength(node.type, node.attributes);
+                newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
             }
 
             this.treeCursor = { nodeId: node.id, offset: newOffset };
@@ -570,6 +613,29 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // When the cursor is on an html-block tag line (source view), edit
+        // the openingTag / closingTag attribute directly.
+        if (node.type === 'html-block' && this.treeCursor.tagPart) {
+            const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+            const old = node.attributes[attr] || '';
+            if (this.treeCursor.offset < old.length) {
+                const before = this.syntaxTree.toMarkdown();
+                const left = old.substring(0, this.treeCursor.offset);
+                const right = old.substring(this.treeCursor.offset + 1);
+                node.attributes[attr] = left + right;
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.treeCursor.tagPart,
+                };
+                this.recordAndRender(before);
+            }
+            return;
+        }
+
+        // html-block containers without tagPart are structural (focused view).
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset < node.content.length) {
@@ -579,34 +645,25 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
-            // Self-closed html-block: update content directly, skip re-parse.
+            // Re-parse to detect type changes
             let newOffset;
-            if (node.type === 'html-block' && node.attributes?.selfClosed) {
+            const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
+            const parsed = this.parser.parseSingleLine(fullLine);
+
+            if (parsed) {
+                node.type = parsed.type;
+                node.content = parsed.content;
+                node.attributes = parsed.attributes;
+            } else {
                 node.content = newContent;
-                const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-                    node.attributes
-                );
-                attrs.openingTag = `<${attrs.tagName}>${node.content}</${attrs.tagName}>`;
+            }
+
+            if (oldType === node.type) {
                 newOffset = left.length;
             } else {
-                const fullLine = this.buildMarkdownLine(node.type, newContent, node.attributes);
-                const parsed = this.parser.parseSingleLine(fullLine);
-
-                if (parsed) {
-                    node.type = parsed.type;
-                    node.content = parsed.content;
-                    node.attributes = parsed.attributes;
-                } else {
-                    node.content = newContent;
-                }
-
-                if (oldType === node.type) {
-                    newOffset = left.length;
-                } else {
-                    const oldPrefix = this.getPrefixLength(oldType, node.attributes);
-                    const newPrefix = this.getPrefixLength(node.type, node.attributes);
-                    newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
-                }
+                const oldPrefix = this.getPrefixLength(oldType, node.attributes);
+                const newPrefix = this.getPrefixLength(node.type, node.attributes);
+                newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
             }
 
             this.treeCursor = { nodeId: node.id, offset: newOffset };
@@ -635,6 +692,11 @@ export class Editor {
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
+        // html-block tag lines and containers are not splittable.
+        if (node.type === 'html-block' && (this.treeCursor.tagPart || node.children.length > 0)) {
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         const contentBefore = node.content.substring(0, this.treeCursor.offset);
@@ -642,6 +704,12 @@ export class Editor {
 
         // Current node keeps the text before the cursor
         node.content = contentBefore;
+
+        // If the node was bare text inside an HTML container, splitting it
+        // means it is no longer a single bare-text line — clear the flag.
+        if (node.attributes?.bareText) {
+            node.attributes.bareText = undefined;
+        }
 
         // New node is always a paragraph
         const newNode = new SyntaxNode('paragraph', contentAfter);
@@ -1282,6 +1350,9 @@ export class Editor {
     changeElementType(elementType) {
         const currentNode = this.selectionManager.getCurrentNode();
         if (!currentNode || !this.syntaxTree) return;
+
+        // html-block containers are structural nodes, not type-changeable.
+        if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
 
         const beforeContent = this.getMarkdown();
         this.syntaxTree.changeNodeType(currentNode, elementType);

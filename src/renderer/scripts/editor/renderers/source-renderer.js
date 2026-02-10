@@ -293,16 +293,47 @@ export class SourceRenderer {
     renderHtmlBlock(node, element) {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
 
-        // Self-closed tag on a single line: render the full line as-is.
-        if (attrs.selfClosed) {
-            element.textContent = attrs.openingTag || '';
+        // Bare-text container (e.g. <summary>text</summary>): render as a
+        // single line matching the original markdown source.
+        if (
+            node.children.length === 1 &&
+            node.children[0].attributes.bareText &&
+            node.children[0].type === 'paragraph'
+        ) {
+            const tag = attrs.tagName || 'div';
+            const child = node.children[0];
+            // Render as a single line whose data-node-id points to the
+            // child paragraph so that editing targets the right node.
+            element.dataset.nodeId = child.id;
+            element.className = 'md-line md-paragraph';
+
+            const openSyntax = document.createElement('span');
+            openSyntax.className = 'md-syntax md-html-tag';
+            openSyntax.textContent = `<${tag}>`;
+            element.appendChild(openSyntax);
+
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'md-content';
+            this.renderInlineContent(child.content, contentSpan);
+            element.appendChild(contentSpan);
+
+            const closeSyntax = document.createElement('span');
+            closeSyntax.className = 'md-syntax md-html-tag';
+            closeSyntax.textContent = `</${tag}>`;
+            element.appendChild(closeSyntax);
+
             return element;
         }
 
-        // Opening tag line
+        // Opening tag line — editable via data-tag-part="opening"
         const openLine = document.createElement('div');
-        openLine.className = 'md-html-tag';
-        openLine.textContent = attrs.openingTag || '';
+        openLine.className = 'md-line md-html-tag';
+        openLine.dataset.nodeId = node.id;
+        openLine.dataset.tagPart = 'opening';
+        const openContent = document.createElement('span');
+        openContent.className = 'md-content';
+        openContent.textContent = attrs.openingTag || '';
+        openLine.appendChild(openContent);
         element.appendChild(openLine);
 
         // Render children as normal nodes
@@ -313,11 +344,16 @@ export class SourceRenderer {
             }
         }
 
-        // Closing tag line
+        // Closing tag line — editable via data-tag-part="closing"
         if (attrs.closingTag) {
             const closeLine = document.createElement('div');
-            closeLine.className = 'md-html-tag';
-            closeLine.textContent = attrs.closingTag;
+            closeLine.className = 'md-line md-html-tag';
+            closeLine.dataset.nodeId = node.id;
+            closeLine.dataset.tagPart = 'closing';
+            const closeContent = document.createElement('span');
+            closeContent.className = 'md-content';
+            closeContent.textContent = attrs.closingTag;
+            closeLine.appendChild(closeContent);
             element.appendChild(closeLine);
         }
 

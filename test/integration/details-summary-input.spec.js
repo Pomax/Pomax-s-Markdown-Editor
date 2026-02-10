@@ -51,9 +51,9 @@ test.afterAll(async () => {
 });
 
 test('pressing Enter after summary text and typing " a a" preserves leading space', async () => {
-    // Click on the summary element to focus it.
-    const summaryLine = page.locator('#editor summary.md-html-inline');
-    await summaryLine.click();
+    // Click on the paragraph inside the summary element to focus it.
+    const summaryParagraph = page.locator('#editor summary.md-html-container .md-paragraph');
+    await summaryParagraph.click();
     await page.waitForTimeout(200);
 
     // Move the cursor to the end of the summary text.
@@ -64,12 +64,16 @@ test('pressing Enter after summary text and typing " a a" preserves leading spac
     await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
 
-    /** Helper: read the textContent of the newly-created paragraph. */
+    /** Helper: read the textContent of the newly-created paragraph.
+     *  After pressing Enter inside the summary, the new paragraph is
+     *  the second .md-paragraph inside the <details> (the first is the
+     *  remaining summary text, or a sibling after the summary container). */
     const readParagraph = () =>
         page.evaluate(() => {
             const details = document.querySelector('#editor details');
             if (!details) return null;
-            const para = details.querySelector('.md-paragraph');
+            // The new paragraph is the one that is currently focused.
+            const para = details.querySelector('.md-paragraph.md-focused');
             return para ? para.textContent : null;
         });
 

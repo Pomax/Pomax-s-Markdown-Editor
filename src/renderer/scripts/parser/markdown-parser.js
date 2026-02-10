@@ -462,9 +462,11 @@ export class MarkdownParser {
      * Parses a self-closed HTML block element where the opening and closing
      * tags are on the same line (e.g. `<summary>Text here</summary>`).
      *
-     * The inner text is stored as the node's content and the full line
-     * is preserved in `openingTag` (with `closingTag` empty since both
-     * tags are on the same line).
+     * Rather than storing this as a leaf node, we create a normal container
+     * html-block with separate opening/closing tags and a single child
+     * paragraph whose `bareText` attribute is set.  When serialised back
+     * to markdown, a container whose only child is `bareText` collapses
+     * to the single-line form `<tag>content</tag>`.
      *
      * @param {number} index - Line index
      * @param {string} tagName - Lower-cased tag name
@@ -473,15 +475,25 @@ export class MarkdownParser {
      * @returns {{node: SyntaxNode, nextIndex: number}}
      */
     parseSelfClosedHtmlBlock(index, tagName, fullLine, innerText) {
-        const node = new SyntaxNode('html-block', innerText.trim());
+        // Extract the opening tag portion (everything up to and including the first '>').
+        const gtPos = fullLine.indexOf('>');
+        const openingTag = fullLine.substring(0, gtPos + 1);
+
+        const node = new SyntaxNode('html-block', '');
         node.attributes = {
             tagName,
-            openingTag: fullLine,
-            closingTag: '',
-            selfClosed: true,
+            openingTag,
+            closingTag: `</${tagName}>`,
         };
         node.startLine = index;
         node.endLine = index;
+
+        // The inner text becomes a bare-text paragraph child.
+        const child = new SyntaxNode('paragraph', innerText.trim());
+        child.attributes = { bareText: true };
+        child.startLine = index;
+        child.endLine = index;
+        node.appendChild(child);
 
         return { node, nextIndex: index + 1 };
     }

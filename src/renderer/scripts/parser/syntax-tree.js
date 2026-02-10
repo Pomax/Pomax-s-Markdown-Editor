@@ -16,7 +16,7 @@
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
- * @property {boolean} [selfClosed] - Whether the tag is self-closed on a single line
+ * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  */
 
 /**
@@ -178,6 +178,17 @@ export class SyntaxNode {
             case 'table':
                 return this.content;
             case 'html-block': {
+                // If the container has exactly one bare-text child, collapse
+                // to a single line: <tag>content</tag>
+                if (
+                    this.children.length === 1 &&
+                    this.children[0].attributes.bareText &&
+                    this.children[0].type === 'paragraph'
+                ) {
+                    const tag = this.attributes.tagName || 'div';
+                    return `<${tag}>${this.children[0].content}</${tag}>`;
+                }
+
                 const parts = [this.attributes.openingTag || ''];
                 for (const child of this.children) {
                     parts.push(child.toMarkdown());

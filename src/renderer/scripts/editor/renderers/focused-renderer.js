@@ -471,12 +471,6 @@ export class FocusedRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const tagName = attrs.tagName || 'div';
 
-        // Self-closed html-block (e.g. <summary>text</summary>):
-        // render as the actual element with inline content.
-        if (attrs.selfClosed) {
-            return this.renderSelfClosedHtmlBlock(node, element, isFocused);
-        }
-
         // Create the actual HTML container element
         const container = document.createElement(tagName);
         container.className = 'md-html-container';
@@ -505,31 +499,6 @@ export class FocusedRenderer {
         if (node.children.length === 0) {
             container.appendChild(document.createElement('br'));
         }
-
-        element.appendChild(container);
-        return element;
-    }
-
-    /**
-     * Renders a self-closed html-block node (e.g. `<summary>text</summary>`)
-     * as the actual HTML element with editable inline content inside.
-     *
-     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
-     * @param {HTMLElement} element - The wrapper div with data-node-id
-     * @param {boolean} isFocused
-     * @returns {HTMLElement}
-     */
-    renderSelfClosedHtmlBlock(node, element, isFocused) {
-        const attrs = /** @type {NodeAttributes} */ (node.attributes);
-        const tagName = attrs.tagName || 'span';
-
-        const container = document.createElement(tagName);
-        container.className = 'md-html-inline';
-
-        const contentSpan = document.createElement('span');
-        contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
-        container.appendChild(contentSpan);
 
         element.appendChild(container);
         return element;
