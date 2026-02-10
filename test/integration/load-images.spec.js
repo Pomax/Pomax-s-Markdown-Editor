@@ -4,21 +4,16 @@
  * to load, and verifies that the referenced images actually load.
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { _electron as electron, expect, test } from '@playwright/test';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { expect, test } from '@playwright/test';
+import { launchApp } from './test-utils.js';
 
 const testFile = 'c:\\Users\\Mike\\Documents\\git\\released\\are-we-flying\\docs\\index.md';
 
 test('images in a loaded markdown file resolve and load successfully', async () => {
-    const electronApp = await electron.launch({
-        args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js'), testFile],
-        env: { ...process.env, TESTING: '1' },
-    });
-    const page = await electronApp.firstWindow();
+    // Give CI runners extra time for image loading.
+    test.setTimeout(60_000);
+
+    const { electronApp, page } = await launchApp([testFile]);
 
     // Wait for the editor to finish rendering the loaded document.
     await page.waitForSelector('#editor .md-line');

@@ -27,6 +27,8 @@ this **before** doing any work.
 - The user runs the full Playwright suite themselves; you can run individual
   spec files to verify your work, but do not run the entire suite without
   being asked.
+- **ALways** update integrations test for UX that gets changed
+- **Always** write new integration tests for new UX
 
 ## Playwright Pitfalls
 

@@ -160,6 +160,11 @@ export class TableOfContents {
             link.href = '#';
             link.textContent = heading.text;
             link.dataset.nodeId = heading.id;
+            // Prevent mousedown from stealing focus away from the editor.
+            // Without this, clicking a TOC link fires the editor's
+            // handleBlur (which clears treeCursor and re-renders) before
+            // _scrollToHeading runs, disrupting the scroll.
+            link.addEventListener('mousedown', (e) => e.preventDefault());
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 this._scrollToHeading(heading.id);

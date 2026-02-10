@@ -16,14 +16,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { _electron as electron } from '@playwright/test';
+import { launchApp, loadContent, projectRoot } from './test-utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const projectRoot = path.join(__dirname, '..', '..');
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
 
@@ -34,19 +29,7 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    electronApp = await electron.launch({
-        args: [path.join(projectRoot, 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    page = await electronApp.firstWindow();
-
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await electronApp.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
-        }
-    });
+    ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
@@ -55,14 +38,11 @@ test.afterAll(async () => {
 
 test('source view: backspace at start of paragraph after </details> does not delete the line', async () => {
     // Load the fixture fresh.
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, fixtureContent);
-    await page.waitForTimeout(300);
+    await loadContent(page, fixtureContent);
 
     // Switch to source view.
     await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.waitForTimeout(300);
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
 
     // Find the line that contains "And then this is the main doc again."
     const targetLine = page.locator('#editor .md-line', {
@@ -98,14 +78,11 @@ test('source view: backspace at start of paragraph after </details> does not del
 
 test('focused view: backspace at start of paragraph after </details> merges with last child inside details', async () => {
     // Reload the fixture fresh.
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, fixtureContent);
-    await page.waitForTimeout(300);
+    await loadContent(page, fixtureContent);
 
     // Make sure we're in focused view.
     await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.waitForTimeout(300);
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
     // Click on "And then this is the main doc again."
     const targetLine = page.locator('#editor .md-line', {

@@ -3,20 +3,13 @@
  * Types a heading, then deletes all characters, expecting an empty document.
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { _electron as electron, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { launchApp } from './test-utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const heading = '# main';
 
 test('typing "# main" then backspace 6 times results in empty document', async () => {
-    const electronApp = await electron.launch({
-        args: [path.join(__dirname, '..', '..', 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    const page = await electronApp.firstWindow();
+    const { electronApp, page } = await launchApp();
     await page.waitForSelector('#editor .md-line');
 
     const editor = page.locator('#editor');

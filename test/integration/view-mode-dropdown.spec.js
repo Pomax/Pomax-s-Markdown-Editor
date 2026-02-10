@@ -7,14 +7,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { _electron as electron } from '@playwright/test';
+import { defocusEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const projectRoot = path.join(__dirname, '..', '..');
 const readmePath = path.join(projectRoot, 'README.md');
 const readmeContent = fs.readFileSync(readmePath, 'utf-8');
 
@@ -25,19 +20,7 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    electronApp = await electron.launch({
-        args: [path.join(projectRoot, 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    page = await electronApp.firstWindow();
-
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await electronApp.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
-        }
-    });
+    ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
@@ -58,15 +41,12 @@ test('view mode toggle defaults to Focused Writing', async () => {
 
 test('clicking toggle switches editor to source mode', async () => {
     // Load content so we have a heading to test against.
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, readmeContent);
+    await loadContent(page, readmeContent);
 
     const toggle = page.locator('.toolbar-view-mode-toggle');
 
     // Click to switch to source mode.
     await toggle.click();
-    await page.waitForTimeout(200);
 
     await expect(toggle).toHaveText('Source View');
 
@@ -85,17 +65,14 @@ test('clicking toggle again switches editor back to focused mode', async () => {
 
     // Click to switch back to focused mode.
     await toggle.click();
-    await page.waitForTimeout(200);
 
     await expect(toggle).toHaveText('Focused Writing');
 
     const editor = page.locator('#editor');
     await expect(editor).toHaveAttribute('data-view-mode', 'focused');
 
-    // Click on the second line so the h1 is no longer focused.
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
-    await page.waitForTimeout(200);
+    // Defocus the editor so no node is focused.
+    await defocusEditor(page);
 
     // In focused mode, unfocused headings hide their `#` syntax.
     const firstLine = page.locator('#editor .md-line').first();
@@ -112,14 +89,14 @@ test('toggle stays in sync when view mode changes via menu', async () => {
 
     // Switch to source via the IPC (simulating a menu action).
     await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.waitForTimeout(200);
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
 
     // The toggle should reflect the new mode.
     await expect(toggle).toHaveText('Source View');
 
     // Switch back via IPC.
     await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.waitForTimeout(200);
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
     await expect(toggle).toHaveText('Focused Writing');
 });

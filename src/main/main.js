@@ -139,7 +139,9 @@ function createWindow() {
     const win = mainWindow;
 
     win.once('ready-to-show', () => {
-        win.show();
+        if (!process.env.TESTING) {
+            win.show();
+        }
     });
 
     // Persist window bounds on move/resize (debounced)

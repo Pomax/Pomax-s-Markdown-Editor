@@ -1062,9 +1062,19 @@ export class Editor {
         this.container.classList.add('focused');
     }
 
-    /** Handles blur events. */
+    /** Handles blur events — clears the active node highlight. */
     handleBlur() {
         this.container.classList.remove('focused');
+
+        // In focused view the active node shows raw markdown syntax.
+        // When the user clicks outside the editor we clear the tree
+        // cursor and re-render so every node shows its "unfocused"
+        // presentation.  Clicking back into the editor will restore
+        // the cursor via handleClick / handleSelectionChange.
+        if (this.viewMode === 'focused' && this.treeCursor) {
+            this.treeCursor = null;
+            this.render();
+        }
     }
 
     /** Handles selection change events. */
@@ -1114,6 +1124,7 @@ export class Editor {
         // then render.  Because the rewrite is async (IPC round-trip) we render
         // once immediately and a second time after paths have been rewritten.
         this.renderAndPlaceCursor();
+        this.container.focus();
         this.rewriteImagePaths().then(() => this.renderAndPlaceCursor());
     }
 

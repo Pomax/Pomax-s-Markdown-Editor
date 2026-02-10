@@ -8,14 +8,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { _electron as electron } from '@playwright/test';
+import { launchApp, loadContent, projectRoot } from './test-utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const projectRoot = path.join(__dirname, '..', '..');
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
 
@@ -26,25 +21,10 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    electronApp = await electron.launch({
-        args: [path.join(projectRoot, 'src', 'main', 'main.js')],
-        env: { ...process.env, TESTING: '1' },
-    });
-    page = await electronApp.firstWindow();
-
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await electronApp.evaluate(async ({ BrowserWindow }) => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (!win.isVisible()) {
-            await new Promise((resolve) => win.once('show', /** @type {any} */ (resolve)));
-        }
-    });
+    ({ electronApp, page } = await launchApp());
 
     // Load the details fixture content into the editor.
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, fixtureContent);
-    await page.waitForTimeout(300);
+    await loadContent(page, fixtureContent);
 });
 
 test.afterAll(async () => {
@@ -54,6 +34,7 @@ test.afterAll(async () => {
 test('typing a character on the summary line in source view inserts it without rewriting the line', async () => {
     // Step 1: click on the summary text in focused view to position the cursor.
     const summaryParagraph = page.locator('#editor .md-details-summary-content .md-paragraph');
+    await summaryParagraph.waitFor({ state: 'visible' });
     await summaryParagraph.click();
     await page.waitForTimeout(200);
 
@@ -63,7 +44,7 @@ test('typing a character on the summary line in source view inserts it without r
 
     // Step 3: switch to source view.
     await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.waitForTimeout(300);
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
 
     // The summary should be rendered as a single line in source view.
     // The bareText path renders it as a .md-paragraph (not .md-html-block)
