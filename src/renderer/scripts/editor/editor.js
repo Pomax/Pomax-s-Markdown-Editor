@@ -1106,12 +1106,17 @@ export class Editor {
 
             // In focused view the active node shows raw markdown syntax, so we
             // must re-render whenever the cursor moves to a different node.
+            // Only the two affected nodes need updating — a full rebuild
+            // would be noticeably slow on large documents.
             const newNodeId = this.treeCursor?.nodeId ?? null;
             if (this.viewMode === 'focused' && newNodeId && newNodeId !== previousNodeId) {
-                console.log(
-                    `[selectionchange] node changed: ${previousNodeId} -> ${newNodeId}, re-rendering`,
-                );
-                this.renderAndPlaceCursor();
+                this._isRendering = true;
+                try {
+                    this.focusedRenderer.updateFocus(this.container, previousNodeId, newNodeId);
+                } finally {
+                    this._isRendering = false;
+                }
+                this.placeCursor();
             }
         }
     }
