@@ -110,6 +110,51 @@ export class FocusedRenderer {
     }
 
     /**
+     * Re-renders only the previously focused node and the newly focused
+     * node, swapping them in-place in the DOM.  This avoids a full
+     * teardown/rebuild of the entire document when the user simply
+     * clicks on a different element.
+     *
+     * @param {HTMLElement} container - The editor container
+     * @param {string|null} previousNodeId - The node that was focused before
+     * @param {string} newNodeId - The node that is now focused
+     */
+    updateFocus(container, previousNodeId, newNodeId) {
+        const tree = this.editor.syntaxTree;
+        if (!tree) return;
+
+        // Defocus the previously-focused node (re-render without focus).
+        if (previousNodeId) {
+            this._replaceNodeElement(container, tree, previousNodeId, false);
+        }
+
+        // Focus the newly-focused node (re-render with focus).
+        this._replaceNodeElement(container, tree, newNodeId, true);
+    }
+
+    /**
+     * Finds a node by id in the syntax tree, renders it, and replaces
+     * the corresponding DOM element in the container.
+     *
+     * @param {HTMLElement} container
+     * @param {import('../../parser/syntax-tree.js').SyntaxTree} tree
+     * @param {string} nodeId
+     * @param {boolean} isFocused
+     */
+    _replaceNodeElement(container, tree, nodeId, isFocused) {
+        const node = tree.findNodeById(nodeId);
+        if (!node) return;
+
+        const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
+        if (!existing) return;
+
+        const updated = this.renderNode(node, isFocused);
+        if (updated) {
+            existing.replaceWith(updated);
+        }
+    }
+
+    /**
      * Renders a syntax tree node to an HTML element.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node - The node to render
      * @param {boolean} isFocused - Whether this node has focus

@@ -1,5 +1,19 @@
 # Release Log
 
+## v1.2.0
+
+### New Features
+
+- **Iframe support**: `<iframe>` elements in markdown documents now render correctly in focused view. The Content Security Policy has been updated to allow frames from any HTTP/HTTPS origin.
+- **External script support**: `<script>` tags with a `src` attribute are now recognised as HTML block elements and are allowed by the Content Security Policy. This enables custom HTML elements and external libraries inside markdown documents. Inline scripts (without `src`) remain blocked.
+- **Remote image support**: The Content Security Policy now explicitly allows images from `file:`, `data:`, `https:`, and `http:` sources, so remote images render correctly.
+
+### Performance
+
+- **Targeted focus updates**: Switching focus between elements in focused view no longer rebuilds the entire DOM. Only the previously focused and newly focused nodes are re-rendered in-place, making focus changes O(1) regardless of document size.
+
+---
+
 ## v1.1.0
 
 ### New Features

@@ -16,6 +16,11 @@ this **before** doing any work.
 - **Never** use `2>&1` in terminal commands.
 - The project root is the workspace folder (the one containing `package.json`).
 
+## Doing work
+
+- **Always** create a new git branch off of `main` for any new work
+- **Never** start modifying files without asking whether what you thought up makes sense or whether assumptions made during the reasoning step missed anything.
+
 ## Test Runners
 
 | Kind        | Command                  | Framework                     |

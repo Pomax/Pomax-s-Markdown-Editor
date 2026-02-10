@@ -61,6 +61,7 @@ const HTML_BLOCK_TAGS = new Set([
     'p',
     'param',
     'search',
+    'script',
     'section',
     'source',
     'summary',
