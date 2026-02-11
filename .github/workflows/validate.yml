@@ -6,7 +6,14 @@ on:
       - main
 
 jobs:
+  check-label:
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-ci')"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CI not skipped"
+
   test-windows:
+    needs: check-label
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +24,7 @@ jobs:
       - run: npm ci && npx playwright install firefox --with-deps && npm test
 
   test-macos:
+    needs: check-label
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +35,7 @@ jobs:
       - run: npm ci && npx playwright install firefox --with-deps && npm test
 
   test-linux:
+    needs: check-label
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
