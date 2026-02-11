@@ -1,0 +1,171 @@
+/**
+ * @fileoverview Unit tests for the inline tokenizer.
+ */
+
+// @ts-nocheck — test assertions access optional properties without guards
+
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import {
+    buildInlineTree,
+    tokenizeInline,
+} from '../../../src/renderer/scripts/parser/inline-tokenizer.js';
+
+// ── tokenizeInline ──────────────────────────────────────────────────
+
+describe('tokenizeInline', () => {
+    it('returns plain text for a string with no markup', () => {
+        const tokens = tokenizeInline('hello world');
+        assert.deepStrictEqual(tokens, [{ type: 'text', raw: 'hello world' }]);
+    });
+
+    it('tokenizes **bold** markers', () => {
+        const tokens = tokenizeInline('a **b** c');
+        assert.equal(tokens.length, 5);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[1].type, 'bold-open');
+        assert.equal(tokens[2].type, 'text');
+        assert.equal(tokens[3].type, 'bold-close');
+        assert.equal(tokens[4].type, 'text');
+    });
+
+    it('tokenizes *italic* markers', () => {
+        const tokens = tokenizeInline('a *b* c');
+        assert.equal(tokens[1].type, 'italic-open');
+        assert.equal(tokens[3].type, 'italic-close');
+    });
+
+    it('tokenizes ~~strikethrough~~ markers', () => {
+        const tokens = tokenizeInline('a ~~b~~ c');
+        assert.equal(tokens[1].type, 'strikethrough-open');
+        assert.equal(tokens[3].type, 'strikethrough-close');
+    });
+
+    it('tokenizes `code` spans', () => {
+        const tokens = tokenizeInline('a `code` b');
+        assert.equal(tokens.length, 3);
+        assert.equal(tokens[1].type, 'code');
+        assert.equal(tokens[1].content, 'code');
+    });
+
+    it('tokenizes [link](url) syntax', () => {
+        const tokens = tokenizeInline('click [here](https://x.com) now');
+        const linkOpen = tokens.find((t) => t.type === 'link-open');
+        const linkClose = tokens.find((t) => t.type === 'link-close');
+        assert.ok(linkOpen);
+        assert.ok(linkClose);
+        assert.equal(linkClose.href, 'https://x.com');
+    });
+
+    it('tokenizes <sub> and </sub> HTML tags', () => {
+        const tokens = tokenizeInline('H<sub>2</sub>O');
+        assert.equal(tokens.length, 5);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[0].raw, 'H');
+        assert.equal(tokens[1].type, 'html-open');
+        assert.equal(tokens[1].tag, 'sub');
+        assert.equal(tokens[2].type, 'text');
+        assert.equal(tokens[2].raw, '2');
+        assert.equal(tokens[3].type, 'html-close');
+        assert.equal(tokens[3].tag, 'sub');
+        assert.equal(tokens[4].type, 'text');
+        assert.equal(tokens[4].raw, 'O');
+    });
+
+    it('tokenizes <strong> and <em> HTML tags', () => {
+        const tokens = tokenizeInline('<strong>bold</strong> and <em>italic</em>');
+        const opens = tokens.filter((t) => t.type === 'html-open');
+        const closes = tokens.filter((t) => t.type === 'html-close');
+        assert.equal(opens.length, 2);
+        assert.equal(closes.length, 2);
+        assert.equal(opens[0].tag, 'strong');
+        assert.equal(opens[1].tag, 'em');
+    });
+
+    it('ignores unknown HTML tags', () => {
+        const tokens = tokenizeInline('a <span>b</span> c');
+        // <span> is not in INLINE_HTML_TAGS, so it should be plain text
+        assert.equal(tokens.length, 1);
+        assert.equal(tokens[0].type, 'text');
+    });
+});
+
+// ── buildInlineTree ─────────────────────────────────────────────────
+
+describe('buildInlineTree', () => {
+    it('builds a tree from bold tokens', () => {
+        const tokens = tokenizeInline('a **b** c');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 3);
+        assert.equal(tree[0].type, 'text');
+        assert.equal(tree[1].type, 'bold');
+        assert.equal(tree[1].children.length, 1);
+        assert.equal(tree[1].children[0].text, 'b');
+        assert.equal(tree[2].type, 'text');
+    });
+
+    it('builds a tree from HTML inline tags', () => {
+        const tokens = tokenizeInline('H<sub>2</sub>O');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 3);
+        assert.equal(tree[0].type, 'text');
+        assert.equal(tree[0].text, 'H');
+        assert.equal(tree[1].type, 'sub');
+        assert.equal(tree[1].tag, 'sub');
+        assert.equal(tree[1].children.length, 1);
+        assert.equal(tree[1].children[0].text, '2');
+        assert.equal(tree[2].type, 'text');
+        assert.equal(tree[2].text, 'O');
+    });
+
+    it('handles nested markdown inside HTML tags', () => {
+        const tokens = tokenizeInline('<strong>**nested** text</strong>');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 1);
+        assert.equal(tree[0].type, 'strong');
+        assert.equal(tree[0].children.length, 2);
+        assert.equal(tree[0].children[0].type, 'bold');
+        assert.equal(tree[0].children[1].type, 'text');
+    });
+
+    it('handles mixed markdown and HTML', () => {
+        const tokens = tokenizeInline('**bold** and <sub>subscript</sub>');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 3);
+        assert.equal(tree[0].type, 'bold');
+        assert.equal(tree[1].type, 'text');
+        assert.equal(tree[2].type, 'sub');
+    });
+
+    it('treats unmatched open as plain text', () => {
+        const tokens = tokenizeInline('a **b c');
+        const tree = buildInlineTree(tokens);
+        // ** is unmatched, so it becomes text
+        assert.ok(tree.every((s) => s.type === 'text'));
+    });
+
+    it('treats unmatched close tag as plain text', () => {
+        const tokens = tokenizeInline('text</sub>more');
+        const tree = buildInlineTree(tokens);
+        assert.ok(tree.every((s) => s.type === 'text'));
+    });
+
+    it('builds a link with children', () => {
+        const tokens = tokenizeInline('[click **here**](https://x.com)');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 1);
+        assert.equal(tree[0].type, 'link');
+        assert.equal(tree[0].href, 'https://x.com');
+        assert.equal(tree[0].children.length, 2);
+        assert.equal(tree[0].children[0].type, 'text');
+        assert.equal(tree[0].children[1].type, 'bold');
+    });
+
+    it('handles code spans (no nesting)', () => {
+        const tokens = tokenizeInline('use `<sub>` for subscript');
+        const tree = buildInlineTree(tokens);
+        const codeNode = tree.find((s) => s.type === 'code');
+        assert.ok(codeNode);
+        assert.equal(codeNode.content, '<sub>');
+    });
+});

@@ -34,6 +34,10 @@ this **before** doing any work.
   being asked.
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
+- When a task needs to be split into parts, **always** write integration tests before moving from one part to the next.
+- Integration tests take a long time to finish: always run the command with an `&& echo "FINISHED"` and wait for that to show up on the terminal.
+- **Never** interrupt the tests by trying to run another command
+- **Never** issue a ctrl-C, ask the user what to do, instead.
 
 ## Playwright Pitfalls
 
