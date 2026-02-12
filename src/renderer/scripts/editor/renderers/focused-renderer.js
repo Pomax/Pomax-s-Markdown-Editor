@@ -702,12 +702,6 @@ export class FocusedRenderer {
             return;
         }
 
-        if (isFocused) {
-            // Show raw syntax when focused
-            container.appendChild(document.createTextNode(content));
-            return;
-        }
-
         // Parse and recursively render formatted inline elements.
         this.renderInlineParts(content, container);
     }

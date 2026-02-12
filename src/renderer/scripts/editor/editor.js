@@ -16,6 +16,181 @@ import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { UndoManager } from './undo-manager.js';
 
+// ── Inline formatting regex ─────────────────────────────────────────
+// This MUST match the regex used by FocusedRenderer.renderInlineParts()
+// so that offset mapping is consistent with the rendered DOM.
+const INLINE_RE =
+    /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+
+/**
+ * Given a raw markdown string and an offset into that raw string,
+ * returns the corresponding offset in the rendered (visible) text —
+ * i.e. the text the user sees after inline formatting markers have been
+ * hidden by renderInlineParts.
+ *
+ * @param {string} content     - Raw markdown content of the node
+ * @param {number} rawOffset   - Offset in the raw content
+ * @returns {number}
+ */
+function rawOffsetToRenderedOffset(content, rawOffset) {
+    if (!content || rawOffset <= 0) return 0;
+
+    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    let rawPos = 0;
+    let renderedPos = 0;
+
+    for (const match of content.matchAll(re)) {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+
+        // Plain text before this match
+        const plainLen = matchStart - rawPos;
+        if (rawOffset <= rawPos + plainLen) {
+            // Target falls in the plain-text gap before this match
+            return renderedPos + (rawOffset - rawPos);
+        }
+        renderedPos += plainLen;
+        rawPos = matchStart;
+
+        // Determine the inner content and its delimiters
+        const innerContent = match[1] ?? match[3] ?? match[4] ?? match[5] ??
+            match[6] ?? match[7] ?? match[8] ?? '';
+
+        if (match[1] !== undefined) {
+            // Link: [text](href) — rendered text is just "text"
+            const openLen = 1;  // [
+            const innerLen = match[1].length;
+            const closingLen = 2 + match[2].length + 1; // ](href)
+
+            if (rawOffset <= rawPos + openLen) {
+                // Inside the opening [
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + openLen + innerLen) {
+                // Inside the link text — recurse for nested formatting
+                const innerRaw = rawOffset - rawPos - openLen;
+                return renderedPos + rawOffsetToRenderedOffset(match[1], innerRaw);
+            }
+            // Inside or after ](href)
+            const innerRendered = rawOffsetToRenderedOffset(match[1], innerLen);
+            if (rawOffset < matchEnd) {
+                return renderedPos + innerRendered;
+            }
+            renderedPos += innerRendered;
+        } else if (match[8] !== undefined) {
+            // Inline code: `text` — delimiters are single backticks
+            const delimLen = 1;
+
+            if (rawOffset <= rawPos + delimLen) {
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + delimLen + match[8].length) {
+                return renderedPos + (rawOffset - rawPos - delimLen);
+            }
+            if (rawOffset < matchEnd) {
+                return renderedPos + match[8].length;
+            }
+            renderedPos += match[8].length;
+        } else {
+            // Bold (**), italic (*/_), emphasis (__), strikethrough (~~)
+            const raw = match[0];
+            const delimLen = (raw.length - innerContent.length) / 2;
+
+            if (rawOffset <= rawPos + delimLen) {
+                // Inside the opening delimiter
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + delimLen + innerContent.length) {
+                // Inside the inner content — recurse for nested formatting
+                const innerRaw = rawOffset - rawPos - delimLen;
+                return renderedPos + rawOffsetToRenderedOffset(innerContent, innerRaw);
+            }
+            if (rawOffset < matchEnd) {
+                // Inside the closing delimiter
+                const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+                return renderedPos + innerRendered;
+            }
+            const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+            renderedPos += innerRendered;
+        }
+
+        rawPos = matchEnd;
+    }
+
+    // Trailing plain text
+    return renderedPos + (rawOffset - rawPos);
+}
+
+/**
+ * Given a raw markdown string and an offset in the rendered (visible)
+ * text, returns the corresponding offset in the raw string.
+ *
+ * @param {string} content          - Raw markdown content of the node
+ * @param {number} renderedOffset   - Offset in the rendered text
+ * @returns {number}
+ */
+function renderedOffsetToRawOffset(content, renderedOffset) {
+    if (!content || renderedOffset <= 0) return 0;
+
+    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    let rawPos = 0;
+    let renderedPos = 0;
+
+    for (const match of content.matchAll(re)) {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+
+        // Plain text before this match
+        const plainLen = matchStart - rawPos;
+        if (renderedOffset <= renderedPos + plainLen) {
+            return rawPos + (renderedOffset - renderedPos);
+        }
+        renderedPos += plainLen;
+        rawPos = matchStart;
+
+        // Determine the inner content
+        if (match[1] !== undefined) {
+            // Link: [text](href)
+            const openLen = 1;
+            const innerLen = match[1].length;
+            const innerRenderedLen = rawOffsetToRenderedOffset(match[1], innerLen);
+
+            if (renderedOffset < renderedPos + innerRenderedLen) {
+                const innerRendered = renderedOffset - renderedPos;
+                return rawPos + openLen + renderedOffsetToRawOffset(match[1], innerRendered);
+            }
+            renderedPos += innerRenderedLen;
+        } else if (match[8] !== undefined) {
+            // Inline code: `text`
+            const delimLen = 1;
+            const innerLen = match[8].length;
+
+            if (renderedOffset < renderedPos + innerLen) {
+                return rawPos + delimLen + (renderedOffset - renderedPos);
+            }
+            renderedPos += innerLen;
+        } else {
+            // Bold/italic/emphasis/strikethrough
+            const innerContent = match[3] ?? match[4] ?? match[5] ??
+                match[6] ?? match[7] ?? '';
+            const raw = match[0];
+            const delimLen = (raw.length - innerContent.length) / 2;
+            const innerRenderedLen = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+
+            if (renderedOffset < renderedPos + innerRenderedLen) {
+                const innerRendered = renderedOffset - renderedPos;
+                return rawPos + delimLen + renderedOffsetToRawOffset(innerContent, innerRendered);
+            }
+            renderedPos += innerRenderedLen;
+        }
+
+        rawPos = matchEnd;
+    }
+
+    // Trailing plain text
+    return rawPos + (renderedOffset - renderedPos);
+}
+
 /**
  * @typedef {'source' | 'focused'} ViewMode
  */
@@ -248,7 +423,8 @@ export class Editor {
 
         while (node) {
             if (node === cursorNode) {
-                return offset + cursorOffset;
+                const renderedOff = offset + cursorOffset;
+                return this._toRawOffset(nodeElement, renderedOff);
             }
             offset += node.textContent?.length ?? 0;
             node = walker.nextNode();
@@ -256,7 +432,24 @@ export class Editor {
 
         // cursorNode was not a text node inside the content element (e.g. the
         // cursor is on the element itself).  Clamp to content length.
-        return Math.min(cursorOffset, offset);
+        const renderedOff = Math.min(cursorOffset, offset);
+        return this._toRawOffset(nodeElement, renderedOff);
+    }
+
+    /**
+     * Converts a rendered (DOM) offset back to a raw (markdown) offset.
+     * In source mode the offset is returned as-is.
+     * @param {HTMLElement} nodeElement - The element with `data-node-id`
+     * @param {number} renderedOffset - The offset in rendered text
+     * @returns {number}
+     */
+    _toRawOffset(nodeElement, renderedOffset) {
+        if (this.viewMode !== 'focused') return renderedOffset;
+        const nodeId = nodeElement.dataset?.nodeId;
+        if (!nodeId) return renderedOffset;
+        const syntaxNode = this.syntaxTree?.findNodeById(nodeId);
+        if (!syntaxNode) return renderedOffset;
+        return renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
     }
 
     // ──────────────────────────────────────────────
@@ -312,8 +505,18 @@ export class Editor {
 
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
 
+        // In focused mode the DOM shows rendered text (no markdown syntax),
+        // so we must convert the raw tree offset to a rendered offset.
+        let cursorOffset = this.treeCursor.offset;
+        if (this.viewMode === 'focused') {
+            const node = this.getCurrentNode();
+            if (node) {
+                cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
+            }
+        }
+
         const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
-        let remaining = this.treeCursor.offset;
+        let remaining = cursorOffset;
         let textNode = walker.nextNode();
         let placed = false;
 
