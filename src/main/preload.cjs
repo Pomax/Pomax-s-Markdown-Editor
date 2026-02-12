@@ -92,6 +92,15 @@ const electronAPI = {
     setFocusedView: () => ipcRenderer.invoke('view:focused'),
 
     /**
+     * Notifies the main process that the editor's selection state changed,
+     * so the Edit menu can enable/disable Copy and Cut.
+     * @param {boolean} hasSelection
+     * @returns {Promise<{success: boolean}>}
+     */
+    notifySelectionChanged: (hasSelection) =>
+      ipcRenderer.invoke('editor:selectionChanged', hasSelection),
+
+    /**
      * Sends the current list of open files to the main process so the
      * View menu can be rebuilt.
      * @param {Array<{id: string, filePath: string|null, active: boolean}>} files

@@ -7,7 +7,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { launchApp, loadContent, projectRoot } from './test-utils.js';
+
+const fixtureContent = fs
+  .readFileSync(path.join(projectRoot, 'test', 'fixtures', 'copy-cut.md'), 'utf-8')
+  .trimEnd();
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -55,7 +61,7 @@ test.describe('Cut Functionality', () => {
   });
 
   test('should cut across multiple nodes and merge remainders', async () => {
-    await loadContent(page, '# heading\n\nparagraph text');
+    await loadContent(page, fixtureContent);
 
     const editor = page.locator('#editor');
     await editor.click();
@@ -68,7 +74,7 @@ test.describe('Cut Functionality', () => {
 
     // Clipboard should contain the full markdown
     const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardContent).toBe('# heading\n\nparagraph text');
+    expect(clipboardContent).toBe(fixtureContent);
 
     // Document should be empty (just an empty paragraph remains)
     const markdown = await page.evaluate(() => window.editorAPI?.getContent());

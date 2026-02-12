@@ -159,14 +159,22 @@ export class MenuBuilder {
         },
         { type: 'separator' },
         {
+          id: 'edit-cut',
           label: 'Cut',
           accelerator: 'CmdOrCtrl+X',
-          role: 'cut',
+          enabled: this._hasSelection ?? false,
+          click: () => {
+            if (this.window) this.window.webContents.cut();
+          },
         },
         {
+          id: 'edit-copy',
           label: 'Copy',
           accelerator: 'CmdOrCtrl+C',
-          role: 'copy',
+          enabled: this._hasSelection ?? false,
+          click: () => {
+            if (this.window) this.window.webContents.copy();
+          },
         },
         {
           label: 'Paste',
@@ -311,6 +319,21 @@ export class MenuBuilder {
   refreshMenu() {
     const menu = this.buildMenu();
     Menu.setApplicationMenu(menu);
+  }
+
+  /**
+   * Updates the enabled state of the Copy and Cut menu items based on
+   * whether there is currently a text selection in the editor.
+   * @param {boolean} hasSelection
+   */
+  updateSelectionState(hasSelection) {
+    this._hasSelection = hasSelection;
+    const menu = Menu.getApplicationMenu();
+    if (!menu) return;
+    const copy = menu.getMenuItemById('edit-copy');
+    const cut = menu.getMenuItemById('edit-cut');
+    if (copy) copy.enabled = hasSelection;
+    if (cut) cut.enabled = hasSelection;
   }
 
   /**

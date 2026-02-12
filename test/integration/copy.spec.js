@@ -8,7 +8,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { launchApp, loadContent, projectRoot } from './test-utils.js';
+
+const fixtureContent = fs
+  .readFileSync(path.join(projectRoot, 'test', 'fixtures', 'copy-cut.md'), 'utf-8')
+  .trimEnd();
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -48,7 +54,7 @@ test.describe('Copy Functionality', () => {
   });
 
   test('should copy across multiple nodes', async () => {
-    await loadContent(page, '# heading\n\nparagraph text');
+    await loadContent(page, fixtureContent);
 
     const editor = page.locator('#editor');
     await editor.click();
@@ -60,7 +66,7 @@ test.describe('Copy Functionality', () => {
     await page.keyboard.press('Control+c');
 
     const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardContent).toBe('# heading\n\nparagraph text');
+    expect(clipboardContent).toBe(fixtureContent);
   });
 
   test('should copy list items with proper markdown', async () => {
@@ -111,5 +117,29 @@ test.describe('Copy Functionality', () => {
     await page.keyboard.type('Test');
     const content = await editor.innerText();
     expect(content).toContain('Test');
+  });
+
+  test('should close unclosed inline HTML tags when selection ends mid-tag', async () => {
+    await loadContent(page, fixtureContent);
+
+    // Click the third paragraph to make it active (raw text visible)
+    const thirdParagraph = page.locator('#editor .md-line').nth(2);
+    await thirdParagraph.click();
+    await page.waitForTimeout(200);
+
+    // Now the active node shows: and <strong>inline</strong> html
+    // Select from after "a" (offset 1) through "nd <strong>in" (13 chars)
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.down('Shift');
+    for (let i = 0; i < 13; i++) {
+      await page.keyboard.press('ArrowRight');
+    }
+    await page.keyboard.up('Shift');
+
+    await page.keyboard.press('Control+c');
+
+    const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardContent).toBe('nd <strong>in</strong>');
   });
 });

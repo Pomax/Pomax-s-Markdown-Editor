@@ -41,6 +41,7 @@ interface ElectronAPI {
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
+    notifySelectionChanged(hasSelection: boolean): Promise<{ success: boolean }>;
     notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
 }
 

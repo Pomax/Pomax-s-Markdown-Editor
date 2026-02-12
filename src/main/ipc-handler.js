@@ -158,6 +158,13 @@ export class IPCHandler {
       return { success: true };
     });
 
+    ipcMain.handle('editor:selectionChanged', async (_event, hasSelection) => {
+      if (this.menuBuilder) {
+        this.menuBuilder.updateSelectionState(!!hasSelection);
+      }
+      return { success: true };
+    });
+
     ipcMain.handle('view:openFilesChanged', async (_event, files) => {
       if (this.menuBuilder) {
         this.menuBuilder.openFiles = files ?? [];

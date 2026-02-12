@@ -86,6 +86,53 @@ function renderedOffsetToRawOffset(content, renderedOffset) {
 }
 
 /**
+ * Appends closing syntax for any inline HTML tags or markdown formatting
+ * markers that were opened but not closed in a content substring.
+ *
+ * This is needed when slicing raw node content for a selection range
+ * that ends inside a formatted span — e.g. `<strong>in` becomes
+ * `<strong>in</strong>`, or `**bol` becomes `**bol**`.
+ *
+ * @param {string} sliced - The raw content substring
+ * @returns {string} The content with closing tags/markers appended
+ */
+function closeUnclosedInlineMarkup(sliced) {
+  const tokens = tokenizeInline(sliced);
+  /** @type {string[]} */
+  const openStack = [];
+
+  for (const token of tokens) {
+    if (token.type === 'html-open') {
+      openStack.push(`</${token.tag}>`);
+    } else if (token.type === 'html-close') {
+      const closer = `</${token.tag}>`;
+      for (let i = openStack.length - 1; i >= 0; i--) {
+        if (openStack[i] === closer) {
+          openStack.splice(i, 1);
+          break;
+        }
+      }
+    } else if (token.type.endsWith('-open') && token.type !== 'link-open') {
+      openStack.push(token.raw);
+    } else if (token.type.endsWith('-close') && token.type !== 'link-close') {
+      for (let i = openStack.length - 1; i >= 0; i--) {
+        if (openStack[i] === token.raw) {
+          openStack.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+
+  // Close in reverse order (innermost first)
+  let result = sliced;
+  for (let i = openStack.length - 1; i >= 0; i--) {
+    result += openStack[i];
+  }
+  return result;
+}
+
+/**
  * @typedef {'source' | 'focused'} ViewMode
  */
 
@@ -152,6 +199,12 @@ export class Editor {
      * @type {boolean}
      */
     this._isRendering = false;
+
+    /**
+     * Last selection state sent to the main process (avoids redundant IPC).
+     * @type {boolean}
+     */
+    this._lastNotifiedHasSelection = false;
   }
 
   /**
@@ -1174,6 +1227,15 @@ export class Editor {
       this.syncCursorFromDOM();
       this.selectionManager.updateFromDOM();
 
+      // Notify the main process so the Edit menu can enable / disable
+      // the Copy and Cut items.
+      const selection = window.getSelection();
+      const hasSelection = !!selection && !selection.isCollapsed;
+      if (hasSelection !== this._lastNotifiedHasSelection) {
+        this._lastNotifiedHasSelection = hasSelection;
+        window.electronAPI?.notifySelectionChanged(hasSelection);
+      }
+
       // In focused view the active node shows raw markdown syntax, so we
       // must re-render whenever the cursor moves to a different node.
       // Only the two affected nodes need updating — a full rebuild
@@ -1374,7 +1436,7 @@ export class Editor {
     if (startIdx === endIdx) {
       // Selection within a single node
       const node = allNodes[startIdx];
-      const sliced = node.content.substring(startOffset, endOffset);
+      const sliced = closeUnclosedInlineMarkup(node.content.substring(startOffset, endOffset));
       return this.buildMarkdownLine(node.type, sliced, node.attributes);
     }
 
@@ -1388,7 +1450,7 @@ export class Editor {
       if (i === startIdx) {
         content = node.content.substring(startOffset);
       } else if (i === endIdx) {
-        content = node.content.substring(0, endOffset);
+        content = closeUnclosedInlineMarkup(node.content.substring(0, endOffset));
       } else {
         content = node.content;
       }
