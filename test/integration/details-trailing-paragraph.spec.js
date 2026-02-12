@@ -10,6 +10,10 @@
 import { expect, test } from '@playwright/test';
 import { launchApp, loadContent } from './test-utils.js';
 
+const isMac = process.platform === 'darwin';
+const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
+const End = isMac ? 'Meta+ArrowRight' : 'End';
+
 /** A tiny document that ends with </details>. */
 const markdownEndingInDetails =
     '# Title\n\n<details>\n\n<summary>Summary</summary>\n\nbody\n\n</details>';
@@ -60,8 +64,8 @@ test('deleting all content after </details> re-creates the trailing paragraph', 
     await page.waitForTimeout(200);
 
     // Select all text in the line and delete it.
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Shift+End');
+    await page.keyboard.press(Home);
+    await page.keyboard.press(`Shift+${End}`);
     await page.keyboard.press('Backspace');
     await page.waitForTimeout(200);
 

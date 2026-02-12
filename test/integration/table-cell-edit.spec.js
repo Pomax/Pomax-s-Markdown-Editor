@@ -9,6 +9,10 @@
 import { expect, test } from '@playwright/test';
 import { launchApp, loadContent } from './test-utils.js';
 
+const isMac = process.platform === 'darwin';
+const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
+const End = isMac ? 'Meta+ArrowRight' : 'End';
+
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
 
@@ -48,7 +52,7 @@ test.describe('Table cell editing', () => {
         await firstCell.click();
 
         // Move to the end of the cell text and delete one character
-        await page.keyboard.press('End');
+        await page.keyboard.press(End);
         await page.keyboard.press('Backspace');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
@@ -62,7 +66,7 @@ test.describe('Table cell editing', () => {
         await firstCell.click();
 
         // Move to home and delete one character forward
-        await page.keyboard.press('Home');
+        await page.keyboard.press(Home);
         await page.keyboard.press('Delete');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
@@ -79,7 +83,7 @@ test.describe('Table cell editing', () => {
         await page.keyboard.press('Enter');
 
         // Type to verify we're now in the "Alice" cell
-        await page.keyboard.press('Home');
+        await page.keyboard.press(Home);
         await page.keyboard.type('X');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
@@ -95,7 +99,7 @@ test.describe('Table cell editing', () => {
         await page.keyboard.press('Tab');
 
         // Type to verify we're in the "Age" cell
-        await page.keyboard.press('Home');
+        await page.keyboard.press(Home);
         await page.keyboard.type('X');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
@@ -111,7 +115,7 @@ test.describe('Table cell editing', () => {
         await page.keyboard.press('Tab');
 
         // Type to verify we're in the "Alice" cell
-        await page.keyboard.press('Home');
+        await page.keyboard.press(Home);
         await page.keyboard.type('X');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
@@ -127,7 +131,7 @@ test.describe('Table cell editing', () => {
         await page.keyboard.press('Shift+Tab');
 
         // Type to verify we're in the "Name" cell
-        await page.keyboard.press('Home');
+        await page.keyboard.press(Home);
         await page.keyboard.type('X');
 
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');

@@ -19,6 +19,9 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { launchApp, loadContent, projectRoot } from './test-utils.js';
 
+const isMac = process.platform === 'darwin';
+const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
+
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
 
@@ -55,7 +58,7 @@ test('source view: backspace at start of paragraph after </details> does not del
     await page.waitForTimeout(100);
 
     // Move cursor to the very start of the line.
-    await page.keyboard.press('Home');
+    await page.keyboard.press(Home);
     await page.waitForTimeout(100);
 
     // Press Backspace.
@@ -92,7 +95,7 @@ test('focused view: backspace at start of paragraph after </details> merges with
     await page.waitForTimeout(100);
 
     // Move cursor to the very start.
-    await page.keyboard.press('Home');
+    await page.keyboard.press(Home);
     await page.waitForTimeout(100);
 
     // Press Backspace — should merge into the "better" paragraph.
