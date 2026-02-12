@@ -10,7 +10,7 @@ export default defineConfig({
     testMatch: '**/*.spec.js',
     timeout: 30000,
     retries: 0,
-    workers: 8,
+    workers: 4,
     reporter: 'list',
     projects: [
         {
