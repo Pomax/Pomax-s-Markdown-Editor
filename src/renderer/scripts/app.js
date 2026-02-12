@@ -28,624 +28,624 @@ import { Toolbar } from './toolbar/toolbar.js';
  * Coordinates all editor components.
  */
 class App {
-    constructor() {
-        /** @type {Editor|null} */
-        this.editor = null;
+  constructor() {
+    /** @type {Editor|null} */
+    this.editor = null;
 
-        /** @type {Toolbar|null} */
-        this.toolbar = null;
+    /** @type {Toolbar|null} */
+    this.toolbar = null;
 
-        /** @type {MenuHandler|null} */
-        this.menuHandler = null;
+    /** @type {MenuHandler|null} */
+    this.menuHandler = null;
 
-        /** @type {KeyboardHandler|null} */
-        this.keyboardHandler = null;
+    /** @type {KeyboardHandler|null} */
+    this.keyboardHandler = null;
 
-        /** @type {TableOfContents|null} */
-        this.toc = null;
+    /** @type {TableOfContents|null} */
+    this.toc = null;
 
-        /** @type {TabBar|null} */
-        this.tabBar = null;
-
-        /**
-         * Per-tab document state storage.
-         * @type {Map<string, DocumentState>}
-         */
-        this._documentStates = new Map();
-
-        /** @type {number} Counter for generating unique tab IDs */
-        this._tabCounter = 0;
-    }
+    /** @type {TabBar|null} */
+    this.tabBar = null;
 
     /**
-     * Initializes the application.
+     * Per-tab document state storage.
+     * @type {Map<string, DocumentState>}
      */
-    async initialize() {
-        // Get container elements
-        const editorContainer = document.getElementById('editor');
-        const toolbarContainer = document.getElementById('toolbar-container');
-        const tocContainer = document.getElementById('toc-sidebar');
+    this._documentStates = new Map();
 
-        if (!editorContainer || !toolbarContainer) {
-            console.error('Required container elements not found');
-            return;
-        }
+    /** @type {number} Counter for generating unique tab IDs */
+    this._tabCounter = 0;
+  }
 
-        // Initialize editor
-        this.editor = new Editor(editorContainer);
-        await this.editor.initialize();
+  /**
+   * Initializes the application.
+   */
+  async initialize() {
+    // Get container elements
+    const editorContainer = document.getElementById('editor');
+    const toolbarContainer = document.getElementById('toolbar-container');
+    const tocContainer = document.getElementById('toc-sidebar');
 
-        // Initialize toolbar
-        this.toolbar = new Toolbar(toolbarContainer, this.editor);
-        this.toolbar.initialize();
-
-        // Initialize handlers
-        this.menuHandler = new MenuHandler(this.editor, this.toolbar);
-        this.menuHandler.initialize();
-
-        this.keyboardHandler = new KeyboardHandler(this.editor);
-        this.keyboardHandler.initialize();
-
-        // Initialize Table of Contents sidebar
-        if (tocContainer) {
-            this.toc = new TableOfContents(tocContainer, this.editor);
-            this.toc.initialize();
-        }
-
-        // Initialize tab bar
-        const tabBarContainer = document.getElementById('tab-bar');
-        if (tabBarContainer) {
-            this.tabBar = new TabBar(tabBarContainer);
-            this.tabBar.initialize();
-
-            const firstTabId = this._nextTabId();
-            this.tabBar.addTab(firstTabId, null, true);
-
-            this.tabBar.onTabSelect = (tabId) => this._switchToTab(tabId);
-            this.tabBar.onTabClose = (tabId) => this._closeTab(tabId);
-        }
-
-        // Keep tab bar in sync with editor file state
-        document.addEventListener('editor:fileStateChanged', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.tabBar?.activeTabId && detail) {
-                this.tabBar.updateTabPath(this.tabBar.activeTabId, detail.filePath);
-                this.tabBar.setModified(this.tabBar.activeTabId, detail.modified);
-                this._notifyOpenFiles();
-            }
-        });
-
-        // Handle file switching from the View menu
-        document.addEventListener('view:switchFile', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (detail?.tabId) {
-                this._switchToTab(detail.tabId);
-            }
-        });
-
-        // Handle File → New: create a new tab with an empty document
-        document.addEventListener('file:new', () => {
-            this._createNewTab(null, '');
-        });
-
-        // Handle File → Load / Open Recent: open in a new tab (or switch
-        // to an existing tab if the file is already open)
-        document.addEventListener('file:loaded', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (!detail) return;
-            const filePath = detail.filePath || null;
-
-            // If this file is already open in another tab, switch to it
-            if (filePath && this.tabBar) {
-                const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
-                if (existing) {
-                    this._switchToTab(existing.id);
-                    return;
-                }
-            }
-
-            // If the active tab is a pristine empty document, reuse it
-            // instead of opening a new tab alongside it
-            if (this._isActiveTabPristine()) {
-                this._loadIntoCurrentTab(filePath, detail.content ?? '');
-            } else {
-                this._createNewTab(filePath, detail.content ?? '');
-            }
-        });
-
-        // Handle File → Close: close the active tab
-        document.addEventListener('file:close', () => {
-            if (this.tabBar?.activeTabId) {
-                this._closeTab(this.tabBar.activeTabId);
-            }
-        });
-
-        // Listen for TOC settings changes from the preferences modal
-        document.addEventListener('toc:settingsChanged', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.toc && detail) {
-                this.toc.setVisible(detail.visible);
-                this.toc.setPosition(detail.position);
-            }
-        });
-
-        // Listen for image handling settings changes from the preferences modal
-        document.addEventListener('imageHandling:settingsChanged', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail) {
-                this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
-                if (this.editor.ensureLocalPaths) {
-                    this.editor.rewriteImagePaths().then(() => {
-                        this.editor?.renderAndPlaceCursor();
-                    });
-                }
-            }
-        });
-
-        // Listen for content settings changes from the preferences modal
-        document.addEventListener('content:settingsChanged', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail) {
-                this.editor.detailsClosed = !!detail.detailsClosed;
-                this.editor.renderAndPlaceCursor();
-            }
-        });
-
-        // Expose API for main process queries
-        this.exposeEditorAPI();
-
-        // Set up external API handler
-        this.setupExternalAPIHandler();
-
-        // Load persisted settings (e.g. margins) and apply them
-        await this.loadSettings();
-
-        console.log('Markdown Editor initialized');
+    if (!editorContainer || !toolbarContainer) {
+      console.error('Required container elements not found');
+      return;
     }
 
-    // ──────────────────────────────────────────────
-    //  Multi-file tab management
-    // ──────────────────────────────────────────────
+    // Initialize editor
+    this.editor = new Editor(editorContainer);
+    await this.editor.initialize();
 
-    /**
-     * Generates a unique tab identifier.
-     * @returns {string}
-     */
-    _nextTabId() {
-        this._tabCounter++;
-        return `tab-${this._tabCounter}`;
+    // Initialize toolbar
+    this.toolbar = new Toolbar(toolbarContainer, this.editor);
+    this.toolbar.initialize();
+
+    // Initialize handlers
+    this.menuHandler = new MenuHandler(this.editor, this.toolbar);
+    this.menuHandler.initialize();
+
+    this.keyboardHandler = new KeyboardHandler(this.editor);
+    this.keyboardHandler.initialize();
+
+    // Initialize Table of Contents sidebar
+    if (tocContainer) {
+      this.toc = new TableOfContents(tocContainer, this.editor);
+      this.toc.initialize();
     }
 
-    /**
-     * Saves the current editor state for the active tab.
-     */
-    _saveCurrentState() {
-        const tabId = this.tabBar?.activeTabId;
-        if (!tabId || !this.editor) return;
+    // Initialize tab bar
+    const tabBarContainer = document.getElementById('tab-bar');
+    if (tabBarContainer) {
+      this.tabBar = new TabBar(tabBarContainer);
+      this.tabBar.initialize();
 
-        this._documentStates.set(tabId, {
-            content: this.editor.getMarkdown(),
-            filePath: this.editor.currentFilePath,
-            modified: this.editor.hasUnsavedChanges(),
-            cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
-            undoStack: [...this.editor.undoManager.undoStack],
-            redoStack: [...this.editor.undoManager.redoStack],
-        });
+      const firstTabId = this._nextTabId();
+      this.tabBar.addTab(firstTabId, null, true);
+
+      this.tabBar.onTabSelect = (tabId) => this._switchToTab(tabId);
+      this.tabBar.onTabClose = (tabId) => this._closeTab(tabId);
     }
 
-    /**
-     * Restores the editor state for a given tab.
-     * @param {string} tabId
-     */
-    _restoreState(tabId) {
-        if (!this.editor) return;
-
-        const state = this._documentStates.get(tabId);
-        if (state) {
-            this.editor.currentFilePath = state.filePath;
-            this.editor.loadMarkdown(state.content);
-            this.editor.undoManager.undoStack = [...state.undoStack];
-            this.editor.undoManager.redoStack = [...state.redoStack];
-            if (state.cursor) {
-                this.editor.treeCursor = { ...state.cursor };
-                this.editor.placeCursor();
-            }
-            this.editor.setUnsavedChanges(state.modified);
-        } else {
-            this.editor.reset();
-        }
-    }
-
-    /**
-     * Returns true when the active tab is an untouched empty document —
-     * no file path, no unsaved changes, and no content.  Loading a file
-     * into such a tab should reuse it rather than opening a second tab.
-     * @returns {boolean}
-     */
-    _isActiveTabPristine() {
-        if (!this.editor || !this.tabBar?.activeTabId) return false;
-
-        const tab = this.tabBar.tabs.find((t) => t.id === this.tabBar?.activeTabId);
-        if (!tab) return false;
-
-        return (
-            tab.filePath === null &&
-            !this.editor.hasUnsavedChanges() &&
-            this.editor.getMarkdown().trim() === ''
-        );
-    }
-
-    /**
-     * Loads a file into the current (active) tab, replacing its content
-     * without creating a new tab.
-     * @param {string|null} filePath
-     * @param {string} content
-     */
-    _loadIntoCurrentTab(filePath, content) {
-        if (!this.editor || !this.tabBar?.activeTabId) return;
-
-        this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
-
-        this.editor.currentFilePath = filePath;
-        this.editor.loadMarkdown(content);
-        this.editor.updateWindowTitle();
-
+    // Keep tab bar in sync with editor file state
+    document.addEventListener('editor:fileStateChanged', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.tabBar?.activeTabId && detail) {
+        this.tabBar.updateTabPath(this.tabBar.activeTabId, detail.filePath);
+        this.tabBar.setModified(this.tabBar.activeTabId, detail.modified);
         this._notifyOpenFiles();
+      }
+    });
+
+    // Handle file switching from the View menu
+    document.addEventListener('view:switchFile', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (detail?.tabId) {
+        this._switchToTab(detail.tabId);
+      }
+    });
+
+    // Handle File → New: create a new tab with an empty document
+    document.addEventListener('file:new', () => {
+      this._createNewTab(null, '');
+    });
+
+    // Handle File → Load / Open Recent: open in a new tab (or switch
+    // to an existing tab if the file is already open)
+    document.addEventListener('file:loaded', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (!detail) return;
+      const filePath = detail.filePath || null;
+
+      // If this file is already open in another tab, switch to it
+      if (filePath && this.tabBar) {
+        const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
+        if (existing) {
+          this._switchToTab(existing.id);
+          return;
+        }
+      }
+
+      // If the active tab is a pristine empty document, reuse it
+      // instead of opening a new tab alongside it
+      if (this._isActiveTabPristine()) {
+        this._loadIntoCurrentTab(filePath, detail.content ?? '');
+      } else {
+        this._createNewTab(filePath, detail.content ?? '');
+      }
+    });
+
+    // Handle File → Close: close the active tab
+    document.addEventListener('file:close', () => {
+      if (this.tabBar?.activeTabId) {
+        this._closeTab(this.tabBar.activeTabId);
+      }
+    });
+
+    // Listen for TOC settings changes from the preferences modal
+    document.addEventListener('toc:settingsChanged', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.toc && detail) {
+        this.toc.setVisible(detail.visible);
+        this.toc.setPosition(detail.position);
+      }
+    });
+
+    // Listen for image handling settings changes from the preferences modal
+    document.addEventListener('imageHandling:settingsChanged', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.editor && detail) {
+        this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
+        if (this.editor.ensureLocalPaths) {
+          this.editor.rewriteImagePaths().then(() => {
+            this.editor?.renderAndPlaceCursor();
+          });
+        }
+      }
+    });
+
+    // Listen for content settings changes from the preferences modal
+    document.addEventListener('content:settingsChanged', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.editor && detail) {
+        this.editor.detailsClosed = !!detail.detailsClosed;
+        this.editor.renderAndPlaceCursor();
+      }
+    });
+
+    // Expose API for main process queries
+    this.exposeEditorAPI();
+
+    // Set up external API handler
+    this.setupExternalAPIHandler();
+
+    // Load persisted settings (e.g. margins) and apply them
+    await this.loadSettings();
+
+    console.log('Markdown Editor initialized');
+  }
+
+  // ──────────────────────────────────────────────
+  //  Multi-file tab management
+  // ──────────────────────────────────────────────
+
+  /**
+   * Generates a unique tab identifier.
+   * @returns {string}
+   */
+  _nextTabId() {
+    this._tabCounter++;
+    return `tab-${this._tabCounter}`;
+  }
+
+  /**
+   * Saves the current editor state for the active tab.
+   */
+  _saveCurrentState() {
+    const tabId = this.tabBar?.activeTabId;
+    if (!tabId || !this.editor) return;
+
+    this._documentStates.set(tabId, {
+      content: this.editor.getMarkdown(),
+      filePath: this.editor.currentFilePath,
+      modified: this.editor.hasUnsavedChanges(),
+      cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
+      undoStack: [...this.editor.undoManager.undoStack],
+      redoStack: [...this.editor.undoManager.redoStack],
+    });
+  }
+
+  /**
+   * Restores the editor state for a given tab.
+   * @param {string} tabId
+   */
+  _restoreState(tabId) {
+    if (!this.editor) return;
+
+    const state = this._documentStates.get(tabId);
+    if (state) {
+      this.editor.currentFilePath = state.filePath;
+      this.editor.loadMarkdown(state.content);
+      this.editor.undoManager.undoStack = [...state.undoStack];
+      this.editor.undoManager.redoStack = [...state.redoStack];
+      if (state.cursor) {
+        this.editor.treeCursor = { ...state.cursor };
+        this.editor.placeCursor();
+      }
+      this.editor.setUnsavedChanges(state.modified);
+    } else {
+      this.editor.reset();
+    }
+  }
+
+  /**
+   * Returns true when the active tab is an untouched empty document —
+   * no file path, no unsaved changes, and no content.  Loading a file
+   * into such a tab should reuse it rather than opening a second tab.
+   * @returns {boolean}
+   */
+  _isActiveTabPristine() {
+    if (!this.editor || !this.tabBar?.activeTabId) return false;
+
+    const tab = this.tabBar.tabs.find((t) => t.id === this.tabBar?.activeTabId);
+    if (!tab) return false;
+
+    return (
+      tab.filePath === null &&
+      !this.editor.hasUnsavedChanges() &&
+      this.editor.getMarkdown().trim() === ''
+    );
+  }
+
+  /**
+   * Loads a file into the current (active) tab, replacing its content
+   * without creating a new tab.
+   * @param {string|null} filePath
+   * @param {string} content
+   */
+  _loadIntoCurrentTab(filePath, content) {
+    if (!this.editor || !this.tabBar?.activeTabId) return;
+
+    this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
+
+    this.editor.currentFilePath = filePath;
+    this.editor.loadMarkdown(content);
+    this.editor.updateWindowTitle();
+
+    this._notifyOpenFiles();
+  }
+
+  /**
+   * Creates a new tab and loads content into it.
+   * @param {string|null} filePath - File path, or null for untitled
+   * @param {string} content - Markdown content to load
+   */
+  _createNewTab(filePath, content) {
+    if (!this.editor || !this.tabBar) return;
+
+    // Save the current tab's state before switching
+    this._saveCurrentState();
+
+    const tabId = this._nextTabId();
+    this.tabBar.addTab(tabId, filePath, true);
+
+    // Load the new content into the editor
+    this.editor.currentFilePath = filePath;
+    this.editor.loadMarkdown(content);
+    this.editor.updateWindowTitle();
+
+    this._notifyOpenFiles();
+  }
+
+  /**
+   * Switches to a different tab, saving and restoring state.
+   * @param {string} tabId
+   */
+  _switchToTab(tabId) {
+    if (!this.editor || !this.tabBar) return;
+    if (tabId === this.tabBar.activeTabId) return;
+
+    // Save current tab's state
+    this._saveCurrentState();
+
+    // Activate the new tab
+    this.tabBar.setActiveTab(tabId);
+
+    // Restore the target tab's state
+    this._restoreState(tabId);
+
+    this._notifyOpenFiles();
+  }
+
+  /**
+   * Closes a tab. If the document has unsaved changes, prompts the
+   * user to save, discard, or cancel before closing.
+   * If it's the last tab, resets to a fresh untitled document.
+   * @param {string} tabId
+   */
+  async _closeTab(tabId) {
+    if (!this.tabBar || !this.editor) return;
+
+    const tab = this.tabBar.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+
+    // Check whether this tab has unsaved changes.  For the active
+    // tab we ask the editor directly; for background tabs we check
+    // the saved document-state snapshot.
+    const isActive = tabId === this.tabBar.activeTabId;
+    const isModified = isActive
+      ? this.editor.hasUnsavedChanges()
+      : (this._documentStates.get(tabId)?.modified ?? false);
+
+    if (isModified && window.electronAPI) {
+      // If we're closing a background tab, switch to it first so
+      // the user can see what they're being asked about.
+      if (!isActive) {
+        this._switchToTab(tabId);
+      }
+
+      const { action } = await window.electronAPI.confirmClose();
+
+      if (action === 'cancel') return;
+
+      if (action === 'save') {
+        const content = this.editor.getMarkdown();
+        const result = await window.electronAPI.saveFile(content);
+        if (!result.success) return; // save dialog was cancelled
+      } else if (action === 'saveAs') {
+        const content = this.editor.getMarkdown();
+        const result = await window.electronAPI.saveFileAs(content);
+        if (!result.success) return;
+      }
+      // 'discard' falls through to the removal below
     }
 
-    /**
-     * Creates a new tab and loads content into it.
-     * @param {string|null} filePath - File path, or null for untitled
-     * @param {string} content - Markdown content to load
-     */
-    _createNewTab(filePath, content) {
-        if (!this.editor || !this.tabBar) return;
+    this._documentStates.delete(tabId);
 
-        // Save the current tab's state before switching
-        this._saveCurrentState();
+    // Re-check active state — it may have changed if we switched above
+    const wasActive = tabId === this.tabBar.activeTabId;
+    this.tabBar.removeTab(tabId);
 
-        const tabId = this._nextTabId();
-        this.tabBar.addTab(tabId, filePath, true);
-
-        // Load the new content into the editor
-        this.editor.currentFilePath = filePath;
-        this.editor.loadMarkdown(content);
-        this.editor.updateWindowTitle();
-
-        this._notifyOpenFiles();
+    if (this.tabBar.tabs.length === 0) {
+      // Last tab was closed — create a fresh untitled tab
+      const newId = this._nextTabId();
+      this.tabBar.addTab(newId, null, true);
+      this.editor.reset();
+    } else if (wasActive && this.tabBar.activeTabId) {
+      // removeTab already picked a new active tab; restore its state
+      this._restoreState(this.tabBar.activeTabId);
     }
 
-    /**
-     * Switches to a different tab, saving and restoring state.
-     * @param {string} tabId
-     */
-    _switchToTab(tabId) {
-        if (!this.editor || !this.tabBar) return;
-        if (tabId === this.tabBar.activeTabId) return;
+    this._notifyOpenFiles();
+  }
 
-        // Save current tab's state
-        this._saveCurrentState();
+  /**
+   * Sends the current list of open files to the main process
+   * so the View menu can be rebuilt.
+   */
+  _notifyOpenFiles() {
+    if (!this.tabBar || !window.electronAPI) return;
 
-        // Activate the new tab
-        this.tabBar.setActiveTab(tabId);
+    const labels = getDisambiguatedLabels(this.tabBar.tabs);
 
-        // Restore the target tab's state
-        this._restoreState(tabId);
+    const files = this.tabBar.tabs.map((tab) => ({
+      id: tab.id,
+      filePath: tab.filePath,
+      label: labels.get(tab.id) ?? tab.label,
+      active: tab.active,
+    }));
 
-        this._notifyOpenFiles();
+    window.electronAPI.notifyOpenFiles(files);
+  }
+
+  /**
+   * Loads persisted settings from the database and applies them.
+   */
+  async loadSettings() {
+    if (!window.electronAPI) return;
+
+    try {
+      const result = await window.electronAPI.getSetting('defaultView');
+      if (result.success && result.value) {
+        this.editor?.setViewMode(result.value);
+        this.toolbar?.setViewMode(result.value);
+      }
+    } catch {
+      // Use hardcoded default (focused)
     }
 
-    /**
-     * Closes a tab. If the document has unsaved changes, prompts the
-     * user to save, discard, or cancel before closing.
-     * If it's the last tab, resets to a fresh untitled document.
-     * @param {string} tabId
-     */
-    async _closeTab(tabId) {
-        if (!this.tabBar || !this.editor) return;
-
-        const tab = this.tabBar.tabs.find((t) => t.id === tabId);
-        if (!tab) return;
-
-        // Check whether this tab has unsaved changes.  For the active
-        // tab we ask the editor directly; for background tabs we check
-        // the saved document-state snapshot.
-        const isActive = tabId === this.tabBar.activeTabId;
-        const isModified = isActive
-            ? this.editor.hasUnsavedChanges()
-            : (this._documentStates.get(tabId)?.modified ?? false);
-
-        if (isModified && window.electronAPI) {
-            // If we're closing a background tab, switch to it first so
-            // the user can see what they're being asked about.
-            if (!isActive) {
-                this._switchToTab(tabId);
-            }
-
-            const { action } = await window.electronAPI.confirmClose();
-
-            if (action === 'cancel') return;
-
-            if (action === 'save') {
-                const content = this.editor.getMarkdown();
-                const result = await window.electronAPI.saveFile(content);
-                if (!result.success) return; // save dialog was cancelled
-            } else if (action === 'saveAs') {
-                const content = this.editor.getMarkdown();
-                const result = await window.electronAPI.saveFileAs(content);
-                if (!result.success) return;
-            }
-            // 'discard' falls through to the removal below
-        }
-
-        this._documentStates.delete(tabId);
-
-        // Re-check active state — it may have changed if we switched above
-        const wasActive = tabId === this.tabBar.activeTabId;
-        this.tabBar.removeTab(tabId);
-
-        if (this.tabBar.tabs.length === 0) {
-            // Last tab was closed — create a fresh untitled tab
-            const newId = this._nextTabId();
-            this.tabBar.addTab(newId, null, true);
-            this.editor.reset();
-        } else if (wasActive && this.tabBar.activeTabId) {
-            // removeTab already picked a new active tab; restore its state
-            this._restoreState(this.tabBar.activeTabId);
-        }
-
-        this._notifyOpenFiles();
+    try {
+      const result = await window.electronAPI.getSetting('pageWidth');
+      if (result.success && result.value) {
+        applyPageWidth(result.value);
+      }
+    } catch {
+      // Use CSS defaults
     }
 
-    /**
-     * Sends the current list of open files to the main process
-     * so the View menu can be rebuilt.
-     */
-    _notifyOpenFiles() {
-        if (!this.tabBar || !window.electronAPI) return;
-
-        const labels = getDisambiguatedLabels(this.tabBar.tabs);
-
-        const files = this.tabBar.tabs.map((tab) => ({
-            id: tab.id,
-            filePath: tab.filePath,
-            label: labels.get(tab.id) ?? tab.label,
-            active: tab.active,
-        }));
-
-        window.electronAPI.notifyOpenFiles(files);
+    try {
+      const result = await window.electronAPI.getSetting('margins');
+      if (result.success && result.value) {
+        applyMargins(result.value);
+      }
+    } catch {
+      // Use CSS defaults
     }
 
-    /**
-     * Loads persisted settings from the database and applies them.
-     */
-    async loadSettings() {
-        if (!window.electronAPI) return;
-
-        try {
-            const result = await window.electronAPI.getSetting('defaultView');
-            if (result.success && result.value) {
-                this.editor?.setViewMode(result.value);
-                this.toolbar?.setViewMode(result.value);
-            }
-        } catch {
-            // Use hardcoded default (focused)
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('pageWidth');
-            if (result.success && result.value) {
-                applyPageWidth(result.value);
-            }
-        } catch {
-            // Use CSS defaults
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('margins');
-            if (result.success && result.value) {
-                applyMargins(result.value);
-            }
-        } catch {
-            // Use CSS defaults
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('colors');
-            if (result.success && result.value) {
-                applyColors(result.value);
-            }
-        } catch {
-            // Use CSS defaults
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('tocVisible');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                this.toc?.setVisible(!!result.value);
-            }
-        } catch {
-            // Default is visible
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('tocPosition');
-            if (result.success && result.value) {
-                this.toc?.setPosition(result.value === 'right' ? 'right' : 'left');
-            }
-        } catch {
-            // Default is left
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('tocWidth');
-            if (result.success && result.value) {
-                this.toc?.setWidth(Number(result.value));
-            }
-        } catch {
-            // Default width from CSS
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('ensureLocalPaths');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                if (this.editor) {
-                    this.editor.ensureLocalPaths = !!result.value;
-                }
-            }
-        } catch {
-            // Default is false
-        }
-
-        try {
-            const result = await window.electronAPI.getSetting('detailsClosed');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                if (this.editor) {
-                    this.editor.detailsClosed = !!result.value;
-                }
-            }
-        } catch {
-            // Default is false (open)
-        }
+    try {
+      const result = await window.electronAPI.getSetting('colors');
+      if (result.success && result.value) {
+        applyColors(result.value);
+      }
+    } catch {
+      // Use CSS defaults
     }
 
-    /**
-     * Exposes the editor API to the main process.
-     */
-    exposeEditorAPI() {
-        window.editorAPI = {
-            hasUnsavedChanges: () => this.editor?.hasUnsavedChanges() ?? false,
-            getContent: () => this.editor?.getMarkdown() ?? '',
-            setContent: (content) => this.editor?.loadMarkdown(content),
-            getViewMode: () => this.editor?.getViewMode() ?? 'source',
-            setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
+    try {
+      const result = await window.electronAPI.getSetting('tocVisible');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        this.toc?.setVisible(!!result.value);
+      }
+    } catch {
+      // Default is visible
+    }
+
+    try {
+      const result = await window.electronAPI.getSetting('tocPosition');
+      if (result.success && result.value) {
+        this.toc?.setPosition(result.value === 'right' ? 'right' : 'left');
+      }
+    } catch {
+      // Default is left
+    }
+
+    try {
+      const result = await window.electronAPI.getSetting('tocWidth');
+      if (result.success && result.value) {
+        this.toc?.setWidth(Number(result.value));
+      }
+    } catch {
+      // Default width from CSS
+    }
+
+    try {
+      const result = await window.electronAPI.getSetting('ensureLocalPaths');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        if (this.editor) {
+          this.editor.ensureLocalPaths = !!result.value;
+        }
+      }
+    } catch {
+      // Default is false
+    }
+
+    try {
+      const result = await window.electronAPI.getSetting('detailsClosed');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        if (this.editor) {
+          this.editor.detailsClosed = !!result.value;
+        }
+      }
+    } catch {
+      // Default is false (open)
+    }
+  }
+
+  /**
+   * Exposes the editor API to the main process.
+   */
+  exposeEditorAPI() {
+    window.editorAPI = {
+      hasUnsavedChanges: () => this.editor?.hasUnsavedChanges() ?? false,
+      getContent: () => this.editor?.getMarkdown() ?? '',
+      setContent: (content) => this.editor?.loadMarkdown(content),
+      getViewMode: () => this.editor?.getViewMode() ?? 'source',
+      setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
+    };
+
+    // Expose file path and cursor info as globals so the reload handler
+    // can read them via executeJavaScript before the page unloads.
+    Object.defineProperty(window, '__editorFilePath', {
+      get: () => this.editor?.currentFilePath ?? null,
+      set: (v) => {
+        if (this.editor) this.editor.currentFilePath = v;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(window, '__editorCursorNodeId', {
+      get: () => this.editor?.treeCursor?.nodeId ?? null,
+      configurable: true,
+    });
+    Object.defineProperty(window, '__editorCursorOffset', {
+      get: () => this.editor?.treeCursor?.offset ?? 0,
+      configurable: true,
+    });
+
+    // Listen for view-mode restore after a reload
+    window.addEventListener('__restoreViewMode', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.editor && detail) {
+        this.editor.setViewMode(detail);
+      }
+    });
+
+    // Listen for cursor-position restore after a reload
+    window.addEventListener('__restoreCursor', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (this.editor && detail?.nodeId) {
+        this.editor.treeCursor = {
+          nodeId: detail.nodeId,
+          offset: detail.offset ?? 0,
         };
+        this.editor.placeCursor();
+      }
+    });
+  }
 
-        // Expose file path and cursor info as globals so the reload handler
-        // can read them via executeJavaScript before the page unloads.
-        Object.defineProperty(window, '__editorFilePath', {
-            get: () => this.editor?.currentFilePath ?? null,
-            set: (v) => {
-                if (this.editor) this.editor.currentFilePath = v;
-            },
-            configurable: true,
-        });
-        Object.defineProperty(window, '__editorCursorNodeId', {
-            get: () => this.editor?.treeCursor?.nodeId ?? null,
-            configurable: true,
-        });
-        Object.defineProperty(window, '__editorCursorOffset', {
-            get: () => this.editor?.treeCursor?.offset ?? 0,
-            configurable: true,
-        });
-
-        // Listen for view-mode restore after a reload
-        window.addEventListener('__restoreViewMode', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail) {
-                this.editor.setViewMode(detail);
-            }
-        });
-
-        // Listen for cursor-position restore after a reload
-        window.addEventListener('__restoreCursor', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail?.nodeId) {
-                this.editor.treeCursor = {
-                    nodeId: detail.nodeId,
-                    offset: detail.offset ?? 0,
-                };
-                this.editor.placeCursor();
-            }
-        });
+  /**
+   * Sets up the handler for external API calls.
+   */
+  setupExternalAPIHandler() {
+    if (!window.electronAPI) {
+      console.warn('electronAPI not available');
+      return;
     }
 
-    /**
-     * Sets up the handler for external API calls.
-     */
-    setupExternalAPIHandler() {
-        if (!window.electronAPI) {
-            console.warn('electronAPI not available');
-            return;
-        }
+    window.electronAPI.onExternalAPI((method, ...args) => {
+      this.handleExternalAPI(method, args);
+    });
+  }
 
-        window.electronAPI.onExternalAPI((method, ...args) => {
-            this.handleExternalAPI(method, args);
-        });
+  /**
+   * Handles external API calls.
+   * @param {string} method - The API method name
+   * @param {any[]} args - The method arguments
+   */
+  handleExternalAPI(method, args) {
+    if (!this.editor || !this.menuHandler) {
+      console.warn('Editor or MenuHandler not initialized');
+      return;
     }
 
-    /**
-     * Handles external API calls.
-     * @param {string} method - The API method name
-     * @param {any[]} args - The method arguments
-     */
-    handleExternalAPI(method, args) {
-        if (!this.editor || !this.menuHandler) {
-            console.warn('Editor or MenuHandler not initialized');
-            return;
-        }
-
-        switch (method) {
-            case 'file:new':
-                this._createNewTab(null, '');
-                break;
-            case 'file:save':
-                this.menuHandler.handleSave();
-                break;
-            case 'file:saveAs':
-                this.menuHandler.handleSaveAs();
-                break;
-            case 'edit:undo':
-                this.editor.undo();
-                break;
-            case 'edit:redo':
-                this.editor.redo();
-                break;
-            case 'view:source':
-                this.editor.setViewMode('source');
-                break;
-            case 'view:focused':
-                this.editor.setViewMode('focused');
-                break;
-            case 'document:getContent':
-                // Response would be handled via IPC
-                break;
-            case 'document:setContent':
-                this.editor.loadMarkdown(args[0]);
-                break;
-            case 'document:insertText':
-                this.editor.insertText(args[0]);
-                break;
-            case 'element:changeType':
-                this.editor.changeElementType(args[0]);
-                break;
-            case 'element:format':
-                this.editor.applyFormat(args[0]);
-                break;
-            case 'cursor:setPosition':
-                this.editor.setCursorPosition(args[0], args[1]);
-                break;
-            case 'selection:set':
-                this.editor.setSelection(args[0]);
-                break;
-            case 'app:reload':
-                // Trigger the reload via the main process IPC handler
-                window.electronAPI?.reload();
-                break;
-            case 'file:getRecentFiles':
-                // Handled directly via IPC, no renderer action needed
-                break;
-            case 'edit:preferences':
-                this.menuHandler?.handlePreferences();
-                break;
-            default:
-                console.warn(`Unknown external API method: ${method}`);
-        }
+    switch (method) {
+      case 'file:new':
+        this._createNewTab(null, '');
+        break;
+      case 'file:save':
+        this.menuHandler.handleSave();
+        break;
+      case 'file:saveAs':
+        this.menuHandler.handleSaveAs();
+        break;
+      case 'edit:undo':
+        this.editor.undo();
+        break;
+      case 'edit:redo':
+        this.editor.redo();
+        break;
+      case 'view:source':
+        this.editor.setViewMode('source');
+        break;
+      case 'view:focused':
+        this.editor.setViewMode('focused');
+        break;
+      case 'document:getContent':
+        // Response would be handled via IPC
+        break;
+      case 'document:setContent':
+        this.editor.loadMarkdown(args[0]);
+        break;
+      case 'document:insertText':
+        this.editor.insertText(args[0]);
+        break;
+      case 'element:changeType':
+        this.editor.changeElementType(args[0]);
+        break;
+      case 'element:format':
+        this.editor.applyFormat(args[0]);
+        break;
+      case 'cursor:setPosition':
+        this.editor.setCursorPosition(args[0], args[1]);
+        break;
+      case 'selection:set':
+        this.editor.setSelection(args[0]);
+        break;
+      case 'app:reload':
+        // Trigger the reload via the main process IPC handler
+        window.electronAPI?.reload();
+        break;
+      case 'file:getRecentFiles':
+        // Handled directly via IPC, no renderer action needed
+        break;
+      case 'edit:preferences':
+        this.menuHandler?.handlePreferences();
+        break;
+      default:
+        console.warn(`Unknown external API method: ${method}`);
     }
+  }
 }
 
 // Initialize the application when the DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
-    const app = new App();
-    await app.initialize();
+  const app = new App();
+  await app.initialize();
 });

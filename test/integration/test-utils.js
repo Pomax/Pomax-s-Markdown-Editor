@@ -30,23 +30,23 @@ export const VIEWPORT = { width: 800, height: 1132 };
  * @returns {Promise<{ electronApp: import('@playwright/test').ElectronApplication, page: import('@playwright/test').Page }>}
  */
 export async function launchApp(extraArgs = []) {
-    const electronApp = await electron.launch({
-        args: [
-            ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
-            path.join(projectRoot, 'src', 'main', 'main.js'),
-            ...extraArgs,
-        ],
-        env: { ...process.env, TESTING: '1' },
-    });
-    const page = await electronApp.firstWindow();
+  const electronApp = await electron.launch({
+    args: [
+      ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
+      path.join(projectRoot, 'src', 'main', 'main.js'),
+      ...extraArgs,
+    ],
+    env: { ...process.env, TESTING: '1' },
+  });
+  const page = await electronApp.firstWindow();
 
-    // Wait for the renderer to be ready.
-    await page.waitForFunction(() => document.readyState === 'complete');
+  // Wait for the renderer to be ready.
+  await page.waitForFunction(() => document.readyState === 'complete');
 
-    // Force a consistent viewport so layout-sensitive tests pass on CI.
-    await page.setViewportSize(VIEWPORT);
+  // Force a consistent viewport so layout-sensitive tests pass on CI.
+  await page.setViewportSize(VIEWPORT);
 
-    return { electronApp, page };
+  return { electronApp, page };
 }
 
 /**
@@ -57,11 +57,11 @@ export async function launchApp(extraArgs = []) {
  * @param {string} fixtureContent  Raw markdown string to load.
  */
 export async function loadContent(page, fixtureContent) {
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, fixtureContent);
-    // Wait for the editor to re-render.
-    await page.waitForSelector('#editor .md-line');
+  await page.evaluate((content) => {
+    window.editorAPI?.setContent(content);
+  }, fixtureContent);
+  // Wait for the editor to re-render.
+  await page.waitForSelector('#editor .md-line');
 }
 
 /**
@@ -72,13 +72,13 @@ export async function loadContent(page, fixtureContent) {
  * @param {import('@playwright/test').Page} page
  */
 export async function defocusEditor(page) {
-    // Blur the editor element.  The editor's handleBlur clears the
-    // treeCursor and re-renders in focused view, so no node will show
-    // its raw markdown syntax after this call.
-    await page.evaluate(() => {
-        const editor = /** @type {HTMLElement|null} */ (document.querySelector('#editor'));
-        if (editor) editor.blur();
-    });
-    // Give the editor time to re-render.
-    await page.waitForTimeout(200);
+  // Blur the editor element.  The editor's handleBlur clears the
+  // treeCursor and re-renders in focused view, so no node will show
+  // its raw markdown syntax after this call.
+  await page.evaluate(() => {
+    const editor = /** @type {HTMLElement|null} */ (document.querySelector('#editor'));
+    if (editor) editor.blur();
+  });
+  // Give the editor time to re-render.
+  await page.waitForTimeout(200);
 }

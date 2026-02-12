@@ -31,450 +31,450 @@ let nodeIdCounter = 0;
  * @returns {string}
  */
 function generateNodeId() {
-    return `node-${++nodeIdCounter}`;
+  return `node-${++nodeIdCounter}`;
 }
 
 /**
  * Represents a node in the syntax tree.
  */
 export class SyntaxNode {
+  /**
+   * @param {string} type - The node type (heading1-6, paragraph, etc.)
+   * @param {string} content - The text content of the node
+   */
+  constructor(type, content = '') {
     /**
-     * @param {string} type - The node type (heading1-6, paragraph, etc.)
-     * @param {string} content - The text content of the node
+     * Unique identifier for this node.
+     * @type {string}
      */
-    constructor(type, content = '') {
-        /**
-         * Unique identifier for this node.
-         * @type {string}
-         */
-        this.id = generateNodeId();
+    this.id = generateNodeId();
 
-        /**
-         * The type of node.
-         * @type {string}
-         */
-        this.type = type;
+    /**
+     * The type of node.
+     * @type {string}
+     */
+    this.type = type;
 
-        /**
-         * The text content.
-         * @type {string}
-         */
-        this.content = content;
+    /**
+     * The text content.
+     * @type {string}
+     */
+    this.content = content;
 
-        /**
-         * Child nodes.
-         * @type {SyntaxNode[]}
-         */
-        this.children = [];
+    /**
+     * Child nodes.
+     * @type {SyntaxNode[]}
+     */
+    this.children = [];
 
-        /**
-         * Parent node reference.
-         * @type {SyntaxNode|null}
-         */
-        this.parent = null;
+    /**
+     * Parent node reference.
+     * @type {SyntaxNode|null}
+     */
+    this.parent = null;
 
-        /**
-         * Additional attributes for the node.
-         * @type {NodeAttributes}
-         */
-        this.attributes = {};
+    /**
+     * Additional attributes for the node.
+     * @type {NodeAttributes}
+     */
+    this.attributes = {};
 
-        /**
-         * Starting line in the source (0-based).
-         * @type {number}
-         */
-        this.startLine = 0;
+    /**
+     * Starting line in the source (0-based).
+     * @type {number}
+     */
+    this.startLine = 0;
 
-        /**
-         * Ending line in the source (0-based).
-         * @type {number}
-         */
-        this.endLine = 0;
+    /**
+     * Ending line in the source (0-based).
+     * @type {number}
+     */
+    this.endLine = 0;
+  }
+
+  /**
+   * Adds a child node.
+   * @param {SyntaxNode} child - The child node to add
+   */
+  appendChild(child) {
+    child.parent = this;
+    this.children.push(child);
+  }
+
+  /**
+   * Removes a child node.
+   * @param {SyntaxNode} child - The child node to remove
+   * @returns {boolean} Whether the child was found and removed
+   */
+  removeChild(child) {
+    const index = this.children.indexOf(child);
+    if (index !== -1) {
+      this.children.splice(index, 1);
+      child.parent = null;
+      return true;
     }
+    return false;
+  }
 
-    /**
-     * Adds a child node.
-     * @param {SyntaxNode} child - The child node to add
-     */
-    appendChild(child) {
-        child.parent = this;
-        this.children.push(child);
+  /**
+   * Inserts a node before another node.
+   * @param {SyntaxNode} newNode - The node to insert
+   * @param {SyntaxNode} referenceNode - The node to insert before
+   * @returns {boolean} Whether the insertion was successful
+   */
+  insertBefore(newNode, referenceNode) {
+    const index = this.children.indexOf(referenceNode);
+    if (index !== -1) {
+      newNode.parent = this;
+      this.children.splice(index, 0, newNode);
+      return true;
     }
+    return false;
+  }
 
-    /**
-     * Removes a child node.
-     * @param {SyntaxNode} child - The child node to remove
-     * @returns {boolean} Whether the child was found and removed
-     */
-    removeChild(child) {
-        const index = this.children.indexOf(child);
-        if (index !== -1) {
-            this.children.splice(index, 1);
-            child.parent = null;
-            return true;
+  /**
+   * Converts this node to markdown.
+   * @returns {string}
+   */
+  toMarkdown() {
+    switch (this.type) {
+      case 'heading1':
+        return `# ${this.content}`;
+      case 'heading2':
+        return `## ${this.content}`;
+      case 'heading3':
+        return `### ${this.content}`;
+      case 'heading4':
+        return `#### ${this.content}`;
+      case 'heading5':
+        return `##### ${this.content}`;
+      case 'heading6':
+        return `###### ${this.content}`;
+      case 'paragraph':
+        return this.content;
+      case 'blockquote':
+        return this.content
+          .split('\n')
+          .map((line) => `> ${line}`)
+          .join('\n');
+      case 'code-block': {
+        const lang = this.attributes.language || '';
+        return `\`\`\`${lang}\n${this.content}\n\`\`\``;
+      }
+      case 'list-item': {
+        const indent = '  '.repeat(this.attributes.indent || 0);
+        const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : '- ';
+        return `${indent}${marker}${this.content}`;
+      }
+      case 'horizontal-rule':
+        return '---';
+      case 'image': {
+        const imgAlt = this.attributes.alt ?? this.content;
+        const imgSrc = this.attributes.url ?? '';
+        if (this.attributes.href) {
+          return `[![${imgAlt}](${imgSrc})](${this.attributes.href})`;
         }
-        return false;
-    }
-
-    /**
-     * Inserts a node before another node.
-     * @param {SyntaxNode} newNode - The node to insert
-     * @param {SyntaxNode} referenceNode - The node to insert before
-     * @returns {boolean} Whether the insertion was successful
-     */
-    insertBefore(newNode, referenceNode) {
-        const index = this.children.indexOf(referenceNode);
-        if (index !== -1) {
-            newNode.parent = this;
-            this.children.splice(index, 0, newNode);
-            return true;
+        return `![${imgAlt}](${imgSrc})`;
+      }
+      case 'table':
+        return this.content;
+      case 'html-block': {
+        // If the container has exactly one bare-text child, collapse
+        // to a single line: <tag>content</tag>
+        if (
+          this.children.length === 1 &&
+          this.children[0].attributes.bareText &&
+          this.children[0].type === 'paragraph'
+        ) {
+          const tag = this.attributes.tagName || 'div';
+          return `<${tag}>${this.children[0].content}</${tag}>`;
         }
-        return false;
-    }
 
-    /**
-     * Converts this node to markdown.
-     * @returns {string}
-     */
-    toMarkdown() {
-        switch (this.type) {
-            case 'heading1':
-                return `# ${this.content}`;
-            case 'heading2':
-                return `## ${this.content}`;
-            case 'heading3':
-                return `### ${this.content}`;
-            case 'heading4':
-                return `#### ${this.content}`;
-            case 'heading5':
-                return `##### ${this.content}`;
-            case 'heading6':
-                return `###### ${this.content}`;
-            case 'paragraph':
-                return this.content;
-            case 'blockquote':
-                return this.content
-                    .split('\n')
-                    .map((line) => `> ${line}`)
-                    .join('\n');
-            case 'code-block': {
-                const lang = this.attributes.language || '';
-                return `\`\`\`${lang}\n${this.content}\n\`\`\``;
-            }
-            case 'list-item': {
-                const indent = '  '.repeat(this.attributes.indent || 0);
-                const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : '- ';
-                return `${indent}${marker}${this.content}`;
-            }
-            case 'horizontal-rule':
-                return '---';
-            case 'image': {
-                const imgAlt = this.attributes.alt ?? this.content;
-                const imgSrc = this.attributes.url ?? '';
-                if (this.attributes.href) {
-                    return `[![${imgAlt}](${imgSrc})](${this.attributes.href})`;
-                }
-                return `![${imgAlt}](${imgSrc})`;
-            }
-            case 'table':
-                return this.content;
-            case 'html-block': {
-                // If the container has exactly one bare-text child, collapse
-                // to a single line: <tag>content</tag>
-                if (
-                    this.children.length === 1 &&
-                    this.children[0].attributes.bareText &&
-                    this.children[0].type === 'paragraph'
-                ) {
-                    const tag = this.attributes.tagName || 'div';
-                    return `<${tag}>${this.children[0].content}</${tag}>`;
-                }
-
-                const parts = [this.attributes.openingTag || ''];
-                for (const child of this.children) {
-                    parts.push(child.toMarkdown());
-                }
-                if (this.attributes.closingTag) {
-                    parts.push(this.attributes.closingTag);
-                }
-                return parts.join('\n\n');
-            }
-            default:
-                return this.content;
-        }
-    }
-
-    /**
-     * Creates a deep clone of this node.
-     * @returns {SyntaxNode}
-     */
-    clone() {
-        const cloned = new SyntaxNode(this.type, this.content);
-        cloned.attributes = { ...this.attributes };
-        cloned.startLine = this.startLine;
-        cloned.endLine = this.endLine;
-
+        const parts = [this.attributes.openingTag || ''];
         for (const child of this.children) {
-            cloned.appendChild(child.clone());
+          parts.push(child.toMarkdown());
         }
-
-        return cloned;
+        if (this.attributes.closingTag) {
+          parts.push(this.attributes.closingTag);
+        }
+        return parts.join('\n\n');
+      }
+      default:
+        return this.content;
     }
+  }
+
+  /**
+   * Creates a deep clone of this node.
+   * @returns {SyntaxNode}
+   */
+  clone() {
+    const cloned = new SyntaxNode(this.type, this.content);
+    cloned.attributes = { ...this.attributes };
+    cloned.startLine = this.startLine;
+    cloned.endLine = this.endLine;
+
+    for (const child of this.children) {
+      cloned.appendChild(child.clone());
+    }
+
+    return cloned;
+  }
 }
 
 /**
  * Represents the root of a syntax tree.
  */
 export class SyntaxTree {
-    constructor() {
-        /**
-         * Root children nodes.
-         * @type {SyntaxNode[]}
-         */
-        this.children = [];
-    }
-
+  constructor() {
     /**
-     * Adds a child node to the tree.
-     * @param {SyntaxNode} node - The node to add
+     * Root children nodes.
+     * @type {SyntaxNode[]}
      */
-    appendChild(node) {
-        node.parent = null;
-        this.children.push(node);
-    }
+    this.children = [];
+  }
 
-    /**
-     * Removes a node from the tree.
-     * @param {SyntaxNode} node - The node to remove
-     * @returns {boolean} Whether the node was found and removed
-     */
-    removeChild(node) {
-        const index = this.children.indexOf(node);
-        if (index !== -1) {
-            this.children.splice(index, 1);
-            node.parent = null;
-            return true;
+  /**
+   * Adds a child node to the tree.
+   * @param {SyntaxNode} node - The node to add
+   */
+  appendChild(node) {
+    node.parent = null;
+    this.children.push(node);
+  }
+
+  /**
+   * Removes a node from the tree.
+   * @param {SyntaxNode} node - The node to remove
+   * @returns {boolean} Whether the node was found and removed
+   */
+  removeChild(node) {
+    const index = this.children.indexOf(node);
+    if (index !== -1) {
+      this.children.splice(index, 1);
+      node.parent = null;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Finds a node by its ID.
+   * @param {string} id - The node ID
+   * @returns {SyntaxNode|null}
+   */
+  findNodeById(id) {
+    for (const child of this.children) {
+      if (child.id === id) {
+        return child;
+      }
+      const found = this.findNodeByIdRecursive(child, id);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Recursively finds a node by ID.
+   * @param {SyntaxNode} node - The node to search in
+   * @param {string} id - The ID to find
+   * @returns {SyntaxNode|null}
+   */
+  findNodeByIdRecursive(node, id) {
+    for (const child of node.children) {
+      if (child.id === id) {
+        return child;
+      }
+      const found = this.findNodeByIdRecursive(child, id);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds the node at a given position.
+   * Recurses into container nodes (e.g. html-block) to find the
+   * deepest (leaf) node that contains the position.
+   * @param {number} line - The line number (0-based)
+   * @param {number} column - The column number (0-based)
+   * @returns {SyntaxNode|null}
+   */
+  findNodeAtPosition(line, column) {
+    for (const child of this.children) {
+      if (line >= child.startLine && line <= child.endLine) {
+        return this.findDeepestNodeAtPosition(child, line, column);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Recursively descends into a node's children to find the deepest
+   * node that contains the given line position.
+   * @param {SyntaxNode} node
+   * @param {number} line
+   * @param {number} column
+   * @returns {SyntaxNode}
+   */
+  findDeepestNodeAtPosition(node, line, column) {
+    if (node.children.length > 0) {
+      for (const child of node.children) {
+        if (line >= child.startLine && line <= child.endLine) {
+          return this.findDeepestNodeAtPosition(child, line, column);
         }
-        return false;
+      }
     }
+    return node;
+  }
 
-    /**
-     * Finds a node by its ID.
-     * @param {string} id - The node ID
-     * @returns {SyntaxNode|null}
-     */
-    findNodeById(id) {
-        for (const child of this.children) {
-            if (child.id === id) {
-                return child;
-            }
-            const found = this.findNodeByIdRecursive(child, id);
-            if (found) {
-                return found;
-            }
+  /**
+   * Changes the type of a node.
+   * @param {SyntaxNode} node - The node to change
+   * @param {string} newType - The new type
+   */
+  changeNodeType(node, newType) {
+    node.type = newType;
+
+    // Reset type-specific attributes
+    switch (newType) {
+      case 'list-item':
+        if (!node.attributes.ordered) {
+          node.attributes = { ordered: false, indent: 0 };
         }
-        return null;
-    }
-
-    /**
-     * Recursively finds a node by ID.
-     * @param {SyntaxNode} node - The node to search in
-     * @param {string} id - The ID to find
-     * @returns {SyntaxNode|null}
-     */
-    findNodeByIdRecursive(node, id) {
-        for (const child of node.children) {
-            if (child.id === id) {
-                return child;
-            }
-            const found = this.findNodeByIdRecursive(child, id);
-            if (found) {
-                return found;
-            }
+        break;
+      case 'code-block':
+        if (!node.attributes.language) {
+          node.attributes = { language: '' };
         }
-        return null;
+        break;
+      default:
+        node.attributes = {};
     }
+  }
+
+  /**
+   * Applies formatting to a selection.
+   * @param {{startLine: number, startColumn: number, endLine: number, endColumn: number}} selection
+   * @param {string} format - The format to apply
+   */
+  applyFormat(selection, format) {
+    // Find the node containing the selection
+    const node = this.findNodeAtPosition(selection.startLine, selection.startColumn);
+    if (!node) return;
+
+    // Apply the format to the content
+    const content = node.content;
+    const lines = content.split('\n');
+
+    // For simplicity, assuming single-line selection within a node
+    const startOffset = this.getOffsetInNode(node, selection.startLine, selection.startColumn);
+    const endOffset = this.getOffsetInNode(node, selection.endLine, selection.endColumn);
+
+    const before = content.substring(0, startOffset);
+    const selected = content.substring(startOffset, endOffset);
+    const after = content.substring(endOffset);
+
+    let formatted;
+    switch (format) {
+      case 'bold':
+        formatted = `**${selected}**`;
+        break;
+      case 'italic':
+        formatted = `*${selected}*`;
+        break;
+      case 'code':
+        formatted = `\`${selected}\``;
+        break;
+      case 'strikethrough':
+        formatted = `~~${selected}~~`;
+        break;
+      case 'subscript':
+        formatted = `<sub>${selected}</sub>`;
+        break;
+      case 'superscript':
+        formatted = `<sup>${selected}</sup>`;
+        break;
+      case 'link':
+        formatted = `[${selected}](url)`;
+        break;
+      default:
+        formatted = selected;
+    }
+
+    node.content = before + formatted + after;
+  }
+
+  /**
+   * Gets the offset within a node for a line/column position.
+   * @param {SyntaxNode} node - The node
+   * @param {number} line - The line number (0-based)
+   * @param {number} column - The column number (0-based)
+   * @returns {number}
+   */
+  getOffsetInNode(node, line, column) {
+    const nodeStartLine = node.startLine;
+    const relativeLine = line - nodeStartLine;
+
+    const lines = node.content.split('\n');
+    let offset = 0;
+
+    for (let i = 0; i < relativeLine && i < lines.length; i++) {
+      offset += lines[i].length + 1; // +1 for newline
+    }
+
+    return offset + Math.min(column, lines[relativeLine]?.length ?? 0);
+  }
+
+  /**
+   * Converts the tree to markdown.
+   * @returns {string}
+   */
+  toMarkdown() {
+    const lines = [];
+
+    for (const child of this.children) {
+      lines.push(child.toMarkdown());
+    }
+
+    return lines.join('\n\n');
+  }
+
+  /**
+   * Creates a deep clone of the tree.
+   * @returns {SyntaxTree}
+   */
+  clone() {
+    const cloned = new SyntaxTree();
+
+    for (const child of this.children) {
+      cloned.appendChild(child.clone());
+    }
+
+    return cloned;
+  }
+
+  /**
+   * Gets the total number of nodes in the tree.
+   * @returns {number}
+   */
+  getNodeCount() {
+    let count = 0;
 
     /**
-     * Finds the node at a given position.
-     * Recurses into container nodes (e.g. html-block) to find the
-     * deepest (leaf) node that contains the position.
-     * @param {number} line - The line number (0-based)
-     * @param {number} column - The column number (0-based)
-     * @returns {SyntaxNode|null}
+     * @param {SyntaxNode[]} nodes
      */
-    findNodeAtPosition(line, column) {
-        for (const child of this.children) {
-            if (line >= child.startLine && line <= child.endLine) {
-                return this.findDeepestNodeAtPosition(child, line, column);
-            }
-        }
-        return null;
-    }
+    const countRecursive = (nodes) => {
+      for (const node of nodes) {
+        count++;
+        countRecursive(node.children);
+      }
+    };
 
-    /**
-     * Recursively descends into a node's children to find the deepest
-     * node that contains the given line position.
-     * @param {SyntaxNode} node
-     * @param {number} line
-     * @param {number} column
-     * @returns {SyntaxNode}
-     */
-    findDeepestNodeAtPosition(node, line, column) {
-        if (node.children.length > 0) {
-            for (const child of node.children) {
-                if (line >= child.startLine && line <= child.endLine) {
-                    return this.findDeepestNodeAtPosition(child, line, column);
-                }
-            }
-        }
-        return node;
-    }
-
-    /**
-     * Changes the type of a node.
-     * @param {SyntaxNode} node - The node to change
-     * @param {string} newType - The new type
-     */
-    changeNodeType(node, newType) {
-        node.type = newType;
-
-        // Reset type-specific attributes
-        switch (newType) {
-            case 'list-item':
-                if (!node.attributes.ordered) {
-                    node.attributes = { ordered: false, indent: 0 };
-                }
-                break;
-            case 'code-block':
-                if (!node.attributes.language) {
-                    node.attributes = { language: '' };
-                }
-                break;
-            default:
-                node.attributes = {};
-        }
-    }
-
-    /**
-     * Applies formatting to a selection.
-     * @param {{startLine: number, startColumn: number, endLine: number, endColumn: number}} selection
-     * @param {string} format - The format to apply
-     */
-    applyFormat(selection, format) {
-        // Find the node containing the selection
-        const node = this.findNodeAtPosition(selection.startLine, selection.startColumn);
-        if (!node) return;
-
-        // Apply the format to the content
-        const content = node.content;
-        const lines = content.split('\n');
-
-        // For simplicity, assuming single-line selection within a node
-        const startOffset = this.getOffsetInNode(node, selection.startLine, selection.startColumn);
-        const endOffset = this.getOffsetInNode(node, selection.endLine, selection.endColumn);
-
-        const before = content.substring(0, startOffset);
-        const selected = content.substring(startOffset, endOffset);
-        const after = content.substring(endOffset);
-
-        let formatted;
-        switch (format) {
-            case 'bold':
-                formatted = `**${selected}**`;
-                break;
-            case 'italic':
-                formatted = `*${selected}*`;
-                break;
-            case 'code':
-                formatted = `\`${selected}\``;
-                break;
-            case 'strikethrough':
-                formatted = `~~${selected}~~`;
-                break;
-            case 'subscript':
-                formatted = `<sub>${selected}</sub>`;
-                break;
-            case 'superscript':
-                formatted = `<sup>${selected}</sup>`;
-                break;
-            case 'link':
-                formatted = `[${selected}](url)`;
-                break;
-            default:
-                formatted = selected;
-        }
-
-        node.content = before + formatted + after;
-    }
-
-    /**
-     * Gets the offset within a node for a line/column position.
-     * @param {SyntaxNode} node - The node
-     * @param {number} line - The line number (0-based)
-     * @param {number} column - The column number (0-based)
-     * @returns {number}
-     */
-    getOffsetInNode(node, line, column) {
-        const nodeStartLine = node.startLine;
-        const relativeLine = line - nodeStartLine;
-
-        const lines = node.content.split('\n');
-        let offset = 0;
-
-        for (let i = 0; i < relativeLine && i < lines.length; i++) {
-            offset += lines[i].length + 1; // +1 for newline
-        }
-
-        return offset + Math.min(column, lines[relativeLine]?.length ?? 0);
-    }
-
-    /**
-     * Converts the tree to markdown.
-     * @returns {string}
-     */
-    toMarkdown() {
-        const lines = [];
-
-        for (const child of this.children) {
-            lines.push(child.toMarkdown());
-        }
-
-        return lines.join('\n\n');
-    }
-
-    /**
-     * Creates a deep clone of the tree.
-     * @returns {SyntaxTree}
-     */
-    clone() {
-        const cloned = new SyntaxTree();
-
-        for (const child of this.children) {
-            cloned.appendChild(child.clone());
-        }
-
-        return cloned;
-    }
-
-    /**
-     * Gets the total number of nodes in the tree.
-     * @returns {number}
-     */
-    getNodeCount() {
-        let count = 0;
-
-        /**
-         * @param {SyntaxNode[]} nodes
-         */
-        const countRecursive = (nodes) => {
-            for (const node of nodes) {
-                count++;
-                countRecursive(node.children);
-            }
-        };
-
-        countRecursive(this.children);
-        return count;
-    }
+    countRecursive(this.children);
+    return count;
+  }
 }

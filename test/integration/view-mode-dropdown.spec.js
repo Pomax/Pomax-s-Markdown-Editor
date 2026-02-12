@@ -20,83 +20,83 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+  await electronApp.close();
 });
 
 test('view mode toggle has a visible label', async () => {
-    const label = page.locator('.toolbar-view-mode-label');
-    await expect(label).toBeVisible();
-    await expect(label).toHaveText('View:');
+  const label = page.locator('.toolbar-view-mode-label');
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText('View:');
 });
 
 test('view mode toggle defaults to Focused Writing', async () => {
-    const toggle = page.locator('.toolbar-view-mode-toggle');
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveText('Focused Writing');
+  const toggle = page.locator('.toolbar-view-mode-toggle');
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveText('Focused Writing');
 });
 
 test('clicking toggle switches editor to source mode', async () => {
-    // Load content so we have a heading to test against.
-    await loadContent(page, readmeContent);
+  // Load content so we have a heading to test against.
+  await loadContent(page, readmeContent);
 
-    const toggle = page.locator('.toolbar-view-mode-toggle');
+  const toggle = page.locator('.toolbar-view-mode-toggle');
 
-    // Click to switch to source mode.
-    await toggle.click();
+  // Click to switch to source mode.
+  await toggle.click();
 
-    await expect(toggle).toHaveText('Source View');
+  await expect(toggle).toHaveText('Source View');
 
-    // The editor's data-view-mode attribute should reflect the change.
-    const editor = page.locator('#editor');
-    await expect(editor).toHaveAttribute('data-view-mode', 'source');
+  // The editor's data-view-mode attribute should reflect the change.
+  const editor = page.locator('#editor');
+  await expect(editor).toHaveAttribute('data-view-mode', 'source');
 
-    // In source mode, headings always show their `#` syntax.
-    const firstLine = page.locator('#editor .md-line').first();
-    const text = await firstLine.innerText();
-    expect(text).toContain("# Pomax's Markdown Editor");
+  // In source mode, headings always show their `#` syntax.
+  const firstLine = page.locator('#editor .md-line').first();
+  const text = await firstLine.innerText();
+  expect(text).toContain("# Pomax's Markdown Editor");
 });
 
 test('clicking toggle again switches editor back to focused mode', async () => {
-    const toggle = page.locator('.toolbar-view-mode-toggle');
+  const toggle = page.locator('.toolbar-view-mode-toggle');
 
-    // Click to switch back to focused mode.
-    await toggle.click();
+  // Click to switch back to focused mode.
+  await toggle.click();
 
-    await expect(toggle).toHaveText('Focused Writing');
+  await expect(toggle).toHaveText('Focused Writing');
 
-    const editor = page.locator('#editor');
-    await expect(editor).toHaveAttribute('data-view-mode', 'focused');
+  const editor = page.locator('#editor');
+  await expect(editor).toHaveAttribute('data-view-mode', 'focused');
 
-    // Defocus the editor so no node is focused.
-    await defocusEditor(page);
+  // Defocus the editor so no node is focused.
+  await defocusEditor(page);
 
-    // In focused mode, unfocused headings hide their `#` syntax.
-    const firstLine = page.locator('#editor .md-line').first();
-    const text = await firstLine.innerText();
-    expect(text).not.toContain('#');
-    expect(text).toContain("Pomax's Markdown Editor");
+  // In focused mode, unfocused headings hide their `#` syntax.
+  const firstLine = page.locator('#editor .md-line').first();
+  const text = await firstLine.innerText();
+  expect(text).not.toContain('#');
+  expect(text).toContain("Pomax's Markdown Editor");
 });
 
 test('toggle stays in sync when view mode changes via menu', async () => {
-    const toggle = page.locator('.toolbar-view-mode-toggle');
+  const toggle = page.locator('.toolbar-view-mode-toggle');
 
-    // Start in focused mode from the previous test.
-    await expect(toggle).toHaveText('Focused Writing');
+  // Start in focused mode from the previous test.
+  await expect(toggle).toHaveText('Focused Writing');
 
-    // Switch to source via the IPC (simulating a menu action).
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+  // Switch to source via the IPC (simulating a menu action).
+  await page.evaluate(() => window.electronAPI?.setSourceView());
+  await page.locator('#editor[data-view-mode="source"]').waitFor();
 
-    // The toggle should reflect the new mode.
-    await expect(toggle).toHaveText('Source View');
+  // The toggle should reflect the new mode.
+  await expect(toggle).toHaveText('Source View');
 
-    // Switch back via IPC.
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+  // Switch back via IPC.
+  await page.evaluate(() => window.electronAPI?.setFocusedView());
+  await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
-    await expect(toggle).toHaveText('Focused Writing');
+  await expect(toggle).toHaveText('Focused Writing');
 });

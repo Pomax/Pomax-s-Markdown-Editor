@@ -14,49 +14,49 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+  await electronApp.close();
 });
 
 test('reload preserves document content', async () => {
-    const editor = page.locator('#editor');
-    await editor.click();
+  const editor = page.locator('#editor');
+  await editor.click();
 
-    // Type some content
-    await page.keyboard.type('# Hello');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('This is a test document.');
+  // Type some content
+  await page.keyboard.type('# Hello');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('This is a test document.');
 
-    // Grab the text before reload
-    const contentBefore = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-    expect(contentBefore).toContain('# Hello');
-    expect(contentBefore).toContain('This is a test document.');
+  // Grab the text before reload
+  const contentBefore = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+  expect(contentBefore).toContain('# Hello');
+  expect(contentBefore).toContain('This is a test document.');
 
-    // Trigger reload via the IPC API
-    await page.evaluate(() => window.electronAPI?.reload());
+  // Trigger reload via the IPC API
+  await page.evaluate(() => window.electronAPI?.reload());
 
-    // Wait for the page to fully reload and the editor to re-initialise
-    await page.waitForFunction(
-        () => {
-            return document.readyState === 'complete' && !!window.editorAPI;
-        },
-        { timeout: 10000 },
-    );
+  // Wait for the page to fully reload and the editor to re-initialise
+  await page.waitForFunction(
+    () => {
+      return document.readyState === 'complete' && !!window.editorAPI;
+    },
+    { timeout: 10000 },
+  );
 
-    // Give the restore script time to run
-    await page.waitForFunction(
-        () => {
-            const content = window.editorAPI?.getContent() ?? '';
-            return content.includes('Hello');
-        },
-        { timeout: 10000 },
-    );
+  // Give the restore script time to run
+  await page.waitForFunction(
+    () => {
+      const content = window.editorAPI?.getContent() ?? '';
+      return content.includes('Hello');
+    },
+    { timeout: 10000 },
+  );
 
-    // Verify the content survived the reload
-    const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-    expect(contentAfter).toContain('# Hello');
-    expect(contentAfter).toContain('This is a test document.');
+  // Verify the content survived the reload
+  const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+  expect(contentAfter).toContain('# Hello');
+  expect(contentAfter).toContain('This is a test document.');
 });
