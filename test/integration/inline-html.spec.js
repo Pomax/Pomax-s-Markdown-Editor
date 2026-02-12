@@ -222,8 +222,7 @@ test('focused line shows raw HTML tags', async () => {
 });
 
 test('mixed markdown and HTML inline tags render correctly', async () => {
-    const markdown =
-        'Water is H<sub>2</sub>O and **bold** with `code`\n\nSecond paragraph';
+    const markdown = 'Water is H<sub>2</sub>O and **bold** with `code`\n\nSecond paragraph';
     await loadAndDefocusFirstLine(markdown);
 
     const firstLine = page.locator('#editor .md-line').first();

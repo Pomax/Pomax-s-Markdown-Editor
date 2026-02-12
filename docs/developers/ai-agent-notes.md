@@ -1,25 +1,43 @@
 # AI Agent Notes
 
+This project is exclusive meant for working on using Claude Opu 4.6s
+If Opus is not available, **never** switch models, and instead
+**always** inform the user that you cannot proceed.
+
+If you are not Claude Opus, inform the user that you are not, and stop.
+
 This document captures hard-won lessons, conventions, and technical details
 that an AI coding assistant should know when working on this project.  Read
 this **before** doing any work.
+
+If you need to access any files outside of the repo, you are **never*
+allowed to do so. You are **forbidden* from access any part of the file
+system outside of the repo
 
 ---
 
 ## Working Environment
 
-- **OS**: Windows.  Default shell is `cmd.exe`.
-- **Shell rule**: If you are not already in the standard command prompt, run
-  `cmd` first.  Then check whether you are already in the project directory —
+In all environments:
+
+- **Shell rule**: Check whether you are already in the project directory —
   `cd` is almost never necessary because the terminal usually opens in the
   workspace root already.  **Do not blindly prepend `cd …` to commands.**
 - **Never** use `2>&1` in terminal commands.
 - The project root is the workspace folder (the one containing `package.json`).
 
+Additionally, if we're in Windows:
+
+- **Shell**: The default shell should be `cmd.exe`.
+- **Shell rule**: If you are not already in the standard command prompt, run
+  `cmd` first. This rule adds onto, and does not replace, the general shell rule.
+
+
 ## Doing work
 
 - **Always** create a new git branch off of `main` for any new work
 - **Never** start modifying files without asking whether what you thought up makes sense or whether assumptions made during the reasoning step missed anything.
+- When a task needs to be split into parts, **always** create a commit once unit and integration tests pass before moving from one part to the next, so as not to lose progress.
 
 ## Test Runners
 
@@ -29,15 +47,14 @@ this **before** doing any work.
 | Integration | `npx playwright test`    | Playwright + Firefox          |
 
 - **Do not** use vitest — the project does not use it.
-- The user runs the full Playwright suite themselves; you can run individual
   spec files to verify your work, but do not run the entire suite without
   being asked.
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
 - When a task needs to be split into parts, **always** write integration tests before moving from one part to the next.
 - Integration tests take a long time to finish: always run the command with an `&& echo "FINISHED"` and wait for that to show up on the terminal.
-- **Never** interrupt the tests by trying to run another command
-- **Never** issue a ctrl-C, ask the user what to do, instead.
+- **Never** interrupt the tests by trying to run another command, instead ask the user whether the tests are done.
+- **Never** issue a ctrl-C, instead ask the user whether the tests are done.
 
 ## Playwright Pitfalls
 
