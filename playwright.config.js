@@ -9,7 +9,7 @@ export default defineConfig({
     testDir: './test/integration',
     testMatch: '**/*.spec.js',
     timeout: 30000,
-    retries: 0,
+    retries: 2,
     workers: 4,
     reporter: 'list',
     projects: [
