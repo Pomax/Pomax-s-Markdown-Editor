@@ -10,6 +10,7 @@
 /// <reference path="../../../types.d.ts" />
 
 import { ImageModal } from '../image/image-modal.js';
+import { LinkModal } from '../link/link-modal.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { TableModal } from '../table/table-modal.js';
@@ -267,6 +268,12 @@ export class Editor {
          * @type {ImageModal|null}
          */
         this._imageModal = null;
+
+        /**
+         * Lazily-created link modal for click-to-edit in focused mode.
+         * @type {LinkModal|null}
+         */
+        this._linkModal = null;
     }
 
     /**
@@ -1629,6 +1636,20 @@ export class Editor {
             }
         }
 
+        // In focused view, clicking a link prevents navigation and opens
+        // the edit modal so the user can change the text or URL.
+        if (this.viewMode === 'focused' && event.target instanceof HTMLElement) {
+            const anchor = event.target.closest('a');
+            if (anchor) {
+                event.preventDefault();
+                const node = this.getCurrentNode();
+                if (node) {
+                    this._openLinkModalForNode(node, anchor);
+                }
+                return;
+            }
+        }
+
         // In focused view the active node shows raw markdown syntax, so we
         // must re-render whenever the cursor moves to a different node.
         if (
@@ -2099,6 +2120,39 @@ export class Editor {
             node.attributes.href = result.href;
         }
         this.treeCursor = { nodeId: node.id, offset: result.alt.length };
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Opens the link-editing modal pre-filled with the link data extracted
+     * from the clicked `<a>` element and, on submit, replaces it in the
+     * node's raw content.
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLAnchorElement} anchor - The clicked `<a>` element
+     */
+    async _openLinkModalForNode(node, anchor) {
+        if (!this._linkModal) {
+            this._linkModal = new LinkModal();
+        }
+
+        const oldText = anchor.textContent ?? '';
+        const oldUrl = anchor.getAttribute('href') ?? '';
+        const oldMarkdown = `[${oldText}](${oldUrl})`;
+
+        // Ensure the link actually exists in the node's raw content
+        if (!node.content.includes(oldMarkdown)) return;
+
+        const result = await this._linkModal.open({ text: oldText, url: oldUrl });
+        if (!result) return;
+
+        if (!this.syntaxTree) return;
+        const before = this.syntaxTree.toMarkdown();
+
+        const newMarkdown = `[${result.text}](${result.url})`;
+        node.content = node.content.replace(oldMarkdown, newMarkdown);
+
+        this.treeCursor = { nodeId: node.id, offset: 0 };
         this.recordAndRender(before);
     }
 
