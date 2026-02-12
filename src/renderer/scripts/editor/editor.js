@@ -11,6 +11,7 @@
 
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
+import { TableModal } from '../table/table-modal.js';
 import { FocusedRenderer } from './renderers/focused-renderer.js';
 import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
@@ -200,6 +201,8 @@ function renderedOffsetToRawOffset(content, renderedOffset) {
  * @property {number} offset - The character offset within the node's content
  * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
  *     html-block container's opening or closing tag line (source view only).
+ * @property {number} [cellRow] - Row index for table cell editing (0 = header).
+ * @property {number} [cellCol] - Column index for table cell editing.
  */
 
 /**
@@ -356,6 +359,23 @@ export class Editor {
                 const htmlEl = /** @type {HTMLElement} */ (el);
                 const nodeId = htmlEl.dataset?.nodeId;
                 if (nodeId) {
+                    // Check if the cursor is inside a table cell
+                    const node = this.syntaxTree?.findNodeById(nodeId);
+                    if (node?.type === 'table' && this.viewMode === 'focused') {
+                        const pos = this._computeTableCellPosition(
+                            htmlEl,
+                            range.startContainer,
+                            range.startOffset,
+                        );
+                        this.treeCursor = {
+                            nodeId,
+                            offset: pos.offset,
+                            cellRow: pos.cellRow,
+                            cellCol: pos.cellCol,
+                        };
+                        return;
+                    }
+
                     const offset = this.computeOffsetInContent(
                         htmlEl,
                         range.startContainer,
@@ -477,6 +497,191 @@ export class Editor {
     }
 
     // ──────────────────────────────────────────────
+    //  Table cell helpers
+    // ──────────────────────────────────────────────
+
+    /**
+     * Returns the text of a specific table cell.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {number} row - Row index (0 = header row)
+     * @param {number} col - Column index
+     * @returns {string}
+     */
+    _getTableCellText(node, row, col) {
+        const data = TableModal.parseTableContent(node.content);
+        return data.cells[row]?.[col] ?? '';
+    }
+
+    /**
+     * Replaces a single cell's text and rebuilds the table markdown.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {number} row - Row index (0 = header)
+     * @param {number} col - Column index
+     * @param {string} newText - New cell content
+     */
+    _setTableCellText(node, row, col, newText) {
+        const data = TableModal.parseTableContent(node.content);
+        if (data.cells[row]) {
+            data.cells[row][col] = newText;
+        }
+        node.content = this._buildTableMarkdown(data);
+    }
+
+    /**
+     * Returns the dimensions of a table node.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {{totalRows: number, columns: number}}
+     */
+    _getTableDimensions(node) {
+        const data = TableModal.parseTableContent(node.content);
+        return { totalRows: data.cells.length, columns: data.columns };
+    }
+
+    /**
+     * Appends an empty row to a table node and rebuilds the markdown.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {number} The row index of the new row
+     */
+    _tableAddRow(node) {
+        const data = TableModal.parseTableContent(node.content);
+        const newRow = Array.from({ length: data.columns }, () => '');
+        data.cells.push(newRow);
+        data.rows++;
+        node.content = this._buildTableMarkdown(data);
+        return data.cells.length - 1;
+    }
+
+    /**
+     * Determines the cell (row, col) the DOM cursor is in for a table node.
+     * Walks up from the cursor node to find the `<th>` or `<td>` element,
+     * then counts its position within the table.
+     * @param {HTMLElement} nodeElement - The `[data-node-id]` wrapper
+     * @param {Node} cursorNode - The DOM node the cursor is in
+     * @param {number} cursorOffset - The offset within cursorNode
+     * @returns {{cellRow: number, cellCol: number, offset: number}}
+     */
+    _computeTableCellPosition(nodeElement, cursorNode, cursorOffset) {
+        // Walk up to find the <th> or <td>
+        /** @type {HTMLElement|null} */
+        let cell = null;
+        /** @type {Node|null} */
+        let el = cursorNode;
+        while (el && el !== nodeElement) {
+            if (el.nodeType === Node.ELEMENT_NODE) {
+                const tag = /** @type {HTMLElement} */ (el).tagName;
+                if (tag === 'TH' || tag === 'TD') {
+                    cell = /** @type {HTMLElement} */ (el);
+                    break;
+                }
+            }
+            el = el.parentNode;
+        }
+
+        if (!cell) {
+            return { cellRow: 0, cellCol: 0, offset: 0 };
+        }
+
+        // Determine column index
+        const row = /** @type {HTMLTableRowElement} */ (cell.parentNode);
+        const cellCol = Array.from(row.cells).indexOf(/** @type {HTMLTableCellElement} */ (cell));
+
+        // Determine row index (header row = 0, body rows = 1+)
+        let cellRow = 0;
+        const thead = nodeElement.querySelector('thead');
+        const tbody = nodeElement.querySelector('tbody');
+        if (cell.tagName === 'TH') {
+            cellRow = 0;
+        } else if (tbody) {
+            const bodyRow = /** @type {HTMLTableRowElement} */ (cell.parentNode);
+            cellRow = Array.from(tbody.rows).indexOf(bodyRow) + 1;
+        }
+
+        // Compute text offset within the cell
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+        let offset = 0;
+        let textNode = walker.nextNode();
+        while (textNode) {
+            if (textNode === cursorNode) {
+                return { cellRow, cellCol, offset: offset + cursorOffset };
+            }
+            offset += textNode.textContent?.length ?? 0;
+            textNode = walker.nextNode();
+        }
+
+        return { cellRow, cellCol, offset: Math.min(cursorOffset, offset) };
+    }
+
+    /**
+     * Places the DOM cursor inside a specific table cell.
+     * @param {HTMLElement} nodeElement - The `[data-node-id]` wrapper
+     * @param {number} row - Row index (0 = header)
+     * @param {number} col - Column index
+     * @param {number} offset - Character offset within the cell text
+     */
+    _placeTableCellCursor(nodeElement, row, col, offset) {
+        /** @type {HTMLTableCellElement|null} */
+        let cell = null;
+        if (row === 0) {
+            const thead = nodeElement.querySelector('thead');
+            if (thead) {
+                const headerRow = thead.querySelector('tr');
+                cell = headerRow?.cells[col] ?? null;
+            }
+        } else {
+            const tbody = nodeElement.querySelector('tbody');
+            if (tbody) {
+                const bodyRow = tbody.rows[row - 1];
+                cell = bodyRow?.cells[col] ?? null;
+            }
+        }
+        if (!cell) return;
+
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+        let remaining = offset;
+        let textNode = walker.nextNode();
+
+        // If the cell is empty, place cursor at the start of the cell element
+        if (!textNode) {
+            const sel = window.getSelection();
+            if (sel) {
+                const range = document.createRange();
+                range.selectNodeContents(cell);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+            return;
+        }
+
+        while (textNode) {
+            const len = textNode.textContent?.length ?? 0;
+            if (remaining <= len) {
+                const sel = window.getSelection();
+                if (sel) {
+                    const range = document.createRange();
+                    range.setStart(textNode, remaining);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+                return;
+            }
+            remaining -= len;
+            textNode = walker.nextNode();
+        }
+
+        // Offset beyond available text — place at end
+        const sel = window.getSelection();
+        if (sel) {
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+
+    // ──────────────────────────────────────────────
     //  Rendering
     // ──────────────────────────────────────────────
 
@@ -526,6 +731,21 @@ export class Editor {
             );
         }
         if (!nodeElement) return;
+
+        // ── Table cell cursor placement ──
+        if (
+            this.viewMode === 'focused' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            this._placeTableCellCursor(
+                /** @type {HTMLElement} */ (nodeElement),
+                this.treeCursor.cellRow,
+                this.treeCursor.cellCol,
+                this.treeCursor.offset,
+            );
+            return;
+        }
 
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
 
@@ -658,6 +878,17 @@ export class Editor {
             return;
         }
 
+        // ── Tab / Shift+Tab inside a table ──
+        if (event.key === 'Tab' && this.viewMode === 'focused') {
+            this.syncCursorFromDOM();
+            const node = this.getCurrentNode();
+            if (node?.type === 'table' && this.treeCursor?.cellRow !== undefined) {
+                event.preventDefault();
+                this.handleTableTab(event.shiftKey);
+                return;
+            }
+        }
+
         // Navigation keys (arrows, Home, End, Page Up/Down), Tab, Escape, etc.
         // are left to their default browser behaviour so the cursor moves
         // naturally.  After the key is processed, `selectionchange` will fire
@@ -700,6 +931,28 @@ export class Editor {
         if (node.type === 'html-block' && node.children.length > 0) return;
 
         const before = this.syntaxTree.toMarkdown();
+
+        // ── Table cell editing ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            const cellText = this._getTableCellText(node, cellRow, cellCol);
+            const left = cellText.substring(0, offset);
+            const right = cellText.substring(offset);
+            this._setTableCellText(node, cellRow, cellCol, left + text + right);
+            this.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                cellRow,
+                cellCol,
+            };
+            this.recordAndRender(before);
+            return;
+        }
+
         const oldType = node.type;
 
         // Insert the text into the node's content at the cursor offset
@@ -793,6 +1046,31 @@ export class Editor {
 
         // html-block containers without tagPart are structural (focused view).
         if (node.type === 'html-block' && node.children.length > 0) return;
+
+        // ── Table cell backspace ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            if (offset > 0) {
+                const before = this.syntaxTree.toMarkdown();
+                const cellText = this._getTableCellText(node, cellRow, cellCol);
+                const left = cellText.substring(0, offset - 1);
+                const right = cellText.substring(offset);
+                this._setTableCellText(node, cellRow, cellCol, left + right);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    cellRow,
+                    cellCol,
+                };
+                this.recordAndRender(before);
+            }
+            // At offset 0 — no-op (don't merge cells or break table)
+            return;
+        }
 
         const before = this.syntaxTree.toMarkdown();
 
@@ -923,6 +1201,31 @@ export class Editor {
         // html-block containers without tagPart are structural (focused view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
+        // ── Table cell delete ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            const cellText = this._getTableCellText(node, cellRow, cellCol);
+            if (offset < cellText.length) {
+                const before = this.syntaxTree.toMarkdown();
+                const left = cellText.substring(0, offset);
+                const right = cellText.substring(offset + 1);
+                this._setTableCellText(node, cellRow, cellCol, left + right);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset,
+                    cellRow,
+                    cellCol,
+                };
+                this.recordAndRender(before);
+            }
+            // At end of cell — no-op
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset < node.content.length) {
@@ -1021,6 +1324,23 @@ export class Editor {
             return;
         }
 
+        // ── Enter inside a table → move to next row, same column ──
+        if (node.type === 'table' && this.treeCursor.cellRow !== undefined) {
+            const { cellRow, cellCol } = this.treeCursor;
+            const { totalRows } = this._getTableDimensions(node);
+            if (cellRow < totalRows - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol,
+                };
+                this.placeCursor();
+            }
+            // On last row — no-op
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         // ── Early conversion: ```lang + Enter → code block ──
@@ -1038,7 +1358,7 @@ export class Editor {
         if (node.type === 'code-block') {
             const left = node.content.substring(0, this.treeCursor.offset);
             const right = node.content.substring(this.treeCursor.offset);
-            node.content = left + '\n' + right;
+            node.content = `${left}\n${right}`;
             this.treeCursor = { nodeId: node.id, offset: left.length + 1 };
             this.recordAndRender(before);
             return;
@@ -1066,6 +1386,77 @@ export class Editor {
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
         this.recordAndRender(before);
+    }
+
+    /**
+     * Handles Tab / Shift+Tab inside a table — moves between cells.
+     * Tab on the last cell creates a new row.
+     * @param {boolean} shiftKey - True for Shift+Tab (move backward)
+     */
+    handleTableTab(shiftKey) {
+        const node = this.getCurrentNode();
+        if (
+            !node ||
+            !this.treeCursor ||
+            !this.syntaxTree ||
+            this.treeCursor.cellRow === undefined ||
+            this.treeCursor.cellCol === undefined
+        )
+            return;
+
+        const { cellRow, cellCol } = this.treeCursor;
+        const { totalRows, columns } = this._getTableDimensions(node);
+
+        if (shiftKey) {
+            // Move to previous cell
+            if (cellCol > 0) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol - 1,
+                };
+            } else if (cellRow > 0) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow - 1,
+                    cellCol: columns - 1,
+                };
+            }
+            // On first cell — no-op
+        } else {
+            // Move to next cell
+            if (cellCol < columns - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol + 1,
+                };
+            } else if (cellRow < totalRows - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol: 0,
+                };
+            } else {
+                // Last cell — add a new row
+                const before = this.syntaxTree.toMarkdown();
+                const newRowIdx = this._tableAddRow(node);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: newRowIdx,
+                    cellCol: 0,
+                };
+                this.recordAndRender(before);
+                return;
+            }
+        }
+
+        this.placeCursor();
     }
 
     // ──────────────────────────────────────────────
