@@ -53,12 +53,12 @@ function rawOffsetToRenderedOffset(content, rawOffset) {
         rawPos = matchStart;
 
         // Determine the inner content and its delimiters
-        const innerContent = match[1] ?? match[3] ?? match[4] ?? match[5] ??
-            match[6] ?? match[7] ?? match[8] ?? '';
+        const innerContent =
+            match[1] ?? match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? match[8] ?? '';
 
         if (match[1] !== undefined) {
             // Link: [text](href) — rendered text is just "text"
-            const openLen = 1;  // [
+            const openLen = 1; // [
             const innerLen = match[1].length;
             const closingLen = 2 + match[2].length + 1; // ](href)
 
@@ -171,8 +171,7 @@ function renderedOffsetToRawOffset(content, renderedOffset) {
             renderedPos += innerLen;
         } else {
             // Bold/italic/emphasis/strikethrough
-            const innerContent = match[3] ?? match[4] ?? match[5] ??
-                match[6] ?? match[7] ?? '';
+            const innerContent = match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? '';
             const raw = match[0];
             const delimLen = (raw.length - innerContent.length) / 2;
             const innerRenderedLen = rawOffsetToRenderedOffset(innerContent, innerContent.length);
@@ -449,7 +448,32 @@ export class Editor {
         if (!nodeId) return renderedOffset;
         const syntaxNode = this.syntaxTree?.findNodeById(nodeId);
         if (!syntaxNode) return renderedOffset;
+        if (!this._hasInlineFormatting(syntaxNode.type)) return renderedOffset;
         return renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
+    }
+
+    /**
+     * Returns whether a node type renders inline formatting via
+     * `renderInlineContent` / `renderInlineParts` and therefore needs
+     * offset mapping between raw markdown and rendered DOM text.
+     * @param {string} type
+     * @returns {boolean}
+     */
+    _hasInlineFormatting(type) {
+        switch (type) {
+            case 'paragraph':
+            case 'heading1':
+            case 'heading2':
+            case 'heading3':
+            case 'heading4':
+            case 'heading5':
+            case 'heading6':
+            case 'blockquote':
+            case 'list-item':
+                return true;
+            default:
+                return false;
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -507,10 +531,13 @@ export class Editor {
 
         // In focused mode the DOM shows rendered text (no markdown syntax),
         // so we must convert the raw tree offset to a rendered offset.
+        // Only applies to node types that render inline formatting (paragraph,
+        // heading, blockquote, list-item).  Other types (table, code-block,
+        // image, horizontal-rule) don't use inline markup rendering.
         let cursorOffset = this.treeCursor.offset;
         if (this.viewMode === 'focused') {
             const node = this.getCurrentNode();
-            if (node) {
+            if (node && this._hasInlineFormatting(node.type)) {
                 cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
             }
         }

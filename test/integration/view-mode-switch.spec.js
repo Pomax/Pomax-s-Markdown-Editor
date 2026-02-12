@@ -1,8 +1,8 @@
 /**
  * @fileoverview Integration test for switching between source and focused view modes.
- * Loads the project README.md, which places the cursor on the main h1,
- * then switches to focused writing mode and verifies that the heading
- * no longer shows the markdown `#` syntax prefix.
+ * Loads the project README.md, verifies source mode shows `#` syntax, then
+ * switches to focused writing mode and verifies WYSIWYG rendering (no `#`
+ * prefix on headings, even the active one).
  */
 
 import fs from 'node:fs';
@@ -32,20 +32,24 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
     // loadMarkdown places the cursor on the first node (the h1).
     await loadContent(page, readmeContent);
 
+    // The editor defaults to focused mode — switch to source first.
+    await page.evaluate(() => window.electronAPI?.setSourceView());
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
+
     // Sanity-check: in source view the first line should contain the `#` prefix.
     const firstLineSource = page.locator('#editor .md-line').first();
     const sourceText = await firstLineSource.innerText();
     expect(sourceText).toContain("# Pomax's Markdown Editor");
 
     // Switch to focused writing mode via the menu action IPC.
-    // The cursor is on the h1 (set by loadMarkdown), so the h1 IS the focused
-    // node and SHOULD still show the `#` prefix.
+    // In WYSIWYG mode ALL nodes render formatted output — even the active one.
     await page.evaluate(() => window.electronAPI?.setFocusedView());
     await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
     const firstLineFocusedOnH1 = page.locator('#editor .md-line').first();
     const focusedOnH1Text = await firstLineFocusedOnH1.innerText();
-    expect(focusedOnH1Text).toContain("# Pomax's Markdown Editor");
+    expect(focusedOnH1Text).not.toContain('#');
+    expect(focusedOnH1Text).toContain("Pomax's Markdown Editor");
 
     // The second line (a paragraph) should NOT show any source syntax.
     const secondLineFocused = page.locator('#editor .md-line').nth(1);
@@ -55,8 +59,7 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
     // Now defocus the editor so no node is focused, then verify.
     await defocusEditor(page);
 
-    // The first line (h1 "Markdown Editor") should NOT contain the `#` prefix
-    // because it is not the focused node in focused writing mode.
+    // The first line (h1) should still NOT contain the `#` prefix.
     const firstLineAfterClick = page.locator('#editor .md-line').first();
     const afterClickText = await firstLineAfterClick.innerText();
 

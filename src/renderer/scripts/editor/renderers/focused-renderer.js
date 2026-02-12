@@ -218,15 +218,6 @@ export class FocusedRenderer {
     renderHeading(node, element, isFocused) {
         const level = Number.parseInt(node.type.replace('heading', ''), 10);
 
-        if (isFocused) {
-            // Show syntax when focused
-            const prefix = `${'#'.repeat(level)} `;
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-heading-marker';
-            prefixSpan.textContent = prefix;
-            element.appendChild(prefixSpan);
-        }
-
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
         this.renderInlineContent(node.content, contentSpan, isFocused);
@@ -259,13 +250,6 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderBlockquote(node, element, isFocused) {
-        if (isFocused) {
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-blockquote-marker';
-            prefixSpan.textContent = '> ';
-            element.appendChild(prefixSpan);
-        }
-
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
         this.renderInlineContent(node.content, contentSpan, isFocused);
@@ -290,32 +274,18 @@ export class FocusedRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
-        if (isFocused) {
-            // Show fences when focused
-            const openFence = document.createElement('div');
-            openFence.className = 'md-code-fence md-syntax';
-            openFence.textContent = `\`\`\`${language}`;
-            element.appendChild(openFence);
-        }
-
         const codeContent = document.createElement('pre');
-        codeContent.className = 'md-code-content';
+        codeContent.className = 'md-code-content md-content';
 
         const code = document.createElement('code');
         if (isFocused) {
+            // Plain text when focused so cursor positions map 1:1
             code.textContent = node.content;
         } else {
             code.appendChild(highlight(node.content, language));
         }
         codeContent.appendChild(code);
         element.appendChild(codeContent);
-
-        if (isFocused) {
-            const closeFence = document.createElement('div');
-            closeFence.className = 'md-code-fence md-syntax';
-            closeFence.textContent = '```';
-            element.appendChild(closeFence);
-        }
 
         return element;
     }
@@ -334,21 +304,12 @@ export class FocusedRenderer {
         const isOrdered = attrs.ordered;
         const number = attrs.number || 1;
 
-        if (isFocused) {
-            const indentStr = '  '.repeat(indent);
-            const marker = isOrdered ? `${number}. ` : '- ';
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-list-marker';
-            prefixSpan.textContent = indentStr + marker;
-            element.appendChild(prefixSpan);
-        } else {
-            // Show bullet/number in formatted view
-            element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
-            element.style.display = 'list-item';
-            element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-            if (isOrdered && visualNumber != null) {
-                element.style.counterSet = `list-item ${visualNumber}`;
-            }
+        // Always show as a styled list item (WYSIWYG)
+        element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
+        element.style.display = 'list-item';
+        element.style.marginLeft = `${(indent + 1) * 1.5}em`;
+        if (isOrdered && visualNumber != null) {
+            element.style.counterSet = `list-item ${visualNumber}`;
         }
 
         const contentSpan = document.createElement('span');
@@ -371,40 +332,20 @@ export class FocusedRenderer {
         const alt = attrs.alt ?? node.content;
         const src = attrs.url ?? '';
 
-        if (isFocused) {
-            // Show raw syntax when focused
-            const contentSpan = document.createElement('span');
-            contentSpan.className = 'md-content';
-            if (attrs.href) {
-                contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
-            } else {
-                contentSpan.textContent = `![${alt}](${src})`;
-            }
-            element.appendChild(contentSpan);
+        // Always show rendered image (WYSIWYG)
+        const img = document.createElement('img');
+        img.className = 'md-image-preview';
+        img.src = this.resolveImageSrc(src);
+        img.alt = alt;
+        img.title = alt;
 
-            // Show a non-interactive preview below the syntax
-            const preview = document.createElement('img');
-            preview.className = 'md-image-preview md-image-preview--inert';
-            preview.src = this.resolveImageSrc(src);
-            preview.alt = alt;
-            preview.draggable = false;
-            element.appendChild(preview);
+        if (attrs.href) {
+            const link = document.createElement('a');
+            link.href = attrs.href;
+            link.appendChild(img);
+            element.appendChild(link);
         } else {
-            // Show rendered image
-            const img = document.createElement('img');
-            img.className = 'md-image-preview';
-            img.src = this.resolveImageSrc(src);
-            img.alt = alt;
-            img.title = alt;
-
-            if (attrs.href) {
-                const link = document.createElement('a');
-                link.href = attrs.href;
-                link.appendChild(img);
-                element.appendChild(link);
-            } else {
-                element.appendChild(img);
-            }
+            element.appendChild(img);
         }
 
         return element;
@@ -418,12 +359,9 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderHorizontalRule(node, element, isFocused) {
-        if (isFocused) {
-            element.textContent = '---';
-        } else {
-            const hr = document.createElement('hr');
-            element.appendChild(hr);
-        }
+        // Always show as a visual rule (WYSIWYG)
+        const hr = document.createElement('hr');
+        element.appendChild(hr);
         return element;
     }
 
@@ -435,20 +373,9 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderTable(node, element, isFocused) {
-        if (isFocused) {
-            // Show raw markdown when focused
-            const lines = node.content.split('\n');
-            for (const line of lines) {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'md-table-row';
-                lineDiv.textContent = line;
-                element.appendChild(lineDiv);
-            }
-        } else {
-            // Render as HTML table
-            const table = this.parseTableToHTML(node.content);
-            element.appendChild(table);
-        }
+        // Always render as HTML table (WYSIWYG)
+        const table = this.parseTableToHTML(node.content);
+        element.appendChild(table);
         return element;
     }
 
