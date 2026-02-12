@@ -9,6 +9,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { ImageModal } from '../image/image-modal.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { TableModal } from '../table/table-modal.js';
@@ -260,6 +261,12 @@ export class Editor {
          * @type {boolean}
          */
         this._isRendering = false;
+
+        /**
+         * Lazily-created image modal for click-to-edit in focused mode.
+         * @type {ImageModal|null}
+         */
+        this._imageModal = null;
     }
 
     /**
@@ -1613,6 +1620,15 @@ export class Editor {
 
         this.selectionManager.updateFromDOM();
 
+        // In focused view, clicking an image opens the edit modal directly.
+        if (this.viewMode === 'focused' && this.treeCursor) {
+            const clickedNode = this.getCurrentNode();
+            if (clickedNode?.type === 'image') {
+                this._openImageModalForNode(clickedNode);
+                return;
+            }
+        }
+
         // In focused view the active node shows raw markdown syntax, so we
         // must re-render whenever the cursor moves to a different node.
         if (
@@ -2042,6 +2058,47 @@ export class Editor {
             this.treeCursor = { nodeId: imageNode.id, offset: alt.length };
         }
 
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Opens the image modal pre-filled with the given image node's data,
+     * and applies any edits back to the parse tree.
+     * Used when clicking an image in focused mode.
+     * @param {SyntaxNode} node - The image node to edit
+     */
+    async _openImageModalForNode(node) {
+        if (!this._imageModal) {
+            this._imageModal = new ImageModal();
+        }
+
+        const existing = {
+            alt: node.attributes.alt ?? node.content,
+            src: node.attributes.url ?? '',
+            href: node.attributes.href ?? '',
+        };
+
+        const result = await this._imageModal.open(existing);
+        if (!result) return;
+
+        let src = result.src;
+
+        // Use a relative path when the setting is enabled
+        if (this.ensureLocalPaths) {
+            src = await this.toRelativeImagePath(src);
+        }
+
+        // Update the node directly — after the modal closes the cursor
+        // may have moved, so we cannot rely on insertOrUpdateImage which
+        // reads getCurrentNode().
+        if (!this.syntaxTree) return;
+        const before = this.syntaxTree.toMarkdown();
+        node.content = result.alt;
+        node.attributes = { alt: result.alt, url: src };
+        if (result.href) {
+            node.attributes.href = result.href;
+        }
+        this.treeCursor = { nodeId: node.id, offset: result.alt.length };
         this.recordAndRender(before);
     }
 
