@@ -1630,7 +1630,7 @@ export class Editor {
         // In focused view, clicking an image opens the edit modal directly.
         if (this.viewMode === 'focused' && this.treeCursor) {
             const clickedNode = this.getCurrentNode();
-            if (clickedNode?.type === 'image') {
+            if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
                 this._openImageModalForNode(clickedNode);
                 return;
             }
@@ -2104,6 +2104,20 @@ export class Editor {
 
         let src = result.src;
 
+        // Handle file rename if the filename changed
+        if (result.rename && window.electronAPI) {
+            const originalFilename = this._extractFilename(src);
+            if (result.rename !== originalFilename) {
+                const renameResult = await window.electronAPI.renameImage(
+                    this._resolveImagePath(src),
+                    result.rename,
+                );
+                if (renameResult.success && renameResult.newPath) {
+                    src = this._replaceFilename(src, result.rename);
+                }
+            }
+        }
+
         // Use a relative path when the setting is enabled
         if (this.ensureLocalPaths) {
             src = await this.toRelativeImagePath(src);
@@ -2124,6 +2138,46 @@ export class Editor {
     }
 
     /**
+     * Extracts the filename from a path or URL.
+     * @param {string} src
+     * @returns {string}
+     */
+    _extractFilename(src) {
+        if (!src) return '';
+        const clean = src.split('?')[0].split('#')[0];
+        const parts = clean.split(/[/\\]/);
+        return parts[parts.length - 1] || '';
+    }
+
+    /**
+     * Replaces the filename portion of a path or URL.
+     * @param {string} src - Original path
+     * @param {string} newName - New filename
+     * @returns {string}
+     */
+    _replaceFilename(src, newName) {
+        const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
+        if (lastSlash === -1) return newName;
+        return src.substring(0, lastSlash + 1) + newName;
+    }
+
+    /**
+     * Resolves an image src to an absolute file path for rename operations.
+     * Strips file:/// prefix and decodes URI encoding.
+     * @param {string} src
+     * @returns {string}
+     */
+    _resolveImagePath(src) {
+        let resolved = src;
+        if (resolved.startsWith('file:///')) {
+            resolved = resolved.slice(8);
+        }
+        resolved = decodeURIComponent(resolved);
+        resolved = resolved.replace(/\//g, '\\');
+        return resolved;
+    }
+
+    /**
      * Opens the link-editing modal pre-filled with the link data extracted
      * from the clicked `<a>` element and, on submit, replaces it in the
      * node's raw content.
@@ -2136,14 +2190,25 @@ export class Editor {
             this._linkModal = new LinkModal();
         }
 
-        const oldText = anchor.textContent ?? '';
-        const oldUrl = anchor.getAttribute('href') ?? '';
-        const oldMarkdown = `[${oldText}](${oldUrl})`;
+        const clickedUrl = anchor.getAttribute('href') ?? '';
 
-        // Ensure the link actually exists in the node's raw content
-        if (!node.content.includes(oldMarkdown)) return;
+        // Find the link in the raw markdown by matching the URL, which is
+        // more reliable than anchor.textContent (the latter loses nested
+        // formatting like **bold**).
+        const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
+        let oldMarkdown = '';
+        let oldText = '';
+        for (const match of node.content.matchAll(linkRe)) {
+            if (match[2] === clickedUrl) {
+                oldMarkdown = match[0];
+                oldText = match[1];
+                break;
+            }
+        }
 
-        const result = await this._linkModal.open({ text: oldText, url: oldUrl });
+        if (!oldMarkdown) return;
+
+        const result = await this._linkModal.open({ text: oldText, url: clickedUrl });
         if (!result) return;
 
         if (!this.syntaxTree) return;

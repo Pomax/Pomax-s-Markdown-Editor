@@ -148,7 +148,32 @@ export class FocusedRenderer {
         const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
         if (!existing) return;
 
-        const updated = this.renderNode(node, isFocused);
+        // Compute visualNumber for ordered list items so the counter
+        // displays correctly during incremental refocus.
+        let visualNumber;
+        if (node.type === 'list-item' && node.attributes.ordered) {
+            const children = tree.children;
+            const indent = node.attributes.indent || 0;
+            let count = 0;
+            for (const child of children) {
+                if (child.type === 'list-item' && child.attributes.ordered) {
+                    const childIndent = child.attributes.indent || 0;
+                    if (childIndent === indent) {
+                        count++;
+                    } else {
+                        count = 1;
+                    }
+                } else {
+                    count = 0;
+                }
+                if (child.id === nodeId) {
+                    visualNumber = count;
+                    break;
+                }
+            }
+        }
+
+        const updated = this.renderNode(node, isFocused, visualNumber);
         if (updated) {
             existing.replaceWith(updated);
         }
@@ -192,13 +217,14 @@ export class FocusedRenderer {
                 return this.renderListItem(node, element, isFocused, visualNumber);
 
             case 'horizontal-rule':
-                return this.renderHorizontalRule(node, element, isFocused);
+                return this.renderHorizontalRule(node, element);
 
             case 'image':
-                return this.renderImage(node, element, isFocused);
+            case 'linked-image':
+                return this.renderImage(node, element);
 
             case 'table':
-                return this.renderTable(node, element, isFocused);
+                return this.renderTable(node, element);
 
             case 'html-block':
                 return this.renderHtmlBlock(node, element, isFocused);
@@ -220,7 +246,7 @@ export class FocusedRenderer {
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply heading styling
@@ -238,7 +264,7 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderParagraph(node, element, isFocused) {
-        this.renderInlineContent(node.content, element, isFocused);
+        this.renderInlineContent(node.content, element);
         return element;
     }
 
@@ -252,7 +278,7 @@ export class FocusedRenderer {
     renderBlockquote(node, element, isFocused) {
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply blockquote styling
@@ -314,7 +340,7 @@ export class FocusedRenderer {
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         return element;
@@ -324,10 +350,9 @@ export class FocusedRenderer {
      * Renders an image node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderImage(node, element, isFocused) {
+    renderImage(node, element) {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const alt = attrs.alt ?? node.content;
         const src = attrs.url ?? '';
@@ -355,10 +380,9 @@ export class FocusedRenderer {
      * Renders a horizontal rule node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderHorizontalRule(node, element, isFocused) {
+    renderHorizontalRule(node, element) {
         // Always show as a visual rule (WYSIWYG)
         const hr = document.createElement('hr');
         element.appendChild(hr);
@@ -369,10 +393,9 @@ export class FocusedRenderer {
      * Renders a table node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderTable(node, element, isFocused) {
+    renderTable(node, element) {
         // Always render as HTML table (WYSIWYG)
         const table = this.parseTableToHTML(node.content);
         element.appendChild(table);
@@ -621,9 +644,8 @@ export class FocusedRenderer {
      * Renders inline content with formatting.
      * @param {string} content - The content to render
      * @param {HTMLElement} container - The container element
-     * @param {boolean} isFocused - Whether the parent is focused
      */
-    renderInlineContent(content, container, isFocused) {
+    renderInlineContent(content, container) {
         if (!content) {
             container.appendChild(document.createElement('br'));
             return;
