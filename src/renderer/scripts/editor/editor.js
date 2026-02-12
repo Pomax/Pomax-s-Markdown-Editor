@@ -707,6 +707,15 @@ export class Editor {
         const right = node.content.substring(this.treeCursor.offset);
         const newContent = left + text + right;
 
+        // Code-block content is raw code, not markdown — skip re-parsing
+        // to avoid misidentifying code lines as headings, lists, etc.
+        if (node.type === 'code-block') {
+            node.content = newContent;
+            this.treeCursor = { nodeId: node.id, offset: left.length + text.length };
+            this.recordAndRender(before);
+            return;
+        }
+
         // Re-parse the full markdown line to detect type changes
         let newOffset;
         const wasBareText = !!node.attributes.bareText;
@@ -714,9 +723,15 @@ export class Editor {
         const parsed = this.parser.parseSingleLine(fullLine);
 
         if (parsed) {
-            node.type = parsed.type;
-            node.content = parsed.content;
-            node.attributes = parsed.attributes;
+            // Suppress code-block fence conversion during typing — the
+            // fence pattern (```) is converted on Enter instead.
+            if (parsed.type === 'code-block' && oldType !== 'code-block') {
+                node.content = newContent;
+            } else {
+                node.type = parsed.type;
+                node.content = parsed.content;
+                node.attributes = parsed.attributes;
+            }
         } else {
             node.content = newContent;
         }
@@ -787,6 +802,14 @@ export class Editor {
             const right = node.content.substring(this.treeCursor.offset);
             const newContent = left + right;
             const oldType = node.type;
+
+            // Code-block content is raw code — skip re-parsing.
+            if (node.type === 'code-block') {
+                node.content = newContent;
+                this.treeCursor = { nodeId: node.id, offset: left.length };
+                this.recordAndRender(before);
+                return;
+            }
 
             // Re-parse to detect type changes
             let newOffset;
@@ -909,6 +932,14 @@ export class Editor {
             const newContent = left + right;
             const oldType = node.type;
 
+            // Code-block content is raw code — skip re-parsing.
+            if (node.type === 'code-block') {
+                node.content = newContent;
+                this.treeCursor = { nodeId: node.id, offset: left.length };
+                this.recordAndRender(before);
+                return;
+            }
+
             // Re-parse to detect type changes
             let newOffset;
             const wasBareText = !!node.attributes.bareText;
@@ -991,6 +1022,27 @@ export class Editor {
         }
 
         const before = this.syntaxTree.toMarkdown();
+
+        // ── Early conversion: ```lang + Enter → code block ──
+        const fenceMatch = node.type === 'paragraph' && node.content.match(/^```(\w*)$/);
+        if (fenceMatch) {
+            node.type = 'code-block';
+            node.content = '';
+            node.attributes = { language: fenceMatch[1] || '' };
+            this.treeCursor = { nodeId: node.id, offset: 0 };
+            this.recordAndRender(before);
+            return;
+        }
+
+        // ── Enter inside a code block → insert newline ──
+        if (node.type === 'code-block') {
+            const left = node.content.substring(0, this.treeCursor.offset);
+            const right = node.content.substring(this.treeCursor.offset);
+            node.content = left + '\n' + right;
+            this.treeCursor = { nodeId: node.id, offset: left.length + 1 };
+            this.recordAndRender(before);
+            return;
+        }
 
         const contentBefore = node.content.substring(0, this.treeCursor.offset);
         const contentAfter = node.content.substring(this.treeCursor.offset);
