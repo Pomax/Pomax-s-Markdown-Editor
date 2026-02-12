@@ -9,12 +9,81 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { tokenizeInline } from '../parser/inline-tokenizer.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { FocusedRenderer } from './renderers/focused-renderer.js';
 import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { UndoManager } from './undo-manager.js';
+
+// ──────────────────────────────────────────────
+//  Offset mapping helper
+// ──────────────────────────────────────────────
+
+/**
+ * Converts a rendered-text offset (as seen in the DOM for non-active
+ * nodes in focused view) to the corresponding raw markdown content offset.
+ *
+ * Non-active nodes render inline formatting: `**bold**` becomes
+ * `<strong>bold</strong>` in the DOM, so the DOM text "bold" is 4 chars
+ * while the raw source `**bold**` is 8.  This function uses the inline
+ * tokenizer to walk the raw content and track both positions.
+ *
+ * @param {string} content         - The raw markdown content of the node
+ * @param {number} renderedOffset  - The offset in rendered (DOM) text
+ * @returns {number} The corresponding offset in raw content
+ */
+function renderedOffsetToRawOffset(content, renderedOffset) {
+  if (!content || renderedOffset === 0) return 0;
+
+  const tokens = tokenizeInline(content);
+
+  let rawPos = 0;
+  let renderedPos = 0;
+
+  for (const token of tokens) {
+    const rawLen = token.raw.length;
+    let renderedLen;
+
+    switch (token.type) {
+      case 'text':
+        renderedLen = token.raw.length;
+        break;
+      case 'code':
+        renderedLen = token.content?.length ?? 0;
+        break;
+      default:
+        // Markup tokens (delimiter opens/closes, link-href, html tags)
+        // contribute zero rendered characters.
+        renderedLen = 0;
+        break;
+    }
+
+    if (renderedPos + renderedLen >= renderedOffset) {
+      // Target offset falls within this token
+      const posInToken = renderedOffset - renderedPos;
+
+      if (token.type === 'code') {
+        // Rendered content starts after the opening backtick
+        return rawPos + 1 + posInToken;
+      }
+
+      if (token.type === 'text') {
+        return rawPos + posInToken;
+      }
+
+      // Markup token with 0 rendered length — return its start
+      return rawPos;
+    }
+
+    rawPos += rawLen;
+    renderedPos += renderedLen;
+  }
+
+  // Past the end — return end of raw content
+  return rawPos;
+}
 
 /**
  * @typedef {'source' | 'focused'} ViewMode
@@ -117,6 +186,10 @@ export class Editor {
     this.container.addEventListener('click', this.handleClick.bind(this));
     this.container.addEventListener('focus', this.handleFocus.bind(this));
     this.container.addEventListener('blur', this.handleBlur.bind(this));
+
+    // Clipboard operations
+    this.container.addEventListener('copy', this.handleCopy.bind(this));
+    this.container.addEventListener('cut', this.handleCut.bind(this));
 
     // Drag-and-drop image support
     this.container.addEventListener('dragover', this.handleDragOver.bind(this));
@@ -1116,6 +1189,313 @@ export class Editor {
         this.placeCursor();
       }
     }
+  }
+
+  // ──────────────────────────────────────────────
+  //  Clipboard operations (copy, cut)
+  // ──────────────────────────────────────────────
+
+  /**
+   * Handles copy events — writes the markdown source of the selected
+   * range to the clipboard.
+   * @param {ClipboardEvent} event
+   */
+  handleCopy(event) {
+    const range = this.resolveSelectionRange();
+    if (!range) return; // collapsed or outside editor — let browser default
+
+    event.preventDefault();
+
+    const markdown = this.getSelectedMarkdown(
+      range.startNodeId,
+      range.startOffset,
+      range.endNodeId,
+      range.endOffset,
+    );
+
+    if (event.clipboardData) {
+      event.clipboardData.setData('text/plain', markdown);
+    }
+  }
+
+  /**
+   * Handles cut events — copies the selected markdown to the clipboard
+   * and removes the selected range from the document.
+   * @param {ClipboardEvent} event
+   */
+  handleCut(event) {
+    const range = this.resolveSelectionRange();
+    if (!range) return;
+
+    event.preventDefault();
+
+    const markdown = this.getSelectedMarkdown(
+      range.startNodeId,
+      range.startOffset,
+      range.endNodeId,
+      range.endOffset,
+    );
+
+    if (event.clipboardData) {
+      event.clipboardData.setData('text/plain', markdown);
+    }
+
+    this.deleteSelectedRange(
+      range.startNodeId,
+      range.startOffset,
+      range.endNodeId,
+      range.endOffset,
+    );
+  }
+
+  /**
+   * Maps the current DOM selection to tree positions (raw content offsets).
+   * Returns null if the selection is collapsed or outside the editor.
+   * @returns {{startNodeId: string, startOffset: number, endNodeId: string, endOffset: number}|null}
+   */
+  resolveSelectionRange() {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+
+    // Ensure the selection is inside the editor
+    if (
+      !this.container.contains(range.startContainer) ||
+      !this.container.contains(range.endContainer)
+    ) {
+      return null;
+    }
+
+    const start = this.resolveEndpoint(range.startContainer, range.startOffset);
+    const end = this.resolveEndpoint(range.endContainer, range.endOffset);
+
+    if (!start || !end) return null;
+
+    return {
+      startNodeId: start.nodeId,
+      startOffset: start.offset,
+      endNodeId: end.nodeId,
+      endOffset: end.offset,
+    };
+  }
+
+  /**
+   * Resolves a DOM position (container + offset) to a tree position
+   * (nodeId + raw content offset).
+   *
+   * In source view and for the active node in focused view, the DOM text
+   * matches the raw markdown content so offsets are used directly.  For
+   * non-active nodes in focused view, inline formatting is rendered (e.g.
+   * `**bold**` → `<strong>bold</strong>`), so the rendered text offset must
+   * be converted back to a raw content offset via the inline tokenizer.
+   *
+   * @param {Node} container - The DOM node from the Selection range
+   * @param {number} offset  - The offset within that DOM node
+   * @returns {{nodeId: string, offset: number}|null}
+   */
+  resolveEndpoint(container, offset) {
+    // Walk up from the container to find the nearest data-node-id element
+    /** @type {Node|null} */
+    let el = container;
+    while (el && el !== this.container) {
+      if (el.nodeType === Node.ELEMENT_NODE) {
+        const htmlEl = /** @type {HTMLElement} */ (el);
+        const nodeId = htmlEl.dataset?.nodeId;
+        if (nodeId) {
+          const renderedOffset = this.computeOffsetInContent(htmlEl, container, offset);
+
+          const treeNode = this.syntaxTree?.findNodeById(nodeId);
+          if (!treeNode) return null;
+
+          // In focused view, non-active nodes render inline formatting,
+          // so the DOM text offset differs from the raw content offset.
+          const needsConversion = this.viewMode === 'focused' && this.treeCursor?.nodeId !== nodeId;
+
+          const rawOffset = needsConversion
+            ? renderedOffsetToRawOffset(treeNode.content, renderedOffset)
+            : renderedOffset;
+
+          return { nodeId, offset: rawOffset };
+        }
+      }
+      el = el.parentNode;
+    }
+
+    return null;
+  }
+
+  /**
+   * Collects all leaf nodes (editable content nodes) in document order.
+   * Recurses into container nodes (e.g. html-block with children) to
+   * reach the actual content nodes.
+   * @returns {SyntaxNode[]}
+   */
+  collectLeafNodes() {
+    if (!this.syntaxTree) return [];
+
+    /** @type {SyntaxNode[]} */
+    const nodes = [];
+
+    /** @param {SyntaxNode[]} list */
+    const collect = (list) => {
+      for (const node of list) {
+        if (node.children.length > 0) {
+          collect(node.children);
+        } else {
+          nodes.push(node);
+        }
+      }
+    };
+
+    collect(this.syntaxTree.children);
+    return nodes;
+  }
+
+  /**
+   * Extracts the markdown source text for the range between two tree
+   * positions.
+   *
+   * @param {string} startNodeId - ID of the node where selection starts
+   * @param {number} startOffset - Raw content offset in the start node
+   * @param {string} endNodeId   - ID of the node where selection ends
+   * @param {number} endOffset   - Raw content offset in the end node
+   * @returns {string}
+   */
+  getSelectedMarkdown(startNodeId, startOffset, endNodeId, endOffset) {
+    if (!this.syntaxTree) return '';
+
+    const allNodes = this.collectLeafNodes();
+    const startIdx = allNodes.findIndex((n) => n.id === startNodeId);
+    const endIdx = allNodes.findIndex((n) => n.id === endNodeId);
+
+    if (startIdx === -1 || endIdx === -1) return '';
+
+    if (startIdx === endIdx) {
+      // Selection within a single node
+      const node = allNodes[startIdx];
+      const sliced = node.content.substring(startOffset, endOffset);
+      return this.buildMarkdownLine(node.type, sliced, node.attributes);
+    }
+
+    // Multi-node selection
+    const parts = [];
+
+    for (let i = startIdx; i <= endIdx; i++) {
+      const node = allNodes[i];
+      let content;
+
+      if (i === startIdx) {
+        content = node.content.substring(startOffset);
+      } else if (i === endIdx) {
+        content = node.content.substring(0, endOffset);
+      } else {
+        content = node.content;
+      }
+
+      parts.push(this.buildMarkdownLine(node.type, content, node.attributes));
+    }
+
+    return parts.join('\n\n');
+  }
+
+  /**
+   * Deletes the selected range from the document (used by cut).
+   *
+   * For a single-node selection, removes the selected portion of content.
+   * For multi-node selections, trims the start and end nodes and removes
+   * all nodes in between, then merges the remaining halves.
+   *
+   * @param {string} startNodeId
+   * @param {number} startOffset
+   * @param {string} endNodeId
+   * @param {number} endOffset
+   */
+  deleteSelectedRange(startNodeId, startOffset, endNodeId, endOffset) {
+    if (!this.syntaxTree) return;
+
+    const before = this.syntaxTree.toMarkdown();
+    const allNodes = this.collectLeafNodes();
+
+    const startIdx = allNodes.findIndex((n) => n.id === startNodeId);
+    const endIdx = allNodes.findIndex((n) => n.id === endNodeId);
+
+    if (startIdx === -1 || endIdx === -1) return;
+
+    if (startIdx === endIdx) {
+      // Single-node selection — remove the selected portion
+      const node = allNodes[startIdx];
+      node.content = node.content.substring(0, startOffset) + node.content.substring(endOffset);
+
+      // Re-parse to detect type changes
+      const wasBareText = !!node.attributes.bareText;
+      const fullLine = this.buildMarkdownLine(node.type, node.content, node.attributes);
+      const parsed = this.parser.parseSingleLine(fullLine);
+      if (parsed) {
+        node.type = parsed.type;
+        node.content = parsed.content;
+        node.attributes = parsed.attributes;
+      }
+      if (wasBareText) node.attributes.bareText = true;
+
+      // Demote to paragraph if content is now empty (matches backspace behaviour)
+      if (node.content === '' && node.type !== 'paragraph') {
+        node.type = 'paragraph';
+        node.attributes = {};
+      }
+
+      this.treeCursor = { nodeId: node.id, offset: startOffset };
+    } else {
+      // Multi-node selection
+      const startNode = allNodes[startIdx];
+      const endNode = allNodes[endIdx];
+
+      // Keep content before the selection start + content after the selection end
+      const keepBefore = startNode.content.substring(0, startOffset);
+      const keepAfter = endNode.content.substring(endOffset);
+
+      // Merge into the start node
+      startNode.content = keepBefore + keepAfter;
+
+      // Re-parse the merged content
+      const wasBareText = !!startNode.attributes.bareText;
+      const fullLine = this.buildMarkdownLine(
+        startNode.type,
+        startNode.content,
+        startNode.attributes,
+      );
+      const parsed = this.parser.parseSingleLine(fullLine);
+      if (parsed) {
+        startNode.type = parsed.type;
+        startNode.content = parsed.content;
+        startNode.attributes = parsed.attributes;
+      }
+      if (wasBareText) startNode.attributes.bareText = true;
+
+      // If the merged content is empty and the node type has a syntax
+      // prefix (heading, blockquote, list-item), demote to a plain
+      // paragraph so we don't leave behind a dangling `# ` / `> ` etc.
+      if (startNode.content === '' && startNode.type !== 'paragraph') {
+        startNode.type = 'paragraph';
+        startNode.attributes = {};
+      }
+
+      // Remove the end node and all middle nodes (iterate in reverse
+      // so that splicing doesn't shift indices for earlier removals).
+      for (let i = endIdx; i > startIdx; i--) {
+        const node = allNodes[i];
+        const siblings = this.getSiblings(node);
+        const idx = siblings.indexOf(node);
+        if (idx !== -1) {
+          siblings.splice(idx, 1);
+          node.parent = null;
+        }
+      }
+
+      this.treeCursor = { nodeId: startNode.id, offset: startOffset };
+    }
+
+    this.recordAndRender(before);
   }
 
   // ──────────────────────────────────────────────

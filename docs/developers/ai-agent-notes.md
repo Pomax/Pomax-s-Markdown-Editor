@@ -14,6 +14,10 @@ If you need to access any files outside of the repo, you are **never*
 allowed to do so. You are **forbidden* from access any part of the file
 system outside of the repo
 
+Also, you must ask whether the requirements are correct if it turns out
+your implementation attempts or ideas keep yielding the wrong result
+based on requirements and acceptance criteria.
+
 ---
 
 ## Working Environment
@@ -46,15 +50,16 @@ Additionally, if we're in Windows:
 | Unit        | `npm run test:unit`      | Node.js native test runner    |
 | Integration | `npx playwright test`    | Playwright + Firefox          |
 
-- **Do not** use vitest — the project does not use it.
-  spec files to verify your work, but do not run the entire suite without
-  being asked.
+
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
+- Integration test data that is used in multiple tests should be housed in markdown documents in the `test/fixtures` folder, not hardcoded as string variables.
 - When a task needs to be split into parts, **always** write integration tests before moving from one part to the next.
 - Integration tests take a long time to finish: always run the command with an `&& echo "FINISHED"` and wait for that to show up on the terminal.
-- **Never** interrupt the tests by trying to run another command, instead ask the user whether the tests are done.
-- **Never** issue a ctrl-C, instead ask the user whether the tests are done.
+
+- **Do not** use vitest — the project does not use it.
+- **Do not** interrupt the tests by trying to run another command, instead ask the user whether the tests are done.
+- **Do not** issue a ctrl-C, instead ask the user whether the tests are done.
 
 ## Playwright Pitfalls
 
