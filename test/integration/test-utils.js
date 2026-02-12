@@ -37,6 +37,8 @@ export async function launchApp(extraArgs = []) {
             ...extraArgs,
         ],
         env: { ...process.env, TESTING: '1' },
+        // macOS CI runners are slower to launch Electron; give extra time.
+        timeout: process.platform === 'darwin' ? 60_000 : 30_000,
     });
     const page = await electronApp.firstWindow();
 
