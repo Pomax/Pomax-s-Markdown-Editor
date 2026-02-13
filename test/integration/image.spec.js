@@ -78,7 +78,10 @@ test('inserting an image via the modal creates an image node', async () => {
 });
 
 test('image node displays raw syntax in source mode', async () => {
-    // We should still be in source mode with the image from the previous test
+    // Switch to source view so image shows raw syntax.
+    await page.evaluate(() => window.electronAPI?.setSourceView());
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
+
     const imageNode = page.locator('.md-image .md-content');
     await expect(imageNode).toBeVisible();
 

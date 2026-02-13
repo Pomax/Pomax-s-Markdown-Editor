@@ -7,6 +7,7 @@
  * @typedef {import('../../parser/syntax-tree.js').NodeAttributes} NodeAttributes
  */
 
+import { buildInlineTree, tokenizeInline } from '../../parser/inline-tokenizer.js';
 import { highlight } from '../syntax-highlighter.js';
 
 /**
@@ -148,7 +149,32 @@ export class FocusedRenderer {
         const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
         if (!existing) return;
 
-        const updated = this.renderNode(node, isFocused);
+        // Compute visualNumber for ordered list items so the counter
+        // displays correctly during incremental refocus.
+        let visualNumber;
+        if (node.type === 'list-item' && node.attributes.ordered) {
+            const children = tree.children;
+            const indent = node.attributes.indent || 0;
+            let count = 0;
+            for (const child of children) {
+                if (child.type === 'list-item' && child.attributes.ordered) {
+                    const childIndent = child.attributes.indent || 0;
+                    if (childIndent === indent) {
+                        count++;
+                    } else {
+                        count = 1;
+                    }
+                } else {
+                    count = 0;
+                }
+                if (child.id === nodeId) {
+                    visualNumber = count;
+                    break;
+                }
+            }
+        }
+
+        const updated = this.renderNode(node, isFocused, visualNumber);
         if (updated) {
             existing.replaceWith(updated);
         }
@@ -192,13 +218,14 @@ export class FocusedRenderer {
                 return this.renderListItem(node, element, isFocused, visualNumber);
 
             case 'horizontal-rule':
-                return this.renderHorizontalRule(node, element, isFocused);
+                return this.renderHorizontalRule(node, element);
 
             case 'image':
-                return this.renderImage(node, element, isFocused);
+            case 'linked-image':
+                return this.renderImage(node, element);
 
             case 'table':
-                return this.renderTable(node, element, isFocused);
+                return this.renderTable(node, element);
 
             case 'html-block':
                 return this.renderHtmlBlock(node, element, isFocused);
@@ -218,18 +245,9 @@ export class FocusedRenderer {
     renderHeading(node, element, isFocused) {
         const level = Number.parseInt(node.type.replace('heading', ''), 10);
 
-        if (isFocused) {
-            // Show syntax when focused
-            const prefix = `${'#'.repeat(level)} `;
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-heading-marker';
-            prefixSpan.textContent = prefix;
-            element.appendChild(prefixSpan);
-        }
-
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply heading styling
@@ -247,7 +265,7 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderParagraph(node, element, isFocused) {
-        this.renderInlineContent(node.content, element, isFocused);
+        this.renderInlineContent(node.content, element);
         return element;
     }
 
@@ -259,16 +277,9 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderBlockquote(node, element, isFocused) {
-        if (isFocused) {
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-blockquote-marker';
-            prefixSpan.textContent = '> ';
-            element.appendChild(prefixSpan);
-        }
-
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply blockquote styling
@@ -290,32 +301,18 @@ export class FocusedRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
-        if (isFocused) {
-            // Show fences when focused
-            const openFence = document.createElement('div');
-            openFence.className = 'md-code-fence md-syntax';
-            openFence.textContent = `\`\`\`${language}`;
-            element.appendChild(openFence);
-        }
-
         const codeContent = document.createElement('pre');
-        codeContent.className = 'md-code-content';
+        codeContent.className = 'md-code-content md-content';
 
         const code = document.createElement('code');
         if (isFocused) {
+            // Plain text when focused so cursor positions map 1:1
             code.textContent = node.content;
         } else {
             code.appendChild(highlight(node.content, language));
         }
         codeContent.appendChild(code);
         element.appendChild(codeContent);
-
-        if (isFocused) {
-            const closeFence = document.createElement('div');
-            closeFence.className = 'md-code-fence md-syntax';
-            closeFence.textContent = '```';
-            element.appendChild(closeFence);
-        }
 
         return element;
     }
@@ -334,26 +331,17 @@ export class FocusedRenderer {
         const isOrdered = attrs.ordered;
         const number = attrs.number || 1;
 
-        if (isFocused) {
-            const indentStr = '  '.repeat(indent);
-            const marker = isOrdered ? `${number}. ` : '- ';
-            const prefixSpan = document.createElement('span');
-            prefixSpan.className = 'md-syntax md-list-marker';
-            prefixSpan.textContent = indentStr + marker;
-            element.appendChild(prefixSpan);
-        } else {
-            // Show bullet/number in formatted view
-            element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
-            element.style.display = 'list-item';
-            element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-            if (isOrdered && visualNumber != null) {
-                element.style.counterSet = `list-item ${visualNumber}`;
-            }
+        // Always show as a styled list item (WYSIWYG)
+        element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
+        element.style.display = 'list-item';
+        element.style.marginLeft = `${(indent + 1) * 1.5}em`;
+        if (isOrdered && visualNumber != null) {
+            element.style.counterSet = `list-item ${visualNumber}`;
         }
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan, isFocused);
+        this.renderInlineContent(node.content, contentSpan);
         element.appendChild(contentSpan);
 
         return element;
@@ -363,48 +351,27 @@ export class FocusedRenderer {
      * Renders an image node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderImage(node, element, isFocused) {
+    renderImage(node, element) {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const alt = attrs.alt ?? node.content;
         const src = attrs.url ?? '';
 
-        if (isFocused) {
-            // Show raw syntax when focused
-            const contentSpan = document.createElement('span');
-            contentSpan.className = 'md-content';
-            if (attrs.href) {
-                contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
-            } else {
-                contentSpan.textContent = `![${alt}](${src})`;
-            }
-            element.appendChild(contentSpan);
+        // Always show rendered image (WYSIWYG)
+        const img = document.createElement('img');
+        img.className = 'md-image-preview';
+        img.src = this.resolveImageSrc(src);
+        img.alt = alt;
+        img.title = alt;
 
-            // Show a non-interactive preview below the syntax
-            const preview = document.createElement('img');
-            preview.className = 'md-image-preview md-image-preview--inert';
-            preview.src = this.resolveImageSrc(src);
-            preview.alt = alt;
-            preview.draggable = false;
-            element.appendChild(preview);
+        if (attrs.href) {
+            const link = document.createElement('a');
+            link.href = attrs.href;
+            link.appendChild(img);
+            element.appendChild(link);
         } else {
-            // Show rendered image
-            const img = document.createElement('img');
-            img.className = 'md-image-preview';
-            img.src = this.resolveImageSrc(src);
-            img.alt = alt;
-            img.title = alt;
-
-            if (attrs.href) {
-                const link = document.createElement('a');
-                link.href = attrs.href;
-                link.appendChild(img);
-                element.appendChild(link);
-            } else {
-                element.appendChild(img);
-            }
+            element.appendChild(img);
         }
 
         return element;
@@ -414,16 +381,12 @@ export class FocusedRenderer {
      * Renders a horizontal rule node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderHorizontalRule(node, element, isFocused) {
-        if (isFocused) {
-            element.textContent = '---';
-        } else {
-            const hr = document.createElement('hr');
-            element.appendChild(hr);
-        }
+    renderHorizontalRule(node, element) {
+        // Always show as a visual rule (WYSIWYG)
+        const hr = document.createElement('hr');
+        element.appendChild(hr);
         return element;
     }
 
@@ -431,24 +394,12 @@ export class FocusedRenderer {
      * Renders a table node.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
-     * @param {boolean} isFocused
      * @returns {HTMLElement}
      */
-    renderTable(node, element, isFocused) {
-        if (isFocused) {
-            // Show raw markdown when focused
-            const lines = node.content.split('\n');
-            for (const line of lines) {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'md-table-row';
-                lineDiv.textContent = line;
-                element.appendChild(lineDiv);
-            }
-        } else {
-            // Render as HTML table
-            const table = this.parseTableToHTML(node.content);
-            element.appendChild(table);
-        }
+    renderTable(node, element) {
+        // Always render as HTML table (WYSIWYG)
+        const table = this.parseTableToHTML(node.content);
+        element.appendChild(table);
         return element;
     }
 
@@ -694,17 +645,10 @@ export class FocusedRenderer {
      * Renders inline content with formatting.
      * @param {string} content - The content to render
      * @param {HTMLElement} container - The container element
-     * @param {boolean} isFocused - Whether the parent is focused
      */
-    renderInlineContent(content, container, isFocused) {
+    renderInlineContent(content, container) {
         if (!content) {
             container.appendChild(document.createElement('br'));
-            return;
-        }
-
-        if (isFocused) {
-            // Show raw syntax when focused
-            container.appendChild(document.createTextNode(content));
             return;
         }
 
@@ -713,74 +657,68 @@ export class FocusedRenderer {
     }
 
     /**
-     * Recursively parses inline markdown and appends rendered DOM nodes.
+     * Tokenizes inline markdown + HTML and appends rendered DOM nodes.
      * @param {string} content - The raw inline markdown text
      * @param {HTMLElement} container - The element to append rendered nodes to
      */
     renderInlineParts(content, container) {
-        // Combined pattern — order matters:
-        //   1. Links first so brackets aren't consumed by other patterns.
-        //   2. ** bold before * italic so ** isn't split into two *.
-        //   3. __ emphasis before _ emphasis for the same reason.
-        //   4. Code, strikethrough last.
-        // Note: _ and __ are BOTH emphasis (<em>), only ** is bold (<strong>).
-        const combined =
-            /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+        const tokens = tokenizeInline(content);
+        const tree = buildInlineTree(tokens);
+        this.appendSegments(tree, container);
+    }
 
-        let lastIndex = 0;
-
-        for (const match of content.matchAll(combined)) {
-            // Append any plain text before this match.
-            if (match.index > lastIndex) {
-                container.appendChild(
-                    document.createTextNode(content.slice(lastIndex, match.index)),
-                );
+    /**
+     * Recursively walks an InlineSegment tree and appends DOM nodes.
+     * @param {import('../../parser/inline-tokenizer.js').InlineSegment[]} segments
+     * @param {HTMLElement} container
+     */
+    appendSegments(segments, container) {
+        for (const seg of segments) {
+            switch (seg.type) {
+                case 'text':
+                    container.appendChild(document.createTextNode(seg.text ?? ''));
+                    break;
+                case 'code': {
+                    const code = document.createElement('code');
+                    code.textContent = seg.content ?? '';
+                    container.appendChild(code);
+                    break;
+                }
+                case 'bold': {
+                    const strong = document.createElement('strong');
+                    this.appendSegments(seg.children ?? [], strong);
+                    container.appendChild(strong);
+                    break;
+                }
+                case 'italic': {
+                    const em = document.createElement('em');
+                    this.appendSegments(seg.children ?? [], em);
+                    container.appendChild(em);
+                    break;
+                }
+                case 'strikethrough': {
+                    const del = document.createElement('del');
+                    this.appendSegments(seg.children ?? [], del);
+                    container.appendChild(del);
+                    break;
+                }
+                case 'link': {
+                    const a = document.createElement('a');
+                    a.href = seg.href ?? '';
+                    this.appendSegments(seg.children ?? [], a);
+                    container.appendChild(a);
+                    break;
+                }
+                default: {
+                    // HTML inline tags (sub, sup, mark, u, etc.)
+                    if (seg.tag) {
+                        const el = document.createElement(seg.tag);
+                        this.appendSegments(seg.children ?? [], el);
+                        container.appendChild(el);
+                    }
+                    break;
+                }
             }
-
-            if (match[1] !== undefined) {
-                // Link: [text](href)
-                const a = document.createElement('a');
-                a.href = match[2];
-                this.renderInlineParts(match[1], a);
-                container.appendChild(a);
-            } else if (match[3] !== undefined) {
-                // Bold: **text**
-                const strong = document.createElement('strong');
-                this.renderInlineParts(match[3], strong);
-                container.appendChild(strong);
-            } else if (match[4] !== undefined) {
-                // Emphasis: __text__
-                const em = document.createElement('em');
-                this.renderInlineParts(match[4], em);
-                container.appendChild(em);
-            } else if (match[5] !== undefined) {
-                // Emphasis: *text*
-                const em = document.createElement('em');
-                this.renderInlineParts(match[5], em);
-                container.appendChild(em);
-            } else if (match[6] !== undefined) {
-                // Emphasis: _text_
-                const em = document.createElement('em');
-                this.renderInlineParts(match[6], em);
-                container.appendChild(em);
-            } else if (match[7] !== undefined) {
-                // Strikethrough: ~~text~~
-                const del = document.createElement('del');
-                this.renderInlineParts(match[7], del);
-                container.appendChild(del);
-            } else if (match[8] !== undefined) {
-                // Inline code: `text` — no recursion (code is literal).
-                const code = document.createElement('code');
-                code.textContent = match[8];
-                container.appendChild(code);
-            }
-
-            lastIndex = match.index + match[0].length;
-        }
-
-        // Append any trailing plain text.
-        if (lastIndex < content.length) {
-            container.appendChild(document.createTextNode(content.slice(lastIndex)));
         }
     }
 }

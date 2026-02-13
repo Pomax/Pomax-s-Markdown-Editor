@@ -392,6 +392,12 @@ export class SyntaxTree {
             case 'strikethrough':
                 formatted = `~~${selected}~~`;
                 break;
+            case 'subscript':
+                formatted = `<sub>${selected}</sub>`;
+                break;
+            case 'superscript':
+                formatted = `<sup>${selected}</sup>`;
+                break;
             case 'link':
                 formatted = `[${selected}](url)`;
                 break;

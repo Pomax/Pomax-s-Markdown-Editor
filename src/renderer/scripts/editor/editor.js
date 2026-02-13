@@ -9,12 +9,189 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { ImageModal } from '../image/image-modal.js';
+import { LinkModal } from '../link/link-modal.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
+import { TableModal } from '../table/table-modal.js';
 import { FocusedRenderer } from './renderers/focused-renderer.js';
 import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { UndoManager } from './undo-manager.js';
+
+// ── Inline formatting regex ─────────────────────────────────────────
+// This MUST match the regex used by FocusedRenderer.renderInlineParts()
+// so that offset mapping is consistent with the rendered DOM.
+const INLINE_RE =
+    /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+
+/**
+ * Given a raw markdown string and an offset into that raw string,
+ * returns the corresponding offset in the rendered (visible) text —
+ * i.e. the text the user sees after inline formatting markers have been
+ * hidden by renderInlineParts.
+ *
+ * @param {string} content     - Raw markdown content of the node
+ * @param {number} rawOffset   - Offset in the raw content
+ * @returns {number}
+ */
+function rawOffsetToRenderedOffset(content, rawOffset) {
+    if (!content || rawOffset <= 0) return 0;
+
+    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    let rawPos = 0;
+    let renderedPos = 0;
+
+    for (const match of content.matchAll(re)) {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+
+        // Plain text before this match
+        const plainLen = matchStart - rawPos;
+        if (rawOffset <= rawPos + plainLen) {
+            // Target falls in the plain-text gap before this match
+            return renderedPos + (rawOffset - rawPos);
+        }
+        renderedPos += plainLen;
+        rawPos = matchStart;
+
+        // Determine the inner content and its delimiters
+        const innerContent =
+            match[1] ?? match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? match[8] ?? '';
+
+        if (match[1] !== undefined) {
+            // Link: [text](href) — rendered text is just "text"
+            const openLen = 1; // [
+            const innerLen = match[1].length;
+            const closingLen = 2 + match[2].length + 1; // ](href)
+
+            if (rawOffset <= rawPos + openLen) {
+                // Inside the opening [
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + openLen + innerLen) {
+                // Inside the link text — recurse for nested formatting
+                const innerRaw = rawOffset - rawPos - openLen;
+                return renderedPos + rawOffsetToRenderedOffset(match[1], innerRaw);
+            }
+            // Inside or after ](href)
+            const innerRendered = rawOffsetToRenderedOffset(match[1], innerLen);
+            if (rawOffset < matchEnd) {
+                return renderedPos + innerRendered;
+            }
+            renderedPos += innerRendered;
+        } else if (match[8] !== undefined) {
+            // Inline code: `text` — delimiters are single backticks
+            const delimLen = 1;
+
+            if (rawOffset <= rawPos + delimLen) {
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + delimLen + match[8].length) {
+                return renderedPos + (rawOffset - rawPos - delimLen);
+            }
+            if (rawOffset < matchEnd) {
+                return renderedPos + match[8].length;
+            }
+            renderedPos += match[8].length;
+        } else {
+            // Bold (**), italic (*/_), emphasis (__), strikethrough (~~)
+            const raw = match[0];
+            const delimLen = (raw.length - innerContent.length) / 2;
+
+            if (rawOffset <= rawPos + delimLen) {
+                // Inside the opening delimiter
+                return renderedPos;
+            }
+            if (rawOffset <= rawPos + delimLen + innerContent.length) {
+                // Inside the inner content — recurse for nested formatting
+                const innerRaw = rawOffset - rawPos - delimLen;
+                return renderedPos + rawOffsetToRenderedOffset(innerContent, innerRaw);
+            }
+            if (rawOffset < matchEnd) {
+                // Inside the closing delimiter
+                const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+                return renderedPos + innerRendered;
+            }
+            const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+            renderedPos += innerRendered;
+        }
+
+        rawPos = matchEnd;
+    }
+
+    // Trailing plain text
+    return renderedPos + (rawOffset - rawPos);
+}
+
+/**
+ * Given a raw markdown string and an offset in the rendered (visible)
+ * text, returns the corresponding offset in the raw string.
+ *
+ * @param {string} content          - Raw markdown content of the node
+ * @param {number} renderedOffset   - Offset in the rendered text
+ * @returns {number}
+ */
+function renderedOffsetToRawOffset(content, renderedOffset) {
+    if (!content || renderedOffset <= 0) return 0;
+
+    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    let rawPos = 0;
+    let renderedPos = 0;
+
+    for (const match of content.matchAll(re)) {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+
+        // Plain text before this match
+        const plainLen = matchStart - rawPos;
+        if (renderedOffset <= renderedPos + plainLen) {
+            return rawPos + (renderedOffset - renderedPos);
+        }
+        renderedPos += plainLen;
+        rawPos = matchStart;
+
+        // Determine the inner content
+        if (match[1] !== undefined) {
+            // Link: [text](href)
+            const openLen = 1;
+            const innerLen = match[1].length;
+            const innerRenderedLen = rawOffsetToRenderedOffset(match[1], innerLen);
+
+            if (renderedOffset < renderedPos + innerRenderedLen) {
+                const innerRendered = renderedOffset - renderedPos;
+                return rawPos + openLen + renderedOffsetToRawOffset(match[1], innerRendered);
+            }
+            renderedPos += innerRenderedLen;
+        } else if (match[8] !== undefined) {
+            // Inline code: `text`
+            const delimLen = 1;
+            const innerLen = match[8].length;
+
+            if (renderedOffset < renderedPos + innerLen) {
+                return rawPos + delimLen + (renderedOffset - renderedPos);
+            }
+            renderedPos += innerLen;
+        } else {
+            // Bold/italic/emphasis/strikethrough
+            const innerContent = match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? '';
+            const raw = match[0];
+            const delimLen = (raw.length - innerContent.length) / 2;
+            const innerRenderedLen = rawOffsetToRenderedOffset(innerContent, innerContent.length);
+
+            if (renderedOffset < renderedPos + innerRenderedLen) {
+                const innerRendered = renderedOffset - renderedPos;
+                return rawPos + delimLen + renderedOffsetToRawOffset(innerContent, innerRendered);
+            }
+            renderedPos += innerRenderedLen;
+        }
+
+        rawPos = matchEnd;
+    }
+
+    // Trailing plain text
+    return rawPos + (renderedOffset - renderedPos);
+}
 
 /**
  * @typedef {'source' | 'focused'} ViewMode
@@ -26,6 +203,8 @@ import { UndoManager } from './undo-manager.js';
  * @property {number} offset - The character offset within the node's content
  * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
  *     html-block container's opening or closing tag line (source view only).
+ * @property {number} [cellRow] - Row index for table cell editing (0 = header).
+ * @property {number} [cellCol] - Column index for table cell editing.
  */
 
 /**
@@ -83,6 +262,18 @@ export class Editor {
          * @type {boolean}
          */
         this._isRendering = false;
+
+        /**
+         * Lazily-created image modal for click-to-edit in focused mode.
+         * @type {ImageModal|null}
+         */
+        this._imageModal = null;
+
+        /**
+         * Lazily-created link modal for click-to-edit in focused mode.
+         * @type {LinkModal|null}
+         */
+        this._linkModal = null;
     }
 
     /**
@@ -182,6 +373,23 @@ export class Editor {
                 const htmlEl = /** @type {HTMLElement} */ (el);
                 const nodeId = htmlEl.dataset?.nodeId;
                 if (nodeId) {
+                    // Check if the cursor is inside a table cell
+                    const node = this.syntaxTree?.findNodeById(nodeId);
+                    if (node?.type === 'table' && this.viewMode === 'focused') {
+                        const pos = this._computeTableCellPosition(
+                            htmlEl,
+                            range.startContainer,
+                            range.startOffset,
+                        );
+                        this.treeCursor = {
+                            nodeId,
+                            offset: pos.offset,
+                            cellRow: pos.cellRow,
+                            cellCol: pos.cellCol,
+                        };
+                        return;
+                    }
+
                     const offset = this.computeOffsetInContent(
                         htmlEl,
                         range.startContainer,
@@ -248,7 +456,8 @@ export class Editor {
 
         while (node) {
             if (node === cursorNode) {
-                return offset + cursorOffset;
+                const renderedOff = offset + cursorOffset;
+                return this._toRawOffset(nodeElement, renderedOff);
             }
             offset += node.textContent?.length ?? 0;
             node = walker.nextNode();
@@ -256,7 +465,234 @@ export class Editor {
 
         // cursorNode was not a text node inside the content element (e.g. the
         // cursor is on the element itself).  Clamp to content length.
-        return Math.min(cursorOffset, offset);
+        const renderedOff = Math.min(cursorOffset, offset);
+        return this._toRawOffset(nodeElement, renderedOff);
+    }
+
+    /**
+     * Converts a rendered (DOM) offset back to a raw (markdown) offset.
+     * In source mode the offset is returned as-is.
+     * @param {HTMLElement} nodeElement - The element with `data-node-id`
+     * @param {number} renderedOffset - The offset in rendered text
+     * @returns {number}
+     */
+    _toRawOffset(nodeElement, renderedOffset) {
+        if (this.viewMode !== 'focused') return renderedOffset;
+        const nodeId = nodeElement.dataset?.nodeId;
+        if (!nodeId) return renderedOffset;
+        const syntaxNode = this.syntaxTree?.findNodeById(nodeId);
+        if (!syntaxNode) return renderedOffset;
+        if (!this._hasInlineFormatting(syntaxNode.type)) return renderedOffset;
+        return renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
+    }
+
+    /**
+     * Returns whether a node type renders inline formatting via
+     * `renderInlineContent` / `renderInlineParts` and therefore needs
+     * offset mapping between raw markdown and rendered DOM text.
+     * @param {string} type
+     * @returns {boolean}
+     */
+    _hasInlineFormatting(type) {
+        switch (type) {
+            case 'paragraph':
+            case 'heading1':
+            case 'heading2':
+            case 'heading3':
+            case 'heading4':
+            case 'heading5':
+            case 'heading6':
+            case 'blockquote':
+            case 'list-item':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  Table cell helpers
+    // ──────────────────────────────────────────────
+
+    /**
+     * Returns the text of a specific table cell.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {number} row - Row index (0 = header row)
+     * @param {number} col - Column index
+     * @returns {string}
+     */
+    _getTableCellText(node, row, col) {
+        const data = TableModal.parseTableContent(node.content);
+        return data.cells[row]?.[col] ?? '';
+    }
+
+    /**
+     * Replaces a single cell's text and rebuilds the table markdown.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {number} row - Row index (0 = header)
+     * @param {number} col - Column index
+     * @param {string} newText - New cell content
+     */
+    _setTableCellText(node, row, col, newText) {
+        const data = TableModal.parseTableContent(node.content);
+        if (data.cells[row]) {
+            data.cells[row][col] = newText;
+        }
+        node.content = this._buildTableMarkdown(data);
+    }
+
+    /**
+     * Returns the dimensions of a table node.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {{totalRows: number, columns: number}}
+     */
+    _getTableDimensions(node) {
+        const data = TableModal.parseTableContent(node.content);
+        return { totalRows: data.cells.length, columns: data.columns };
+    }
+
+    /**
+     * Appends an empty row to a table node and rebuilds the markdown.
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {number} The row index of the new row
+     */
+    _tableAddRow(node) {
+        const data = TableModal.parseTableContent(node.content);
+        const newRow = Array.from({ length: data.columns }, () => '');
+        data.cells.push(newRow);
+        data.rows++;
+        node.content = this._buildTableMarkdown(data);
+        return data.cells.length - 1;
+    }
+
+    /**
+     * Determines the cell (row, col) the DOM cursor is in for a table node.
+     * Walks up from the cursor node to find the `<th>` or `<td>` element,
+     * then counts its position within the table.
+     * @param {HTMLElement} nodeElement - The `[data-node-id]` wrapper
+     * @param {Node} cursorNode - The DOM node the cursor is in
+     * @param {number} cursorOffset - The offset within cursorNode
+     * @returns {{cellRow: number, cellCol: number, offset: number}}
+     */
+    _computeTableCellPosition(nodeElement, cursorNode, cursorOffset) {
+        // Walk up to find the <th> or <td>
+        /** @type {HTMLElement|null} */
+        let cell = null;
+        /** @type {Node|null} */
+        let el = cursorNode;
+        while (el && el !== nodeElement) {
+            if (el.nodeType === Node.ELEMENT_NODE) {
+                const tag = /** @type {HTMLElement} */ (el).tagName;
+                if (tag === 'TH' || tag === 'TD') {
+                    cell = /** @type {HTMLElement} */ (el);
+                    break;
+                }
+            }
+            el = el.parentNode;
+        }
+
+        if (!cell) {
+            return { cellRow: 0, cellCol: 0, offset: 0 };
+        }
+
+        // Determine column index
+        const row = /** @type {HTMLTableRowElement} */ (cell.parentNode);
+        const cellCol = Array.from(row.cells).indexOf(/** @type {HTMLTableCellElement} */ (cell));
+
+        // Determine row index (header row = 0, body rows = 1+)
+        let cellRow = 0;
+        const thead = nodeElement.querySelector('thead');
+        const tbody = nodeElement.querySelector('tbody');
+        if (cell.tagName === 'TH') {
+            cellRow = 0;
+        } else if (tbody) {
+            const bodyRow = /** @type {HTMLTableRowElement} */ (cell.parentNode);
+            cellRow = Array.from(tbody.rows).indexOf(bodyRow) + 1;
+        }
+
+        // Compute text offset within the cell
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+        let offset = 0;
+        let textNode = walker.nextNode();
+        while (textNode) {
+            if (textNode === cursorNode) {
+                return { cellRow, cellCol, offset: offset + cursorOffset };
+            }
+            offset += textNode.textContent?.length ?? 0;
+            textNode = walker.nextNode();
+        }
+
+        return { cellRow, cellCol, offset: Math.min(cursorOffset, offset) };
+    }
+
+    /**
+     * Places the DOM cursor inside a specific table cell.
+     * @param {HTMLElement} nodeElement - The `[data-node-id]` wrapper
+     * @param {number} row - Row index (0 = header)
+     * @param {number} col - Column index
+     * @param {number} offset - Character offset within the cell text
+     */
+    _placeTableCellCursor(nodeElement, row, col, offset) {
+        /** @type {HTMLTableCellElement|null} */
+        let cell = null;
+        if (row === 0) {
+            const thead = nodeElement.querySelector('thead');
+            if (thead) {
+                const headerRow = thead.querySelector('tr');
+                cell = headerRow?.cells[col] ?? null;
+            }
+        } else {
+            const tbody = nodeElement.querySelector('tbody');
+            if (tbody) {
+                const bodyRow = tbody.rows[row - 1];
+                cell = bodyRow?.cells[col] ?? null;
+            }
+        }
+        if (!cell) return;
+
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+        let remaining = offset;
+        let textNode = walker.nextNode();
+
+        // If the cell is empty, place cursor at the start of the cell element
+        if (!textNode) {
+            const sel = window.getSelection();
+            if (sel) {
+                const range = document.createRange();
+                range.selectNodeContents(cell);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+            return;
+        }
+
+        while (textNode) {
+            const len = textNode.textContent?.length ?? 0;
+            if (remaining <= len) {
+                const sel = window.getSelection();
+                if (sel) {
+                    const range = document.createRange();
+                    range.setStart(textNode, remaining);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+                return;
+            }
+            remaining -= len;
+            textNode = walker.nextNode();
+        }
+
+        // Offset beyond available text — place at end
+        const sel = window.getSelection();
+        if (sel) {
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -310,10 +746,38 @@ export class Editor {
         }
         if (!nodeElement) return;
 
+        // ── Table cell cursor placement ──
+        if (
+            this.viewMode === 'focused' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            this._placeTableCellCursor(
+                /** @type {HTMLElement} */ (nodeElement),
+                this.treeCursor.cellRow,
+                this.treeCursor.cellCol,
+                this.treeCursor.offset,
+            );
+            return;
+        }
+
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
 
+        // In focused mode the DOM shows rendered text (no markdown syntax),
+        // so we must convert the raw tree offset to a rendered offset.
+        // Only applies to node types that render inline formatting (paragraph,
+        // heading, blockquote, list-item).  Other types (table, code-block,
+        // image, horizontal-rule) don't use inline markup rendering.
+        let cursorOffset = this.treeCursor.offset;
+        if (this.viewMode === 'focused') {
+            const node = this.getCurrentNode();
+            if (node && this._hasInlineFormatting(node.type)) {
+                cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
+            }
+        }
+
         const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
-        let remaining = this.treeCursor.offset;
+        let remaining = cursorOffset;
         let textNode = walker.nextNode();
         let placed = false;
 
@@ -428,6 +892,17 @@ export class Editor {
             return;
         }
 
+        // ── Tab / Shift+Tab inside a table ──
+        if (event.key === 'Tab' && this.viewMode === 'focused') {
+            this.syncCursorFromDOM();
+            const node = this.getCurrentNode();
+            if (node?.type === 'table' && this.treeCursor?.cellRow !== undefined) {
+                event.preventDefault();
+                this.handleTableTab(event.shiftKey);
+                return;
+            }
+        }
+
         // Navigation keys (arrows, Home, End, Page Up/Down), Tab, Escape, etc.
         // are left to their default browser behaviour so the cursor moves
         // naturally.  After the key is processed, `selectionchange` will fire
@@ -470,12 +945,43 @@ export class Editor {
         if (node.type === 'html-block' && node.children.length > 0) return;
 
         const before = this.syntaxTree.toMarkdown();
+
+        // ── Table cell editing ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            const cellText = this._getTableCellText(node, cellRow, cellCol);
+            const left = cellText.substring(0, offset);
+            const right = cellText.substring(offset);
+            this._setTableCellText(node, cellRow, cellCol, left + text + right);
+            this.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                cellRow,
+                cellCol,
+            };
+            this.recordAndRender(before);
+            return;
+        }
+
         const oldType = node.type;
 
         // Insert the text into the node's content at the cursor offset
         const left = node.content.substring(0, this.treeCursor.offset);
         const right = node.content.substring(this.treeCursor.offset);
         const newContent = left + text + right;
+
+        // Code-block content is raw code, not markdown — skip re-parsing
+        // to avoid misidentifying code lines as headings, lists, etc.
+        if (node.type === 'code-block') {
+            node.content = newContent;
+            this.treeCursor = { nodeId: node.id, offset: left.length + text.length };
+            this.recordAndRender(before);
+            return;
+        }
 
         // Re-parse the full markdown line to detect type changes
         let newOffset;
@@ -484,9 +990,15 @@ export class Editor {
         const parsed = this.parser.parseSingleLine(fullLine);
 
         if (parsed) {
-            node.type = parsed.type;
-            node.content = parsed.content;
-            node.attributes = parsed.attributes;
+            // Suppress code-block fence conversion during typing — the
+            // fence pattern (```) is converted on Enter instead.
+            if (parsed.type === 'code-block' && oldType !== 'code-block') {
+                node.content = newContent;
+            } else {
+                node.type = parsed.type;
+                node.content = parsed.content;
+                node.attributes = parsed.attributes;
+            }
         } else {
             node.content = newContent;
         }
@@ -549,6 +1061,31 @@ export class Editor {
         // html-block containers without tagPart are structural (focused view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
+        // ── Table cell backspace ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            if (offset > 0) {
+                const before = this.syntaxTree.toMarkdown();
+                const cellText = this._getTableCellText(node, cellRow, cellCol);
+                const left = cellText.substring(0, offset - 1);
+                const right = cellText.substring(offset);
+                this._setTableCellText(node, cellRow, cellCol, left + right);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    cellRow,
+                    cellCol,
+                };
+                this.recordAndRender(before);
+            }
+            // At offset 0 — no-op (don't merge cells or break table)
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset > 0) {
@@ -557,6 +1094,14 @@ export class Editor {
             const right = node.content.substring(this.treeCursor.offset);
             const newContent = left + right;
             const oldType = node.type;
+
+            // Code-block content is raw code — skip re-parsing.
+            if (node.type === 'code-block') {
+                node.content = newContent;
+                this.treeCursor = { nodeId: node.id, offset: left.length };
+                this.recordAndRender(before);
+                return;
+            }
 
             // Re-parse to detect type changes
             let newOffset;
@@ -670,6 +1215,31 @@ export class Editor {
         // html-block containers without tagPart are structural (focused view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
+        // ── Table cell delete ──
+        if (
+            node.type === 'table' &&
+            this.treeCursor.cellRow !== undefined &&
+            this.treeCursor.cellCol !== undefined
+        ) {
+            const { cellRow, cellCol, offset } = this.treeCursor;
+            const cellText = this._getTableCellText(node, cellRow, cellCol);
+            if (offset < cellText.length) {
+                const before = this.syntaxTree.toMarkdown();
+                const left = cellText.substring(0, offset);
+                const right = cellText.substring(offset + 1);
+                this._setTableCellText(node, cellRow, cellCol, left + right);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset,
+                    cellRow,
+                    cellCol,
+                };
+                this.recordAndRender(before);
+            }
+            // At end of cell — no-op
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
 
         if (this.treeCursor.offset < node.content.length) {
@@ -678,6 +1248,14 @@ export class Editor {
             const right = node.content.substring(this.treeCursor.offset + 1);
             const newContent = left + right;
             const oldType = node.type;
+
+            // Code-block content is raw code — skip re-parsing.
+            if (node.type === 'code-block') {
+                node.content = newContent;
+                this.treeCursor = { nodeId: node.id, offset: left.length };
+                this.recordAndRender(before);
+                return;
+            }
 
             // Re-parse to detect type changes
             let newOffset;
@@ -760,7 +1338,45 @@ export class Editor {
             return;
         }
 
+        // ── Enter inside a table → move to next row, same column ──
+        if (node.type === 'table' && this.treeCursor.cellRow !== undefined) {
+            const { cellRow, cellCol } = this.treeCursor;
+            const { totalRows } = this._getTableDimensions(node);
+            if (cellRow < totalRows - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol,
+                };
+                this.placeCursor();
+            }
+            // On last row — no-op
+            return;
+        }
+
         const before = this.syntaxTree.toMarkdown();
+
+        // ── Early conversion: ```lang + Enter → code block ──
+        const fenceMatch = node.type === 'paragraph' && node.content.match(/^```(\w*)$/);
+        if (fenceMatch) {
+            node.type = 'code-block';
+            node.content = '';
+            node.attributes = { language: fenceMatch[1] || '' };
+            this.treeCursor = { nodeId: node.id, offset: 0 };
+            this.recordAndRender(before);
+            return;
+        }
+
+        // ── Enter inside a code block → insert newline ──
+        if (node.type === 'code-block') {
+            const left = node.content.substring(0, this.treeCursor.offset);
+            const right = node.content.substring(this.treeCursor.offset);
+            node.content = `${left}\n${right}`;
+            this.treeCursor = { nodeId: node.id, offset: left.length + 1 };
+            this.recordAndRender(before);
+            return;
+        }
 
         const contentBefore = node.content.substring(0, this.treeCursor.offset);
         const contentAfter = node.content.substring(this.treeCursor.offset);
@@ -784,6 +1400,77 @@ export class Editor {
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
         this.recordAndRender(before);
+    }
+
+    /**
+     * Handles Tab / Shift+Tab inside a table — moves between cells.
+     * Tab on the last cell creates a new row.
+     * @param {boolean} shiftKey - True for Shift+Tab (move backward)
+     */
+    handleTableTab(shiftKey) {
+        const node = this.getCurrentNode();
+        if (
+            !node ||
+            !this.treeCursor ||
+            !this.syntaxTree ||
+            this.treeCursor.cellRow === undefined ||
+            this.treeCursor.cellCol === undefined
+        )
+            return;
+
+        const { cellRow, cellCol } = this.treeCursor;
+        const { totalRows, columns } = this._getTableDimensions(node);
+
+        if (shiftKey) {
+            // Move to previous cell
+            if (cellCol > 0) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol - 1,
+                };
+            } else if (cellRow > 0) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow - 1,
+                    cellCol: columns - 1,
+                };
+            }
+            // On first cell — no-op
+        } else {
+            // Move to next cell
+            if (cellCol < columns - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol + 1,
+                };
+            } else if (cellRow < totalRows - 1) {
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol: 0,
+                };
+            } else {
+                // Last cell — add a new row
+                const before = this.syntaxTree.toMarkdown();
+                const newRowIdx = this._tableAddRow(node);
+                this.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: newRowIdx,
+                    cellCol: 0,
+                };
+                this.recordAndRender(before);
+                return;
+            }
+        }
+
+        this.placeCursor();
     }
 
     // ──────────────────────────────────────────────
@@ -939,6 +1626,29 @@ export class Editor {
         }
 
         this.selectionManager.updateFromDOM();
+
+        // In focused view, clicking an image opens the edit modal directly.
+        if (this.viewMode === 'focused' && this.treeCursor) {
+            const clickedNode = this.getCurrentNode();
+            if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
+                this._openImageModalForNode(clickedNode);
+                return;
+            }
+        }
+
+        // In focused view, clicking a link prevents navigation and opens
+        // the edit modal so the user can change the text or URL.
+        if (this.viewMode === 'focused' && event.target instanceof HTMLElement) {
+            const anchor = event.target.closest('a');
+            if (anchor) {
+                event.preventDefault();
+                const node = this.getCurrentNode();
+                if (node) {
+                    this._openLinkModalForNode(node, anchor);
+                }
+                return;
+            }
+        }
 
         // In focused view the active node shows raw markdown syntax, so we
         // must re-render whenever the cursor moves to a different node.
@@ -1369,6 +2079,145 @@ export class Editor {
             this.treeCursor = { nodeId: imageNode.id, offset: alt.length };
         }
 
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Opens the image modal pre-filled with the given image node's data,
+     * and applies any edits back to the parse tree.
+     * Used when clicking an image in focused mode.
+     * @param {SyntaxNode} node - The image node to edit
+     */
+    async _openImageModalForNode(node) {
+        if (!this._imageModal) {
+            this._imageModal = new ImageModal();
+        }
+
+        const existing = {
+            alt: node.attributes.alt ?? node.content,
+            src: node.attributes.url ?? '',
+            href: node.attributes.href ?? '',
+        };
+
+        const result = await this._imageModal.open(existing);
+        if (!result) return;
+
+        let src = result.src;
+
+        // Handle file rename if the filename changed
+        if (result.rename && window.electronAPI) {
+            const originalFilename = this._extractFilename(src);
+            if (result.rename !== originalFilename) {
+                const renameResult = await window.electronAPI.renameImage(
+                    this._resolveImagePath(src),
+                    result.rename,
+                );
+                if (renameResult.success && renameResult.newPath) {
+                    src = this._replaceFilename(src, result.rename);
+                }
+            }
+        }
+
+        // Use a relative path when the setting is enabled
+        if (this.ensureLocalPaths) {
+            src = await this.toRelativeImagePath(src);
+        }
+
+        // Update the node directly — after the modal closes the cursor
+        // may have moved, so we cannot rely on insertOrUpdateImage which
+        // reads getCurrentNode().
+        if (!this.syntaxTree) return;
+        const before = this.syntaxTree.toMarkdown();
+        node.content = result.alt;
+        node.attributes = { alt: result.alt, url: src };
+        if (result.href) {
+            node.attributes.href = result.href;
+        }
+        this.treeCursor = { nodeId: node.id, offset: result.alt.length };
+        this.recordAndRender(before);
+    }
+
+    /**
+     * Extracts the filename from a path or URL.
+     * @param {string} src
+     * @returns {string}
+     */
+    _extractFilename(src) {
+        if (!src) return '';
+        const clean = src.split('?')[0].split('#')[0];
+        const parts = clean.split(/[/\\]/);
+        return parts[parts.length - 1] || '';
+    }
+
+    /**
+     * Replaces the filename portion of a path or URL.
+     * @param {string} src - Original path
+     * @param {string} newName - New filename
+     * @returns {string}
+     */
+    _replaceFilename(src, newName) {
+        const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
+        if (lastSlash === -1) return newName;
+        return src.substring(0, lastSlash + 1) + newName;
+    }
+
+    /**
+     * Resolves an image src to an absolute file path for rename operations.
+     * Strips file:/// prefix and decodes URI encoding.
+     * @param {string} src
+     * @returns {string}
+     */
+    _resolveImagePath(src) {
+        let resolved = src;
+        if (resolved.startsWith('file:///')) {
+            resolved = resolved.slice(8);
+        }
+        resolved = decodeURIComponent(resolved);
+        resolved = resolved.replace(/\//g, '\\');
+        return resolved;
+    }
+
+    /**
+     * Opens the link-editing modal pre-filled with the link data extracted
+     * from the clicked `<a>` element and, on submit, replaces it in the
+     * node's raw content.
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @param {HTMLAnchorElement} anchor - The clicked `<a>` element
+     */
+    async _openLinkModalForNode(node, anchor) {
+        if (!this._linkModal) {
+            this._linkModal = new LinkModal();
+        }
+
+        const clickedUrl = anchor.getAttribute('href') ?? '';
+
+        // Find the link in the raw markdown by matching the URL, which is
+        // more reliable than anchor.textContent (the latter loses nested
+        // formatting like **bold**).
+        const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
+        let oldMarkdown = '';
+        let oldText = '';
+        for (const match of node.content.matchAll(linkRe)) {
+            if (match[2] === clickedUrl) {
+                oldMarkdown = match[0];
+                oldText = match[1];
+                break;
+            }
+        }
+
+        if (!oldMarkdown) return;
+
+        const result = await this._linkModal.open({ text: oldText, url: clickedUrl });
+        if (!result) return;
+
+        if (!this.syntaxTree) return;
+        const before = this.syntaxTree.toMarkdown();
+
+        const newMarkdown = `[${result.text}](${result.url})`;
+        node.content = node.content.replace(oldMarkdown, newMarkdown);
+
+        this.treeCursor = { nodeId: node.id, offset: 0 };
         this.recordAndRender(before);
     }
 

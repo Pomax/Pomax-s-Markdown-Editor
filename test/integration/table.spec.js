@@ -67,8 +67,9 @@ test('inserting a table via the modal creates a table node', async () => {
     await insertBtn.click();
     await expect(dialog).not.toBeVisible();
 
-    // Verify the table node was created
-    const tableNode = page.locator('.md-table');
+    // Verify the table node was created (use .md-line.md-table to avoid
+    // matching the inner <table class="md-table"> as well).
+    const tableNode = page.locator('.md-line.md-table');
     await expect(tableNode).toBeVisible();
 
     // Verify the markdown content includes table syntax
@@ -77,17 +78,13 @@ test('inserting a table via the modal creates a table node', async () => {
     expect(content).toContain('---');
 });
 
-test('table renders as an HTML table in focused mode (unfocused)', async () => {
-    // The editor defaults to focused mode.
-    // Click somewhere else first to unfocus the table, then check rendering.
-    // First, add a paragraph above by pressing Home then Enter.
-    // Actually, we just need to click on a non-table node.
-    // Let's evaluate the table's rendered HTML.
-    const tableElement = page.locator('.md-table');
+test('table renders as an HTML table in focused mode', async () => {
+    // In WYSIWYG mode the table is always rendered as an HTML <table>.
+    const tableElement = page.locator('.md-line.md-table');
     await expect(tableElement).toBeVisible();
 
-    // The unfocused table should be rendered as an HTML <table>
-    const htmlTable = page.locator('.md-table table');
+    // The table should always be rendered as an HTML <table> (WYSIWYG)
+    const htmlTable = page.locator('.md-line.md-table table');
     // It may or may not be visible depending on focus — let's check the content
     const content = await page.evaluate(() => window.editorAPI?.getContent());
     expect(content).toContain('Header 1');
@@ -96,7 +93,7 @@ test('table renders as an HTML table in focused mode (unfocused)', async () => {
 
 test('clicking table button on existing table opens edit modal with pre-filled dimensions', async () => {
     // Click on the table node
-    const tableNode = page.locator('.md-table');
+    const tableNode = page.locator('.md-line.md-table');
     await tableNode.click();
 
     // Now click the table button

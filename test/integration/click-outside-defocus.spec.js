@@ -1,11 +1,9 @@
 /**
  * @fileoverview Integration test for clicking outside the editor to defocus.
  *
- * In focused writing mode the active node shows raw markdown syntax (e.g. a
- * heading displays its `#` prefix).  When the user clicks outside the editor
- * element — for example on the background area around the page — the editor
- * should blur, clear its active node, and re-render so that every node shows
- * its "unfocused" presentation.
+ * In focused writing mode all nodes render as WYSIWYG (formatted output, no
+ * raw markdown syntax).  When the user clicks outside the editor the editor
+ * should blur (handleBlur fires) and clear its active node.
  */
 
 import { expect, test } from '@playwright/test';
@@ -32,8 +30,7 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     // loadMarkdown, which sets the treeCursor to the first node and
     // renders.  Without an explicit container.focus() in loadMarkdown,
     // the first node *looks* focused but the editor never received real
-    // DOM focus — so blurring would be a no-op and the heading would
-    // keep showing its `#` syntax.
+    // DOM focus — so blurring would be a no-op.
     await loadContent(page, markdown);
     await page.evaluate(() => window.electronAPI?.setFocusedView());
     await page.locator('#editor[data-view-mode="focused"]').waitFor();
@@ -44,15 +41,14 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     });
     expect(hasFocus, 'editor should have DOM focus after loadContent').toBe(true);
 
-    // The first node (the heading) should show raw `#` syntax.
+    // In WYSIWYG mode the heading never shows the raw `#` prefix.
     const heading = page.locator('#editor .md-line').first();
     const focusedText = await heading.innerText();
-    expect(focusedText).toContain('# My Heading');
+    expect(focusedText).not.toContain('#');
+    expect(focusedText).toContain('My Heading');
 
-    // Now blur — this must actually fire handleBlur because the editor
-    // had real focus.  If container.focus() were missing from
-    // loadMarkdown, this defocus would be a no-op and the assertion
-    // below would fail.
+    // Blur — this must actually fire handleBlur because the editor
+    // had real focus.  The heading should still show formatted text.
     await defocusEditor(page);
 
     const defocusedText = await page.locator('#editor .md-line').first().innerText();
@@ -60,7 +56,7 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     expect(defocusedText).toContain('My Heading');
 });
 
-test('clicking outside the editor hides heading syntax in focused mode', async () => {
+test('clicking outside the editor hides active-node highlight in focused mode', async () => {
     // Load content and switch to focused view.
     await loadContent(page, markdown);
     await page.evaluate(() => window.electronAPI?.setFocusedView());
@@ -71,14 +67,22 @@ test('clicking outside the editor hides heading syntax in focused mode', async (
     await heading.click();
     await page.waitForTimeout(200);
 
-    // The heading should show its raw `#` syntax because it is focused.
+    // In WYSIWYG mode the heading shows formatted text, not raw syntax.
     const focusedText = await heading.innerText();
-    expect(focusedText).toContain('# My Heading');
+    expect(focusedText).not.toContain('#');
+    expect(focusedText).toContain('My Heading');
+
+    // The heading should have the md-focused class.
+    await expect(heading).toHaveClass(/md-focused/);
 
     // Click outside the editor (the editor-container background).
     await defocusEditor(page);
 
-    // The heading should now hide its `#` prefix.
+    // After defocus no node should carry the md-focused class.
+    const focusedNodes = page.locator('#editor .md-focused');
+    expect(await focusedNodes.count()).toBe(0);
+
+    // The heading should still show its formatted text.
     const firstLine = page.locator('#editor .md-line').first();
     const defocusedText = await firstLine.innerText();
     expect(defocusedText).not.toContain('#');
