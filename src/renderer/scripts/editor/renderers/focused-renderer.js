@@ -425,7 +425,7 @@ export class FocusedRenderer {
 
             for (const cellContent of cells) {
                 const cell = document.createElement(i === 0 ? 'th' : 'td');
-                cell.textContent = cellContent.trim();
+                this.renderInlineContent(cellContent.trim(), cell);
                 row.appendChild(cell);
             }
 
