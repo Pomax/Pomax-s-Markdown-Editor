@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { launchApp, loadContent } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -121,4 +121,76 @@ test('clicking table button on existing table opens edit modal with pre-filled d
     const cancelBtn = page.locator('.table-btn--cancel');
     await cancelBtn.click();
     await expect(dialog).not.toBeVisible();
+});
+
+test('table cells render inline markdown formatting', async () => {
+    const markdown = [
+        '| Feature | Status |',
+        '| --- | --- |',
+        '| **bold** cell | *italic* cell |',
+        '| `code` cell | ~~struck~~ cell |',
+    ].join('\n');
+
+    await loadContent(page, markdown);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
+    const table = page.locator('.md-line.md-table table');
+    await expect(table).toBeVisible();
+
+    // Bold cell
+    const bold = table.locator('td strong');
+    await expect(bold).toBeVisible();
+    expect(await bold.textContent()).toBe('bold');
+
+    // Italic cell
+    const italic = table.locator('td em');
+    await expect(italic).toBeVisible();
+    expect(await italic.textContent()).toBe('italic');
+
+    // Code cell
+    const code = table.locator('td code');
+    await expect(code).toBeVisible();
+    expect(await code.textContent()).toBe('code');
+
+    // Strikethrough cell
+    const del = table.locator('td del');
+    await expect(del).toBeVisible();
+    expect(await del.textContent()).toBe('struck');
+});
+
+test('table cells render inline HTML formatting', async () => {
+    const markdown = [
+        '| A | B |',
+        '| --- | --- |',
+        '| this <i>is</i> text | <b>bold</b> text |',
+        '| <sub>sub</sub> text | <mark>marked</mark> text |',
+    ].join('\n');
+
+    await loadContent(page, markdown);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
+    const table = page.locator('.md-line.md-table table');
+    await expect(table).toBeVisible();
+
+    // Italic via <i>
+    const italic = table.locator('td i');
+    await expect(italic).toBeVisible();
+    expect(await italic.textContent()).toBe('is');
+
+    // Bold via <b>
+    const bold = table.locator('td b');
+    await expect(bold).toBeVisible();
+    expect(await bold.textContent()).toBe('bold');
+
+    // Subscript via <sub>
+    const sub = table.locator('td sub');
+    await expect(sub).toBeVisible();
+    expect(await sub.textContent()).toBe('sub');
+
+    // Mark via <mark>
+    const mark = table.locator('td mark');
+    await expect(mark).toBeVisible();
+    expect(await mark.textContent()).toBe('marked');
 });
