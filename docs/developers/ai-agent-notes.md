@@ -208,6 +208,75 @@ single line via `parseSingleLine`, they must check whether the node had
 - When running a single spec file, Playwright will still use up to 8
   workers to parallelize the tests inside it.
 
+## Range Handling (Selection)
+
+### TreeRange
+
+```
+TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
+```
+
+- Populated by `syncCursorFromDOM()` when the DOM selection is non-collapsed.
+- `null` when the selection is collapsed (i.e., just a caret).
+- Used by `deleteSelectedRange()`, `_getSelectedMarkdown()`, and all input
+  handlers that must respect an active selection.
+
+### `deleteSelectedRange()`
+
+Returns `{ before, hints }` where `before` is the pre-edit tree snapshot and
+`hints` is `{ updated: string[], removed?: string[] }`. Handles:
+
+- **Same-node**: substring removal within a single node.
+- **Cross-node**: trims start/end nodes, splices out intermediates, merges
+  the end-node remainder into the start node.
+
+**Critical**: when `deleteSelectedRange()` is called as a *sub-step* of
+another operation (e.g., `insertTextAtCursor`, `handleEnterKey`), the caller
+must propagate `hints.removed` into the final render hints. Failing to do
+so causes stale DOM nodes to remain after re-render.
+
+### `handleSelectAll()` (Ctrl+A)
+
+Context-restricted: selects only the content of the currently focused node,
+not the entire document.
+
+### Cut / Copy / Paste
+
+- `_handleCut` and `_handleCopy` call `event.preventDefault()` and write
+  raw markdown to `clipboardData` so it round-trips correctly.
+- `_handleCut` then calls `deleteSelectedRange()` to remove selected content.
+- Paste goes through `insertTextAtCursor` which handles range deletion first.
+
+### `_mapDOMPositionToTree(domNode, domOffset)`
+
+Extracted helper that maps a single DOM position (node + offset) to tree
+coordinates `{ nodeId, offset }`. Called twice by `syncCursorFromDOM()` for
+anchor and focus positions.
+
+## Playwright Lessons
+
+### Cross-node selection in focused mode
+
+Keyboard-based selection (Shift+ArrowDown) does not work reliably for
+cross-node selection in focused mode because the editor re-renders when the
+cursor moves between nodes, destroying the selection. Use a programmatic
+helper that sets a DOM `Range` via `page.evaluate()`:
+
+```js
+async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
+  await page.evaluate((args) => {
+    // Find nodes by textContent, walk to text nodes, set Range
+  }, [startText, startOff, endText, endOff]);
+}
+```
+
+### Test self-containment for fullyParallel
+
+With `fullyParallel: true`, tests within a single spec file may run in any
+order across different workers. Every test must set up its own state (load
+content, set view mode) rather than depending on prior tests. Module-level
+`page` variables are instantiated per-worker, not shared across tests.
+
 ## CSS Conventions
 
 - Editor styles are in `src/renderer/styles/editor.css`.
