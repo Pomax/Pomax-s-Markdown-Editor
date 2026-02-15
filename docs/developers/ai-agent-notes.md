@@ -1,5 +1,14 @@
 # AI Agent Notes
 
+> **⚠️ CRITICAL — DO NOT FORGET THIS DOCUMENT ⚠️**
+>
+> This file must **never** leave session context, even if the context limit
+> is exceeded. It is the single most important piece of project documentation
+> for AI agents. It may **never** be cleared or partially cleared from
+> context. Any context reset — whether caused by token limits, session
+> boundaries, or conversation summarization — **MUST** start by rereading
+> this file in full before doing any other work.
+
 This document captures hard-won lessons, conventions, and technical details
 that an AI coding assistant should know when working on this project. Read
 this **before** doing any work.
