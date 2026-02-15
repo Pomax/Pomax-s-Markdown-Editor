@@ -236,3 +236,38 @@ test('mixed markdown and HTML inline tags render correctly', async () => {
     await expect(code).toBeVisible();
     expect(await code.textContent()).toBe('code');
 });
+
+test('cursor offset is correct after view-mode switch with inline HTML', async () => {
+    const markdown =
+        '# test document\n\nIt also tests <strong>strong</strong> and <em>emphasis</em> text.';
+
+    await page.evaluate((content) => {
+        window.editorAPI?.setContent(content);
+    }, markdown);
+
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
+    // Click on the last paragraph
+    const lastLine = page.locator('#editor .md-line').last();
+    await lastLine.click();
+    await page.waitForTimeout(200);
+
+    // Place cursor before "text." — End then Left×5
+    await page.keyboard.press('End');
+    for (let i = 0; i < 5; i++) {
+        await page.keyboard.press('ArrowLeft');
+    }
+    await page.waitForTimeout(100);
+
+    // Switch to source view
+    await page.evaluate(() => window.electronAPI?.setSourceView());
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await page.waitForTimeout(200);
+
+    // Raw offset should point at "text." (index 60)
+    const content = 'It also tests <strong>strong</strong> and <em>emphasis</em> text.';
+    const expected = content.indexOf('text.');
+    const actual = await page.evaluate(() => /** @type {any} */ (window).__editorCursorOffset);
+    expect(actual).toBe(expected);
+});

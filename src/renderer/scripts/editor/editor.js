@@ -11,6 +11,7 @@
 
 import { ImageModal } from '../image/image-modal.js';
 import { LinkModal } from '../link/link-modal.js';
+import { tokenizeInline } from '../parser/inline-tokenizer.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { TableModal } from '../table/table-modal.js';
@@ -19,17 +20,20 @@ import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { UndoManager } from './undo-manager.js';
 
-// ── Inline formatting regex ─────────────────────────────────────────
-// This MUST match the regex used by FocusedRenderer.renderInlineParts()
-// so that offset mapping is consistent with the rendered DOM.
-const INLINE_RE =
-    /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+// ── Offset mapping (raw ↔ rendered) ─────────────────────────────────
+// Uses the same tokenizer as FocusedRenderer.renderInlineParts() so
+// that offset mapping is always in sync with the rendered DOM.
 
 /**
  * Given a raw markdown string and an offset into that raw string,
  * returns the corresponding offset in the rendered (visible) text —
  * i.e. the text the user sees after inline formatting markers have been
  * hidden by renderInlineParts.
+ *
+ * Walks the flat token list produced by `tokenizeInline`.  Delimiter
+ * tokens (bold-open, html-close, etc.) are invisible in the rendered
+ * output, so they advance the raw position only.  Text tokens advance
+ * both positions equally.  Code tokens skip the backtick delimiters.
  *
  * @param {string} content     - Raw markdown content of the node
  * @param {number} rawOffset   - Offset in the raw content
@@ -38,95 +42,52 @@ const INLINE_RE =
 function rawOffsetToRenderedOffset(content, rawOffset) {
     if (!content || rawOffset <= 0) return 0;
 
-    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    const tokens = tokenizeInline(content);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const match of content.matchAll(re)) {
-        const matchStart = match.index;
-        const matchEnd = matchStart + match[0].length;
+    for (const token of tokens) {
+        const rawLen = token.raw.length;
 
-        // Plain text before this match
-        const plainLen = matchStart - rawPos;
-        if (rawOffset <= rawPos + plainLen) {
-            // Target falls in the plain-text gap before this match
-            return renderedPos + (rawOffset - rawPos);
-        }
-        renderedPos += plainLen;
-        rawPos = matchStart;
-
-        // Determine the inner content and its delimiters
-        const innerContent =
-            match[1] ?? match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? match[8] ?? '';
-
-        if (match[1] !== undefined) {
-            // Link: [text](href) — rendered text is just "text"
-            const openLen = 1; // [
-            const innerLen = match[1].length;
-            const closingLen = 2 + match[2].length + 1; // ](href)
-
-            if (rawOffset <= rawPos + openLen) {
-                // Inside the opening [
+        if (token.type === 'text') {
+            // Visible text: raw length == rendered length.
+            if (rawOffset <= rawPos + rawLen) {
+                return renderedPos + (rawOffset - rawPos);
+            }
+            rawPos += rawLen;
+            renderedPos += rawLen;
+        } else if (token.type === 'code') {
+            // Code span: `content` — backticks are invisible.
+            const contentLen = token.content?.length ?? 0;
+            const openDelim = 1;
+            if (rawOffset <= rawPos + openDelim) {
                 return renderedPos;
             }
-            if (rawOffset <= rawPos + openLen + innerLen) {
-                // Inside the link text — recurse for nested formatting
-                const innerRaw = rawOffset - rawPos - openLen;
-                return renderedPos + rawOffsetToRenderedOffset(match[1], innerRaw);
+            if (rawOffset <= rawPos + openDelim + contentLen) {
+                return renderedPos + (rawOffset - rawPos - openDelim);
             }
-            // Inside or after ](href)
-            const innerRendered = rawOffsetToRenderedOffset(match[1], innerLen);
-            if (rawOffset < matchEnd) {
-                return renderedPos + innerRendered;
+            if (rawOffset < rawPos + rawLen) {
+                return renderedPos + contentLen;
             }
-            renderedPos += innerRendered;
-        } else if (match[8] !== undefined) {
-            // Inline code: `text` — delimiters are single backticks
-            const delimLen = 1;
-
-            if (rawOffset <= rawPos + delimLen) {
-                return renderedPos;
-            }
-            if (rawOffset <= rawPos + delimLen + match[8].length) {
-                return renderedPos + (rawOffset - rawPos - delimLen);
-            }
-            if (rawOffset < matchEnd) {
-                return renderedPos + match[8].length;
-            }
-            renderedPos += match[8].length;
+            rawPos += rawLen;
+            renderedPos += contentLen;
         } else {
-            // Bold (**), italic (*/_), emphasis (__), strikethrough (~~)
-            const raw = match[0];
-            const delimLen = (raw.length - innerContent.length) / 2;
-
-            if (rawOffset <= rawPos + delimLen) {
-                // Inside the opening delimiter
+            // Invisible delimiter (bold-open, html-close, link-open, etc.).
+            if (rawOffset < rawPos + rawLen) {
                 return renderedPos;
             }
-            if (rawOffset <= rawPos + delimLen + innerContent.length) {
-                // Inside the inner content — recurse for nested formatting
-                const innerRaw = rawOffset - rawPos - delimLen;
-                return renderedPos + rawOffsetToRenderedOffset(innerContent, innerRaw);
-            }
-            if (rawOffset < matchEnd) {
-                // Inside the closing delimiter
-                const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-                return renderedPos + innerRendered;
-            }
-            const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-            renderedPos += innerRendered;
+            rawPos += rawLen;
         }
-
-        rawPos = matchEnd;
     }
 
-    // Trailing plain text
-    return renderedPos + (rawOffset - rawPos);
+    return renderedPos;
 }
 
 /**
  * Given a raw markdown string and an offset in the rendered (visible)
  * text, returns the corresponding offset in the raw string.
+ *
+ * Inverse of {@link rawOffsetToRenderedOffset}.
  *
  * @param {string} content          - Raw markdown content of the node
  * @param {number} renderedOffset   - Offset in the rendered text
@@ -135,62 +96,34 @@ function rawOffsetToRenderedOffset(content, rawOffset) {
 function renderedOffsetToRawOffset(content, renderedOffset) {
     if (!content || renderedOffset <= 0) return 0;
 
-    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    const tokens = tokenizeInline(content);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const match of content.matchAll(re)) {
-        const matchStart = match.index;
-        const matchEnd = matchStart + match[0].length;
+    for (const token of tokens) {
+        const rawLen = token.raw.length;
 
-        // Plain text before this match
-        const plainLen = matchStart - rawPos;
-        if (renderedOffset <= renderedPos + plainLen) {
-            return rawPos + (renderedOffset - renderedPos);
-        }
-        renderedPos += plainLen;
-        rawPos = matchStart;
-
-        // Determine the inner content
-        if (match[1] !== undefined) {
-            // Link: [text](href)
-            const openLen = 1;
-            const innerLen = match[1].length;
-            const innerRenderedLen = rawOffsetToRenderedOffset(match[1], innerLen);
-
-            if (renderedOffset < renderedPos + innerRenderedLen) {
-                const innerRendered = renderedOffset - renderedPos;
-                return rawPos + openLen + renderedOffsetToRawOffset(match[1], innerRendered);
+        if (token.type === 'text') {
+            if (renderedOffset <= renderedPos + rawLen) {
+                return rawPos + (renderedOffset - renderedPos);
             }
-            renderedPos += innerRenderedLen;
-        } else if (match[8] !== undefined) {
-            // Inline code: `text`
-            const delimLen = 1;
-            const innerLen = match[8].length;
-
-            if (renderedOffset < renderedPos + innerLen) {
-                return rawPos + delimLen + (renderedOffset - renderedPos);
+            rawPos += rawLen;
+            renderedPos += rawLen;
+        } else if (token.type === 'code') {
+            const contentLen = token.content?.length ?? 0;
+            const openDelim = 1;
+            if (renderedOffset < renderedPos + contentLen) {
+                return rawPos + openDelim + (renderedOffset - renderedPos);
             }
-            renderedPos += innerLen;
+            rawPos += rawLen;
+            renderedPos += contentLen;
         } else {
-            // Bold/italic/emphasis/strikethrough
-            const innerContent = match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? '';
-            const raw = match[0];
-            const delimLen = (raw.length - innerContent.length) / 2;
-            const innerRenderedLen = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-
-            if (renderedOffset < renderedPos + innerRenderedLen) {
-                const innerRendered = renderedOffset - renderedPos;
-                return rawPos + delimLen + renderedOffsetToRawOffset(innerContent, innerRendered);
-            }
-            renderedPos += innerRenderedLen;
+            // Invisible delimiter — advance raw position only.
+            rawPos += rawLen;
         }
-
-        rawPos = matchEnd;
     }
 
-    // Trailing plain text
-    return rawPos + (renderedOffset - renderedPos);
+    return rawPos;
 }
 
 /**
