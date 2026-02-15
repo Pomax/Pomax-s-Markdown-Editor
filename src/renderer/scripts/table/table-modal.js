@@ -6,6 +6,8 @@
  * and warns if shrinking would lose data.
  */
 
+import { BaseModal } from '../modal/base-modal.js';
+
 /**
  * @typedef {Object} TableData
  * @property {number} rows - Number of body rows (not counting the header)
@@ -15,20 +17,11 @@
 
 /**
  * A modal dialog for inserting or editing tables.
+ * @extends {BaseModal}
  */
-export class TableModal {
+export class TableModal extends BaseModal {
     constructor() {
-        /** @type {HTMLDialogElement|null} */
-        this.dialog = null;
-
-        /** @type {boolean} */
-        this._built = false;
-
-        /**
-         * Resolve function for the current open() promise.
-         * @type {function(TableData|null): void}
-         */
-        this._resolve = () => {};
+        super();
 
         /**
          * The existing table data when editing (null for insert).
@@ -37,22 +30,16 @@ export class TableModal {
         this._existing = null;
     }
 
-    // ──────────────────────────────────────────────
-    //  DOM construction (lazy)
-    // ──────────────────────────────────────────────
+    get _prefix() {
+        return 'table';
+    }
 
-    /**
-     * Lazily builds the dialog DOM the first time it is needed.
-     */
-    _build() {
-        if (this._built) return;
-        this._built = true;
+    get _ariaLabel() {
+        return 'Insert Table';
+    }
 
-        const dialog = document.createElement('dialog');
-        dialog.className = 'table-dialog';
-        dialog.setAttribute('aria-label', 'Insert Table');
-
-        dialog.innerHTML = `
+    _getTemplate() {
+        return `
             <form method="dialog" class="table-form">
                 <header class="table-dialog-header">
                     <h2>Insert Table</h2>
@@ -76,67 +63,18 @@ export class TableModal {
                 </footer>
             </form>
         `;
-
-        // Close on × or Cancel
-        const closeBtn = dialog.querySelector('.table-dialog-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this._cancel());
-        }
-        const cancelBtn = dialog.querySelector('.table-btn--cancel');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this._cancel());
-        }
-
-        // Submit handler
-        const form = dialog.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this._submit();
-            });
-        }
-
-        // Close on backdrop click
-        dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                this._cancel();
-            }
-        });
-
-        // Close on Escape key
-        dialog.addEventListener('cancel', (e) => {
-            e.preventDefault();
-            this._cancel();
-        });
-
-        document.body.appendChild(dialog);
-        this.dialog = dialog;
     }
 
-    // ──────────────────────────────────────────────
-    //  Public API
-    // ──────────────────────────────────────────────
-
     /**
-     * Opens the table modal.
-     * If `existing` is provided, the fields are pre-populated for editing.
-     * Returns a promise that resolves with the table data, or null if cancelled.
-     *
-     * @param {TableData|null} [existing] - Existing table data for editing
-     * @returns {Promise<TableData|null>}
+     * @param {TableData|null} [existing]
      */
-    open(existing = null) {
-        this._build();
-        if (!this.dialog || this.dialog.open) return Promise.resolve(null);
-
-        this._existing = existing;
+    _populateFields(existing) {
+        this._existing = existing ?? null;
 
         const colsInput = this._getInput('table-columns');
         const rowsInput = this._getInput('table-rows');
-        const insertBtn = /** @type {HTMLButtonElement} */ (
-            this.dialog.querySelector('.table-btn--insert')
-        );
-        const heading = this.dialog.querySelector('.table-dialog-header h2');
+        const insertBtn = this._getInsertBtn();
+        const heading = this._getHeading();
 
         if (existing) {
             colsInput.value = String(existing.columns);
@@ -149,33 +87,17 @@ export class TableModal {
             if (insertBtn) insertBtn.textContent = 'Insert';
             if (heading) heading.textContent = 'Insert Table';
         }
+    }
 
-        this.dialog.showModal();
-        colsInput.focus();
+    /**
+     * @returns {HTMLElement}
+     */
+    _getFocusTarget() {
+        const colsInput = this._getInput('table-columns');
         colsInput.select();
-
-        return new Promise((resolve) => {
-            this._resolve = resolve;
-        });
+        return colsInput;
     }
 
-    // ──────────────────────────────────────────────
-    //  Internal helpers
-    // ──────────────────────────────────────────────
-
-    /**
-     * Closes the modal without submitting.
-     */
-    _cancel() {
-        if (this.dialog?.open) {
-            this.dialog.close();
-        }
-        this._resolve(null);
-    }
-
-    /**
-     * Submits the modal data.
-     */
     _submit() {
         const newCols = Number.parseInt(this._getInput('table-columns').value, 10) || 1;
         const newRows = Number.parseInt(this._getInput('table-rows').value, 10) || 1;
@@ -199,23 +121,17 @@ export class TableModal {
                 }
             }
 
-            // Build new cells by copying what fits and trimming or expanding
             const cells = this._resizeCells(this._existing.cells, rows, cols);
-
-            if (this.dialog?.open) {
-                this.dialog.close();
-            }
-            this._resolve({ rows, columns: cols, cells });
+            this._closeWithResult({ rows, columns: cols, cells });
         } else {
-            // New table — empty cells
             const cells = this._emptyCells(rows, cols);
-
-            if (this.dialog?.open) {
-                this.dialog.close();
-            }
-            this._resolve({ rows, columns: cols, cells });
+            this._closeWithResult({ rows, columns: cols, cells });
         }
     }
+
+    // ──────────────────────────────────────────────
+    //  Internal helpers
+    // ──────────────────────────────────────────────
 
     /**
      * Checks whether shrinking to `newRows`×`newCols` would discard non-empty
@@ -226,7 +142,6 @@ export class TableModal {
      * @returns {boolean}
      */
     _wouldLoseData(data, newRows, newCols) {
-        // Total rows in cells array = header (1) + body rows
         const totalOldRows = data.cells.length;
         const keepRows = newRows + 1; // +1 for header
 
@@ -236,7 +151,6 @@ export class TableModal {
                 const trimmed = (row[c] ?? '').trim();
                 if (!trimmed) continue;
 
-                // Is this cell outside the new bounds?
                 if (r >= keepRows || c >= newCols) {
                     return true;
                 }
@@ -298,15 +212,6 @@ export class TableModal {
         }
 
         return cells;
-    }
-
-    /**
-     * Gets an input element by id.
-     * @param {string} id
-     * @returns {HTMLInputElement}
-     */
-    _getInput(id) {
-        return /** @type {HTMLInputElement} */ (this.dialog?.querySelector(`#${id}`));
     }
 
     // ──────────────────────────────────────────────

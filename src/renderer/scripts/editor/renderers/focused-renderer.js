@@ -153,9 +153,7 @@ export class FocusedRenderer {
             // Insert after the previous sibling's DOM element.
             if (idx > 0) {
                 const prevSibling = siblings[idx - 1];
-                const prevEl = container.querySelector(
-                    `[data-node-id="${prevSibling.id}"]`,
-                );
+                const prevEl = container.querySelector(`[data-node-id="${prevSibling.id}"]`);
                 if (prevEl) {
                     prevEl.after(element);
                     continue;

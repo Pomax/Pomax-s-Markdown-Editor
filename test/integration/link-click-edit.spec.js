@@ -142,7 +142,24 @@ test.describe('Link with nested formatting', () => {
         await loadContent(page, BOLD_LINK_MD);
     });
 
-    test('clicking a link with bold text opens the modal with raw markdown text', async () => {
+    test('clicking bold text inside a link does not open the link modal', async () => {
+        const paragraph = page.locator('.md-line.md-paragraph');
+        await paragraph.click();
+
+        // Click the <strong> inside the <a> — this is what a real user hits.
+        const bold = page.locator('.md-line.md-paragraph a strong');
+        await bold.click();
+
+        // The link modal should NOT appear — the user clicked the bold text,
+        // not the link itself.
+        const dialog = page.locator('.link-dialog');
+        await expect(dialog).not.toBeVisible();
+    });
+
+    test('clicking the link element itself still opens the modal', async () => {
+        // Load content with a non-bold link so we can click the <a> directly.
+        await loadContent(page, 'Click [plain link](https://bold.com) here.');
+
         const paragraph = page.locator('.md-line.md-paragraph');
         await paragraph.click();
 
@@ -152,39 +169,13 @@ test.describe('Link with nested formatting', () => {
         const dialog = page.locator('.link-dialog');
         await expect(dialog).toBeVisible();
 
-        // The text field should contain the raw markdown (with ** markers)
         const textInput = page.locator('#link-text');
-        await expect(textInput).toHaveValue('**bold link**');
+        await expect(textInput).toHaveValue('plain link');
 
         const urlInput = page.locator('#link-url');
         await expect(urlInput).toHaveValue('https://bold.com');
 
-        // Cancel
         const cancelBtn = page.locator('.link-btn--cancel');
         await cancelBtn.click();
-    });
-
-    test('editing a link with bold text updates correctly', async () => {
-        const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
-
-        const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
-
-        const dialog = page.locator('.link-dialog');
-        await expect(dialog).toBeVisible();
-
-        // Update the fields
-        await page.fill('#link-text', '**new bold**');
-        await page.fill('#link-url', 'https://new-bold.com');
-
-        const updateBtn = page.locator('.link-btn--insert');
-        await updateBtn.click();
-        await expect(dialog).not.toBeVisible();
-
-        // Verify the parse tree was updated
-        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-        expect(markdown).toContain('[**new bold**](https://new-bold.com)');
-        expect(markdown).not.toContain('[**bold link**](https://bold.com)');
     });
 });

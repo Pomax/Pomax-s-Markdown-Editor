@@ -5,6 +5,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { BaseModal } from '../modal/base-modal.js';
+
 /**
  * @typedef {Object} LinkData
  * @property {string} text - The visible link text
@@ -13,34 +15,19 @@
 
 /**
  * A modal dialog for inserting or editing links.
+ * @extends {BaseModal}
  */
-export class LinkModal {
-    constructor() {
-        /** @type {HTMLDialogElement|null} */
-        this.dialog = null;
-
-        /** @type {boolean} */
-        this._built = false;
-
-        /**
-         * Resolve function for the current open() promise.
-         * @type {function(LinkData|null): void}
-         */
-        this._resolve = () => {};
+export class LinkModal extends BaseModal {
+    get _prefix() {
+        return 'link';
     }
 
-    /**
-     * Lazily builds the dialog DOM the first time it is needed.
-     */
-    _build() {
-        if (this._built) return;
-        this._built = true;
+    get _ariaLabel() {
+        return 'Edit Link';
+    }
 
-        const dialog = document.createElement('dialog');
-        dialog.className = 'link-dialog';
-        dialog.setAttribute('aria-label', 'Edit Link');
-
-        dialog.innerHTML = `
+    _getTemplate() {
+        return `
             <form method="dialog" class="link-form">
                 <header class="link-dialog-header">
                     <h2>Insert Link</h2>
@@ -62,61 +49,16 @@ export class LinkModal {
                 </footer>
             </form>
         `;
-
-        // Close on × or Cancel
-        const closeBtn = dialog.querySelector('.link-dialog-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this._cancel());
-        }
-        const cancelBtn = dialog.querySelector('.link-btn--cancel');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this._cancel());
-        }
-
-        // Submit handler
-        const form = dialog.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this._submit();
-            });
-        }
-
-        // Close on backdrop click
-        dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                this._cancel();
-            }
-        });
-
-        // Close on Escape key
-        dialog.addEventListener('cancel', (e) => {
-            e.preventDefault();
-            this._cancel();
-        });
-
-        document.body.appendChild(dialog);
-        this.dialog = dialog;
     }
 
     /**
-     * Opens the link modal.
-     * If `existing` is provided, the fields are pre-populated for editing.
-     * Returns a promise that resolves with the link data, or null if cancelled.
-     *
-     * @param {Partial<LinkData>} [existing] - Existing link data for editing
-     * @returns {Promise<LinkData|null>}
+     * @param {Partial<LinkData>} [existing]
      */
-    open(existing) {
-        this._build();
-        if (!this.dialog || this.dialog.open) return Promise.resolve(null);
-
+    _populateFields(existing) {
         const textInput = this._getInput('link-text');
         const urlInput = this._getInput('link-url');
-        const insertBtn = /** @type {HTMLButtonElement} */ (
-            this.dialog.querySelector('.link-btn--insert')
-        );
-        const heading = this.dialog.querySelector('.link-dialog-header h2');
+        const insertBtn = this._getInsertBtn();
+        const heading = this._getHeading();
 
         if (existing?.text || existing?.url) {
             textInput.value = existing.text ?? '';
@@ -129,34 +71,19 @@ export class LinkModal {
             if (insertBtn) insertBtn.textContent = 'Insert';
             if (heading) heading.textContent = 'Insert Link';
         }
+    }
 
-        this.dialog.showModal();
-
+    /**
+     * @param {Partial<LinkData>} [existing]
+     * @returns {HTMLElement}
+     */
+    _getFocusTarget(existing) {
         // Focus the URL input when editing (text is usually fine), text input when inserting
-        if (existing?.text || existing?.url) {
-            urlInput.focus();
-        } else {
-            textInput.focus();
-        }
-
-        return new Promise((resolve) => {
-            this._resolve = resolve;
-        });
+        return existing?.text || existing?.url
+            ? this._getInput('link-url')
+            : this._getInput('link-text');
     }
 
-    /**
-     * Closes the modal without submitting.
-     */
-    _cancel() {
-        if (this.dialog?.open) {
-            this.dialog.close();
-        }
-        this._resolve(null);
-    }
-
-    /**
-     * Submits the modal data.
-     */
     _submit() {
         const text = this._getInput('link-text').value.trim();
         const url = this._getInput('link-url').value.trim();
@@ -166,19 +93,6 @@ export class LinkModal {
             return;
         }
 
-        if (this.dialog?.open) {
-            this.dialog.close();
-        }
-
-        this._resolve({ text: text || url, url });
-    }
-
-    /**
-     * Gets an input element by id.
-     * @param {string} id
-     * @returns {HTMLInputElement}
-     */
-    _getInput(id) {
-        return /** @type {HTMLInputElement} */ (this.dialog?.querySelector(`#${id}`));
+        this._closeWithResult({ text: text || url, url });
     }
 }

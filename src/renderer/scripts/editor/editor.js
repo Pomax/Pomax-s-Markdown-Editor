@@ -274,6 +274,13 @@ export class Editor {
          * @type {LinkModal|null}
          */
         this._linkModal = null;
+
+        /**
+         * Set to true when the editor loses focus to a modal dialog,
+         * so handleFocus can restore the caret when the modal closes.
+         * @type {boolean}
+         */
+        this._blurredByModal = false;
     }
 
     /**
@@ -305,6 +312,7 @@ export class Editor {
         // and also catch composition/IME and paste events as a safety net.
         this.container.addEventListener('beforeinput', this.handleBeforeInput.bind(this));
 
+        this.container.addEventListener('mousedown', this._handleMouseDown.bind(this));
         this.container.addEventListener('click', this.handleClick.bind(this));
         this.container.addEventListener('focus', this.handleFocus.bind(this));
         this.container.addEventListener('blur', this.handleBlur.bind(this));
@@ -1120,6 +1128,7 @@ export class Editor {
         }
 
         const before = this.syntaxTree.toMarkdown();
+        /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
         let renderHints = { updated: [node.id] };
 
         if (this.treeCursor.offset > 0) {
@@ -1277,6 +1286,7 @@ export class Editor {
         }
 
         const before = this.syntaxTree.toMarkdown();
+        /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
         let renderHints = { updated: [node.id] };
 
         if (this.treeCursor.offset < node.content.length) {
@@ -1348,9 +1358,10 @@ export class Editor {
                             next.parent = null;
                         }
                         this.treeCursor = { nodeId: node.id, offset: curLen };
-                        renderHints = next.children.length === 0
-                            ? { updated: [node.id], removed: [next.id] }
-                            : { updated: [node.id, next.id] };
+                        renderHints =
+                            next.children.length === 0
+                                ? { updated: [node.id], removed: [next.id] }
+                                : { updated: [node.id, next.id] };
                     }
                 } else {
                     const curLen = node.content.length;
@@ -1602,6 +1613,7 @@ export class Editor {
      * Records an undo entry, marks the document dirty, renders, and places
      * the cursor.
      * @param {string} before - The markdown content before the edit
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} [hints]
      */
     recordAndRender(before, hints) {
         if (!this.syntaxTree) return;
@@ -1654,6 +1666,21 @@ export class Editor {
      * so the source-syntax decoration follows the cursor.
      * @param {MouseEvent} event
      */
+    /**
+     * Captures the anchor element (if any) under the pointer at mousedown
+     * time.  A selectionchange between mousedown and click may re-render
+     * the node and destroy the <a>, so we stash a reference while it still
+     * exists in the DOM.
+     * @param {MouseEvent} event
+     */
+    _handleMouseDown(event) {
+        this._mouseDownAnchor =
+            event.target instanceof HTMLElement && event.target.tagName === 'A'
+                ? event.target
+                : null;
+    }
+
+    /** @param {MouseEvent} event */
     handleClick(event) {
         const previousNodeId = this.treeCursor?.nodeId ?? null;
         this.syncCursorFromDOM();
@@ -1689,13 +1716,21 @@ export class Editor {
 
         // In focused view, clicking a link prevents navigation and opens
         // the edit modal so the user can change the text or URL.
-        if (this.viewMode === 'focused' && event.target instanceof HTMLElement) {
-            const anchor = event.target.closest('a');
+        // The anchor may no longer be in the DOM (selectionchange can
+        // re-render the node between mousedown and click), so fall back
+        // to the reference captured in _handleMouseDown.
+        if (this.viewMode === 'focused') {
+            const anchor =
+                (event.target instanceof HTMLElement &&
+                    event.target.tagName === 'A' &&
+                    event.target) ||
+                this._mouseDownAnchor;
+            this._mouseDownAnchor = null;
             if (anchor) {
                 event.preventDefault();
                 const node = this.getCurrentNode();
                 if (node) {
-                    this._openLinkModalForNode(node, anchor);
+                    this._openLinkModalForNode(node, /** @type {HTMLAnchorElement} */ (anchor));
                 }
                 return;
             }
@@ -1842,10 +1877,31 @@ export class Editor {
     /** Handles focus events. */
     handleFocus() {
         this.container.classList.add('focused');
+
+        // When returning from a modal dialog (link/image/table), the
+        // tree cursor was intentionally preserved (see handleBlur).
+        // Restore the browser caret so the user sees their cursor again.
+        if (this._blurredByModal) {
+            this._blurredByModal = false;
+            if (this.treeCursor) {
+                this.placeCursor();
+            }
+        }
     }
 
-    /** Handles blur events — clears the active node highlight. */
-    handleBlur() {
+    /** Handles blur events — clears the active node highlight.
+     *  @param {FocusEvent} event
+     */
+    handleBlur(event) {
+        // When focus moves to a modal dialog (link / image / table edit),
+        // preserve the tree cursor and the focused-node rendering so they
+        // can be seamlessly restored when the modal closes.
+        const related = /** @type {HTMLElement|null} */ (event.relatedTarget);
+        if (related?.closest?.('dialog')) {
+            this._blurredByModal = true;
+            return;
+        }
+
         this.container.classList.remove('focused');
 
         // In focused view the active node shows raw markdown syntax.
@@ -1877,6 +1933,19 @@ export class Editor {
                 if (previousNodeId) nodesToUpdate.push(previousNodeId);
                 this.renderNodes({ updated: nodesToUpdate });
                 this.placeCursor();
+
+                // If the user mousedown'd on an <a> and selectionchange moved
+                // focus to a different node, the re-render above destroyed the
+                // <a> so the browser will never fire a click event.  Open the
+                // link modal now instead.
+                if (this._mouseDownAnchor) {
+                    const anchor = /** @type {HTMLAnchorElement} */ (this._mouseDownAnchor);
+                    this._mouseDownAnchor = null;
+                    const node = this.getCurrentNode();
+                    if (node) {
+                        this._openLinkModalForNode(node, anchor);
+                    }
+                }
             }
         }
     }
