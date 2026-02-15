@@ -19,6 +19,11 @@ this **before** doing any work.
 ## Doing work
 
 - **Always** create a new git branch off of `main` for any new work
+- **Always** run all commands and reasoning in the foreground
+- **ALways** use the active terminal to run any commands
+- **Never** split commands with `;`, **always** use `&&` or if you can't, split them up.
+- **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its own first if you're not already in cmd.
+- When asked to offer multiple choices, **never** present option picking UI, instead ask what option to select and wait for the user to type the answer.
 - **Never** start modifying files without asking whether what you thought up makes sense or whether assumptions made during the reasoning step missed anything.
 
 ## Test Runners
@@ -26,7 +31,7 @@ this **before** doing any work.
 | Kind        | Command                  | Framework                     |
 |-------------|--------------------------|-------------------------------|
 | Unit        | `npm run test:unit`      | Node.js native test runner    |
-| Integration | `npx playwright test`    | Playwright + Firefox          |
+| Integration | `npm run test:integration` | Playwright + Firefox        |
 
 - **Do not** use vitest — the project does not use it.
 - The user runs the full Playwright suite themselves; you can run individual

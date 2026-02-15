@@ -213,7 +213,7 @@ export class TableOfContents {
         // changes element sizes).
         this.editor.treeCursor = { nodeId, offset: 0 };
         this.editor.container.focus({ preventScroll: true });
-        this.editor.renderAndPlaceCursor();
+        this.editor.fullRenderAndPlaceCursor();
 
         // Defer the scroll to the next animation frame so it runs
         // *after* any browser-initiated scroll-into-view triggered by

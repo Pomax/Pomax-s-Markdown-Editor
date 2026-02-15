@@ -24,7 +24,7 @@ export class SourceRenderer {
      * @param {import('../../parser/syntax-tree.js').SyntaxTree} syntaxTree - The syntax tree to render
      * @param {HTMLElement} container - The container element
      */
-    render(syntaxTree, container) {
+    fullRender(syntaxTree, container) {
         // Save current selection
         const selection = window.getSelection();
         let savedRange = null;
