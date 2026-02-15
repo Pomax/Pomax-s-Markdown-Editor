@@ -78,7 +78,11 @@ test('inserting an image via the modal creates an image node', async () => {
 });
 
 test('image node displays raw syntax in source mode', async () => {
-    // Switch to source view so image shows raw syntax.
+    // Set up: load content with an image, then switch to source view.
+    await page.evaluate((content) => {
+        window.editorAPI?.setContent(content);
+    }, '![Test Image](test-image.png)');
+    await page.waitForSelector('#editor .md-line');
     await page.evaluate(() => window.electronAPI?.setSourceView());
     await page.locator('#editor[data-view-mode="source"]').waitFor();
 
@@ -90,16 +94,26 @@ test('image node displays raw syntax in source mode', async () => {
 });
 
 test('clicking image button on existing image opens edit modal with pre-filled data', async () => {
-    // Click on the image node to place cursor there
-    const imageNode = page.locator('.md-image');
-    await imageNode.click();
+    // Set up: load content with an image and switch to focused view.
+    await page.evaluate((content) => {
+        window.editorAPI?.setContent(content);
+    }, '![Test Image](test-image.png)');
+    await page.waitForSelector('#editor .md-line');
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
-    // Now click the image button
+    // Place the cursor on the image node without triggering click-to-edit.
+    // Use keyboard navigation: focus the editor, then move to the image line.
+    const editor = page.locator('#editor');
+    await editor.focus();
+    await page.keyboard.press('Home');
+    await page.waitForTimeout(100);
+
+    // Now click the image toolbar button with cursor on the image node.
     const imageButton = page.locator('[data-button-id="image"]');
     await imageButton.click();
 
-    const dialog = page.locator('.image-dialog');
-    await expect(dialog).toBeVisible();
+    const dialog = page.locator('.image-dialog[open]');
 
     // Check that the heading says "Edit Image"
     const heading = page.locator('.image-dialog-header h2');

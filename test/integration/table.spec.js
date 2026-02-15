@@ -79,6 +79,12 @@ test('inserting a table via the modal creates a table node', async () => {
 });
 
 test('table renders as an HTML table in focused mode', async () => {
+    // Set up: load content with a table and switch to focused view.
+    const tableMarkdown = '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |';
+    await loadContent(page, tableMarkdown);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
     // In WYSIWYG mode the table is always rendered as an HTML <table>.
     const tableElement = page.locator('.md-line.md-table');
     await expect(tableElement).toBeVisible();
@@ -92,6 +98,13 @@ test('table renders as an HTML table in focused mode', async () => {
 });
 
 test('clicking table button on existing table opens edit modal with pre-filled dimensions', async () => {
+    // Set up: load a 2×2 table and switch to focused view.
+    const tableMarkdown =
+        '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |\n| Cell 3 | Cell 4 |';
+    await loadContent(page, tableMarkdown);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
     // Click on the table node
     const tableNode = page.locator('.md-line.md-table');
     await tableNode.click();

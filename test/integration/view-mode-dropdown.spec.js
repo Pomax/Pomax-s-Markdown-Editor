@@ -61,7 +61,11 @@ test('clicking toggle switches editor to source mode', async () => {
 });
 
 test('clicking toggle again switches editor back to focused mode', async () => {
+    // Set up: load content and switch to source mode first.
+    await loadContent(page, readmeContent);
     const toggle = page.locator('.toolbar-view-mode-toggle');
+    await page.evaluate(() => window.electronAPI?.setSourceView());
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
 
     // Click to switch back to focused mode.
     await toggle.click();
@@ -84,7 +88,9 @@ test('clicking toggle again switches editor back to focused mode', async () => {
 test('toggle stays in sync when view mode changes via menu', async () => {
     const toggle = page.locator('.toolbar-view-mode-toggle');
 
-    // Start in focused mode from the previous test.
+    // Set up: ensure we start in focused mode.
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
     await expect(toggle).toHaveText('Focused Writing');
 
     // Switch to source via the IPC (simulating a menu action).

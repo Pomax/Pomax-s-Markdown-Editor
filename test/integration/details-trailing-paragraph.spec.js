@@ -83,7 +83,12 @@ test('deleting all content after </details> re-creates the trailing paragraph', 
 });
 
 test('user can type in the auto-created trailing paragraph', async () => {
-    // From the previous test the cursor may be inside the details block.
+    // Set up: load a document ending in </details> so the editor creates
+    // a trailing empty paragraph, then switch to focused view.
+    await loadContent(page, markdownEndingInDetails);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+
     // Click the trailing empty paragraph to place the cursor there.
     const trailingPara = page.locator('#editor > .md-line:not(.md-html-block)').last();
     await trailingPara.click();

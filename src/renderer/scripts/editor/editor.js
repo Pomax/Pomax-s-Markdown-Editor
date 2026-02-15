@@ -208,6 +208,16 @@ function renderedOffsetToRawOffset(content, renderedOffset) {
  */
 
 /**
+ * Represents a non-collapsed selection range mapped to tree coordinates.
+ * Both endpoints are expressed as (nodeId, offset) pairs.
+ * @typedef {Object} TreeRange
+ * @property {string} startNodeId - The ID of the node the range starts in
+ * @property {number} startOffset - Character offset within the start node's content
+ * @property {string} endNodeId - The ID of the node the range ends in
+ * @property {number} endOffset - Character offset within the end node's content
+ */
+
+/**
  * Main editor class that manages the markdown editing experience.
  */
 export class Editor {
@@ -281,6 +291,13 @@ export class Editor {
          * @type {boolean}
          */
         this._blurredByModal = false;
+
+        /**
+         * Non-collapsed selection range mapped to tree coordinates.
+         * null when the selection is collapsed (i.e. just a cursor).
+         * @type {TreeRange|null}
+         */
+        this.treeRange = null;
     }
 
     /**
@@ -316,6 +333,15 @@ export class Editor {
         this.container.addEventListener('click', this.handleClick.bind(this));
         this.container.addEventListener('focus', this.handleFocus.bind(this));
         this.container.addEventListener('blur', this.handleBlur.bind(this));
+
+        // Cut handling: write the selected range's markdown to the clipboard
+        // before the browser's default action.  The actual tree mutation is
+        // handled by the beforeinput handler for 'deleteByCut'.
+        this.container.addEventListener('cut', this._handleCut.bind(this));
+
+        // Copy handling: override the browser default to write the raw
+        // markdown of the selected range to the clipboard.
+        this.container.addEventListener('copy', this._handleCopy.bind(this));
 
         // Drag-and-drop image support
         this.container.addEventListener('dragover', this.handleDragOver.bind(this));
@@ -365,6 +391,9 @@ export class Editor {
      * it back to a (nodeId, offset) pair.  This is the **only** place where we
      * read positional information from the DOM — and it only updates the cursor,
      * never content.
+     *
+     * When the selection is non-collapsed, also populates `this.treeRange`
+     * with start/end tree coordinates.  When collapsed, clears `treeRange`.
      */
     syncCursorFromDOM() {
         const selection = window.getSelection();
@@ -372,10 +401,44 @@ export class Editor {
 
         const range = selection.getRangeAt(0);
 
-        // Walk up from the selection anchor to find the nearest element with a
-        // data-node-id attribute, which maps it back to a tree node.
+        // Map the start (anchor) position to tree coordinates.
+        const startInfo = this._mapDOMPositionToTree(range.startContainer, range.startOffset);
+        if (!startInfo) return;
+
+        this.treeCursor = startInfo.cursor;
+
+        // If the selection is collapsed there is no range.
+        if (selection.isCollapsed) {
+            this.treeRange = null;
+            return;
+        }
+
+        // Map the end (focus) position to tree coordinates.
+        const endInfo = this._mapDOMPositionToTree(range.endContainer, range.endOffset);
+        if (!endInfo) {
+            this.treeRange = null;
+            return;
+        }
+
+        this.treeRange = {
+            startNodeId: startInfo.cursor.nodeId,
+            startOffset: startInfo.cursor.offset,
+            endNodeId: endInfo.cursor.nodeId,
+            endOffset: endInfo.cursor.offset,
+        };
+    }
+
+    /**
+     * Maps a DOM position (node + offset) to tree coordinates by walking up
+     * to the nearest element with a `data-node-id` attribute.
+     *
+     * @param {Node} domNode - The DOM node the position is in
+     * @param {number} domOffset - The offset within `domNode`
+     * @returns {{ cursor: TreeCursor } | null}
+     */
+    _mapDOMPositionToTree(domNode, domOffset) {
         /** @type {Node|null} */
-        let el = range.startContainer;
+        let el = domNode;
         while (el && el !== this.container) {
             if (el.nodeType === Node.ELEMENT_NODE) {
                 const htmlEl = /** @type {HTMLElement} */ (el);
@@ -384,25 +447,18 @@ export class Editor {
                     // Check if the cursor is inside a table cell
                     const node = this.syntaxTree?.findNodeById(nodeId);
                     if (node?.type === 'table' && this.viewMode === 'focused') {
-                        const pos = this._computeTableCellPosition(
-                            htmlEl,
-                            range.startContainer,
-                            range.startOffset,
-                        );
-                        this.treeCursor = {
-                            nodeId,
-                            offset: pos.offset,
-                            cellRow: pos.cellRow,
-                            cellCol: pos.cellCol,
+                        const pos = this._computeTableCellPosition(htmlEl, domNode, domOffset);
+                        return {
+                            cursor: {
+                                nodeId,
+                                offset: pos.offset,
+                                cellRow: pos.cellRow,
+                                cellCol: pos.cellCol,
+                            },
                         };
-                        return;
                     }
 
-                    const offset = this.computeOffsetInContent(
-                        htmlEl,
-                        range.startContainer,
-                        range.startOffset,
-                    );
+                    const offset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
                     /** @type {TreeCursor} */
                     const cursor = { nodeId, offset };
                     // If this element represents an html-block tag line in
@@ -412,12 +468,12 @@ export class Editor {
                     if (tagPart === 'opening' || tagPart === 'closing') {
                         cursor.tagPart = tagPart;
                     }
-                    this.treeCursor = cursor;
-                    return;
+                    return { cursor };
                 }
             }
             el = el.parentNode;
         }
+        return null;
     }
 
     /**
@@ -471,8 +527,24 @@ export class Editor {
             node = walker.nextNode();
         }
 
-        // cursorNode was not a text node inside the content element (e.g. the
-        // cursor is on the element itself).  Clamp to content length.
+        // cursorNode was not a text node inside the content element — this
+        // happens when the DOM range targets an element container directly
+        // (e.g. after selectNodeContents).  In that case `cursorOffset` is a
+        // child-node index, not a character offset.  Sum the text content of
+        // all children before the target index to compute the character offset.
+        if (cursorNode.nodeType === Node.ELEMENT_NODE) {
+            const children = cursorNode.childNodes;
+            let charOffset = 0;
+            for (let i = 0; i < cursorOffset && i < children.length; i++) {
+                charOffset += children[i].textContent?.length ?? 0;
+            }
+            // Clamp to total text length in case cursorOffset >= child count.
+            const total = cursorNode.textContent?.length ?? 0;
+            const renderedOff = Math.min(charOffset, total);
+            return this._toRawOffset(nodeElement, renderedOff);
+        }
+
+        // Fallback: clamp to content length.
         const renderedOff = Math.min(cursorOffset, offset);
         return this._toRawOffset(nodeElement, renderedOff);
     }
@@ -879,6 +951,20 @@ export class Editor {
             return;
         }
 
+        // Handle cut — the clipboard was already written by the 'cut'
+        // event handler; here we just delete the selected range via the tree.
+        if (event.inputType === 'deleteByCut') {
+            event.preventDefault();
+            this.syncCursorFromDOM();
+            if (this.treeRange) {
+                const rangeResult = this.deleteSelectedRange();
+                if (rangeResult) {
+                    this.recordAndRender(rangeResult.before, rangeResult.hints);
+                }
+            }
+            return;
+        }
+
         // All other mutations are prevented — we drive edits through the tree.
         event.preventDefault();
     }
@@ -900,6 +986,12 @@ export class Editor {
             if ((event.key === 'z' && event.shiftKey) || event.key === 'y') {
                 event.preventDefault();
                 this.redo();
+                return;
+            }
+            // ── Select All (Ctrl+A) — context-restricted ──
+            if (event.key === 'a') {
+                event.preventDefault();
+                this.handleSelectAll();
                 return;
             }
         }
@@ -951,6 +1043,185 @@ export class Editor {
     }
 
     // ──────────────────────────────────────────────
+    //  Range (selection) operations
+    // ──────────────────────────────────────────────
+
+    /**
+     * Returns an ordered flat list of leaf nodes within the given sibling
+     * list, optionally restricted to the range between `startId` and `endId`.
+     * Both endpoints are inclusive.  Only considers nodes at the same
+     * nesting level (siblings).
+     *
+     * @param {SyntaxNode[]} siblings
+     * @param {string} startId
+     * @param {string} endId
+     * @returns {SyntaxNode[]}
+     */
+    _getNodesBetween(siblings, startId, endId) {
+        const result = [];
+        let collecting = false;
+        for (const node of siblings) {
+            if (node.id === startId) {
+                collecting = true;
+            }
+            if (collecting) {
+                result.push(node);
+            }
+            if (node.id === endId) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Deletes the currently selected range (stored in `this.treeRange`)
+     * from the syntax tree.  Handles same-node and cross-node selections.
+     *
+     * After deletion the cursor is placed at the join point and
+     * `this.treeRange` is cleared.
+     *
+     * @returns {{ before: string, hints: { updated?: string[], added?: string[], removed?: string[] } } | null}
+     *     The markdown snapshot before the edit and render hints, or null
+     *     if there was no range to delete.
+     */
+    deleteSelectedRange() {
+        if (!this.treeRange || !this.syntaxTree) return null;
+
+        const { startNodeId, startOffset, endNodeId, endOffset } = this.treeRange;
+        const startNode = this.syntaxTree.findNodeById(startNodeId);
+        const endNode = this.syntaxTree.findNodeById(endNodeId);
+        if (!startNode || !endNode) return null;
+
+        const before = this.syntaxTree.toMarkdown();
+
+        // ── Same-node selection ──
+        if (startNodeId === endNodeId) {
+            const left = startNode.content.substring(0, startOffset);
+            const right = startNode.content.substring(endOffset);
+            startNode.content = left + right;
+            this.treeCursor = { nodeId: startNode.id, offset: startOffset };
+            this.treeRange = null;
+            return { before, hints: { updated: [startNode.id] } };
+        }
+
+        // ── Cross-node selection ──
+        // Both nodes must share the same parent (sibling list).
+        const siblings = this.getSiblings(startNode);
+        const startIdx = siblings.indexOf(startNode);
+        const endIdx = siblings.indexOf(endNode);
+
+        // Safety: if nodes are not in the same sibling list, bail.
+        if (startIdx === -1 || endIdx === -1) return null;
+
+        // Ensure correct ordering (startIdx should be < endIdx).
+        // The DOM selection direction is always start < end in document
+        // order, so this should hold, but guard just in case.
+        const [firstIdx, firstNode, firstOffset, lastIdx, lastNode, lastOffset] =
+            startIdx <= endIdx
+                ? [startIdx, startNode, startOffset, endIdx, endNode, endOffset]
+                : [endIdx, endNode, endOffset, startIdx, startNode, startOffset];
+
+        // Trim the first node: keep content before the selection start.
+        const leftContent = firstNode.content.substring(0, firstOffset);
+
+        // Trim the last node: keep content after the selection end.
+        const rightContent = lastNode.content.substring(lastOffset);
+
+        // Merge: first node gets left + right content
+        firstNode.content = leftContent + rightContent;
+
+        // Collect IDs of intermediate and end nodes to remove.
+        /** @type {string[]} */
+        const removedIds = [];
+        for (let i = firstIdx + 1; i <= lastIdx; i++) {
+            removedIds.push(siblings[i].id);
+            siblings[i].parent = null;
+        }
+        // Remove them from the siblings array.
+        siblings.splice(firstIdx + 1, lastIdx - firstIdx);
+
+        this.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
+        this.treeRange = null;
+        return { before, hints: { updated: [firstNode.id], removed: removedIds } };
+    }
+
+    /**
+     * Handles Ctrl+A — selects all content within the current block-level
+     * context rather than the entire document.
+     *
+     * Context scoping:
+     * - Code block → selects all code inside the block
+     * - List item → selects the list item text
+     * - Paragraph / heading / blockquote → selects the whole element
+     * - Text inside inline formatting (bold, italic…) in focused mode →
+     *   selects the containing block-level node, not just the span
+     * - Table cell → selects the cell content
+     */
+    handleSelectAll() {
+        this.syncCursorFromDOM();
+        const node = this.getCurrentNode();
+        if (!node) return;
+
+        // ── Table cell: select just the cell content ──
+        if (
+            node.type === 'table' &&
+            this.viewMode === 'focused' &&
+            this.treeCursor?.cellRow !== undefined &&
+            this.treeCursor?.cellCol !== undefined
+        ) {
+            const cellText = this._getTableCellText(
+                node,
+                this.treeCursor.cellRow,
+                this.treeCursor.cellCol,
+            );
+            // Place selection spanning the whole cell via DOM
+            const nodeEl = this.container.querySelector(`[data-node-id="${node.id}"]`);
+            if (nodeEl) {
+                this._placeTableCellCursor(
+                    /** @type {HTMLElement} */ (nodeEl),
+                    this.treeCursor.cellRow,
+                    this.treeCursor.cellCol,
+                    0,
+                );
+                // Extend to end
+                const sel = window.getSelection();
+                if (sel && cellText.length > 0) {
+                    // Re-select the full cell range using the DOM
+                    const range = sel.getRangeAt(0);
+                    const contentEl = range.startContainer.parentElement?.closest('td, th');
+                    if (contentEl) {
+                        const domRange = document.createRange();
+                        domRange.selectNodeContents(contentEl);
+                        sel.removeAllRanges();
+                        sel.addRange(domRange);
+                    }
+                }
+            }
+            // Update treeRange from the new DOM selection.
+            this.syncCursorFromDOM();
+            return;
+        }
+
+        // For all other block-level nodes, select the entire node content
+        // by setting a DOM range over the content element.
+        const nodeEl = this.container.querySelector(`[data-node-id="${node.id}"]`);
+        if (!nodeEl) return;
+
+        const contentEl = nodeEl.querySelector('.md-content') ?? nodeEl;
+        const sel = window.getSelection();
+        if (!sel) return;
+
+        const domRange = document.createRange();
+        domRange.selectNodeContents(contentEl);
+        sel.removeAllRanges();
+        sel.addRange(domRange);
+
+        // Refresh tree cursor/range from the new DOM selection.
+        this.syncCursorFromDOM();
+    }
+
+    // ──────────────────────────────────────────────
     //  Tree-level edit operations
     // ──────────────────────────────────────────────
 
@@ -961,13 +1232,35 @@ export class Editor {
      */
     insertTextAtCursor(text) {
         this.syncCursorFromDOM();
+
+        // If there is a non-collapsed selection, delete it first so the
+        // typed text replaces the selection.
+        /** @type {string|null} */
+        let rangeDeleteBefore = null;
+        /** @type {string[]} */
+        let rangeRemovedIds = [];
+        if (this.treeRange) {
+            const rangeResult = this.deleteSelectedRange();
+            if (rangeResult) {
+                rangeDeleteBefore = rangeResult.before;
+                rangeRemovedIds = rangeResult.hints.removed ?? [];
+                if (!text) {
+                    this.recordAndRender(rangeResult.before, rangeResult.hints);
+                    return;
+                }
+                // Fall through — treeCursor is at the join point and we
+                // will insert the text there.  Use the pre-deletion
+                // snapshot for the undo entry.
+            }
+        }
+
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
         if (node.type === 'html-block' && this.treeCursor.tagPart) {
-            const before = this.syntaxTree.toMarkdown();
+            const before = rangeDeleteBefore ?? this.syntaxTree.toMarkdown();
             const attr = this.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
             const old = node.attributes[attr] || '';
             const left = old.substring(0, this.treeCursor.offset);
@@ -985,7 +1278,7 @@ export class Editor {
         // html-block containers without tagPart are structural (focused view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
-        const before = this.syntaxTree.toMarkdown();
+        const before = rangeDeleteBefore ?? this.syntaxTree.toMarkdown();
 
         // ── Table cell editing ──
         if (
@@ -1068,7 +1361,10 @@ export class Editor {
         }
 
         this.treeCursor = { nodeId: node.id, offset: newOffset };
-        this.recordAndRender(before, { updated: [node.id] });
+        /** @type {{ updated: string[], removed?: string[] }} */
+        const hints = { updated: [node.id] };
+        if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
+        this.recordAndRender(before, hints);
     }
 
     /**
@@ -1076,6 +1372,17 @@ export class Editor {
      */
     handleBackspace() {
         this.syncCursorFromDOM();
+
+        // If there is a non-collapsed selection, delete the entire range
+        // instead of a single character.
+        if (this.treeRange) {
+            const rangeResult = this.deleteSelectedRange();
+            if (rangeResult) {
+                this.recordAndRender(rangeResult.before, rangeResult.hints);
+                return;
+            }
+        }
+
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
@@ -1234,6 +1541,17 @@ export class Editor {
      */
     handleDelete() {
         this.syncCursorFromDOM();
+
+        // If there is a non-collapsed selection, delete the entire range
+        // instead of a single character.
+        if (this.treeRange) {
+            const rangeResult = this.deleteSelectedRange();
+            if (rangeResult) {
+                this.recordAndRender(rangeResult.before, rangeResult.hints);
+                return;
+            }
+        }
+
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
@@ -1382,6 +1700,22 @@ export class Editor {
      */
     handleEnterKey() {
         this.syncCursorFromDOM();
+
+        // If there is a non-collapsed selection, delete it first, then
+        // split at the resulting cursor position.
+        /** @type {string|null} */
+        let rangeDeleteBefore = null;
+        /** @type {string[]} */
+        let rangeRemovedIds = [];
+        if (this.treeRange) {
+            const rangeResult = this.deleteSelectedRange();
+            if (rangeResult) {
+                rangeDeleteBefore = rangeResult.before;
+                rangeRemovedIds = rangeResult.hints.removed ?? [];
+                // Fall through — treeCursor now points at the join point.
+            }
+        }
+
         const node = this.getCurrentNode();
         if (!node || !this.syntaxTree || !this.treeCursor) return;
 
@@ -1407,7 +1741,7 @@ export class Editor {
             return;
         }
 
-        const before = this.syntaxTree.toMarkdown();
+        const before = rangeDeleteBefore ?? this.syntaxTree.toMarkdown();
 
         // ── Early conversion: ```lang + Enter → code block ──
         const fenceMatch = node.type === 'paragraph' && node.content.match(/^```(\w*)$/);
@@ -1451,7 +1785,10 @@ export class Editor {
 
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
-        this.recordAndRender(before, { updated: [node.id], added: [newNode.id] });
+        /** @type {{ updated: string[], added: string[], removed?: string[] }} */
+        const hints = { updated: [node.id], added: [newNode.id] };
+        if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
+        this.recordAndRender(before, hints);
     }
 
     /**
@@ -1659,6 +1996,85 @@ export class Editor {
     // ──────────────────────────────────────────────
     //  Non-editing event handlers
     // ──────────────────────────────────────────────
+
+    /**
+     * Returns the raw markdown text for the current selection range.
+     * For same-node selections, returns the selected substring.
+     * For cross-node selections, returns the full markdown of the
+     * selected region (trimmed start/end, full intermediate nodes).
+     *
+     * @returns {string} The markdown text of the selection, or empty string.
+     */
+    _getSelectedMarkdown() {
+        this.syncCursorFromDOM();
+        if (!this.treeRange || !this.syntaxTree) return '';
+
+        const { startNodeId, startOffset, endNodeId, endOffset } = this.treeRange;
+        const startNode = this.syntaxTree.findNodeById(startNodeId);
+        const endNode = this.syntaxTree.findNodeById(endNodeId);
+        if (!startNode || !endNode) return '';
+
+        // Same node — just the selected substring.
+        if (startNodeId === endNodeId) {
+            return startNode.content.substring(startOffset, endOffset);
+        }
+
+        // Cross-node: collect the tail of the first node, full intermediate
+        // nodes, and the head of the last node.
+        const siblings = this.getSiblings(startNode);
+        const startIdx = siblings.indexOf(startNode);
+        const endIdx = siblings.indexOf(endNode);
+        if (startIdx === -1 || endIdx === -1) return '';
+
+        const parts = [];
+        parts.push(startNode.content.substring(startOffset));
+        for (let i = startIdx + 1; i < endIdx; i++) {
+            parts.push(siblings[i].toMarkdown());
+        }
+        parts.push(endNode.content.substring(0, endOffset));
+        return parts.join('\n\n');
+    }
+
+    /**
+     * Handles the `cut` event by writing the selected markdown to the
+     * clipboard.  The actual DOM/tree mutation is handled by
+     * `handleBeforeInput` for the `deleteByCut` input type.
+     * @param {ClipboardEvent} event
+     */
+    _handleCut(event) {
+        this.syncCursorFromDOM();
+        if (!this.treeRange) return; // nothing selected — let browser handle
+
+        event.preventDefault();
+        const markdown = this._getSelectedMarkdown();
+        if (event.clipboardData) {
+            event.clipboardData.setData('text/plain', markdown);
+        }
+        // After this event, the browser fires beforeinput with inputType
+        // 'deleteByCut', which we intercept to delete through the tree.
+        // However, since we preventDefault'd the cut, no beforeinput fires.
+        // Do the deletion here directly.
+        const rangeResult = this.deleteSelectedRange();
+        if (rangeResult) {
+            this.recordAndRender(rangeResult.before, rangeResult.hints);
+        }
+    }
+
+    /**
+     * Handles the `copy` event by writing the selected markdown to the
+     * clipboard instead of the browser's default rendered-text copy.
+     * @param {ClipboardEvent} event
+     */
+    _handleCopy(event) {
+        this.syncCursorFromDOM();
+        if (!this.treeRange) return; // nothing selected — let browser handle
+
+        event.preventDefault();
+        const markdown = this._getSelectedMarkdown();
+        if (event.clipboardData) {
+            event.clipboardData.setData('text/plain', markdown);
+        }
+    }
 
     /**
      * Handles click events — syncs tree cursor from wherever the user clicked.
@@ -1923,6 +2339,12 @@ export class Editor {
             const previousNodeId = this.treeCursor?.nodeId ?? null;
             this.syncCursorFromDOM();
             this.selectionManager.updateFromDOM();
+
+            // When the user is extending a selection (non-collapsed), skip
+            // the focused-mode re-render — re-rendering would destroy the
+            // in-progress DOM selection and place a collapsed cursor.
+            const selection = window.getSelection();
+            if (selection && !selection.isCollapsed) return;
 
             // In focused view the active node shows raw markdown syntax, so we
             // must re-render whenever the cursor moves to a different node.

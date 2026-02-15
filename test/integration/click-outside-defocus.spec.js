@@ -90,7 +90,12 @@ test('clicking outside the editor hides active-node highlight in focused mode', 
 });
 
 test('clicking back into the editor after defocus restores cursor', async () => {
-    // The editor should currently be blurred from the previous test.
+    // Set up: load content, switch to focused view, and defocus.
+    await loadContent(page, markdown);
+    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await defocusEditor(page);
+
     // Click on the paragraph (second line) to re-focus.
     const paragraph = page.locator('#editor .md-line').nth(1);
     await paragraph.click();
@@ -108,7 +113,8 @@ test('clicking back into the editor after defocus restores cursor', async () => 
 });
 
 test('defocus is a no-op in source view', async () => {
-    // Switch to source view.
+    // Set up: load content and switch to source view.
+    await loadContent(page, markdown);
     await page.evaluate(() => window.electronAPI?.setSourceView());
     await page.locator('#editor[data-view-mode="source"]').waitFor();
 

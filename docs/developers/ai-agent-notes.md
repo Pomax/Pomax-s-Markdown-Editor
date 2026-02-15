@@ -198,6 +198,16 @@ single line via `parseSingleLine`, they must check whether the node had
 - **App wiring**: `app.js` listens for settings events and applies them to
   the editor instance, then calls `render()`.
 
+## Playwright Workers
+
+- The Playwright config sets `fullyParallel: true` and `workers: 8` on
+  Windows (2 on macOS, 4 on Linux). Tests within a single spec file run
+  in parallel across workers.
+- Each worker gets its own `beforeAll` / `afterAll`, so shared resources
+  like HTTP servers are spun up per-worker (each on its own port).
+- When running a single spec file, Playwright will still use up to 8
+  workers to parallelize the tests inside it.
+
 ## CSS Conventions
 
 - Editor styles are in `src/renderer/styles/editor.css`.
