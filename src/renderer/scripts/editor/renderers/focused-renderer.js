@@ -52,7 +52,7 @@ export class FocusedRenderer {
      * @param {import('../../parser/syntax-tree.js').SyntaxTree} syntaxTree - The syntax tree to render
      * @param {HTMLElement} container - The container element
      */
-    render(syntaxTree, container) {
+    fullRender(syntaxTree, container) {
         // Use the tree cursor (the canonical cursor position) to determine
         // which node is focused, rather than the selection manager which
         // may be stale when switching view modes.
@@ -111,26 +111,93 @@ export class FocusedRenderer {
     }
 
     /**
-     * Re-renders only the previously focused node and the newly focused
-     * node, swapping them in-place in the DOM.  This avoids a full
-     * teardown/rebuild of the entire document when the user simply
-     * clicks on a different element.
+     * Incrementally updates the DOM by re-rendering, adding, or removing
+     * specific nodes rather than rebuilding the entire document.
      *
      * @param {HTMLElement} container - The editor container
-     * @param {string|null} previousNodeId - The node that was focused before
-     * @param {string} newNodeId - The node that is now focused
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} hints
+     *     - updated: node IDs whose content or focus state changed (re-render in place)
+     *     - added:   node IDs that were just inserted into the tree (create & insert DOM element)
+     *     - removed: node IDs that were just removed from the tree (delete DOM element)
      */
-    updateFocus(container, previousNodeId, newNodeId) {
+    renderNodes(container, { updated = [], added = [], removed = [] }) {
         const tree = this.editor.syntaxTree;
         if (!tree) return;
 
-        // Defocus the previously-focused node (re-render without focus).
-        if (previousNodeId) {
-            this._replaceNodeElement(container, tree, previousNodeId, false);
+        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+
+        // 1. Remove DOM elements for deleted nodes.
+        for (const nodeId of removed) {
+            const el = container.querySelector(`[data-node-id="${nodeId}"]`);
+            if (el) el.remove();
         }
 
-        // Focus the newly-focused node (re-render with focus).
-        this._replaceNodeElement(container, tree, newNodeId, true);
+        // 2. Re-render existing nodes in-place.
+        for (const nodeId of updated) {
+            const isFocused = nodeId === currentNodeId;
+            this._replaceNodeElement(container, tree, nodeId, isFocused);
+        }
+
+        // 3. Insert DOM elements for newly added nodes.
+        for (const nodeId of added) {
+            const node = tree.findNodeById(nodeId);
+            if (!node) continue;
+
+            const isFocused = nodeId === currentNodeId;
+            const siblings = node.parent ? node.parent.children : tree.children;
+            const idx = siblings.indexOf(node);
+            const visualNumber = this._computeVisualNumber(tree, node);
+            const element = this.renderNode(node, isFocused, visualNumber);
+            if (!element) continue;
+
+            // Insert after the previous sibling's DOM element.
+            if (idx > 0) {
+                const prevSibling = siblings[idx - 1];
+                const prevEl = container.querySelector(`[data-node-id="${prevSibling.id}"]`);
+                if (prevEl) {
+                    prevEl.after(element);
+                    continue;
+                }
+            }
+
+            // No previous sibling — if inside an html-block, re-render
+            // the parent instead; otherwise prepend to the container.
+            if (node.parent && node.parent.type === 'html-block') {
+                const parentFocused = node.parent.id === currentNodeId;
+                this._replaceNodeElement(container, tree, node.parent.id, parentFocused);
+            } else {
+                container.prepend(element);
+            }
+        }
+    }
+
+    /**
+     * Computes the 1-based visual position for an ordered list item within
+     * its consecutive run of ordered items at the same indent level.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxTree} tree
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {number|undefined}
+     */
+    _computeVisualNumber(tree, node) {
+        if (node.type !== 'list-item' || !node.attributes.ordered) return undefined;
+        const children = tree.children;
+        const indent = node.attributes.indent || 0;
+        let count = 0;
+        for (const child of children) {
+            if (child.type === 'list-item' && child.attributes.ordered) {
+                const childIndent = child.attributes.indent || 0;
+                if (childIndent === indent) {
+                    count++;
+                } else {
+                    count = 1;
+                }
+            } else {
+                count = 0;
+            }
+            if (child.id === node.id) return count;
+        }
+        return undefined;
     }
 
     /**
@@ -149,31 +216,7 @@ export class FocusedRenderer {
         const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
         if (!existing) return;
 
-        // Compute visualNumber for ordered list items so the counter
-        // displays correctly during incremental refocus.
-        let visualNumber;
-        if (node.type === 'list-item' && node.attributes.ordered) {
-            const children = tree.children;
-            const indent = node.attributes.indent || 0;
-            let count = 0;
-            for (const child of children) {
-                if (child.type === 'list-item' && child.attributes.ordered) {
-                    const childIndent = child.attributes.indent || 0;
-                    if (childIndent === indent) {
-                        count++;
-                    } else {
-                        count = 1;
-                    }
-                } else {
-                    count = 0;
-                }
-                if (child.id === nodeId) {
-                    visualNumber = count;
-                    break;
-                }
-            }
-        }
-
+        const visualNumber = this._computeVisualNumber(tree, node);
         const updated = this.renderNode(node, isFocused, visualNumber);
         if (updated) {
             existing.replaceWith(updated);
@@ -575,7 +618,7 @@ export class FocusedRenderer {
             triangle.addEventListener('click', (e) => {
                 e.stopPropagation();
                 node.attributes._detailsOpen = !node.attributes._detailsOpen;
-                this.editor.render();
+                this.editor.renderNodes({ updated: [node.id] });
                 this.editor.placeCursor();
             });
             summaryRow.appendChild(triangle);

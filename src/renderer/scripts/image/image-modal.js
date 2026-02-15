@@ -7,6 +7,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { BaseModal } from '../modal/base-modal.js';
+
 /**
  * @typedef {Object} ImageData
  * @property {string} alt - Alt text for the image
@@ -17,34 +19,19 @@
 
 /**
  * A modal dialog for inserting or editing images.
+ * @extends {BaseModal}
  */
-export class ImageModal {
-    constructor() {
-        /** @type {HTMLDialogElement|null} */
-        this.dialog = null;
-
-        /** @type {boolean} */
-        this._built = false;
-
-        /**
-         * Resolve function for the current open() promise.
-         * @type {function(ImageData|null): void}
-         */
-        this._resolve = () => {};
+export class ImageModal extends BaseModal {
+    get _prefix() {
+        return 'image';
     }
 
-    /**
-     * Lazily builds the dialog DOM the first time it is needed.
-     */
-    _build() {
-        if (this._built) return;
-        this._built = true;
+    get _ariaLabel() {
+        return 'Insert Image';
+    }
 
-        const dialog = document.createElement('dialog');
-        dialog.className = 'image-dialog';
-        dialog.setAttribute('aria-label', 'Insert Image');
-
-        dialog.innerHTML = `
+    _getTemplate() {
+        return `
             <form method="dialog" class="image-form">
                 <header class="image-dialog-header">
                     <h2>Insert Image</h2>
@@ -80,78 +67,37 @@ export class ImageModal {
                 </footer>
             </form>
         `;
+    }
 
-        // Close on × or Cancel
-        const closeBtn = dialog.querySelector('.image-dialog-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this._cancel());
-        }
-        const cancelBtn = dialog.querySelector('.image-btn--cancel');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this._cancel());
-        }
-
-        // Save/insert handler
-        const form = dialog.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this._submit();
-            });
-        }
-
-        // Close on backdrop click
-        dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                this._cancel();
-            }
-        });
-
-        // Close on Escape key
-        dialog.addEventListener('cancel', (e) => {
-            e.preventDefault();
-            this._cancel();
-        });
+    _afterBuild() {
+        if (!this.dialog) return;
 
         // Browse button
-        const browseBtn = dialog.querySelector('.image-browse-btn');
+        const browseBtn = this.dialog.querySelector('.image-browse-btn');
         if (browseBtn) {
             browseBtn.addEventListener('click', () => this._browse());
         }
 
         // Image preview on src change
-        const srcInput = /** @type {HTMLInputElement} */ (dialog.querySelector('#image-src'));
+        const srcInput = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#image-src'));
         if (srcInput) {
             srcInput.addEventListener('input', () => {
                 this._updatePreview();
                 this._updateRename();
             });
         }
-
-        document.body.appendChild(dialog);
-        this.dialog = dialog;
     }
 
     /**
-     * Opens the image modal.
-     * If `existing` is provided, the fields are pre-populated for editing.
-     * Returns a promise that resolves with the image data, or null if cancelled.
-     *
-     * @param {Partial<ImageData>} [existing] - Existing image data for editing
-     * @returns {Promise<ImageData|null>}
+     * @param {Partial<ImageData>} [existing]
      */
-    open(existing) {
-        this._build();
-        if (!this.dialog || this.dialog.open) return Promise.resolve(null);
-
+    _populateFields(existing) {
         const srcInput = this._getInput('image-src');
         const renameInput = this._getInput('image-rename');
         const altInput = this._getInput('image-alt');
         const hrefInput = this._getInput('image-href');
-        const insertBtn = /** @type {HTMLButtonElement} */ (
-            this.dialog.querySelector('.image-btn--insert')
-        );
-        const heading = this.dialog.querySelector('.image-dialog-header h2');
+        const insertBtn = this._getInsertBtn();
+        const heading = this._getHeading();
 
         if (existing?.src || existing?.alt || existing?.href) {
             srcInput.value = existing.src ?? '';
@@ -170,30 +116,15 @@ export class ImageModal {
         }
 
         this._updatePreview();
-
-        this.dialog.showModal();
-
-        // Focus the src input
-        srcInput.focus();
-
-        return new Promise((resolve) => {
-            this._resolve = resolve;
-        });
     }
 
     /**
-     * Closes the modal without submitting.
+     * @returns {HTMLElement}
      */
-    _cancel() {
-        if (this.dialog?.open) {
-            this.dialog.close();
-        }
-        this._resolve(null);
+    _getFocusTarget() {
+        return this._getInput('image-src');
     }
 
-    /**
-     * Submits the modal data.
-     */
     _submit() {
         const src = this._getInput('image-src').value.trim();
         const rename = this._getInput('image-rename').value.trim();
@@ -201,16 +132,11 @@ export class ImageModal {
         const href = this._getInput('image-href').value.trim();
 
         if (!src) {
-            // Focus the src input if empty
             this._getInput('image-src').focus();
             return;
         }
 
-        if (this.dialog?.open) {
-            this.dialog.close();
-        }
-
-        this._resolve({ alt, src, href, rename });
+        this._closeWithResult({ alt, src, href, rename });
     }
 
     /**
@@ -246,7 +172,6 @@ export class ImageModal {
             previewImg.alt = this._getInput('image-alt').value.trim() || 'Preview';
             previewContainer.classList.add('visible');
 
-            // Hide on error
             previewImg.onerror = () => {
                 previewContainer.classList.remove('visible');
             };
@@ -279,14 +204,5 @@ export class ImageModal {
         // Handle both forward and back slashes
         const parts = clean.split(/[/\\]/);
         return parts[parts.length - 1] || '';
-    }
-
-    /**
-     * Gets an input element by id.
-     * @param {string} id
-     * @returns {HTMLInputElement}
-     */
-    _getInput(id) {
-        return /** @type {HTMLInputElement} */ (this.dialog?.querySelector(`#${id}`));
     }
 }

@@ -1,34 +1,55 @@
 # AI Agent Notes
 
 This document captures hard-won lessons, conventions, and technical details
-that an AI coding assistant should know when working on this project.  Read
+that an AI coding assistant should know when working on this project. Read
 this **before** doing any work.
 
 ---
 
 ## Working Environment
 
-- **OS**: Windows.  Default shell is `cmd.exe`.
+- **OS**: Windows. Default shell is `cmd.exe`.
 - **Shell rule**: If you are not already in the standard command prompt, run
-  `cmd` first.  Then check whether you are already in the project directory —
+  `cmd` first. Then check whether you are already in the project directory —
   `cd` is almost never necessary because the terminal usually opens in the
-  workspace root already.  **Do not blindly prepend `cd …` to commands.**
+  workspace root already. **Do not blindly prepend `cd …` to commands.**
 - **Never** use `2>&1` in terminal commands.
 - The project root is the workspace folder (the one containing `package.json`).
 
 ## Doing work
 
 - **Always** create a new git branch off of `main` for any new work
-- **Never** start modifying files without asking whether what you thought up makes sense or whether assumptions made during the reasoning step missed anything.
+- **Always** run all commands and reasoning in the foreground
+- **ALways** use the active terminal to run any commands
+- **Never** split commands with `;`, **always** use `&&` or if you can't,
+  split them up.
+- **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
+  own first if you're not already in cmd.
+- When asked to offer multiple choices, **never** present option picking
+  UI, instead ask what option to select and wait for the user to type
+  the answer.
+- **Never** start modifying files without asking whether what you thought
+  up makes sense or whether assumptions made during the reasoning step
+  missed anything.
+- **After starting a test run**, do **nothing** — no terminal commands, no
+  file reads, no edits — until the **user explicitly says the tests have
+  finished** and provides results. Terminal output may be truncated or
+  returned before the command completes; never assume tests are done based
+  on partial output alone.
+- **Never** use multiline strings in terminal commands. `cmd.exe` treats
+  each line as a separate command. Git commit messages must be a single
+  line: `git commit -m "one line summary"`.
 
 ## Test Runners
 
-| Kind        | Command                  | Framework                     |
-|-------------|--------------------------|-------------------------------|
-| Unit        | `npm run test:unit`      | Node.js native test runner    |
-| Integration | `npx playwright test`    | Playwright + Firefox          |
+| Kind        | Command                    | Framework                  |
+| ----------- | -------------------------- | -------------------------- |
+| Unit        | `npm run test:unit`        | Node.js native test runner |
+| Integration | `npm run test:integration` | Playwright + Firefox       |
 
 - **Do not** use vitest — the project does not use it.
+- **Never** use `npx` to run tools — always use the corresponding `npm run`
+  script. To run a single spec file: `npm run test:integration -- path/to/file.spec.js`.
 - The user runs the full Playwright suite themselves; you can run individual
   spec files to verify your work, but do not run the entire suite without
   being asked.
@@ -40,32 +61,47 @@ this **before** doing any work.
 ### Synthetic vs. real clicks
 
 `locator.click()` dispatches a synthetic event that **skips** the real
-browser event sequence.  A real human click fires:
+browser event sequence. A real human click fires:
 
     mousedown → (selectionchange) → mouseup → click
 
 If the editor re-renders on `selectionchange` (it does — see
 `handleSelectionChange` in `editor.js`), the DOM element that received
-`mousedown` may be destroyed before `click` fires.  A synthetic
+`mousedown` may be destroyed before `click` fires. A synthetic
 `locator.click()` won't reproduce this because it skips `selectionchange`.
 
 **Whenever a test needs to click an interactive element inside the editor
 (e.g., the disclosure triangle), use `page.mouse.click(x, y)` with
-coordinates obtained from `locator.boundingBox()`.**  This produces the
+coordinates obtained from `locator.boundingBox()`.** This produces the
 real event sequence and will catch bugs that `locator.click()` hides.
+
+Even `page.mouse.click()` may not be enough — Playwright can fire the
+full sequence so fast that `selectionchange` never gets a chance to
+interleave. To faithfully reproduce real-user timing, break the click
+into discrete steps with a small delay:
+
+```js
+await page.mouse.move(x, y);
+await page.mouse.down();
+await page.waitForTimeout(100); // let selectionchange fire
+await page.mouse.up();
+```
+
+This is the only reliable way to reproduce bugs where `selectionchange`
+triggers a re-render that destroys the element before `click` fires.
 
 ### `scrollHeight` and `min-height`
 
 The editor has `min-height: calc(var(--page-max-width) * 1.414)` (A4 aspect
-ratio).  For small documents the content height is smaller than the
+ratio). For small documents the content height is smaller than the
 min-height, so `scrollHeight` will **not change** when content is
-collapsed/hidden.  Measure the bounding rect of the specific element you
+collapsed/hidden. Measure the bounding rect of the specific element you
 care about instead.
 
 ### Locator specificity
 
 Selectors like `locator('#editor .md-line', { hasText: 'foo' })` can match
-**parent** container elements whose descendant text includes `'foo'`.  Use
+**parent** container elements whose descendant text includes `'foo'`. Use
 pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
 
 ## Architecture Quick Reference

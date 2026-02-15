@@ -274,6 +274,13 @@ export class Editor {
          * @type {LinkModal|null}
          */
         this._linkModal = null;
+
+        /**
+         * Set to true when the editor loses focus to a modal dialog,
+         * so handleFocus can restore the caret when the modal closes.
+         * @type {boolean}
+         */
+        this._blurredByModal = false;
     }
 
     /**
@@ -290,7 +297,7 @@ export class Editor {
         this.setupEventListeners();
 
         // Render initial state
-        this.render();
+        this.fullRender();
         this.placeCursor();
     }
 
@@ -305,6 +312,7 @@ export class Editor {
         // and also catch composition/IME and paste events as a safety net.
         this.container.addEventListener('beforeinput', this.handleBeforeInput.bind(this));
 
+        this.container.addEventListener('mousedown', this._handleMouseDown.bind(this));
         this.container.addEventListener('click', this.handleClick.bind(this));
         this.container.addEventListener('focus', this.handleFocus.bind(this));
         this.container.addEventListener('blur', this.handleBlur.bind(this));
@@ -700,26 +708,59 @@ export class Editor {
     // ──────────────────────────────────────────────
 
     /**
-     * Renders the document based on current view mode.
+     * Full re-render: tears down the entire DOM and rebuilds it from
+     * the syntax tree.  Use only for operations that affect the whole
+     * document (initial load, file open, view-mode switch, undo/redo).
      */
-    render() {
+    fullRender() {
         if (!this.syntaxTree) return;
 
         this._isRendering = true;
         try {
             const renderer =
                 this.viewMode === 'source' ? this.sourceRenderer : this.focusedRenderer;
-            renderer.render(this.syntaxTree, this.container);
+            renderer.fullRender(this.syntaxTree, this.container);
         } finally {
             this._isRendering = false;
         }
     }
 
     /**
-     * Renders the tree and then places the DOM cursor according to `treeCursor`.
+     * Incremental render: updates only the DOM elements for the nodes
+     * listed in `hints`.  Falls back to a full render in source mode
+     * (the source renderer does not yet support incremental updates).
+     *
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} hints
      */
-    renderAndPlaceCursor() {
-        this.render();
+    renderNodes(hints) {
+        if (!this.syntaxTree) return;
+
+        if (this.viewMode === 'focused') {
+            this._isRendering = true;
+            try {
+                this.focusedRenderer.renderNodes(this.container, hints);
+            } finally {
+                this._isRendering = false;
+            }
+        } else {
+            this.fullRender();
+        }
+    }
+
+    /**
+     * Full render followed by cursor placement.
+     */
+    fullRenderAndPlaceCursor() {
+        this.fullRender();
+        this.placeCursor();
+    }
+
+    /**
+     * Incremental render followed by cursor placement.
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} hints
+     */
+    renderNodesAndPlaceCursor(hints) {
+        this.renderNodes(hints);
         this.placeCursor();
     }
 
@@ -937,7 +978,7 @@ export class Editor {
                 offset: left.length + text.length,
                 tagPart: this.treeCursor.tagPart,
             };
-            this.recordAndRender(before);
+            this.recordAndRender(before, { updated: [node.id] });
             return;
         }
 
@@ -963,7 +1004,7 @@ export class Editor {
                 cellRow,
                 cellCol,
             };
-            this.recordAndRender(before);
+            this.recordAndRender(before, { updated: [node.id] });
             return;
         }
 
@@ -979,7 +1020,7 @@ export class Editor {
         if (node.type === 'code-block') {
             node.content = newContent;
             this.treeCursor = { nodeId: node.id, offset: left.length + text.length };
-            this.recordAndRender(before);
+            this.recordAndRender(before, { updated: [node.id] });
             return;
         }
 
@@ -1027,7 +1068,7 @@ export class Editor {
         }
 
         this.treeCursor = { nodeId: node.id, offset: newOffset };
-        this.recordAndRender(before);
+        this.recordAndRender(before, { updated: [node.id] });
     }
 
     /**
@@ -1053,7 +1094,7 @@ export class Editor {
                     offset: left.length,
                     tagPart: this.treeCursor.tagPart,
                 };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
             }
             return;
         }
@@ -1080,13 +1121,15 @@ export class Editor {
                     cellRow,
                     cellCol,
                 };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
             }
             // At offset 0 — no-op (don't merge cells or break table)
             return;
         }
 
         const before = this.syntaxTree.toMarkdown();
+        /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
+        let renderHints = { updated: [node.id] };
 
         if (this.treeCursor.offset > 0) {
             // Delete one character before the cursor inside this node's content
@@ -1099,7 +1142,7 @@ export class Editor {
             if (node.type === 'code-block') {
                 node.content = newContent;
                 this.treeCursor = { nodeId: node.id, offset: left.length };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
                 return;
             }
 
@@ -1168,6 +1211,7 @@ export class Editor {
                             siblings.splice(idx, 1);
                             node.parent = null;
                             this.treeCursor = { nodeId: lastChild.id, offset: lastChildLen };
+                            renderHints = { updated: [lastChild.id], removed: [node.id] };
                         }
                     } else {
                         const prevLen = prev.content.length;
@@ -1175,13 +1219,14 @@ export class Editor {
                         siblings.splice(idx, 1);
                         node.parent = null;
                         this.treeCursor = { nodeId: prev.id, offset: prevLen };
+                        renderHints = { updated: [prev.id], removed: [node.id] };
                     }
                 }
                 // If idx === 0 there is nothing to merge into — do nothing.
             }
         }
 
-        this.recordAndRender(before);
+        this.recordAndRender(before, renderHints);
     }
 
     /**
@@ -1207,7 +1252,7 @@ export class Editor {
                     offset: left.length,
                     tagPart: this.treeCursor.tagPart,
                 };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
             }
             return;
         }
@@ -1234,13 +1279,15 @@ export class Editor {
                     cellRow,
                     cellCol,
                 };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
             }
             // At end of cell — no-op
             return;
         }
 
         const before = this.syntaxTree.toMarkdown();
+        /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
+        let renderHints = { updated: [node.id] };
 
         if (this.treeCursor.offset < node.content.length) {
             // Delete one character after the cursor
@@ -1253,7 +1300,7 @@ export class Editor {
             if (node.type === 'code-block') {
                 node.content = newContent;
                 this.treeCursor = { nodeId: node.id, offset: left.length };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
                 return;
             }
 
@@ -1311,6 +1358,10 @@ export class Editor {
                             next.parent = null;
                         }
                         this.treeCursor = { nodeId: node.id, offset: curLen };
+                        renderHints =
+                            next.children.length === 0
+                                ? { updated: [node.id], removed: [next.id] }
+                                : { updated: [node.id, next.id] };
                     }
                 } else {
                     const curLen = node.content.length;
@@ -1318,11 +1369,12 @@ export class Editor {
                     siblings.splice(idx + 1, 1);
                     next.parent = null;
                     this.treeCursor = { nodeId: node.id, offset: curLen };
+                    renderHints = { updated: [node.id], removed: [next.id] };
                 }
             }
         }
 
-        this.recordAndRender(before);
+        this.recordAndRender(before, renderHints);
     }
 
     /**
@@ -1364,7 +1416,7 @@ export class Editor {
             node.content = '';
             node.attributes = { language: fenceMatch[1] || '' };
             this.treeCursor = { nodeId: node.id, offset: 0 };
-            this.recordAndRender(before);
+            this.recordAndRender(before, { updated: [node.id] });
             return;
         }
 
@@ -1374,7 +1426,7 @@ export class Editor {
             const right = node.content.substring(this.treeCursor.offset);
             node.content = `${left}\n${right}`;
             this.treeCursor = { nodeId: node.id, offset: left.length + 1 };
-            this.recordAndRender(before);
+            this.recordAndRender(before, { updated: [node.id] });
             return;
         }
 
@@ -1399,7 +1451,7 @@ export class Editor {
 
         this.treeCursor = { nodeId: newNode.id, offset: 0 };
 
-        this.recordAndRender(before);
+        this.recordAndRender(before, { updated: [node.id], added: [newNode.id] });
     }
 
     /**
@@ -1465,7 +1517,7 @@ export class Editor {
                     cellRow: newRowIdx,
                     cellCol: 0,
                 };
-                this.recordAndRender(before);
+                this.recordAndRender(before, { updated: [node.id] });
                 return;
             }
         }
@@ -1561,11 +1613,16 @@ export class Editor {
      * Records an undo entry, marks the document dirty, renders, and places
      * the cursor.
      * @param {string} before - The markdown content before the edit
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} [hints]
      */
-    recordAndRender(before) {
+    recordAndRender(before, hints) {
         if (!this.syntaxTree) return;
 
-        this._ensureTrailingParagraph();
+        const addedPara = this._ensureTrailingParagraph();
+        if (addedPara && hints) {
+            if (!hints.added) hints.added = [];
+            hints.added.push(addedPara.id);
+        }
 
         const after = this.syntaxTree.toMarkdown();
         if (before !== after) {
@@ -1573,7 +1630,11 @@ export class Editor {
             this.setUnsavedChanges(true);
         }
 
-        this.renderAndPlaceCursor();
+        if (hints) {
+            this.renderNodesAndPlaceCursor(hints);
+        } else {
+            this.fullRenderAndPlaceCursor();
+        }
     }
 
     /**
@@ -1583,14 +1644,16 @@ export class Editor {
      * top-level node is a container html-block.
      */
     _ensureTrailingParagraph() {
-        if (!this.syntaxTree) return;
+        if (!this.syntaxTree) return null;
         const children = this.syntaxTree.children;
-        if (children.length === 0) return;
+        if (children.length === 0) return null;
         const last = children[children.length - 1];
         if (last.type === 'html-block' && last.children.length > 0) {
             const para = new SyntaxNode('paragraph', '');
             this.syntaxTree.appendChild(para);
+            return para;
         }
+        return null;
     }
 
     // ──────────────────────────────────────────────
@@ -1603,6 +1666,21 @@ export class Editor {
      * so the source-syntax decoration follows the cursor.
      * @param {MouseEvent} event
      */
+    /**
+     * Captures the anchor element (if any) under the pointer at mousedown
+     * time.  A selectionchange between mousedown and click may re-render
+     * the node and destroy the <a>, so we stash a reference while it still
+     * exists in the DOM.
+     * @param {MouseEvent} event
+     */
+    _handleMouseDown(event) {
+        this._mouseDownAnchor =
+            event.target instanceof HTMLElement && event.target.tagName === 'A'
+                ? event.target
+                : null;
+    }
+
+    /** @param {MouseEvent} event */
     handleClick(event) {
         const previousNodeId = this.treeCursor?.nodeId ?? null;
         this.syncCursorFromDOM();
@@ -1638,13 +1716,21 @@ export class Editor {
 
         // In focused view, clicking a link prevents navigation and opens
         // the edit modal so the user can change the text or URL.
-        if (this.viewMode === 'focused' && event.target instanceof HTMLElement) {
-            const anchor = event.target.closest('a');
+        // The anchor may no longer be in the DOM (selectionchange can
+        // re-render the node between mousedown and click), so fall back
+        // to the reference captured in _handleMouseDown.
+        if (this.viewMode === 'focused') {
+            const anchor =
+                (event.target instanceof HTMLElement &&
+                    event.target.tagName === 'A' &&
+                    event.target) ||
+                this._mouseDownAnchor;
+            this._mouseDownAnchor = null;
             if (anchor) {
                 event.preventDefault();
                 const node = this.getCurrentNode();
                 if (node) {
-                    this._openLinkModalForNode(node, anchor);
+                    this._openLinkModalForNode(node, /** @type {HTMLAnchorElement} */ (anchor));
                 }
                 return;
             }
@@ -1657,7 +1743,9 @@ export class Editor {
             this.treeCursor &&
             this.treeCursor.nodeId !== previousNodeId
         ) {
-            this.renderAndPlaceCursor();
+            const nodesToUpdate = [this.treeCursor.nodeId];
+            if (previousNodeId) nodesToUpdate.push(previousNodeId);
+            this.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
         }
     }
 
@@ -1789,20 +1877,42 @@ export class Editor {
     /** Handles focus events. */
     handleFocus() {
         this.container.classList.add('focused');
+
+        // When returning from a modal dialog (link/image/table), the
+        // tree cursor was intentionally preserved (see handleBlur).
+        // Restore the browser caret so the user sees their cursor again.
+        if (this._blurredByModal) {
+            this._blurredByModal = false;
+            if (this.treeCursor) {
+                this.placeCursor();
+            }
+        }
     }
 
-    /** Handles blur events — clears the active node highlight. */
-    handleBlur() {
+    /** Handles blur events — clears the active node highlight.
+     *  @param {FocusEvent} event
+     */
+    handleBlur(event) {
+        // When focus moves to a modal dialog (link / image / table edit),
+        // preserve the tree cursor and the focused-node rendering so they
+        // can be seamlessly restored when the modal closes.
+        const related = /** @type {HTMLElement|null} */ (event.relatedTarget);
+        if (related?.closest?.('dialog')) {
+            this._blurredByModal = true;
+            return;
+        }
+
         this.container.classList.remove('focused');
 
         // In focused view the active node shows raw markdown syntax.
         // When the user clicks outside the editor we clear the tree
-        // cursor and re-render so every node shows its "unfocused"
-        // presentation.  Clicking back into the editor will restore
-        // the cursor via handleClick / handleSelectionChange.
+        // cursor and re-render the previously focused node so it shows
+        // its "unfocused" presentation.  Clicking back into the editor
+        // will restore the cursor via handleClick / handleSelectionChange.
         if (this.viewMode === 'focused' && this.treeCursor) {
+            const previousNodeId = this.treeCursor.nodeId;
             this.treeCursor = null;
-            this.render();
+            this.renderNodes({ updated: [previousNodeId] });
         }
     }
 
@@ -1816,17 +1926,26 @@ export class Editor {
 
             // In focused view the active node shows raw markdown syntax, so we
             // must re-render whenever the cursor moves to a different node.
-            // Only the two affected nodes need updating — a full rebuild
-            // would be noticeably slow on large documents.
+            // Only the two affected nodes need updating.
             const newNodeId = this.treeCursor?.nodeId ?? null;
             if (this.viewMode === 'focused' && newNodeId && newNodeId !== previousNodeId) {
-                this._isRendering = true;
-                try {
-                    this.focusedRenderer.updateFocus(this.container, previousNodeId, newNodeId);
-                } finally {
-                    this._isRendering = false;
-                }
+                const nodesToUpdate = [newNodeId];
+                if (previousNodeId) nodesToUpdate.push(previousNodeId);
+                this.renderNodes({ updated: nodesToUpdate });
                 this.placeCursor();
+
+                // If the user mousedown'd on an <a> and selectionchange moved
+                // focus to a different node, the re-render above destroyed the
+                // <a> so the browser will never fire a click event.  Open the
+                // link modal now instead.
+                if (this._mouseDownAnchor) {
+                    const anchor = /** @type {HTMLAnchorElement} */ (this._mouseDownAnchor);
+                    this._mouseDownAnchor = null;
+                    const node = this.getCurrentNode();
+                    if (node) {
+                        this._openLinkModalForNode(node, anchor);
+                    }
+                }
             }
         }
     }
@@ -1862,9 +1981,9 @@ export class Editor {
         // Rewrite absolute image paths to relative when the setting is enabled,
         // then render.  Because the rewrite is async (IPC round-trip) we render
         // once immediately and a second time after paths have been rewritten.
-        this.renderAndPlaceCursor();
+        this.fullRenderAndPlaceCursor();
         this.container.focus();
-        this.rewriteImagePaths().then(() => this.renderAndPlaceCursor());
+        this.rewriteImagePaths().then(() => this.fullRenderAndPlaceCursor());
     }
 
     /**
@@ -1886,7 +2005,7 @@ export class Editor {
         this.undoManager.clear();
         this.currentFilePath = null;
         this.setUnsavedChanges(false);
-        this.renderAndPlaceCursor();
+        this.fullRenderAndPlaceCursor();
     }
 
     /**
@@ -1929,7 +2048,7 @@ export class Editor {
 
         this.viewMode = mode;
         this.container.dataset.viewMode = mode;
-        this.renderAndPlaceCursor();
+        this.fullRenderAndPlaceCursor();
 
         // Restore scroll so the anchor node sits at the same viewport offset.
         if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
@@ -1962,7 +2081,7 @@ export class Editor {
             }
             const first = this.syntaxTree.children[0];
             this.treeCursor = { nodeId: first.id, offset: 0 };
-            this.renderAndPlaceCursor();
+            this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
     }
@@ -1978,7 +2097,7 @@ export class Editor {
             }
             const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
             this.treeCursor = { nodeId: last.id, offset: last.content.length };
-            this.renderAndPlaceCursor();
+            this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
     }
@@ -2042,6 +2161,7 @@ export class Editor {
 
         const before = this.syntaxTree.toMarkdown();
         const currentNode = this.getCurrentNode();
+        let renderHints;
 
         if (currentNode?.type === 'image') {
             // Update existing image node
@@ -2051,6 +2171,7 @@ export class Editor {
                 currentNode.attributes.href = href;
             }
             this.treeCursor = { nodeId: currentNode.id, offset: alt.length };
+            renderHints = { updated: [currentNode.id] };
         } else {
             // Insert a new image node
             const imageNode = new SyntaxNode('image', alt);
@@ -2067,19 +2188,22 @@ export class Editor {
                     siblings.splice(idx, 1, imageNode);
                     imageNode.parent = currentNode.parent;
                     currentNode.parent = null;
+                    renderHints = { added: [imageNode.id], removed: [currentNode.id] };
                 } else {
                     // Insert after current node
                     siblings.splice(idx + 1, 0, imageNode);
                     imageNode.parent = currentNode.parent;
+                    renderHints = { added: [imageNode.id] };
                 }
             } else {
                 this.syntaxTree.appendChild(imageNode);
+                renderHints = { added: [imageNode.id] };
             }
 
             this.treeCursor = { nodeId: imageNode.id, offset: alt.length };
         }
 
-        this.recordAndRender(before);
+        this.recordAndRender(before, renderHints);
     }
 
     /**
@@ -2134,7 +2258,7 @@ export class Editor {
             node.attributes.href = result.href;
         }
         this.treeCursor = { nodeId: node.id, offset: result.alt.length };
-        this.recordAndRender(before);
+        this.recordAndRender(before, { updated: [node.id] });
     }
 
     /**
@@ -2218,7 +2342,7 @@ export class Editor {
         node.content = node.content.replace(oldMarkdown, newMarkdown);
 
         this.treeCursor = { nodeId: node.id, offset: 0 };
-        this.recordAndRender(before);
+        this.recordAndRender(before, { updated: [node.id] });
     }
 
     /**
@@ -2233,11 +2357,13 @@ export class Editor {
 
         const before = this.syntaxTree.toMarkdown();
         const currentNode = this.getCurrentNode();
+        let renderHints;
 
         if (currentNode?.type === 'table') {
             // Update existing table
             currentNode.content = markdown;
             this.treeCursor = { nodeId: currentNode.id, offset: 0 };
+            renderHints = { updated: [currentNode.id] };
         } else {
             // Insert a new table node
             const tableNode = new SyntaxNode('table', markdown);
@@ -2249,18 +2375,21 @@ export class Editor {
                     siblings.splice(idx, 1, tableNode);
                     tableNode.parent = currentNode.parent;
                     currentNode.parent = null;
+                    renderHints = { added: [tableNode.id], removed: [currentNode.id] };
                 } else {
                     siblings.splice(idx + 1, 0, tableNode);
                     tableNode.parent = currentNode.parent;
+                    renderHints = { added: [tableNode.id] };
                 }
             } else {
                 this.syntaxTree.appendChild(tableNode);
+                renderHints = { added: [tableNode.id] };
             }
 
             this.treeCursor = { nodeId: tableNode.id, offset: 0 };
         }
 
-        this.recordAndRender(before);
+        this.recordAndRender(before, renderHints);
     }
 
     /**
@@ -2315,7 +2444,7 @@ export class Editor {
             after: this.getMarkdown(),
         });
 
-        this.renderAndPlaceCursor();
+        this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
     }
 
@@ -2336,7 +2465,13 @@ export class Editor {
             after: this.getMarkdown(),
         });
 
-        this.renderAndPlaceCursor();
+        // Format changes affect the node(s) in the selection.
+        const formatNodeId = this.treeCursor?.nodeId;
+        if (formatNodeId) {
+            this.renderNodesAndPlaceCursor({ updated: [formatNodeId] });
+        } else {
+            this.fullRenderAndPlaceCursor();
+        }
         this.setUnsavedChanges(true);
     }
 

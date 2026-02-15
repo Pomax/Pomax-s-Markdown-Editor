@@ -176,7 +176,7 @@ class App {
                 this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
                 if (this.editor.ensureLocalPaths) {
                     this.editor.rewriteImagePaths().then(() => {
-                        this.editor?.renderAndPlaceCursor();
+                        this.editor?.fullRenderAndPlaceCursor();
                     });
                 }
             }
@@ -187,7 +187,7 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (this.editor && detail) {
                 this.editor.detailsClosed = !!detail.detailsClosed;
-                this.editor.renderAndPlaceCursor();
+                this.editor.fullRenderAndPlaceCursor();
             }
         });
 

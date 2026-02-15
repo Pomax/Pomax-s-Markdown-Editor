@@ -9,12 +9,11 @@ import os from "os"; // Import the OS module
 const platform = os.platform();
 
 const config = {
-  timeout: 30_000,
+  timeout: 60_000,
   workersCount: 8,
 };
 
 if (platform === "darwin") {
-  config.timeout = 60_000;
   config.workersCount = 2;
 } else if (platform === "linux") {
   config.workersCount = 4;
