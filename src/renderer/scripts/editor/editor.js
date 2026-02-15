@@ -11,6 +11,7 @@
 
 import { ImageModal } from '../image/image-modal.js';
 import { LinkModal } from '../link/link-modal.js';
+import { tokenizeInline } from '../parser/inline-tokenizer.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { TableModal } from '../table/table-modal.js';
@@ -19,178 +20,114 @@ import { SourceRenderer } from './renderers/source-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { UndoManager } from './undo-manager.js';
 
-// ── Inline formatting regex ─────────────────────────────────────────
-// This MUST match the regex used by FocusedRenderer.renderInlineParts()
-// so that offset mapping is consistent with the rendered DOM.
-const INLINE_RE =
-    /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*([^*]+)\*(?!\*)|(?<!\w)_([^_]+)_(?!\w)|~~(.+?)~~|`([^`]+)`/g;
+// ── Inline offset mapping ───────────────────────────────────────────
+// These two functions convert between a *raw* offset (position inside
+// the node's markdown source) and a *rendered* offset (position in the
+// visible text the user sees after formatting markers are hidden).
+//
+// They use the same `tokenizeInline` tokenizer that the focused
+// renderer uses, so they automatically stay in sync with whatever
+// inline syntax the tokenizer understands (markdown **and** HTML tags).
+//
+// The mapping is simple: walk the flat token list and track two
+// counters — raw position and rendered position.  Text and code
+// content advances both; delimiters (open/close markers, link hrefs)
+// advance only the raw counter.
+
+/**
+ * Returns true when a token contributes visible (rendered) characters.
+ * @param {import('../parser/inline-tokenizer.js').InlineToken} token
+ * @returns {boolean}
+ */
+function isVisibleToken(token) {
+    return token.type === 'text' || token.type === 'code';
+}
+
+/**
+ * Returns the number of rendered characters a token contributes.
+ * @param {import('../parser/inline-tokenizer.js').InlineToken} token
+ * @returns {number}
+ */
+function renderedLength(token) {
+    if (token.type === 'text') return token.raw.length;
+    if (token.type === 'code') return (token.content ?? '').length;
+    return 0;
+}
 
 /**
  * Given a raw markdown string and an offset into that raw string,
- * returns the corresponding offset in the rendered (visible) text —
- * i.e. the text the user sees after inline formatting markers have been
- * hidden by renderInlineParts.
+ * returns the corresponding offset in the rendered (visible) text.
  *
- * @param {string} content     - Raw markdown content of the node
- * @param {number} rawOffset   - Offset in the raw content
+ * @param {string} content   - Raw markdown content of the node
+ * @param {number} rawOffset - Offset in the raw content
  * @returns {number}
  */
 function rawOffsetToRenderedOffset(content, rawOffset) {
     if (!content || rawOffset <= 0) return 0;
 
-    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    const tokens = tokenizeInline(content);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const match of content.matchAll(re)) {
-        const matchStart = match.index;
-        const matchEnd = matchStart + match[0].length;
+    for (const token of tokens) {
+        const rawLen = token.raw.length;
 
-        // Plain text before this match
-        const plainLen = matchStart - rawPos;
-        if (rawOffset <= rawPos + plainLen) {
-            // Target falls in the plain-text gap before this match
-            return renderedPos + (rawOffset - rawPos);
-        }
-        renderedPos += plainLen;
-        rawPos = matchStart;
-
-        // Determine the inner content and its delimiters
-        const innerContent =
-            match[1] ?? match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? match[8] ?? '';
-
-        if (match[1] !== undefined) {
-            // Link: [text](href) — rendered text is just "text"
-            const openLen = 1; // [
-            const innerLen = match[1].length;
-            const closingLen = 2 + match[2].length + 1; // ](href)
-
-            if (rawOffset <= rawPos + openLen) {
-                // Inside the opening [
-                return renderedPos;
+        if (rawOffset <= rawPos + rawLen) {
+            // Target falls inside this token.
+            const into = rawOffset - rawPos;
+            if (isVisibleToken(token)) {
+                if (token.type === 'code') {
+                    // raw = `content` — first char is the backtick delimiter
+                    const delimLen = 1;
+                    if (into <= delimLen) return renderedPos;
+                    return renderedPos + Math.min(into - delimLen, (token.content ?? '').length);
+                }
+                return renderedPos + into;
             }
-            if (rawOffset <= rawPos + openLen + innerLen) {
-                // Inside the link text — recurse for nested formatting
-                const innerRaw = rawOffset - rawPos - openLen;
-                return renderedPos + rawOffsetToRenderedOffset(match[1], innerRaw);
-            }
-            // Inside or after ](href)
-            const innerRendered = rawOffsetToRenderedOffset(match[1], innerLen);
-            if (rawOffset < matchEnd) {
-                return renderedPos + innerRendered;
-            }
-            renderedPos += innerRendered;
-        } else if (match[8] !== undefined) {
-            // Inline code: `text` — delimiters are single backticks
-            const delimLen = 1;
-
-            if (rawOffset <= rawPos + delimLen) {
-                return renderedPos;
-            }
-            if (rawOffset <= rawPos + delimLen + match[8].length) {
-                return renderedPos + (rawOffset - rawPos - delimLen);
-            }
-            if (rawOffset < matchEnd) {
-                return renderedPos + match[8].length;
-            }
-            renderedPos += match[8].length;
-        } else {
-            // Bold (**), italic (*/_), emphasis (__), strikethrough (~~)
-            const raw = match[0];
-            const delimLen = (raw.length - innerContent.length) / 2;
-
-            if (rawOffset <= rawPos + delimLen) {
-                // Inside the opening delimiter
-                return renderedPos;
-            }
-            if (rawOffset <= rawPos + delimLen + innerContent.length) {
-                // Inside the inner content — recurse for nested formatting
-                const innerRaw = rawOffset - rawPos - delimLen;
-                return renderedPos + rawOffsetToRenderedOffset(innerContent, innerRaw);
-            }
-            if (rawOffset < matchEnd) {
-                // Inside the closing delimiter
-                const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-                return renderedPos + innerRendered;
-            }
-            const innerRendered = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-            renderedPos += innerRendered;
+            // Inside a delimiter — clamp to the rendered position
+            return renderedPos;
         }
 
-        rawPos = matchEnd;
+        rawPos += rawLen;
+        renderedPos += renderedLength(token);
     }
 
-    // Trailing plain text
-    return renderedPos + (rawOffset - rawPos);
+    return renderedPos;
 }
 
 /**
  * Given a raw markdown string and an offset in the rendered (visible)
  * text, returns the corresponding offset in the raw string.
  *
- * @param {string} content          - Raw markdown content of the node
- * @param {number} renderedOffset   - Offset in the rendered text
+ * @param {string} content        - Raw markdown content of the node
+ * @param {number} renderedOffset - Offset in the rendered text
  * @returns {number}
  */
 function renderedOffsetToRawOffset(content, renderedOffset) {
     if (!content || renderedOffset <= 0) return 0;
 
-    const re = new RegExp(INLINE_RE.source, INLINE_RE.flags);
+    const tokens = tokenizeInline(content);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const match of content.matchAll(re)) {
-        const matchStart = match.index;
-        const matchEnd = matchStart + match[0].length;
+    for (const token of tokens) {
+        const rawLen = token.raw.length;
+        const visLen = renderedLength(token);
 
-        // Plain text before this match
-        const plainLen = matchStart - rawPos;
-        if (renderedOffset <= renderedPos + plainLen) {
-            return rawPos + (renderedOffset - renderedPos);
-        }
-        renderedPos += plainLen;
-        rawPos = matchStart;
-
-        // Determine the inner content
-        if (match[1] !== undefined) {
-            // Link: [text](href)
-            const openLen = 1;
-            const innerLen = match[1].length;
-            const innerRenderedLen = rawOffsetToRenderedOffset(match[1], innerLen);
-
-            if (renderedOffset < renderedPos + innerRenderedLen) {
-                const innerRendered = renderedOffset - renderedPos;
-                return rawPos + openLen + renderedOffsetToRawOffset(match[1], innerRendered);
+        if (visLen > 0 && renderedOffset <= renderedPos + visLen) {
+            // Target falls inside this visible token.
+            const into = renderedOffset - renderedPos;
+            if (token.type === 'code') {
+                return rawPos + 1 + into; // skip opening backtick
             }
-            renderedPos += innerRenderedLen;
-        } else if (match[8] !== undefined) {
-            // Inline code: `text`
-            const delimLen = 1;
-            const innerLen = match[8].length;
-
-            if (renderedOffset < renderedPos + innerLen) {
-                return rawPos + delimLen + (renderedOffset - renderedPos);
-            }
-            renderedPos += innerLen;
-        } else {
-            // Bold/italic/emphasis/strikethrough
-            const innerContent = match[3] ?? match[4] ?? match[5] ?? match[6] ?? match[7] ?? '';
-            const raw = match[0];
-            const delimLen = (raw.length - innerContent.length) / 2;
-            const innerRenderedLen = rawOffsetToRenderedOffset(innerContent, innerContent.length);
-
-            if (renderedOffset < renderedPos + innerRenderedLen) {
-                const innerRendered = renderedOffset - renderedPos;
-                return rawPos + delimLen + renderedOffsetToRawOffset(innerContent, innerRendered);
-            }
-            renderedPos += innerRenderedLen;
+            return rawPos + into;
         }
 
-        rawPos = matchEnd;
+        rawPos += rawLen;
+        renderedPos += visLen;
     }
 
-    // Trailing plain text
-    return rawPos + (renderedOffset - renderedPos);
+    return rawPos;
 }
 
 /**
@@ -281,6 +218,14 @@ export class Editor {
          * @type {boolean}
          */
         this._blurredByModal = false;
+
+        /**
+         * True while setViewMode is executing.  Prevents handleSelectionChange
+         * from overwriting treeCursor between the focus() and placeCursor()
+         * calls at the end of the view-mode switch.
+         * @type {boolean}
+         */
+        this._isSwitchingViewMode = false;
     }
 
     /**
@@ -1910,6 +1855,9 @@ export class Editor {
         // its "unfocused" presentation.  Clicking back into the editor
         // will restore the cursor via handleClick / handleSelectionChange.
         if (this.viewMode === 'focused' && this.treeCursor) {
+            // Stash the cursor so setViewMode can recover it — blur fires
+            // before the toolbar click handler calls setViewMode.
+            this._cursorBeforeBlur = { ...this.treeCursor };
             const previousNodeId = this.treeCursor.nodeId;
             this.treeCursor = null;
             this.renderNodes({ updated: [previousNodeId] });
@@ -1918,7 +1866,7 @@ export class Editor {
 
     /** Handles selection change events. */
     handleSelectionChange() {
-        if (this._isRendering) return;
+        if (this._isRendering || this._isSwitchingViewMode) return;
         if (document.activeElement === this.container) {
             const previousNodeId = this.treeCursor?.nodeId ?? null;
             this.syncCursorFromDOM();
@@ -2018,6 +1966,14 @@ export class Editor {
             return;
         }
 
+        // Clicking the toolbar button to switch modes triggers handleBlur
+        // (which clears treeCursor in focused view) before this method runs.
+        // Recover from the stash that handleBlur saved.
+        const savedCursor = this.treeCursor
+            ? { ...this.treeCursor }
+            : this._cursorBeforeBlur ?? null;
+        this._cursorBeforeBlur = null;
+
         // Find the node element closest to the vertical centre of the visible
         // viewport and remember its offset from the container top.  This keeps
         // the content the user is looking at in the same place after re-render.
@@ -2048,7 +2004,20 @@ export class Editor {
 
         this.viewMode = mode;
         this.container.dataset.viewMode = mode;
-        this.fullRenderAndPlaceCursor();
+
+        // Restore the cursor that handleBlur cleared.  Fall back to the
+        // scroll-anchor node (offset 0) when there was no cursor at all.
+        if (!this.treeCursor) {
+            this.treeCursor = savedCursor ?? (anchorNodeId ? { nodeId: anchorNodeId, offset: 0 } : null);
+        }
+
+        // Suppress handleSelectionChange during the focus + placeCursor
+        // sequence.  Without this, container.focus() can fire selectionchange
+        // before the cursor is placed, causing syncCursorFromDOM to overwrite
+        // treeCursor with an invalid position.
+        this._isSwitchingViewMode = true;
+
+        this.fullRender();
 
         // Restore scroll so the anchor node sits at the same viewport offset.
         if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
@@ -2060,6 +2029,14 @@ export class Editor {
                 scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
             }
         }
+
+        // Focus first so the container is active, then place the cursor.
+        // If we placed the cursor before focusing, the browser might discard
+        // the selection when the non-focused contenteditable gains focus.
+        this.container.focus();
+        this.placeCursor();
+
+        this._isSwitchingViewMode = false;
     }
 
     /**

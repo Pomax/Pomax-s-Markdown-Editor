@@ -519,6 +519,12 @@ class App {
             setContent: (content) => this.editor?.loadMarkdown(content),
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
             setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
+            getCursor: () => this.editor?.treeCursor ? { ...this.editor.treeCursor } : null,
+            setCursor: (nodeId, offset) => {
+                if (!this.editor) return;
+                this.editor.treeCursor = { nodeId, offset };
+                this.editor.placeCursor();
+            },
         };
 
         // Expose file path and cursor info as globals so the reload handler

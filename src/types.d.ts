@@ -11,6 +11,8 @@ interface EditorAPI {
     setContent(content: string): void;
     getViewMode(): string;
     setUnsavedChanges(hasChanges: boolean): void;
+    getCursor(): { nodeId: string; offset: number } | null;
+    setCursor(nodeId: string, offset: number): void;
 }
 
 /**

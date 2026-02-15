@@ -19,6 +19,7 @@ this **before** doing any work.
 ## Doing work
 
 - **Always** create a new git branch off of `main` for any new work
+- **Never** hide your reasoning, the user needs to be able to see what you did by scrolling up.
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
 - **Never** split commands with `;`, **always** use `&&` or if you can't,
@@ -39,6 +40,11 @@ this **before** doing any work.
 - **Never** use multiline strings in terminal commands. `cmd.exe` treats
   each line as a separate command. Git commit messages must be a single
   line: `git commit -m "one line summary"`.
+- **Never** use `git push -u`. Always be explicit with remote and branch
+  names: `git push origin <branch-name>`.
+- If you edit files **after** a commit, amend the commit and force-push:
+  `git add <files>`, `git commit --amend --no-edit`,
+  `git push origin <branch-name> --force`.
 
 ## Test Runners
 
