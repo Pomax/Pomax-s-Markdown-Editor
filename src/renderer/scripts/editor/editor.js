@@ -2854,8 +2854,10 @@ export class Editor {
             startOffset = this.treeRange.startOffset;
             endOffset = this.treeRange.endOffset;
         } else {
-            // Collapsed cursor — nothing selected, nothing to format.
-            return;
+            // Collapsed cursor — pass the cursor position; applyFormat will
+            // detect the word boundaries or existing format span.
+            startOffset = this.treeCursor.offset;
+            endOffset = this.treeCursor.offset;
         }
 
         const beforeContent = this.getMarkdown();

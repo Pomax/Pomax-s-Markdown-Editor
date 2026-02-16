@@ -317,3 +317,95 @@ test.describe('Cursor position after bold', () => {
         expect(cursorInfo?.offset).toBe(5);
     });
 });
+
+// ─── Collapsed cursor: bold word under caret / unbold ───────────────
+
+/**
+ * Single-click inside a word to place a collapsed cursor.
+ * Uses the DOM Range API to get exact pixel coordinates.
+ *
+ * @param {import('@playwright/test').Page} pg
+ * @param {import('@playwright/test').Locator} lineLocator
+ * @param {string} word - The word to click inside
+ * @param {'first'|'middle'|'last'} which - Which occurrence
+ */
+async function clickInsideWord(pg, lineLocator, word, which = 'first') {
+    const coords = await lineLocator.evaluate(
+        (el, args) => {
+            const [targetWord, occurrence] = args;
+            const text = el.textContent || '';
+
+            let startIdx;
+            if (occurrence === 'first') {
+                startIdx = text.indexOf(targetWord);
+            } else if (occurrence === 'middle') {
+                const firstEnd = text.indexOf(targetWord) + targetWord.length;
+                startIdx = text.indexOf(targetWord, firstEnd);
+            } else {
+                startIdx = text.lastIndexOf(targetWord);
+            }
+            if (startIdx === -1) return null;
+
+            // Place the click roughly in the middle of the word.
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let offset = 0;
+            let node = walker.nextNode();
+            while (node) {
+                const nodeLen = node.textContent?.length ?? 0;
+                if (offset + nodeLen > startIdx) {
+                    const localMid = startIdx - offset + Math.floor(targetWord.length / 2);
+                    const range = document.createRange();
+                    range.setStart(node, localMid);
+                    range.setEnd(node, Math.min(localMid + 1, nodeLen));
+                    const rect = range.getBoundingClientRect();
+                    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+                }
+                offset += nodeLen;
+                node = walker.nextNode();
+            }
+            return null;
+        },
+        [word, which],
+    );
+
+    if (!coords) throw new Error(`clickInsideWord: could not find "${word}" (${which})`);
+
+    await pg.mouse.click(coords.x, coords.y);
+    await pg.waitForTimeout(200);
+}
+
+test.describe('Collapsed cursor — bold word under caret', () => {
+    test('clicking bold with cursor on a plain word bolds that word', async () => {
+        await loadContent(page, fixtureContent);
+        await setFocusedView(page);
+
+        // Place a collapsed cursor inside the middle "text1".
+        const firstLine = page.locator('#editor .md-line').first();
+        await clickInsideWord(page, firstLine, 'text1', 'middle');
+        await clickBoldButton(page);
+
+        // Switch to source view and verify.
+        await setSourceView(page);
+        const line = await getSourceLineText(page, 0);
+        expect(line).toBe('text1 **text1** text1');
+    });
+
+    test('clicking bold with cursor inside bold text removes bold', async () => {
+        // Start with the middle word already bold.
+        const boldContent = 'text1 **text1** text1\n\ntext2 text2 text2\n';
+        await loadContent(page, boldContent);
+        await setFocusedView(page);
+
+        // In focused view the bold word renders without ** markers.
+        // The rendered line shows "text1 text1 text1" with the middle
+        // word in a <strong> tag.  Click inside that bold word.
+        const firstLine = page.locator('#editor .md-line').first();
+        await clickInsideWord(page, firstLine, 'text1', 'middle');
+        await clickBoldButton(page);
+
+        // Switch to source view and verify bold markers removed.
+        await setSourceView(page);
+        const line = await getSourceLineText(page, 0);
+        expect(line).toBe('text1 text1 text1');
+    });
+});

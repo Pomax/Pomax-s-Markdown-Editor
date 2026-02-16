@@ -372,9 +372,31 @@ export class SyntaxTree {
      */
     applyFormat(node, startOffset, endOffset, format) {
         const content = node.content;
+        let selStart = startOffset;
+        let selEnd = endOffset;
+
+        // ── Collapsed cursor (no selection): infer the target ──────────
+        if (selStart === selEnd) {
+            // If inside an existing format span, toggle it off.
+            const span = this._findFormatSpan(content, selStart, selStart, format);
+            if (span) {
+                const withoutClose =
+                    content.substring(0, span.closeStart) + content.substring(span.closeEnd);
+                node.content =
+                    withoutClose.substring(0, span.openStart) +
+                    withoutClose.substring(span.openEnd);
+                const contentLen = span.closeStart - span.openEnd;
+                return span.openStart + contentLen;
+            }
+            // Otherwise, find the word around the cursor and bold it.
+            const bounds = this._findWordBoundaries(content, startOffset);
+            if (bounds.start === bounds.end) return startOffset; // no word
+            selStart = bounds.start;
+            selEnd = bounds.end;
+        }
 
         // ── Toggle-off: check if the selection overlaps an existing span ─
-        const span = this._findFormatSpan(content, startOffset, endOffset, format);
+        const span = this._findFormatSpan(content, selStart, selEnd, format);
         if (span) {
             // Remove closing delimiter first (higher offset) then opening,
             // so that removing the first doesn't shift the second's position.
@@ -388,9 +410,9 @@ export class SyntaxTree {
         }
 
         // ── Toggle-on: wrap the selected text in format markers ──────────
-        const before = content.substring(0, startOffset);
-        let selected = content.substring(startOffset, endOffset);
-        const after = content.substring(endOffset);
+        const before = content.substring(0, selStart);
+        let selected = content.substring(selStart, selEnd);
+        const after = content.substring(selEnd);
 
         // Trim trailing whitespace so markers hug the text
         // (e.g. **word** not **word **).
@@ -427,7 +449,7 @@ export class SyntaxTree {
 
         node.content = before + formatted + trailingWS + after;
         // Cursor goes right after the closing delimiter.
-        return startOffset + formatted.length;
+        return selStart + formatted.length;
     }
 
     /**
@@ -510,6 +532,32 @@ export class SyntaxTree {
         }
 
         return null;
+    }
+
+    /**
+     * Finds the word boundaries around a raw offset in the content string.
+     * A "word" is a contiguous run of non-whitespace characters.
+     *
+     * @param {string} content - The raw node content
+     * @param {number} offset  - A raw offset within content
+     * @returns {{ start: number, end: number }}
+     */
+    _findWordBoundaries(content, offset) {
+        const pos = Math.min(offset, content.length);
+
+        // Scan backwards for start of word.
+        let start = pos;
+        while (start > 0 && !/\s/.test(content[start - 1])) {
+            start--;
+        }
+
+        // Scan forwards for end of word.
+        let end = pos;
+        while (end < content.length && !/\s/.test(content[end])) {
+            end++;
+        }
+
+        return { start, end };
     }
 
     /**
