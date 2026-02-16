@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, projectRoot } from './test-utils.js';
+import { clickInEditor, END, launchApp, loadContent, projectRoot, setSourceView } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -35,16 +35,15 @@ test('typing a character on the summary line in source view inserts it without r
     // Step 1: click on the summary text in focused view to position the cursor.
     const summaryParagraph = page.locator('#editor .md-details-summary-content .md-paragraph');
     await summaryParagraph.waitFor({ state: 'visible' });
-    await summaryParagraph.click();
+    await clickInEditor(page, summaryParagraph);
     await page.waitForTimeout(200);
 
     // Step 2: move the cursor to the end of the summary text.
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     await page.waitForTimeout(100);
 
     // Step 3: switch to source view.
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     // The summary should be rendered as a single line in source view.
     // The bareText path renders it as a .md-paragraph (not .md-html-block)
@@ -60,11 +59,11 @@ test('typing a character on the summary line in source view inserts it without r
     expect(textBefore).toContain('This is a paragraph');
 
     // Step 4: click on the summary line to place the cursor there, then End.
-    await summaryLine.click();
+    await clickInEditor(page, summaryLine);
     await page.waitForTimeout(100);
 
     // Position cursor at the end of the content (before </summary>).
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     await page.waitForTimeout(100);
 
     // Press left-arrow past the closing </summary> tag to land inside

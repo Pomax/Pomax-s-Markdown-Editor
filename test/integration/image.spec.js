@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -78,9 +78,12 @@ test('inserting an image via the modal creates an image node', async () => {
 });
 
 test('image node displays raw syntax in source mode', async () => {
-    // Switch to source view so image shows raw syntax.
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    // Set up: load content with an image, then switch to source view.
+    await page.evaluate((content) => {
+        window.editorAPI?.setContent(content);
+    }, '![Test Image](test-image.png)');
+    await page.waitForSelector('#editor .md-line');
+    await setSourceView(page);
 
     const imageNode = page.locator('.md-image .md-content');
     await expect(imageNode).toBeVisible();
@@ -90,16 +93,26 @@ test('image node displays raw syntax in source mode', async () => {
 });
 
 test('clicking image button on existing image opens edit modal with pre-filled data', async () => {
-    // Click on the image node to place cursor there
-    const imageNode = page.locator('.md-image');
-    await imageNode.click();
+    // Set up: load content with a paragraph + image and switch to focused view.
+    // The leading paragraph prevents clickInEditor from landing on the image
+    // (which would trigger click-to-edit and open the modal prematurely).
+    await page.evaluate((content) => {
+        window.editorAPI?.setContent(content);
+    }, 'some text\n\n![Test Image](test-image.png)');
+    await page.waitForSelector('#editor .md-line');
+    await setFocusedView(page);
 
-    // Now click the image button
+    // Click on the first paragraph (safe), then arrow down to the image line.
+    const firstLine = page.locator('#editor .md-line').first();
+    await clickInEditor(page, firstLine);
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(100);
+
+    // Now click the image toolbar button with cursor on the image node.
     const imageButton = page.locator('[data-button-id="image"]');
     await imageButton.click();
 
-    const dialog = page.locator('.image-dialog');
-    await expect(dialog).toBeVisible();
+    const dialog = page.locator('.image-dialog[open]');
 
     // Check that the heading says "Edit Image"
     const heading = page.locator('.image-dialog-header h2');

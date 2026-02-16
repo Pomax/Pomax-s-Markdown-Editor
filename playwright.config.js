@@ -25,6 +25,7 @@ export default defineConfig({
   timeout: config.timeout,
   retries: 0,
   workers: config.workersCount,
+  fullyParallel: true,
   reporter: "list",
   projects: [
     {

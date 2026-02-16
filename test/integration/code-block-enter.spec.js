@@ -7,7 +7,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -26,7 +26,7 @@ test.afterAll(async () => {
 test.describe('Code-block early conversion', () => {
     test('typing ``` + Enter creates an empty code block', async () => {
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Type the fence and press Enter
         await page.keyboard.type('```');
@@ -47,7 +47,7 @@ test.describe('Code-block early conversion', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await page.keyboard.type('```js');
         await page.keyboard.press('Enter');
@@ -66,7 +66,7 @@ test.describe('Code-block early conversion', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Create the code block
         await page.keyboard.type('```');
@@ -92,7 +92,7 @@ test.describe('Code-block early conversion', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Type the fence but don't press Enter
         await page.keyboard.type('```');

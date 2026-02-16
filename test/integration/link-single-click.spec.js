@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -31,7 +31,7 @@ test('single click on a link in an unfocused paragraph opens the edit modal', as
 
     // Click the first paragraph so the second one is definitely unfocused.
     const firstParagraph = page.locator('.md-line.md-paragraph').first();
-    await firstParagraph.click();
+    await clickInEditor(page, firstParagraph);
 
     // Verify the first paragraph is now the focused node.
     const firstNodeId = await firstParagraph.getAttribute('data-node-id');

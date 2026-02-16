@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, END, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -29,16 +29,14 @@ test.afterAll(async () => {
  * @param {string} markdown - The markdown content to load.
  */
 async function loadAndDefocusFirstLine(markdown) {
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, markdown);
+    await loadContent(page, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // Click the second paragraph to defocus the first line.
     const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
+    await clickInEditor(page, secondLine);
     await page.waitForTimeout(200);
 }
 
@@ -200,16 +198,14 @@ test('nested markdown inside HTML tag renders correctly', async () => {
 
 test('focused line renders inline HTML as WYSIWYG elements', async () => {
     const markdown = 'H<sub>2</sub>O is water\n\nSecond paragraph';
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, markdown);
+    await loadContent(page, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // Click the first line so it IS focused — should still render WYSIWYG.
     const firstLine = page.locator('#editor .md-line').first();
-    await firstLine.click();
+    await clickInEditor(page, firstLine);
     await page.waitForTimeout(200);
 
     // Even on the active line, <sub> renders as a real subscript element.
@@ -235,4 +231,35 @@ test('mixed markdown and HTML inline tags render correctly', async () => {
     const code = firstLine.locator('code');
     await expect(code).toBeVisible();
     expect(await code.textContent()).toBe('code');
+});
+
+test('cursor offset is correct after view-mode switch with inline HTML', async () => {
+    const markdown =
+        '# test document\n\nIt also tests <strong>strong</strong> and <em>emphasis</em> text.';
+
+    await loadContent(page, markdown);
+
+    await setFocusedView(page);
+
+    // Click on the last paragraph
+    const lastLine = page.locator('#editor .md-line').last();
+    await clickInEditor(page, lastLine);
+    await page.waitForTimeout(200);
+
+    // Place cursor before "text." — End then Left×5
+    await page.keyboard.press(END);
+    for (let i = 0; i < 5; i++) {
+        await page.keyboard.press('ArrowLeft');
+    }
+    await page.waitForTimeout(100);
+
+    // Switch to source view via toolbar toggle
+    await setSourceView(page);
+    await page.waitForTimeout(200);
+
+    // Raw offset should point at "text." (index 60)
+    const content = 'It also tests <strong>strong</strong> and <em>emphasis</em> text.';
+    const expected = content.indexOf('text.');
+    const actual = await page.evaluate(() => /** @type {any} */ (window).__editorCursorOffset);
+    expect(actual).toBe(expected);
 });

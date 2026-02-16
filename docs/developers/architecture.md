@@ -209,6 +209,23 @@ Tracks and manipulates text selection:
 - Tracks current node at cursor
 - Dispatches selection change events
 
+### Range Handling
+
+When the user has a non-collapsed selection (highlighted text), the editor
+tracks it as a `TreeRange`:
+
+```
+TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
+```
+
+Key behaviors:
+- **Typing/pasting with selection**: deletes the selected range first, then inserts
+- **Backspace/Delete with selection**: deletes the selected range
+- **Ctrl+A**: context-restricted to the current node (not the whole document)
+- **Cut**: writes raw markdown to clipboard, then deletes the range
+- **Copy**: writes raw markdown to clipboard without mutation
+- **Cross-node deletion**: trims endpoints, removes intermediates, merges remaining text
+
 ### SyntaxHighlighter
 
 Inline syntax highlighting for source view:

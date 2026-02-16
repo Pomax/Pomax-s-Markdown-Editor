@@ -8,6 +8,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { clickInEditor } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,7 +72,7 @@ test('typing "# main" letter by letter creates a heading with correct content', 
     await page.waitForSelector('#editor .md-line');
 
     const editor = page.locator('#editor');
-    await editor.click();
+    await clickInEditor(page, editor);
 
     // Type each character individually to simulate real user input
     for (const char of ['#', ' ', 'm', 'a', 'i', 'n']) {

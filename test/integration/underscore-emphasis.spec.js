@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -28,7 +28,7 @@ test('underscore emphasis _text_ renders as <em> when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node also renders formatted output.
@@ -44,7 +44,7 @@ test('underscore emphasis _text_ renders as <em> when unfocused', async () => {
 
     // Move focus to the second paragraph.
     const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
+    await clickInEditor(page, secondLine);
     await page.waitForTimeout(200);
 
     const unfocusedText = await firstLine.innerText();
@@ -62,7 +62,7 @@ test('double underscore __text__ renders as <em> when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node also renders formatted output.
@@ -78,7 +78,7 @@ test('double underscore __text__ renders as <em> when unfocused', async () => {
     expect(await firstLine.locator('strong').count()).toBe(0);
 
     const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
+    await clickInEditor(page, secondLine);
     await page.waitForTimeout(200);
 
     const unfocusedText = await firstLine.innerText();
@@ -97,7 +97,7 @@ test('nested **_text_** renders as bold+italic when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node renders formatted output.
@@ -115,7 +115,7 @@ test('nested **_text_** renders as bold+italic when unfocused', async () => {
     expect(await em.textContent()).toBe('both');
 
     const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
+    await clickInEditor(page, secondLine);
     await page.waitForTimeout(200);
 
     const unfocusedText = await firstLine.innerText();
@@ -136,7 +136,7 @@ test('nested _**text**_ renders as italic+bold when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await setFocusedView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node renders formatted output.
@@ -154,7 +154,7 @@ test('nested _**text**_ renders as italic+bold when unfocused', async () => {
     expect(await strong.textContent()).toBe('both');
 
     const secondLine = page.locator('#editor .md-line').nth(1);
-    await secondLine.click();
+    await clickInEditor(page, secondLine);
     await page.waitForTimeout(200);
 
     const unfocusedText = await firstLine.innerText();

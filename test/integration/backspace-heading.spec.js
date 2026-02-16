@@ -4,7 +4,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp } from './test-utils.js';
 
 const heading = '# main';
 
@@ -13,7 +13,7 @@ test('typing "# main" then backspace 6 times results in empty document', async (
     await page.waitForSelector('#editor .md-line');
 
     const editor = page.locator('#editor');
-    await editor.click();
+    await clickInEditor(page, editor);
     for (const char of heading) {
         await page.keyboard.type(char);
     }

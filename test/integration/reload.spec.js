@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -23,7 +23,7 @@ test.afterAll(async () => {
 
 test('reload preserves document content', async () => {
     const editor = page.locator('#editor');
-    await editor.click();
+    await clickInEditor(page, editor);
 
     // Type some content
     await page.keyboard.type('# Hello');

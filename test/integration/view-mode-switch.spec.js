@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { defocusEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
+import { defocusEditor, launchApp, loadContent, projectRoot, setFocusedView, setSourceView } from './test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
 const readmeContent = fs.readFileSync(readmePath, 'utf-8');
@@ -33,8 +33,7 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
     await loadContent(page, readmeContent);
 
     // The editor defaults to focused mode — switch to source first.
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     // Sanity-check: in source view the first line should contain the `#` prefix.
     const firstLineSource = page.locator('#editor .md-line').first();
@@ -43,8 +42,7 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
 
     // Switch to focused writing mode via the menu action IPC.
     // In WYSIWYG mode ALL nodes render formatted output — even the active one.
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     const firstLineFocusedOnH1 = page.locator('#editor .md-line').first();
     const focusedOnH1Text = await firstLineFocusedOnH1.innerText();
@@ -67,8 +65,7 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
     expect(afterClickText).toContain("Pomax's Markdown Editor");
 
     // Switch back to source view — all headings must show their `#` prefixes.
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     const firstLineBackToSource = page.locator('#editor .md-line').first();
     const backToSourceText = await firstLineBackToSource.innerText();
