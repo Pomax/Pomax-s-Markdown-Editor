@@ -76,7 +76,11 @@ export async function launchApp(extraArgs = []) {
             return { electronApp, page };
         } catch (err) {
             // Clean up the failed app instance before retrying.
-            try { await electronApp?.close(); } catch { /* ignore */ }
+            try {
+                await electronApp?.close();
+            } catch {
+                /* ignore */
+            }
             if (attempt === maxAttempts) throw err;
         }
     }

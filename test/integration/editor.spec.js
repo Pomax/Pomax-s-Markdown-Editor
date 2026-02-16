@@ -3,7 +3,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, MOD } from './test-utils.js';
+import { MOD, clickInEditor, launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;

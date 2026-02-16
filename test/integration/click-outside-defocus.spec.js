@@ -7,7 +7,14 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, defocusEditor, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
+import {
+    clickInEditor,
+    defocusEditor,
+    launchApp,
+    loadContent,
+    setFocusedView,
+    setSourceView,
+} from './test-utils.js';
 
 const markdown = '# My Heading\n\nA paragraph of text.';
 
