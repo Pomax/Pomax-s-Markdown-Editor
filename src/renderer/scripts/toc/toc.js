@@ -207,13 +207,17 @@ export class TableOfContents {
      * @param {string} nodeId
      */
     _scrollToHeading(nodeId) {
-        // Move the editor cursor to the target heading and force an
-        // immediate render so the DOM is in its final state (in focused
-        // mode the active node switches to raw-markdown display, which
-        // changes element sizes).
+        // Move the editor cursor to the target heading.  Only re-render
+        // the previously-focused node and the new target — there is no
+        // reason to rebuild the entire DOM.
+        const oldNodeId = this.editor.treeCursor?.nodeId;
         this.editor.treeCursor = { nodeId, offset: 0 };
         this.editor.container.focus({ preventScroll: true });
-        this.editor.fullRenderAndPlaceCursor();
+
+        const updated = [nodeId];
+        if (oldNodeId && oldNodeId !== nodeId) updated.push(oldNodeId);
+        this.editor.renderNodesAndPlaceCursor({ updated });
+        this.editor._lastRenderedNodeId = nodeId;
 
         // Defer the scroll to the next animation frame so it runs
         // *after* any browser-initiated scroll-into-view triggered by
