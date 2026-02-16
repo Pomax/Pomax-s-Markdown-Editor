@@ -231,6 +231,16 @@ export class Editor {
          * @type {TreeRange|null}
          */
         this.treeRange = null;
+
+        /**
+         * The node ID that was last rendered as "active" in focused mode.
+         * Used by handleSelectionChange / handleClick to detect node
+         * transitions reliably — reading from treeCursor is unreliable
+         * because syncCursorFromDOM mutates it before the re-render
+         * decision is made.
+         * @type {string|null}
+         */
+        this._lastRenderedNodeId = null;
     }
 
     /**
@@ -757,6 +767,7 @@ export class Editor {
      */
     fullRenderAndPlaceCursor() {
         this.fullRender();
+        this._lastRenderedNodeId = this.treeCursor?.nodeId ?? null;
         this.placeCursor();
     }
 
@@ -2031,7 +2042,6 @@ export class Editor {
 
     /** @param {MouseEvent} event */
     handleClick(event) {
-        const previousNodeId = this.treeCursor?.nodeId ?? null;
         this.syncCursorFromDOM();
 
         // Clicking on replaced/void elements like <img> or <hr> doesn't
@@ -2039,7 +2049,7 @@ export class Editor {
         // cursor.  Fall back to walking up from the click target to find
         // the nearest element with a data-node-id attribute.
         if (
-            (!this.treeCursor || this.treeCursor.nodeId === previousNodeId) &&
+            (!this.treeCursor || this.treeCursor.nodeId === this._lastRenderedNodeId) &&
             event.target instanceof HTMLElement
         ) {
             let el = /** @type {HTMLElement|null} */ (event.target);
@@ -2087,13 +2097,16 @@ export class Editor {
 
         // In focused view the active node shows raw markdown syntax, so we
         // must re-render whenever the cursor moves to a different node.
+        // Compare against _lastRenderedNodeId for the same reason as in
+        // handleSelectionChange — treeCursor was already mutated.
         if (
             this.viewMode === 'focused' &&
             this.treeCursor &&
-            this.treeCursor.nodeId !== previousNodeId
+            this.treeCursor.nodeId !== this._lastRenderedNodeId
         ) {
             const nodesToUpdate = [this.treeCursor.nodeId];
-            if (previousNodeId) nodesToUpdate.push(previousNodeId);
+            if (this._lastRenderedNodeId) nodesToUpdate.push(this._lastRenderedNodeId);
+            this._lastRenderedNodeId = this.treeCursor.nodeId;
             this.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
         }
     }
@@ -2269,7 +2282,6 @@ export class Editor {
     handleSelectionChange() {
         if (this._isRendering) return;
         if (document.activeElement === this.container) {
-            const previousNodeId = this.treeCursor?.nodeId ?? null;
             this.syncCursorFromDOM();
             this.selectionManager.updateFromDOM();
 
@@ -2282,10 +2294,18 @@ export class Editor {
             // In focused view the active node shows raw markdown syntax, so we
             // must re-render whenever the cursor moves to a different node.
             // Only the two affected nodes need updating.
+            // We compare against _lastRenderedNodeId (not treeCursor before
+            // sync) because syncCursorFromDOM already mutated treeCursor and
+            // the non-collapsed guard above may have skipped earlier renders.
             const newNodeId = this.treeCursor?.nodeId ?? null;
-            if (this.viewMode === 'focused' && newNodeId && newNodeId !== previousNodeId) {
+            if (
+                this.viewMode === 'focused' &&
+                newNodeId &&
+                newNodeId !== this._lastRenderedNodeId
+            ) {
                 const nodesToUpdate = [newNodeId];
-                if (previousNodeId) nodesToUpdate.push(previousNodeId);
+                if (this._lastRenderedNodeId) nodesToUpdate.push(this._lastRenderedNodeId);
+                this._lastRenderedNodeId = newNodeId;
                 this.renderNodes({ updated: nodesToUpdate });
                 this.placeCursor();
 
