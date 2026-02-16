@@ -2811,7 +2811,7 @@ export class Editor {
      * @param {string} elementType
      */
     changeElementType(elementType) {
-        const currentNode = this.selectionManager.getCurrentNode();
+        const currentNode = this.getCurrentNode();
         if (!currentNode || !this.syntaxTree) return;
 
         // html-block containers are structural nodes, not type-changeable.
@@ -2835,11 +2835,33 @@ export class Editor {
      * @param {string} format
      */
     applyFormat(format) {
-        const selection = this.selectionManager.getSelection();
-        if (!selection || !this.syntaxTree) return;
+        if (!this.syntaxTree) return;
+
+        // Use tree-coordinate selection (treeCursor / treeRange) — never
+        // DOM-derived line/column data.
+        const node = this.getCurrentNode();
+        if (!node || !this.treeCursor) return;
+
+        const nodeId = this.treeCursor.nodeId;
+        let startOffset;
+        let endOffset;
+
+        if (this.treeRange) {
+            // Non-collapsed selection — use the range offsets.
+            // For now we only support single-node selections.
+            if (this.treeRange.startNodeId !== nodeId || this.treeRange.endNodeId !== nodeId)
+                return;
+            startOffset = this.treeRange.startOffset;
+            endOffset = this.treeRange.endOffset;
+        } else {
+            // Collapsed cursor — pass the cursor position; applyFormat will
+            // detect the word boundaries or existing format span.
+            startOffset = this.treeCursor.offset;
+            endOffset = this.treeCursor.offset;
+        }
 
         const beforeContent = this.getMarkdown();
-        this.syntaxTree.applyFormat(selection, format);
+        const newCursorOffset = this.syntaxTree.applyFormat(node, startOffset, endOffset, format);
 
         this.undoManager.recordChange({
             type: 'format',
@@ -2847,13 +2869,12 @@ export class Editor {
             after: this.getMarkdown(),
         });
 
-        // Format changes affect the node(s) in the selection.
-        const formatNodeId = this.treeCursor?.nodeId;
-        if (formatNodeId) {
-            this.renderNodesAndPlaceCursor({ updated: [formatNodeId] });
-        } else {
-            this.fullRenderAndPlaceCursor();
-        }
+        // Place cursor at the end of the formatted/unformatted text and
+        // collapse the selection — the old range is no longer valid.
+        this.treeCursor.offset = newCursorOffset;
+        this.treeRange = null;
+
+        this.renderNodesAndPlaceCursor({ updated: [nodeId] });
         this.setUnsavedChanges(true);
     }
 

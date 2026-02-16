@@ -3,6 +3,8 @@
  * Provides a tree structure for representing parsed markdown.
  */
 
+import { tokenizeInline } from './inline-tokenizer.js';
+
 /**
  * @typedef {Object} NodeAttributes
  * @property {string} [language] - Language for code blocks
@@ -357,26 +359,66 @@ export class SyntaxTree {
     }
 
     /**
-     * Applies formatting to a selection.
-     * @param {{startLine: number, startColumn: number, endLine: number, endColumn: number}} selection
+     * Applies formatting to a selection within a node.  If the selection
+     * start falls inside an existing span of the same format, the format
+     * is toggled off (delimiters removed) instead.
+     *
+     * @param {SyntaxNode} node - The node containing the selection
+     * @param {number} startOffset - Start offset within node.content (raw)
+     * @param {number} endOffset - End offset within node.content (raw)
      * @param {string} format - The format to apply
+     * @returns {number} The raw offset where the cursor should be placed
+     *                   after the operation (end of the affected text).
      */
-    applyFormat(selection, format) {
-        // Find the node containing the selection
-        const node = this.findNodeAtPosition(selection.startLine, selection.startColumn);
-        if (!node) return;
-
-        // Apply the format to the content
+    applyFormat(node, startOffset, endOffset, format) {
         const content = node.content;
-        const lines = content.split('\n');
+        let selStart = startOffset;
+        let selEnd = endOffset;
 
-        // For simplicity, assuming single-line selection within a node
-        const startOffset = this.getOffsetInNode(node, selection.startLine, selection.startColumn);
-        const endOffset = this.getOffsetInNode(node, selection.endLine, selection.endColumn);
+        // ── Collapsed cursor (no selection): infer the target ──────────
+        if (selStart === selEnd) {
+            // If inside an existing format span, toggle it off.
+            const span = this._findFormatSpan(content, selStart, selStart, format);
+            if (span) {
+                const withoutClose =
+                    content.substring(0, span.closeStart) + content.substring(span.closeEnd);
+                node.content =
+                    withoutClose.substring(0, span.openStart) +
+                    withoutClose.substring(span.openEnd);
+                const contentLen = span.closeStart - span.openEnd;
+                return span.openStart + contentLen;
+            }
+            // Otherwise, find the word around the cursor and bold it.
+            const bounds = this._findWordBoundaries(content, startOffset);
+            if (bounds.start === bounds.end) return startOffset; // no word
+            selStart = bounds.start;
+            selEnd = bounds.end;
+        }
 
-        const before = content.substring(0, startOffset);
-        const selected = content.substring(startOffset, endOffset);
-        const after = content.substring(endOffset);
+        // ── Toggle-off: check if the selection overlaps an existing span ─
+        const span = this._findFormatSpan(content, selStart, selEnd, format);
+        if (span) {
+            // Remove closing delimiter first (higher offset) then opening,
+            // so that removing the first doesn't shift the second's position.
+            const withoutClose =
+                content.substring(0, span.closeStart) + content.substring(span.closeEnd);
+            node.content =
+                withoutClose.substring(0, span.openStart) + withoutClose.substring(span.openEnd);
+            // Cursor goes to end of the now-unformatted text.
+            const contentLen = span.closeStart - span.openEnd;
+            return span.openStart + contentLen;
+        }
+
+        // ── Toggle-on: wrap the selected text in format markers ──────────
+        const before = content.substring(0, selStart);
+        let selected = content.substring(selStart, selEnd);
+        const after = content.substring(selEnd);
+
+        // Trim trailing whitespace so markers hug the text
+        // (e.g. **word** not **word **).
+        const trimmed = selected.replace(/\s+$/, '');
+        const trailingWS = selected.substring(trimmed.length);
+        selected = trimmed;
 
         let formatted;
         switch (format) {
@@ -405,7 +447,117 @@ export class SyntaxTree {
                 formatted = selected;
         }
 
-        node.content = before + formatted + after;
+        node.content = before + formatted + trailingWS + after;
+        // Cursor goes right after the closing delimiter.
+        return selStart + formatted.length;
+    }
+
+    /**
+     * Searches for an existing format span whose content region overlaps
+     * the selection [selStart, selEnd].  Returns the raw positions of the
+     * open/close delimiters, or `null` if no matching span is found.
+     *
+     * The overlap check is:
+     *   selStart <= contentEnd  AND  selEnd >= contentStart
+     *
+     * This handles the common case where `renderedOffsetToRawOffset` maps
+     * the selection start to *before* the opening delimiter (raw offset 0)
+     * while the selection end lands at the closing delimiter boundary.
+     *
+     * @param {string} content  - The raw node content
+     * @param {number} selStart - Selection start (raw offset)
+     * @param {number} selEnd   - Selection end (raw offset)
+     * @param {string} format   - 'bold' | 'italic' | 'strikethrough' | 'code'
+     * @returns {{ openStart: number, openEnd: number,
+     *             closeStart: number, closeEnd: number } | null}
+     */
+    _findFormatSpan(content, selStart, selEnd, format) {
+        const tokens = tokenizeInline(content);
+
+        // ── Code is a single token, not a paired open/close ─────────
+        if (format === 'code') {
+            let rawPos = 0;
+            for (const token of tokens) {
+                const tokenStart = rawPos;
+                rawPos += token.raw.length;
+                if (token.type === 'code') {
+                    const contentStart = tokenStart + 1; // after opening `
+                    const contentEnd = rawPos - 1; // before closing `
+                    if (selStart <= contentEnd && selEnd >= contentStart) {
+                        return {
+                            openStart: tokenStart,
+                            openEnd: contentStart,
+                            closeStart: contentEnd,
+                            closeEnd: rawPos,
+                        };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ── Paired delimiters: bold / italic / strikethrough ────────
+        /** @type {Record<string, { open: string, close: string }>} */
+        const typeMap = {
+            bold: { open: 'bold-open', close: 'bold-close' },
+            italic: { open: 'italic-open', close: 'italic-close' },
+            strikethrough: { open: 'strikethrough-open', close: 'strikethrough-close' },
+        };
+        const spec = typeMap[format];
+        if (!spec) return null; // sub, sup, link — no toggle
+
+        let rawPos = 0;
+        /** @type {{ rawStart: number, rawEnd: number }[]} */
+        const opens = [];
+
+        for (const token of tokens) {
+            const tokenStart = rawPos;
+            rawPos += token.raw.length;
+
+            if (token.type === spec.open) {
+                opens.push({ rawStart: tokenStart, rawEnd: rawPos });
+            } else if (token.type === spec.close && opens.length > 0) {
+                const open = /** @type {{ rawStart: number, rawEnd: number }} */ (opens.pop());
+                // Content region is between open-end (open.rawEnd) and
+                // close-start (tokenStart).  Check overlap with selection.
+                if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+                    return {
+                        openStart: open.rawStart,
+                        openEnd: open.rawEnd,
+                        closeStart: tokenStart,
+                        closeEnd: rawPos,
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Finds the word boundaries around a raw offset in the content string.
+     * A "word" is a contiguous run of non-whitespace characters.
+     *
+     * @param {string} content - The raw node content
+     * @param {number} offset  - A raw offset within content
+     * @returns {{ start: number, end: number }}
+     */
+    _findWordBoundaries(content, offset) {
+        const pos = Math.min(offset, content.length);
+
+        // Scan backwards for start of word.
+        let start = pos;
+        while (start > 0 && !/\s/.test(content[start - 1])) {
+            start--;
+        }
+
+        // Scan forwards for end of word.
+        let end = pos;
+        while (end < content.length && !/\s/.test(content[end])) {
+            end++;
+        }
+
+        return { start, end };
     }
 
     /**
