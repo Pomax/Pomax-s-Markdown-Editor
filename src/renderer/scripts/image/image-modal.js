@@ -14,6 +14,7 @@ import { BaseModal } from '../modal/base-modal.js';
  * @property {string} alt - Alt text for the image
  * @property {string} src - Image file path or URL
  * @property {string} href - Optional link URL for linked images
+ * @property {string} style - Optional inline CSS style string
  * @property {string} rename - New filename for the image (empty string if unchanged)
  */
 
@@ -51,11 +52,15 @@ export class ImageModal extends BaseModal {
                     </div>
                     <div class="image-field">
                         <label for="image-alt">Alt text</label>
-                        <input type="text" id="image-alt" name="imageAlt" placeholder="Describe the image" autocomplete="off">
+                        <input type="text" id="image-alt" name="imageAlt" autocomplete="off">
                     </div>
                     <div class="image-field">
                         <label for="image-href">Link URL <span class="image-field-hint">(optional)</span></label>
-                        <input type="text" id="image-href" name="imageHref" placeholder="https://example.com" autocomplete="off">
+                        <input type="text" id="image-href" name="imageHref" autocomplete="off">
+                    </div>
+                    <div class="image-field">
+                        <label for="image-style">Style <span class="image-field-hint">(optional)</span></label>
+                        <input type="text" id="image-style" name="imageStyle" autocomplete="off">
                     </div>
                     <div class="image-preview-container" id="image-preview-container">
                         <img id="image-preview" class="image-preview" alt="">
@@ -96,6 +101,7 @@ export class ImageModal extends BaseModal {
         const renameInput = this._getInput('image-rename');
         const altInput = this._getInput('image-alt');
         const hrefInput = this._getInput('image-href');
+        const styleInput = this._getInput('image-style');
         const insertBtn = this._getInsertBtn();
         const heading = this._getHeading();
 
@@ -104,6 +110,7 @@ export class ImageModal extends BaseModal {
             renameInput.value = this._extractFilename(existing.src ?? '');
             altInput.value = existing.alt ?? '';
             hrefInput.value = existing.href ?? '';
+            styleInput.value = existing.style ?? '';
             if (insertBtn) insertBtn.textContent = 'Update';
             if (heading) heading.textContent = 'Edit Image';
         } else {
@@ -111,6 +118,7 @@ export class ImageModal extends BaseModal {
             renameInput.value = '';
             altInput.value = '';
             hrefInput.value = '';
+            styleInput.value = '';
             if (insertBtn) insertBtn.textContent = 'Insert';
             if (heading) heading.textContent = 'Insert Image';
         }
@@ -130,13 +138,14 @@ export class ImageModal extends BaseModal {
         const rename = this._getInput('image-rename').value.trim();
         const alt = this._getInput('image-alt').value.trim();
         const href = this._getInput('image-href').value.trim();
+        const style = this._getInput('image-style').value.trim();
 
         if (!src) {
             this._getInput('image-src').focus();
             return;
         }
 
-        this._closeWithResult({ alt, src, href, rename });
+        this._closeWithResult({ alt, src, href, style, rename });
     }
 
     /**

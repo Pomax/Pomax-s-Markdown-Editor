@@ -30,8 +30,7 @@ this **before** doing any work.
 - **Always** create a new git branch off of `main` for any new work
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
-- **Never** split commands with `;`, **always** use `&&` or if you can't,
-  split them up.
+- **Never** use compound commands, only issue individual commands.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
 - When asked to offer multiple choices, **never** present option picking
@@ -57,6 +56,7 @@ this **before** doing any work.
 
 | Kind        | Command                    | Framework                  |
 | ----------- | -------------------------- | -------------------------- |
+| Linting     | `npm run lint`             | Biome and TSC linting      |
 | Unit        | `npm run test:unit`        | Node.js native test runner |
 | Integration | `npm run test:integration` | Playwright + Firefox       |
 

@@ -2551,7 +2551,7 @@ export class Editor {
      * @param {string} src - Image source path or URL
      * @param {string} href - Optional link URL (empty string for no link)
      */
-    insertOrUpdateImage(alt, src, href) {
+    insertOrUpdateImage(alt, src, href, style = '') {
         if (!this.syntaxTree) return;
 
         const before = this.syntaxTree.toMarkdown();
@@ -2565,6 +2565,9 @@ export class Editor {
             if (href) {
                 currentNode.attributes.href = href;
             }
+            if (style) {
+                currentNode.attributes.style = style;
+            }
             this.treeCursor = { nodeId: currentNode.id, offset: alt.length };
             renderHints = { updated: [currentNode.id] };
         } else {
@@ -2573,6 +2576,9 @@ export class Editor {
             imageNode.attributes = { alt, url: src };
             if (href) {
                 imageNode.attributes.href = href;
+            }
+            if (style) {
+                imageNode.attributes.style = style;
             }
 
             if (currentNode) {
@@ -2616,6 +2622,7 @@ export class Editor {
             alt: node.attributes.alt ?? node.content,
             src: node.attributes.url ?? '',
             href: node.attributes.href ?? '',
+            style: node.attributes.style ?? '',
         };
 
         const result = await this._imageModal.open(existing);
@@ -2651,6 +2658,9 @@ export class Editor {
         node.attributes = { alt: result.alt, url: src };
         if (result.href) {
             node.attributes.href = result.href;
+        }
+        if (result.style) {
+            node.attributes.style = result.style;
         }
         this.treeCursor = { nodeId: node.id, offset: result.alt.length };
         this.recordAndRender(before, { updated: [node.id] });

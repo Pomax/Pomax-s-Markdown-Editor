@@ -454,6 +454,7 @@ export class Toolbar {
                 alt: currentNode.attributes.alt ?? currentNode.content,
                 src: currentNode.attributes.url ?? '',
                 href: currentNode.attributes.href ?? '',
+                style: currentNode.attributes.style ?? '',
             };
         }
 
@@ -482,7 +483,7 @@ export class Toolbar {
             src = await this.editor.toRelativeImagePath(src);
         }
 
-        this.editor.insertOrUpdateImage(result.alt, src, result.href);
+        this.editor.insertOrUpdateImage(result.alt, src, result.href, result.style);
     }
 
     /**
