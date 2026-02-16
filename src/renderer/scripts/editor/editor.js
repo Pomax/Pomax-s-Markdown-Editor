@@ -2362,10 +2362,15 @@ export class Editor {
 
         // Rewrite absolute image paths to relative when the setting is enabled,
         // then render.  Because the rewrite is async (IPC round-trip) we render
-        // once immediately and a second time after paths have been rewritten.
+        // once immediately and incrementally update only the image nodes whose
+        // paths changed after the rewrite completes.
         this.fullRenderAndPlaceCursor();
         this.container.focus();
-        this.rewriteImagePaths().then(() => this.fullRenderAndPlaceCursor());
+        this.rewriteImagePaths().then((changedIds) => {
+            if (changedIds.length > 0) {
+                this.renderNodesAndPlaceCursor({ updated: changedIds });
+            }
+        });
     }
 
     /**
@@ -2516,8 +2521,14 @@ export class Editor {
      * relative form.  Only runs when `this.ensureLocalPaths` is true and the
      * document has been saved to disk.
      */
+    /**
+     * Rewrites absolute image paths to relative paths.
+     * @returns {Promise<string[]>} IDs of nodes whose paths were rewritten.
+     */
     async rewriteImagePaths() {
-        if (!this.ensureLocalPaths || !this.currentFilePath || !this.syntaxTree) return;
+        /** @type {string[]} */
+        const changedIds = [];
+        if (!this.ensureLocalPaths || !this.currentFilePath || !this.syntaxTree) return changedIds;
 
         for (const node of this.syntaxTree.children) {
             if (node.type !== 'image' && node.type !== 'linked-image') continue;
@@ -2528,8 +2539,10 @@ export class Editor {
             const rewritten = await this.toRelativeImagePath(url);
             if (rewritten !== url) {
                 node.attributes.url = rewritten;
+                changedIds.push(node.id);
             }
         }
+        return changedIds;
     }
 
     /**
