@@ -17,7 +17,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, projectRoot, setFocusedView, setSourceView } from './test-utils.js';
+import {
+    clickInEditor,
+    launchApp,
+    loadContent,
+    projectRoot,
+    setFocusedView,
+    setSourceView,
+} from './test-utils.js';
 
 const isMac = process.platform === 'darwin';
 const Home = isMac ? 'Meta+ArrowLeft' : 'Home';

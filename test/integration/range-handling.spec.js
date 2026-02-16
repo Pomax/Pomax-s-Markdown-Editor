@@ -10,7 +10,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, END, HOME, MOD } from './test-utils.js';
+import { END, HOME, MOD, clickInEditor } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
