@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
+import { clickInEditor, END, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -247,7 +247,7 @@ test('cursor offset is correct after view-mode switch with inline HTML', async (
     await page.waitForTimeout(200);
 
     // Place cursor before "text." — End then Left×5
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     for (let i = 0; i < 5; i++) {
         await page.keyboard.press('ArrowLeft');
     }

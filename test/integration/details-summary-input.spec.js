@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
+import { clickInEditor, END, launchApp, loadContent, projectRoot } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -40,7 +40,7 @@ test('pressing Enter after summary text and typing " a a" preserves leading spac
     await page.waitForTimeout(200);
 
     // Move the cursor to the end of the summary text.
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     await page.waitForTimeout(100);
 
     // Press Enter to create a new paragraph after the summary.

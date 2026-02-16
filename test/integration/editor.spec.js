@@ -3,7 +3,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp } from './test-utils.js';
+import { clickInEditor, launchApp, MOD } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -96,7 +96,7 @@ test.describe('Keyboard Shortcuts', () => {
         const editor = await page.locator('#editor');
         await clickInEditor(page, editor);
         await page.keyboard.type('Test');
-        await page.keyboard.press('Control+z');
+        await page.keyboard.press(`${MOD}+z`);
 
         // Note: Actual undo behavior depends on implementation
         // This test verifies the shortcut is captured

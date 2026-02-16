@@ -10,7 +10,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from './test-utils.js';
+import { clickInEditor, END, HOME, MOD } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,7 +85,7 @@ async function typeText(page, text) {
  * @param {import('@playwright/test').Page} page
  */
 async function selectAll(page) {
-    await page.keyboard.press('Control+a');
+    await page.keyboard.press(`${MOD}+a`);
 }
 
 /**
@@ -183,7 +183,7 @@ test.describe('Type with selection', () => {
         await typeText(page, 'abcdef');
 
         // Move to start, then shift+right 3 times to select "abc"
-        await page.keyboard.press('Home');
+        await page.keyboard.press(HOME);
         await page.keyboard.press('Shift+ArrowRight');
         await page.keyboard.press('Shift+ArrowRight');
         await page.keyboard.press('Shift+ArrowRight');
@@ -227,7 +227,7 @@ test.describe('Backspace with selection', () => {
         await typeText(page, 'abcdef');
 
         // Select "bcd" (positions 1-4)
-        await page.keyboard.press('Home');
+        await page.keyboard.press(HOME);
         await page.keyboard.press('ArrowRight'); // after 'a'
         await page.keyboard.press('Shift+ArrowRight');
         await page.keyboard.press('Shift+ArrowRight');
@@ -277,7 +277,7 @@ test.describe('Enter with selection', () => {
         await typeText(page, 'abcdef');
 
         // Select "cd"
-        await page.keyboard.press('Home');
+        await page.keyboard.press(HOME);
         await page.keyboard.press('ArrowRight'); // after 'a'
         await page.keyboard.press('ArrowRight'); // after 'b'
         await page.keyboard.press('Shift+ArrowRight'); // select 'c'
@@ -447,16 +447,16 @@ test.describe('Paste with selection', () => {
         await typeText(page, 'hello world');
 
         // Select "hello"
-        await page.keyboard.press('Home');
+        await page.keyboard.press(HOME);
         for (let i = 0; i < 5; i++) {
             await page.keyboard.press('Shift+ArrowRight');
         }
 
         // Copy "hello" (sets clipboard)
-        await page.keyboard.press('Control+c');
+        await page.keyboard.press(`${MOD}+c`);
 
         // Move to end and type more
-        await page.keyboard.press('End');
+        await page.keyboard.press(END);
         await typeText(page, ' test');
 
         // Now select "test" at the end
@@ -465,7 +465,7 @@ test.describe('Paste with selection', () => {
         }
 
         // Paste — should replace "test" with "hello"
-        await page.keyboard.press('Control+v');
+        await page.keyboard.press(`${MOD}+v`);
 
         const content = await editorText(page);
         expect(content).toBe('hello world hello');
@@ -487,13 +487,13 @@ test.describe('Cut', () => {
         await typeText(page, 'hello world');
 
         // Select "world"
-        await page.keyboard.press('End');
+        await page.keyboard.press(END);
         for (let i = 0; i < 5; i++) {
             await page.keyboard.press('Shift+ArrowLeft');
         }
 
         // Cut
-        await page.keyboard.press('Control+x');
+        await page.keyboard.press(`${MOD}+x`);
 
         // "world" should be gone — read via evaluate to preserve trailing space
         let content = await page.evaluate(
@@ -502,8 +502,8 @@ test.describe('Cut', () => {
         expect(content).toBe('hello ');
 
         // Paste at end — should paste "world" back
-        await page.keyboard.press('End');
-        await page.keyboard.press('Control+v');
+        await page.keyboard.press(END);
+        await page.keyboard.press(`${MOD}+v`);
 
         content = await editorText(page);
         expect(content).toBe('hello world');
@@ -531,7 +531,7 @@ test.describe('Undo after range operations', () => {
         await page.waitForTimeout(400);
 
         // Undo should restore "original"
-        await page.keyboard.press('Control+z');
+        await page.keyboard.press(`${MOD}+z`);
         await page.waitForTimeout(200);
 
         const content = await editorText(page);

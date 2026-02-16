@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, projectRoot, setSourceView } from './test-utils.js';
+import { clickInEditor, END, launchApp, loadContent, projectRoot, setSourceView } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -39,7 +39,7 @@ test('typing a character on the summary line in source view inserts it without r
     await page.waitForTimeout(200);
 
     // Step 2: move the cursor to the end of the summary text.
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     await page.waitForTimeout(100);
 
     // Step 3: switch to source view.
@@ -63,7 +63,7 @@ test('typing a character on the summary line in source view inserts it without r
     await page.waitForTimeout(100);
 
     // Position cursor at the end of the content (before </summary>).
-    await page.keyboard.press('End');
+    await page.keyboard.press(END);
     await page.waitForTimeout(100);
 
     // Press left-arrow past the closing </summary> tag to land inside

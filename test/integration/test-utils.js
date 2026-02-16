@@ -22,6 +22,25 @@ export const projectRoot = path.join(__dirname, '..', '..');
 export const VIEWPORT = { width: 800, height: 1132 };
 
 /**
+ * Platform-aware modifier key: Meta on macOS, Control everywhere else.
+ * Use this for shortcuts like copy/paste/undo (Ctrl+C on Windows → Meta+C on macOS).
+ */
+const isMac = process.platform === 'darwin';
+export const MOD = isMac ? 'Meta' : 'Control';
+
+/**
+ * Platform-aware Home key: Meta+ArrowLeft on macOS, Home everywhere else.
+ * Moves the cursor to the beginning of the current line.
+ */
+export const HOME = isMac ? 'Meta+ArrowLeft' : 'Home';
+
+/**
+ * Platform-aware End key: Meta+ArrowRight on macOS, End everywhere else.
+ * Moves the cursor to the end of the current line.
+ */
+export const END = isMac ? 'Meta+ArrowRight' : 'End';
+
+/**
  * Launch the Electron app, wait for the window to be ready, and set a
  * predictable viewport size so tests are not affected by the CI runner's
  * physical screen dimensions.
