@@ -175,8 +175,10 @@ class App {
             if (this.editor && detail) {
                 this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
                 if (this.editor.ensureLocalPaths) {
-                    this.editor.rewriteImagePaths().then(() => {
-                        this.editor?.fullRenderAndPlaceCursor();
+                    this.editor.rewriteImagePaths().then((changedIds) => {
+                        if (this.editor && changedIds && changedIds.length > 0) {
+                            this.editor.renderNodesAndPlaceCursor({ updated: changedIds });
+                        }
                     });
                 }
             }
@@ -187,7 +189,18 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (this.editor && detail) {
                 this.editor.detailsClosed = !!detail.detailsClosed;
-                this.editor.fullRenderAndPlaceCursor();
+                // Only re-render <details> html-block nodes.
+                const detailsIds = [];
+                if (this.editor.syntaxTree) {
+                    for (const node of this.editor.syntaxTree.children) {
+                        if (node.type === 'html-block' && node.attributes.tagName === 'details') {
+                            detailsIds.push(node.id);
+                        }
+                    }
+                }
+                if (detailsIds.length > 0) {
+                    this.editor.renderNodesAndPlaceCursor({ updated: detailsIds });
+                }
             }
         });
 

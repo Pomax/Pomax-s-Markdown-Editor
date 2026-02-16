@@ -48,6 +48,10 @@ this **before** doing any work.
 - **Never** use multiline strings in terminal commands. `cmd.exe` treats
   each line as a separate command. Git commit messages must be a single
   line: `git commit -m "one line summary"`.
+- after the work has been completed (as agreed to by the user), write a
+  PR comment in markdown that documents what was wrong, how it got changed
+  and why it needed that specific change. Make sure to also note that the
+  PR closes the issue number, if the work was part of addressing an issue.
 
 ## Test Runners
 
