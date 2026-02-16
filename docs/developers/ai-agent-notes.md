@@ -30,7 +30,8 @@ this **before** doing any work.
 - **Always** create a new git branch off of `main` for any new work
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
-- **Never** use compound commands, only issue individual commands.
+- **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
+  terminal invocation must be a single command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
 - When asked to offer multiple choices, **never** present option picking

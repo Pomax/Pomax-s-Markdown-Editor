@@ -6,6 +6,7 @@
 /// <reference path="../../types.d.ts" />
 
 import { Editor } from './editor/editor.js';
+import { initPageResizeHandles } from './editor/page-resize.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
@@ -74,6 +75,9 @@ class App {
         // Initialize editor
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
+
+        // Initialize page resize handles (focused mode only)
+        initPageResizeHandles(editorContainer);
 
         // Initialize toolbar
         this.toolbar = new Toolbar(toolbarContainer, this.editor);
