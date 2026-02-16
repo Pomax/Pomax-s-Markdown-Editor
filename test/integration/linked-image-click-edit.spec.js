@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -32,7 +32,7 @@ test.describe('Linked image click-to-edit', () => {
     test('clicking a linked image opens the image edit modal', async () => {
         // Click the image element
         const image = page.locator('.md-line.md-image');
-        await image.click();
+        await clickInEditor(page, image);
 
         // The image modal should appear (not the link modal)
         const dialog = page.locator('.image-dialog');
@@ -52,7 +52,7 @@ test.describe('Linked image click-to-edit', () => {
 
     test('editing a linked image preserves the href', async () => {
         const image = page.locator('.md-line.md-image');
-        await image.click();
+        await clickInEditor(page, image);
 
         const dialog = page.locator('.image-dialog');
         await expect(dialog).toBeVisible();

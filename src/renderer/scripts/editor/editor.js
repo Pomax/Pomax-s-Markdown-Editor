@@ -2264,6 +2264,13 @@ export class Editor {
             return;
         }
 
+        // When focus moves to a toolbar button (e.g. the view-mode toggle),
+        // preserve the tree cursor so the toolbar action can operate on
+        // the correct cursor position.
+        if (related?.closest?.('#toolbar-container')) {
+            return;
+        }
+
         this.container.classList.remove('focused');
 
         // In focused view the active node shows raw markdown syntax.

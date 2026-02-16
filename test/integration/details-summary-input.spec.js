@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, projectRoot } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -36,7 +36,7 @@ test('pressing Enter after summary text and typing " a a" preserves leading spac
     // .md-details-summary-content, which contains the .md-paragraph.
     const summaryParagraph = page.locator('#editor .md-details-summary-content .md-paragraph');
     await summaryParagraph.waitFor({ state: 'visible' });
-    await summaryParagraph.click();
+    await clickInEditor(page, summaryParagraph);
     await page.waitForTimeout(200);
 
     // Move the cursor to the end of the summary text.

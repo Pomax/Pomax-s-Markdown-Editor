@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -82,8 +82,7 @@ test('table renders as an HTML table in focused mode', async () => {
     // Set up: load content with a table and switch to focused view.
     const tableMarkdown = '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |';
     await loadContent(page, tableMarkdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     // In WYSIWYG mode the table is always rendered as an HTML <table>.
     const tableElement = page.locator('.md-line.md-table');
@@ -102,12 +101,11 @@ test('clicking table button on existing table opens edit modal with pre-filled d
     const tableMarkdown =
         '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |\n| Cell 3 | Cell 4 |';
     await loadContent(page, tableMarkdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     // Click on the table node
     const tableNode = page.locator('.md-line.md-table');
-    await tableNode.click();
+    await clickInEditor(page, tableNode);
 
     // Now click the table button
     const tableButton = page.locator('[data-button-id="table"]');
@@ -145,8 +143,7 @@ test('table cells render inline markdown formatting', async () => {
     ].join('\n');
 
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     const table = page.locator('.md-line.md-table table');
     await expect(table).toBeVisible();
@@ -181,8 +178,7 @@ test('table cells render inline HTML formatting', async () => {
     ].join('\n');
 
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     const table = page.locator('.md-line.md-table table');
     await expect(table).toBeVisible();

@@ -9,7 +9,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -35,11 +35,11 @@ test.describe('Link click-to-edit', () => {
     test('clicking a link in focused mode opens the edit modal', async () => {
         // Click the paragraph to focus it (renders as WYSIWYG with <a>)
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         // Now click the rendered <a> element
         const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
+        await clickInEditor(page, link);
 
         // The link modal should appear
         const dialog = page.locator('.link-dialog');
@@ -68,10 +68,10 @@ test.describe('Link click-to-edit', () => {
     test('editing a link via the modal updates the parse tree', async () => {
         // Click paragraph then the link
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
+        await clickInEditor(page, link);
 
         const dialog = page.locator('.link-dialog');
         await expect(dialog).toBeVisible();
@@ -94,10 +94,10 @@ test.describe('Link click-to-edit', () => {
     test('cancelling the modal does not change the link', async () => {
         // Click paragraph then the link
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
+        await clickInEditor(page, link);
 
         const dialog = page.locator('.link-dialog');
         await expect(dialog).toBeVisible();
@@ -116,10 +116,10 @@ test.describe('Link click-to-edit', () => {
     test('clicking a link does not navigate away', async () => {
         // Click paragraph then the link
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
+        await clickInEditor(page, link);
 
         // We should still be on the same page (modal opens, not navigated away)
         const dialog = page.locator('.link-dialog');
@@ -144,11 +144,11 @@ test.describe('Link with nested formatting', () => {
 
     test('clicking bold text inside a link does not open the link modal', async () => {
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         // Click the <strong> inside the <a> — this is what a real user hits.
         const bold = page.locator('.md-line.md-paragraph a strong');
-        await bold.click();
+        await clickInEditor(page, bold);
 
         // The link modal should NOT appear — the user clicked the bold text,
         // not the link itself.
@@ -161,10 +161,10 @@ test.describe('Link with nested formatting', () => {
         await loadContent(page, 'Click [plain link](https://bold.com) here.');
 
         const paragraph = page.locator('.md-line.md-paragraph');
-        await paragraph.click();
+        await clickInEditor(page, paragraph);
 
         const link = page.locator('.md-line.md-paragraph a');
-        await link.click();
+        await clickInEditor(page, link);
 
         const dialog = page.locator('.link-dialog');
         await expect(dialog).toBeVisible();

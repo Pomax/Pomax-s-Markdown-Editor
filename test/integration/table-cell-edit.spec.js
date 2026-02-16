@@ -7,7 +7,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent } from './test-utils.js';
 
 const isMac = process.platform === 'darwin';
 const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
@@ -37,7 +37,7 @@ test.describe('Table cell editing', () => {
     test('clicking a cell and typing inserts text', async () => {
         // Click into the first body cell ("Alice")
         const firstCell = page.locator('.md-line.md-table td').first();
-        await firstCell.click();
+        await clickInEditor(page, firstCell);
 
         // Type additional text
         await page.keyboard.type('!');
@@ -49,7 +49,7 @@ test.describe('Table cell editing', () => {
     test('backspace deletes a character in a cell', async () => {
         // Click into the "Alice" cell
         const firstCell = page.locator('.md-line.md-table td').first();
-        await firstCell.click();
+        await clickInEditor(page, firstCell);
 
         // Move to the end of the cell text and delete one character
         await page.keyboard.press(End);
@@ -63,7 +63,7 @@ test.describe('Table cell editing', () => {
     test('delete removes a character forward in a cell', async () => {
         // Click into the "Alice" cell
         const firstCell = page.locator('.md-line.md-table td').first();
-        await firstCell.click();
+        await clickInEditor(page, firstCell);
 
         // Move to home and delete one character forward
         await page.keyboard.press(Home);
@@ -77,7 +77,7 @@ test.describe('Table cell editing', () => {
     test('enter moves to the next row in the same column', async () => {
         // Click into the header cell "Name"
         const headerCell = page.locator('.md-line.md-table th').first();
-        await headerCell.click();
+        await clickInEditor(page, headerCell);
 
         // Press Enter to move to the first body row
         await page.keyboard.press('Enter');
@@ -93,7 +93,7 @@ test.describe('Table cell editing', () => {
     test('tab moves to the next cell', async () => {
         // Click into the header cell "Name"
         const headerCell = page.locator('.md-line.md-table th').first();
-        await headerCell.click();
+        await clickInEditor(page, headerCell);
 
         // Tab should move to the next cell (header "Age")
         await page.keyboard.press('Tab');
@@ -109,7 +109,7 @@ test.describe('Table cell editing', () => {
     test('tab wraps to the first cell of the next row', async () => {
         // Click into the header cell "Age" (second column)
         const headerCells = page.locator('.md-line.md-table th');
-        await headerCells.nth(1).click();
+        await clickInEditor(page, headerCells.nth(1));
 
         // Tab should wrap to the first cell of the next row ("Alice")
         await page.keyboard.press('Tab');
@@ -125,7 +125,7 @@ test.describe('Table cell editing', () => {
     test('shift+tab moves to the previous cell', async () => {
         // Click into the "Age" header cell
         const headerCells = page.locator('.md-line.md-table th');
-        await headerCells.nth(1).click();
+        await clickInEditor(page, headerCells.nth(1));
 
         // Shift+Tab should move back to "Name"
         await page.keyboard.press('Shift+Tab');
@@ -141,7 +141,7 @@ test.describe('Table cell editing', () => {
     test('tab on last cell creates a new row', async () => {
         // Click into the last cell ("25" — last row, last column)
         const lastCell = page.locator('.md-line.md-table td').last();
-        await lastCell.click();
+        await clickInEditor(page, lastCell);
 
         // Tab should create a new row and move to its first cell
         await page.keyboard.press('Tab');

@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp, setFocusedView, setSourceView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -83,8 +83,7 @@ test('image node displays raw syntax in source mode', async () => {
         window.editorAPI?.setContent(content);
     }, '![Test Image](test-image.png)');
     await page.waitForSelector('#editor .md-line');
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     const imageNode = page.locator('.md-image .md-content');
     await expect(imageNode).toBeVisible();
@@ -94,19 +93,19 @@ test('image node displays raw syntax in source mode', async () => {
 });
 
 test('clicking image button on existing image opens edit modal with pre-filled data', async () => {
-    // Set up: load content with an image and switch to focused view.
+    // Set up: load content with a paragraph + image and switch to focused view.
+    // The leading paragraph prevents clickInEditor from landing on the image
+    // (which would trigger click-to-edit and open the modal prematurely).
     await page.evaluate((content) => {
         window.editorAPI?.setContent(content);
-    }, '![Test Image](test-image.png)');
+    }, 'some text\n\n![Test Image](test-image.png)');
     await page.waitForSelector('#editor .md-line');
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
-    // Place the cursor on the image node without triggering click-to-edit.
-    // Use keyboard navigation: focus the editor, then move to the image line.
-    const editor = page.locator('#editor');
-    await editor.focus();
-    await page.keyboard.press('Home');
+    // Click on the first paragraph (safe), then arrow down to the image line.
+    const firstLine = page.locator('#editor .md-line').first();
+    await clickInEditor(page, firstLine);
+    await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(100);
 
     // Now click the image toolbar button with cursor on the image node.

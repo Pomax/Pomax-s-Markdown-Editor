@@ -3,7 +3,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from './test-utils.js';
+import { clickInEditor, launchApp } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -83,7 +83,7 @@ test.describe('Toolbar', () => {
 test.describe('Text Input', () => {
     test('should allow typing in the editor', async () => {
         const editor = await page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
         await page.keyboard.type('Hello, World!');
 
         const content = await editor.innerText();
@@ -94,7 +94,7 @@ test.describe('Text Input', () => {
 test.describe('Keyboard Shortcuts', () => {
     test('should handle Ctrl+Z for undo', async () => {
         const editor = await page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
         await page.keyboard.type('Test');
         await page.keyboard.press('Control+z');
 

@@ -7,7 +7,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { defocusEditor, launchApp, loadContent } from './test-utils.js';
+import { clickInEditor, defocusEditor, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
 
 const markdown = '# My Heading\n\nA paragraph of text.';
 
@@ -32,8 +32,7 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     // the first node *looks* focused but the editor never received real
     // DOM focus — so blurring would be a no-op.
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     // Verify the editor has actual DOM focus (not just a visual cursor).
     const hasFocus = await page.evaluate(() => {
@@ -59,12 +58,11 @@ test('loading content gives the editor DOM focus so defocus works without a prio
 test('clicking outside the editor hides active-node highlight in focused mode', async () => {
     // Load content and switch to focused view.
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     // Click on the heading to make it the active node.
     const heading = page.locator('#editor .md-line').first();
-    await heading.click();
+    await clickInEditor(page, heading);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the heading shows formatted text, not raw syntax.
@@ -92,13 +90,12 @@ test('clicking outside the editor hides active-node highlight in focused mode', 
 test('clicking back into the editor after defocus restores cursor', async () => {
     // Set up: load content, switch to focused view, and defocus.
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
     await defocusEditor(page);
 
     // Click on the paragraph (second line) to re-focus.
     const paragraph = page.locator('#editor .md-line').nth(1);
-    await paragraph.click();
+    await clickInEditor(page, paragraph);
     await page.waitForTimeout(200);
 
     // The paragraph should now be the active node.  The heading (first
@@ -115,12 +112,11 @@ test('clicking back into the editor after defocus restores cursor', async () => 
 test('defocus is a no-op in source view', async () => {
     // Set up: load content and switch to source view.
     await loadContent(page, markdown);
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     // Click the heading to place the cursor there.
     const heading = page.locator('#editor .md-line').first();
-    await heading.click();
+    await clickInEditor(page, heading);
     await page.waitForTimeout(200);
 
     // In source view, headings always show `#` regardless of focus.

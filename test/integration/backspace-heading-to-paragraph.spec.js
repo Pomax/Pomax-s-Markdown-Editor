@@ -9,6 +9,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { clickInEditor } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,7 +69,7 @@ test('typing "# main" then backspace 6 times reverts to an empty paragraph', asy
     await page.waitForSelector('#editor .md-line');
 
     const editor = page.locator('#editor');
-    await editor.click();
+    await clickInEditor(page, editor);
 
     // Type "# main" character by character
     for (const char of ['#', ' ', 'm', 'a', 'i', 'n']) {

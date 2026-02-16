@@ -69,16 +69,60 @@ export async function loadContent(page, fixtureContent) {
  * focused-writing renderer.  Useful after switching view modes when
  * you need to assert that heading syntax is hidden.
  *
+ * Clicks a coordinate outside the editor (on the surrounding container
+ * padding) so that the full blur event sequence fires naturally.
+ *
  * @param {import('@playwright/test').Page} page
  */
 export async function defocusEditor(page) {
-    // Blur the editor element.  The editor's handleBlur clears the
-    // treeCursor and re-renders in focused view, so no node will show
-    // its raw markdown syntax after this call.
-    await page.evaluate(() => {
-        const editor = /** @type {HTMLElement|null} */ (document.querySelector('#editor'));
-        if (editor) editor.blur();
-    });
+    // In Firefox, clicking on a non-focusable element (like the
+    // editor-container padding) does NOT move focus away from a
+    // contenteditable.  Use the native DOM blur() API instead —
+    // this fires the full blur / focusout event chain.
+    await page.evaluate(() => /** @type {HTMLElement|null} */ (document.activeElement)?.blur());
     // Give the editor time to re-render.
     await page.waitForTimeout(200);
+}
+
+/**
+ * Click on a locator inside the editor using real mouse coordinates.
+ *
+ * `locator.click()` dispatches a synthetic event that skips the real
+ * browser event sequence (mousedown → selectionchange → mouseup → click).
+ * This helper gets the bounding box and fires a real `page.mouse.click()`
+ * at the element's centre so the full event chain fires.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {import('@playwright/test').Locator} locator
+ */
+export async function clickInEditor(page, locator) {
+    const box = await locator.boundingBox();
+    if (!box) throw new Error('clickInEditor: element not visible');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
+
+/**
+ * Switch the editor to source view by clicking the toolbar toggle.
+ * If already in source view, this is a no-op.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function setSourceView(page) {
+    const current = await page.locator('#editor').getAttribute('data-view-mode');
+    if (current === 'source') return;
+    await page.locator('.toolbar-view-mode-toggle').click();
+    await page.locator('#editor[data-view-mode="source"]').waitFor();
+}
+
+/**
+ * Switch the editor to focused view by clicking the toolbar toggle.
+ * If already in focused view, this is a no-op.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function setFocusedView(page) {
+    const current = await page.locator('#editor').getAttribute('data-view-mode');
+    if (current !== 'source') return;
+    await page.locator('.toolbar-view-mode-toggle').click();
+    await page.locator('#editor[data-view-mode="focused"]').waitFor();
 }

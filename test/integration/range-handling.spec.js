@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { clickInEditor } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -157,7 +158,7 @@ test.describe('Type with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Type some text
         await typeText(page, 'hello world');
@@ -177,7 +178,7 @@ test.describe('Type with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'abcdef');
 
@@ -204,7 +205,7 @@ test.describe('Backspace with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
 
@@ -221,7 +222,7 @@ test.describe('Backspace with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'abcdef');
 
@@ -249,7 +250,7 @@ test.describe('Delete with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
 
@@ -271,7 +272,7 @@ test.describe('Enter with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'abcdef');
 
@@ -306,7 +307,7 @@ test.describe('Ctrl+A context-restricted select-all', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Create two paragraphs
         await typeText(page, 'first paragraph');
@@ -331,7 +332,7 @@ test.describe('Ctrl+A context-restricted select-all', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Create a heading
         await typeText(page, '# My Heading');
@@ -355,7 +356,7 @@ test.describe('Ctrl+A context-restricted select-all', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
         await selectAll(page);
@@ -370,7 +371,7 @@ test.describe('Ctrl+A context-restricted select-all', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
         await selectAll(page);
@@ -391,7 +392,7 @@ test.describe('Cross-node selection deletion', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Create two paragraphs: "first" and "second"
         await typeText(page, 'first');
@@ -413,7 +414,7 @@ test.describe('Cross-node selection deletion', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         // Create two paragraphs: "alpha" and "beta"
         await typeText(page, 'alpha');
@@ -441,7 +442,7 @@ test.describe('Paste with selection', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
 
@@ -481,7 +482,7 @@ test.describe('Cut', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'hello world');
 
@@ -519,7 +520,7 @@ test.describe('Undo after range operations', () => {
         await page.waitForSelector('#editor .md-line');
 
         const editor = page.locator('#editor');
-        await editor.click();
+        await clickInEditor(page, editor);
 
         await typeText(page, 'original');
         // Small delay to separate undo batches

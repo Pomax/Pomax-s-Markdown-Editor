@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { defocusEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
+import { defocusEditor, launchApp, loadContent, projectRoot, setSourceView } from './test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
 const readmeContent = fs.readFileSync(readmePath, 'utf-8');
@@ -64,8 +64,7 @@ test('clicking toggle again switches editor back to focused mode', async () => {
     // Set up: load content and switch to source mode first.
     await loadContent(page, readmeContent);
     const toggle = page.locator('.toolbar-view-mode-toggle');
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     // Click to switch back to focused mode.
     await toggle.click();

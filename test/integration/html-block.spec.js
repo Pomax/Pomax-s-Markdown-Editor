@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, projectRoot } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent, projectRoot } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'nested.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -50,7 +50,7 @@ test('toolbar flags heading inside HTML block as h2', async () => {
     const nestedHeading = page.locator('#editor .md-heading2', {
         hasText: 'and this an h2',
     });
-    await nestedHeading.click();
+    await clickInEditor(page, nestedHeading);
     await page.waitForTimeout(200);
 
     // The h2 toolbar button should be active (not greyed out).
@@ -64,7 +64,7 @@ test('toolbar flags heading after HTML block as h2', async () => {
     const trailingHeading = page.locator('#editor .md-heading2', {
         hasText: 'with another heading',
     });
-    await trailingHeading.click();
+    await clickInEditor(page, trailingHeading);
     await page.waitForTimeout(200);
 
     // The h2 toolbar button should be active (not greyed out).

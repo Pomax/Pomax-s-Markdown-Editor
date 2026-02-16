@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, projectRoot } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent, projectRoot, setFocusedView, setSourceView } from './test-utils.js';
 
 const isMac = process.platform === 'darwin';
 const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
@@ -44,8 +44,7 @@ test('source view: backspace at start of paragraph after </details> does not del
     await loadContent(page, fixtureContent);
 
     // Switch to source view.
-    await page.evaluate(() => window.electronAPI?.setSourceView());
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+    await setSourceView(page);
 
     // Find the line that contains "And then this is the main doc again."
     const targetLine = page.locator('#editor .md-line', {
@@ -54,7 +53,7 @@ test('source view: backspace at start of paragraph after </details> does not del
     // There may be a parent wrapper that also matches; narrow to the
     // innermost .md-line that has no .md-line children.
     const innerTarget = targetLine.locator(':scope:not(:has(.md-line))').first();
-    await innerTarget.click();
+    await clickInEditor(page, innerTarget);
     await page.waitForTimeout(100);
 
     // Move cursor to the very start of the line.
@@ -84,14 +83,13 @@ test('focused view: backspace at start of paragraph after </details> merges with
     await loadContent(page, fixtureContent);
 
     // Make sure we're in focused view.
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await setFocusedView(page);
 
     // Click on "And then this is the main doc again."
     const targetLine = page.locator('#editor .md-line', {
         hasText: 'And then this is the main doc again.',
     });
-    await targetLine.first().click();
+    await clickInEditor(page, targetLine.first());
     await page.waitForTimeout(100);
 
     // Move cursor to the very start.
