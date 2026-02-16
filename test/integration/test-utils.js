@@ -45,27 +45,43 @@ export const END = isMac ? 'Meta+ArrowRight' : 'End';
  * predictable viewport size so tests are not affected by the CI runner's
  * physical screen dimensions.
  *
+ * Retries up to 2 times if the window fails to appear (e.g. transient
+ * CI timeout on macOS runners).
+ *
  * @param {string[]} [extraArgs]  Additional CLI arguments (e.g. a file path).
  * @returns {Promise<{ electronApp: import('@playwright/test').ElectronApplication, page: import('@playwright/test').Page }>}
  */
 export async function launchApp(extraArgs = []) {
-    const electronApp = await electron.launch({
-        args: [
-            ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
-            path.join(projectRoot, 'src', 'main', 'main.js'),
-            ...extraArgs,
-        ],
-        env: { ...process.env, TESTING: '1' },
-    });
-    const page = await electronApp.firstWindow();
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        /** @type {import('@playwright/test').ElectronApplication|undefined} */
+        let electronApp;
+        try {
+            electronApp = await electron.launch({
+                args: [
+                    ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
+                    path.join(projectRoot, 'src', 'main', 'main.js'),
+                    ...extraArgs,
+                ],
+                env: { ...process.env, TESTING: '1' },
+            });
+            const page = await electronApp.firstWindow();
 
-    // Wait for the renderer to be ready.
-    await page.waitForFunction(() => document.readyState === 'complete');
+            // Wait for the renderer to be ready.
+            await page.waitForFunction(() => document.readyState === 'complete');
 
-    // Force a consistent viewport so layout-sensitive tests pass on CI.
-    await page.setViewportSize(VIEWPORT);
+            // Force a consistent viewport so layout-sensitive tests pass on CI.
+            await page.setViewportSize(VIEWPORT);
 
-    return { electronApp, page };
+            return { electronApp, page };
+        } catch (err) {
+            // Clean up the failed app instance before retrying.
+            try { await electronApp?.close(); } catch { /* ignore */ }
+            if (attempt === maxAttempts) throw err;
+        }
+    }
+    // Unreachable, but satisfies the type checker.
+    throw new Error('launchApp: max attempts exceeded');
 }
 
 /**
