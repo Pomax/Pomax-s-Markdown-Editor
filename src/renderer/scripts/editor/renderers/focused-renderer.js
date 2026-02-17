@@ -407,6 +407,9 @@ export class FocusedRenderer {
         img.src = this.resolveImageSrc(src);
         img.alt = alt;
         img.title = alt;
+        if (attrs.style) {
+            img.setAttribute('style', attrs.style);
+        }
 
         if (attrs.href) {
             const link = document.createElement('a');

@@ -15,6 +15,7 @@ import { tokenizeInline } from './inline-tokenizer.js';
  * @property {string} [title] - Title for links and images
  * @property {string} [alt] - Alt text for images
  * @property {string} [href] - Link URL for linked images
+ * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
@@ -173,6 +174,11 @@ export class SyntaxNode {
             case 'image': {
                 const imgAlt = this.attributes.alt ?? this.content;
                 const imgSrc = this.attributes.url ?? '';
+                const imgStyle = this.attributes.style ?? '';
+                if (imgStyle) {
+                    const altAttr = imgAlt ? ` alt="${imgAlt}"` : '';
+                    return `<img src="${imgSrc}"${altAttr} style="${imgStyle}" />`;
+                }
                 if (this.attributes.href) {
                     return `[![${imgAlt}](${imgSrc})](${this.attributes.href})`;
                 }

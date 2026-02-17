@@ -160,6 +160,11 @@ export class MarkdownParser {
                 handler: this.parseImage.bind(this),
             },
             {
+                type: 'html-image',
+                pattern: /^<img\s+([^>]*?)\s*\/?>$/i,
+                handler: this.parseHtmlImage.bind(this),
+            },
+            {
                 type: 'table-row',
                 pattern: /^\|(.+)\|$/,
                 handler: this.parseTableRow.bind(this),
@@ -395,6 +400,37 @@ export class MarkdownParser {
 
         const node = new SyntaxNode('image', alt);
         node.attributes = { alt, url: src, href };
+        node.startLine = index;
+        node.endLine = index;
+
+        return { node, nextIndex: index + 1 };
+    }
+
+    /**
+     * Parses an HTML <img> tag into an image node.
+     * Extracts src, alt, and style attributes from the tag.
+     * @param {string[]} lines
+     * @param {number} index
+     * @param {RegExpMatchArray} match
+     * @returns {{node: SyntaxNode, nextIndex: number}}
+     */
+    parseHtmlImage(lines, index, match) {
+        const attrString = match[1];
+
+        // Extract individual attributes from the tag
+        const srcMatch = attrString.match(/src\s*=\s*"([^"]*)"/i);
+        const altMatch = attrString.match(/alt\s*=\s*"([^"]*)"/i);
+        const styleMatch = attrString.match(/style\s*=\s*"([^"]*)"/i);
+
+        const src = srcMatch ? srcMatch[1] : '';
+        const alt = altMatch ? altMatch[1] : '';
+        const style = styleMatch ? styleMatch[1] : '';
+
+        const node = new SyntaxNode('image', alt);
+        node.attributes = { alt, url: src };
+        if (style) {
+            node.attributes.style = style;
+        }
         node.startLine = index;
         node.endLine = index;
 

@@ -3,7 +3,6 @@
  * Provides element-specific formatting buttons.
  */
 
-import { ImageModal } from '../image/image-modal.js';
 import { TableModal } from '../table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
 
@@ -39,9 +38,6 @@ export class Toolbar {
 
         /** @type {HTMLButtonElement|null} */
         this.viewModeToggle = null;
-
-        /** @type {ImageModal|null} */
-        this.imageModal = null;
 
         /** @type {TableModal|null} */
         this.tableModal = null;
@@ -440,9 +436,7 @@ export class Toolbar {
      * Otherwise opens it for insertion.
      */
     async handleImageAction() {
-        if (!this.imageModal) {
-            this.imageModal = new ImageModal();
-        }
+        const imageModal = this.editor.getImageModal();
 
         // Check if cursor is on an image node
         const currentNode = this.editor.getCurrentNode();
@@ -454,10 +448,11 @@ export class Toolbar {
                 alt: currentNode.attributes.alt ?? currentNode.content,
                 src: currentNode.attributes.url ?? '',
                 href: currentNode.attributes.href ?? '',
+                style: currentNode.attributes.style ?? '',
             };
         }
 
-        const result = await this.imageModal.open(existing);
+        const result = await imageModal.open(existing);
         if (!result) return;
 
         let src = result.src;
@@ -482,7 +477,7 @@ export class Toolbar {
             src = await this.editor.toRelativeImagePath(src);
         }
 
-        this.editor.insertOrUpdateImage(result.alt, src, result.href);
+        this.editor.insertOrUpdateImage(result.alt, src, result.href, result.style);
     }
 
     /**

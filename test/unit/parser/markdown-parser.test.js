@@ -244,6 +244,50 @@ describe('MarkdownParser', () => {
             assert.strictEqual(tree.children[1].type, 'image');
             assert.strictEqual(tree.children[2].type, 'paragraph');
         });
+
+        it('should parse an HTML img tag with src, alt and style', () => {
+            const tree = parser.parse('<img src="photo.png" alt="A photo" style="zoom: 80%;" />');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].attributes.url, 'photo.png');
+            assert.strictEqual(tree.children[0].attributes.alt, 'A photo');
+            assert.strictEqual(tree.children[0].attributes.style, 'zoom: 80%;');
+        });
+
+        it('should parse an HTML img tag without style', () => {
+            const tree = parser.parse('<img src="pic.jpg" alt="test" />');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].attributes.url, 'pic.jpg');
+            assert.strictEqual(tree.children[0].attributes.alt, 'test');
+            assert.strictEqual(tree.children[0].attributes.style, undefined);
+        });
+
+        it('should parse an HTML img tag without alt', () => {
+            const tree = parser.parse('<img src="pic.jpg" style="display: block;" />');
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].attributes.url, 'pic.jpg');
+            assert.strictEqual(tree.children[0].attributes.alt, '');
+            assert.strictEqual(tree.children[0].attributes.style, 'display: block;');
+        });
+
+        it('should parse a non-self-closing HTML img tag', () => {
+            const tree = parser.parse('<img src="pic.jpg" alt="test">');
+            assert.strictEqual(tree.children[0].type, 'image');
+            assert.strictEqual(tree.children[0].attributes.url, 'pic.jpg');
+            assert.strictEqual(tree.children[0].attributes.alt, 'test');
+        });
+
+        it('should round-trip an HTML img with style through toMarkdown', () => {
+            const markdown = '<img src="photo.png" alt="A photo" style="zoom: 80%;" />';
+            const tree = parser.parse(markdown);
+            assert.strictEqual(tree.children[0].toMarkdown(), markdown);
+        });
+
+        it('should serialize an image without style as markdown syntax', () => {
+            const tree = parser.parse('<img src="pic.jpg" alt="test" />');
+            assert.strictEqual(tree.children[0].toMarkdown(), '![test](pic.jpg)');
+        });
     });
 
     describe('complex documents', () => {
