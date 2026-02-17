@@ -110,7 +110,7 @@ markdown-editor/
 | `src/main/settings-manager.js` | Settings persistence via SQLite |
 | `src/main/api-registry.js` | External scripting API |
 | `src/renderer/scripts/app.js` | Renderer entry point, wires everything together |
-| `src/renderer/scripts/editor/editor.js` | Core editor class |
+| `src/renderer/scripts/editor/editor.js` | Core editor class (coordinator) |
 | `src/renderer/scripts/parser/markdown-parser.js` | Markdown → syntax tree |
 | `src/renderer/scripts/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
 | `src/types.d.ts` | Global TypeScript type declarations |
