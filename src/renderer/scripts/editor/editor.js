@@ -2608,15 +2608,25 @@ export class Editor {
     }
 
     /**
+     * Returns the shared ImageModal instance, creating it lazily.
+     * Both the toolbar and editor use this to avoid duplicate dialogs.
+     * @returns {ImageModal}
+     */
+    getImageModal() {
+        if (!this._imageModal) {
+            this._imageModal = new ImageModal();
+        }
+        return this._imageModal;
+    }
+
+    /**
      * Opens the image modal pre-filled with the given image node's data,
      * and applies any edits back to the parse tree.
      * Used when clicking an image in focused mode.
      * @param {SyntaxNode} node - The image node to edit
      */
     async _openImageModalForNode(node) {
-        if (!this._imageModal) {
-            this._imageModal = new ImageModal();
-        }
+        const modal = this.getImageModal();
 
         const existing = {
             alt: node.attributes.alt ?? node.content,
@@ -2625,7 +2635,7 @@ export class Editor {
             style: node.attributes.style ?? '',
         };
 
-        const result = await this._imageModal.open(existing);
+        const result = await modal.open(existing);
         if (!result) return;
 
         let src = result.src;

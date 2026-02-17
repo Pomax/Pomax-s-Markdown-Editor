@@ -48,6 +48,9 @@ this **before** doing any work.
 - **Never** use multiline strings in terminal commands. `cmd.exe` treats
   each line as a separate command. Git commit messages must be a single
   line: `git commit -m "one line summary"`.
+- **Always** be explicit about remote and branch when pushing:
+  `git push origin <branchname>`. Never use bare `git push` or
+  `--set-upstream`.
 - after the work has been completed (as agreed to by the user), write a
   PR comment in markdown that documents what was wrong, how it got changed
   and why it needed that specific change. Make sure to also note that the
