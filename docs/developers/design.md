@@ -19,9 +19,19 @@ Each class has a single, well-defined responsibility:
 Every class is in its own file:
 ```
 src/renderer/scripts/editor/
-├── editor.js           # Editor class
-├── undo-manager.js     # UndoManager class
-└── selection-manager.js # SelectionManager class
+├── editor.js              # Editor class (coordinator)
+├── cursor-manager.js      # CursorManager — DOM ↔ tree cursor sync
+├── table-manager.js       # TableManager — table cell editing
+├── input-handler.js       # InputHandler — keyboard/beforeinput dispatch
+├── edit-operations.js     # EditOperations — insert, backspace, delete, enter
+├── range-operations.js    # RangeOperations — selection range deletion, Ctrl+A
+├── clipboard-handler.js   # ClipboardHandler — cut, copy
+├── event-handler.js       # EventHandler — click, focus, blur, drag/drop
+├── image-helper.js        # ImageHelper — image modal, insert/update, path rewriting
+├── link-helper.js         # LinkHelper — link edit modal
+├── offset-mapping.js      # Pure functions for raw ↔ rendered offset mapping
+├── undo-manager.js        # UndoManager class
+└── selection-manager.js   # SelectionManager class
 ```
 
 ### 3. No Nested Function Declarations
@@ -104,11 +114,21 @@ src/
 │   └── scripts/              # JavaScript
 │       ├── app.js           # App entry, wires components together
 │       ├── editor/          # Core editor components
-│       │   ├── editor.js          # Editor class
-│       │   ├── undo-manager.js    # UndoManager class
-│       │   ├── selection-manager.js # SelectionManager class
-│       │   ├── syntax-highlighter.js # Inline syntax highlighting
-│       │   ├── parse-tree.js      # Parse tree cursor helper
+│       │   ├── editor.js              # Editor class (coordinator)
+│       │   ├── cursor-manager.js      # DOM ↔ tree cursor sync
+│       │   ├── table-manager.js       # Table cell editing
+│       │   ├── input-handler.js       # Keyboard/beforeinput dispatch
+│       │   ├── edit-operations.js     # Insert, backspace, delete, enter
+│       │   ├── range-operations.js    # Selection range deletion, Ctrl+A
+│       │   ├── clipboard-handler.js   # Cut, copy
+│       │   ├── event-handler.js       # Click, focus, blur, drag/drop
+│       │   ├── image-helper.js        # Image modal, path rewriting
+│       │   ├── link-helper.js         # Link edit modal
+│       │   ├── offset-mapping.js      # Raw ↔ rendered offset mapping
+│       │   ├── undo-manager.js        # UndoManager class
+│       │   ├── selection-manager.js   # SelectionManager class
+│       │   ├── syntax-highlighter.js  # Inline syntax highlighting
+│       │   ├── parse-tree.js          # Parse tree cursor helper
 │       │   └── renderers/
 │       │       ├── source-renderer.js
 │       │       └── focused-renderer.js
@@ -245,27 +265,42 @@ import { ClassName, utilityFunction } from './module.js';
 
 ### Editor Pattern
 
-The Editor class uses a coordinator pattern:
+The Editor class uses a coordinator pattern. It delegates concerns to
+focused manager classes that receive the editor as a constructor argument:
 
 ```javascript
 class Editor {
     constructor(container) {
         this.parser = new MarkdownParser();
         this.syntaxTree = null;
-        this.renderer = new SourceRenderer(this);
+        this.sourceRenderer = new SourceRenderer(this);
+        this.focusedRenderer = new FocusedRenderer(this);
         this.undoManager = new UndoManager();
+
+        // Task managers
+        this.cursorManager = new CursorManager(this);
+        this.tableManager = new TableManager(this);
+        this.inputHandler = new InputHandler(this);
+        this.editOperations = new EditOperations(this);
+        this.rangeOperations = new RangeOperations(this);
+        this.clipboardHandler = new ClipboardHandler(this);
+        this.eventHandler = new EventHandler(this);
+        this.imageHelper = new ImageHelper(this);
+        this.linkHelper = new LinkHelper(this);
     }
 
     loadMarkdown(markdown) {
         this.syntaxTree = this.parser.parse(markdown);
         this.undoManager.clear();
-        this.render();
-    }
-
-    render() {
-        this.renderer.render(this.syntaxTree, this.container);
+        this.fullRenderAndPlaceCursor();
     }
 }
+```
+
+Each manager accesses editor state via `this.editor` and calls back into
+the editor's public API (e.g. `this.editor.recordAndRender()`,
+`this.editor.placeCursor()`). The editor itself keeps the public API
+surface, document state, and rendering methods.
 ```
 
 ### Parser Pattern

@@ -60,6 +60,7 @@ this **before** doing any work.
 
 | Kind        | Command                    | Framework                  |
 | ----------- | -------------------------- | -------------------------- |
+| Full suite  | `npm test`                 |                            |
 | Linting     | `npm run lint`             | Biome and TSC linting      |
 | Unit        | `npm run test:unit`        | Node.js native test runner |
 | Integration | `npm run test:integration` | Playwright + Firefox       |
@@ -72,6 +73,10 @@ this **before** doing any work.
   being asked.
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
+- **Never** interrupt the full suite or integration tests if they seem to
+  be running long, instead ask the user to tell you when they finish.
+- **Never** believe the output if it looks truncated, and instead assume
+  the tests are still running, and ask the user to tell you when they finish.
 
 ## Playwright Pitfalls
 
@@ -83,7 +88,7 @@ browser event sequence. A real human click fires:
     mousedown → (selectionchange) → mouseup → click
 
 If the editor re-renders on `selectionchange` (it does — see
-`handleSelectionChange` in `editor.js`), the DOM element that received
+`handleSelectionChange` in `event-handler.js`), the DOM element that received
 `mousedown` may be destroyed before `click` fires. A synthetic
 `locator.click()` won't reproduce this because it skips `selectionchange`.
 
