@@ -52,9 +52,10 @@ this **before** doing any work.
   `git push origin <branchname>`. Never use bare `git push` or
   `--set-upstream`.
 - after the work has been completed (as agreed to by the user), write a
-  PR comment in markdown that documents what was wrong, how it got changed
-  and why it needed that specific change. Make sure to also note that the
-  PR closes the issue number, if the work was part of addressing an issue.
+  PR comment **in raw markdown**, **not styled text**, that documents what
+  was wrong, how it got changed and why it needed that specific change.
+  Make sure to also note that the PR closes the issue number, if the work
+  was part of addressing an issue.
 
 ## Test Runners
 
