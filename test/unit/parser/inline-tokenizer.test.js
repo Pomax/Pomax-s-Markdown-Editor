@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
     buildInlineTree,
+    findMatchedTokenIndices,
     tokenizeInline,
 } from '../../../src/renderer/scripts/parser/inline-tokenizer.js';
 
@@ -167,5 +168,78 @@ describe('buildInlineTree', () => {
         const codeNode = tree.find((s) => s.type === 'code');
         assert.ok(codeNode);
         assert.equal(codeNode.content, '<sub>');
+    });
+});
+
+// ── findMatchedTokenIndices ─────────────────────────────────────────
+
+describe('findMatchedTokenIndices', () => {
+    it('returns empty set for plain text', () => {
+        const tokens = tokenizeInline('hello world');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.equal(matched.size, 0);
+    });
+
+    it('marks matched ** open/close as matched', () => {
+        const tokens = tokenizeInline('a **b** c');
+        const matched = findMatchedTokenIndices(tokens);
+        // tokens: [text, bold-open, text, bold-close, text]
+        assert.ok(matched.has(1)); // bold-open
+        assert.ok(matched.has(3)); // bold-close
+        assert.equal(matched.size, 2);
+    });
+
+    it('marks matched * open/close as matched', () => {
+        const tokens = tokenizeInline('a *b* c');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.ok(matched.has(1)); // italic-open
+        assert.ok(matched.has(3)); // italic-close
+        assert.equal(matched.size, 2);
+    });
+
+    it('marks matched ~~ open/close as matched', () => {
+        const tokens = tokenizeInline('a ~~b~~ c');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.ok(matched.has(1)); // strikethrough-open
+        assert.ok(matched.has(3)); // strikethrough-close
+        assert.equal(matched.size, 2);
+    });
+
+    it('marks matched HTML tags as matched', () => {
+        const tokens = tokenizeInline('H<sub>2</sub>O');
+        const matched = findMatchedTokenIndices(tokens);
+        // tokens: [text, html-open, text, html-close, text]
+        assert.ok(matched.has(1)); // html-open
+        assert.ok(matched.has(3)); // html-close
+        assert.equal(matched.size, 2);
+    });
+
+    it('returns empty set for unmatched *', () => {
+        const tokens = tokenizeInline('this is a *');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.equal(matched.size, 0);
+    });
+
+    it('returns empty set for unmatched ~~', () => {
+        const tokens = tokenizeInline('this is a ~~');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.equal(matched.size, 0);
+    });
+
+    it('returns empty set for unmatched <sub>', () => {
+        const tokens = tokenizeInline('text <sub>');
+        const matched = findMatchedTokenIndices(tokens);
+        assert.equal(matched.size, 0);
+    });
+
+    it('handles mix of matched and unmatched', () => {
+        // **bold** and * — ** pair is matched, lone * is not
+        const tokens = tokenizeInline('**bold** and *');
+        const matched = findMatchedTokenIndices(tokens);
+        // tokens: [bold-open, text, bold-close, text, italic-open]
+        assert.ok(matched.has(0)); // bold-open
+        assert.ok(matched.has(2)); // bold-close
+        assert.ok(!matched.has(4)); // italic-open (unmatched)
+        assert.equal(matched.size, 2);
     });
 });

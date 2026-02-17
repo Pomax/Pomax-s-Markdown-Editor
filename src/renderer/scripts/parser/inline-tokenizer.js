@@ -254,6 +254,107 @@ export function tokenizeInline(input) {
     return tokens;
 }
 
+// ── Matched-delimiter analysis ───────────────────────────────────────
+
+/**
+ * Returns a Set of token indices whose delimiters are successfully
+ * paired (open ↔ close) and will therefore be rendered as invisible
+ * formatting wrappers by {@link buildInlineTree}.  Unmatched
+ * delimiters are rendered as visible text, so offset-mapping must
+ * treat them the same as text tokens.
+ *
+ * The pairing logic mirrors {@link buildInlineTree} exactly.
+ *
+ * @param {InlineToken[]} tokens
+ * @returns {Set<number>}
+ */
+export function findMatchedTokenIndices(tokens) {
+    /** @type {Set<number>} */
+    const matched = new Set();
+
+    /**
+     * Stack tracking open delimiters.
+     * @type {Array<{closeType: string, tokenIndex: number}>}
+     */
+    const openStack = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+
+        if (token.type === 'text' || token.type === 'code') continue;
+
+        // ── Markdown open tokens ────────────────────────────────
+        if (CLOSE_TYPE_FOR[token.type]) {
+            openStack.push({ closeType: CLOSE_TYPE_FOR[token.type], tokenIndex: i });
+            continue;
+        }
+
+        // ── HTML open tags ──────────────────────────────────────
+        if (token.type === 'html-open') {
+            const tag = /** @type {string} */ (token.tag);
+            openStack.push({ closeType: `html-close:${tag}`, tokenIndex: i });
+            continue;
+        }
+
+        // ── Markdown close tokens ───────────────────────────────
+        if (
+            token.type === 'bold-close' ||
+            token.type === 'italic-close' ||
+            token.type === 'strikethrough-close'
+        ) {
+            const idx = _findOpenIdx(openStack, token.type);
+            if (idx !== -1) {
+                matched.add(openStack[idx].tokenIndex);
+                matched.add(i);
+                openStack.splice(idx);
+            }
+            continue;
+        }
+
+        // ── Link close ──────────────────────────────────────────
+        if (token.type === 'link-close') {
+            const idx = _findOpenIdx(openStack, 'link-close');
+            if (idx !== -1) {
+                matched.add(openStack[idx].tokenIndex);
+                matched.add(i);
+                openStack.splice(idx);
+            }
+            continue;
+        }
+
+        // ── HTML close tags ─────────────────────────────────────
+        if (token.type === 'html-close') {
+            const tag = /** @type {string} */ (token.tag);
+            const closeKey = `html-close:${tag}`;
+            const idx = _findOpenIdx(openStack, closeKey);
+            if (idx !== -1) {
+                matched.add(openStack[idx].tokenIndex);
+                matched.add(i);
+                openStack.splice(idx);
+            }
+        }
+    }
+
+    return matched;
+}
+
+/**
+ * Finds the most recent entry on the open-stack whose closeType
+ * matches the given value.
+ *
+ * @param {Array<{closeType: string}>} openStack
+ * @param {string} closeType
+ * @returns {number} Index into openStack, or -1
+ */
+function _findOpenIdx(openStack, closeType) {
+    for (let i = openStack.length - 1; i >= 0; i--) {
+        if (openStack[i].closeType === closeType) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 // ── Tree builder ────────────────────────────────────────────────────
 
 /**
