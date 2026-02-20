@@ -52,17 +52,20 @@ this **before** doing any work.
   `git push origin <branchname>`. Never use bare `git push` or
   `--set-upstream`.
 - Do not consider the work done until a final full test suite run passes.
-- After the work has been completed (as agreed to by the user), write a
-  PR comment **in raw markdown**, **not styled text**, that documents what
-  was wrong, how it got changed and why it needed that specific change.
-  Make sure to also note that the PR closes the issue number, if the work
-  was part of addressing an issue.
+- After the work has been completed (as agreed to by the user), form a
+  final commit (**only after the full test suite confirms everything works**)
+  and write a PR comment **in raw markdown source code** inside a
+  fenced code block (` ```markdown ... ``` `), **never** as styled /
+  rendered text, that documents what was wrong, how it got changed and
+  why it needed that specific change.   Make sure to also note that the
+  PR closes the issue number, if the work was part of addressing an issue.
+- Note that any changes to this file should **always** be added to git
+  commits. They should never be backed out or unstaged.
 
 ## Test Runners
 
 | Kind        | Command                    | Framework                  |
 | ----------- | -------------------------- | -------------------------- |
-| Full suite  | `npm test`                 |                            |
 | Full suite  | `npm test`                 |                            |
 | Linting     | `npm run lint`             | Biome and TSC linting      |
 | Unit        | `npm run test:unit`        | Node.js native test runner |

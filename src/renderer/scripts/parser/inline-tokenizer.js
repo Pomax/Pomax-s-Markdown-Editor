@@ -23,6 +23,7 @@ const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
  * @typedef {'text'|'bold-open'|'bold-close'|'italic-open'|'italic-close'
  *   |'strikethrough-open'|'strikethrough-close'|'code'
  *   |'link-open'|'link-close'|'link-href'
+ *   |'image'
  *   |'html-open'|'html-close'} TokenType
  */
 
@@ -33,6 +34,8 @@ const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
  * @property {string} [content] - Inner content (for code spans / text).
  * @property {string} [tag]     - HTML tag name (for html-open / html-close).
  * @property {string} [href]    - Link URL (for link-href).
+ * @property {string} [alt]     - Alt text (for image tokens).
+ * @property {string} [src]     - Image URL (for image tokens).
  */
 
 // ── Tokenizer ───────────────────────────────────────────────────────
@@ -181,13 +184,31 @@ export function tokenizeInline(input) {
             }
         }
 
-        // ── [text](href) link ───────────────────────────────────
+        // ── ![alt](src) image or [text](href) link ─────────────
         if (ch === '[') {
+            // Check for image syntax: preceding '!' means this is ![alt](src)
+            const isImage = i > 0 && input[i - 1] === '!';
+
             // Look ahead for ](href)
             const closeBracket = input.indexOf(']', i + 1);
             if (closeBracket !== -1 && input[closeBracket + 1] === '(') {
                 const closeParen = input.indexOf(')', closeBracket + 2);
                 if (closeParen !== -1) {
+                    if (isImage) {
+                        // Flush text up to (but not including) the '!'
+                        flushText(i - 1);
+                        const alt = input.slice(i + 1, closeBracket);
+                        const src = input.slice(closeBracket + 2, closeParen);
+                        tokens.push({
+                            type: 'image',
+                            raw: input.slice(i - 1, closeParen + 1),
+                            alt,
+                            src,
+                        });
+                        i = closeParen + 1;
+                        textStart = i;
+                        continue;
+                    }
                     flushText(i);
                     const linkText = input.slice(i + 1, closeBracket);
                     const href = input.slice(closeBracket + 2, closeParen);
@@ -283,6 +304,12 @@ export function findMatchedTokenIndices(tokens) {
 
         if (token.type === 'text' || token.type === 'code') continue;
 
+        // Image tokens are self-contained — always matched.
+        if (token.type === 'image') {
+            matched.add(i);
+            continue;
+        }
+
         // ── Markdown open tokens ────────────────────────────────
         if (CLOSE_TYPE_FOR[token.type]) {
             openStack.push({ closeType: CLOSE_TYPE_FOR[token.type], tokenIndex: i });
@@ -362,11 +389,11 @@ function _findOpenIdx(openStack, closeType) {
  * container with children.
  *
  * @typedef {object} InlineSegment
- * @property {'text'|'code'|'bold'|'italic'|'strikethrough'|'link'|string} type
+ * @property {'text'|'code'|'image'|'bold'|'italic'|'strikethrough'|'link'|string} type
  * @property {string} [text]     - Plain text content (type === 'text').
  * @property {string} [content]  - Code content (type === 'code').
- * @property {string} [href]     - Link URL (type === 'link').
- * @property {string} [tag]      - HTML tag name (for html inline elements).
+ * @property {string} [href]     - Link URL (type === 'link'). * @property {string} [alt]     - Alt text (type === 'image').
+ * @property {string} [src]     - Image URL (type === 'image'). * @property {string} [tag]      - HTML tag name (for html inline elements).
  * @property {InlineSegment[]} [children] - Child segments for containers.
  */
 
@@ -423,6 +450,11 @@ export function buildInlineTree(tokens) {
 
         if (token.type === 'code') {
             current.push({ type: 'code', content: token.content });
+            continue;
+        }
+
+        if (token.type === 'image') {
+            current.push({ type: 'image', alt: token.alt, src: token.src });
             continue;
         }
 

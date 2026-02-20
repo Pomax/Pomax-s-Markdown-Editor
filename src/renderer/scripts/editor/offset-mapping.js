@@ -56,6 +56,13 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
             }
             rawPos += rawLen;
             renderedPos += contentLen;
+        } else if (token.type === 'image') {
+            // Image: ![alt](src) — entire syntax replaced by one rendered unit.
+            if (rawOffset < rawPos + rawLen) {
+                return renderedPos;
+            }
+            rawPos += rawLen;
+            renderedPos += 1;
         } else if (matched.has(i)) {
             // Matched delimiter — invisible in rendered output.
             if (rawOffset < rawPos + rawLen) {
@@ -111,6 +118,13 @@ export function renderedOffsetToRawOffset(content, renderedOffset) {
             }
             rawPos += rawLen;
             renderedPos += contentLen;
+        } else if (token.type === 'image') {
+            // Image: ![alt](src) — one rendered unit maps to entire raw syntax.
+            if (renderedOffset < renderedPos + 1) {
+                return rawPos;
+            }
+            rawPos += rawLen;
+            renderedPos += 1;
         } else if (matched.has(i)) {
             // Matched delimiter — invisible, advance raw position only.
             rawPos += rawLen;

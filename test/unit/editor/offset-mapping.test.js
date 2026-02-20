@@ -114,6 +114,20 @@ describe('rawOffsetToRenderedOffset', () => {
         assert.equal(rawOffsetToRenderedOffset(content, 13), 9); // at unmatched '*'
         assert.equal(rawOffsetToRenderedOffset(content, 14), 10); // end
     });
+
+    it('handles inline image — entire syntax maps to 1 rendered unit', () => {
+        // "hello ![alt](url) world"
+        // raw:    h e l l o   ! [ a l t ] ( u r l )   w o r l d
+        //         0 1 2 3 4 5 6 7 8 9 ...            17 ...
+        // rendered: "hello X world" (X = image, 1 unit)
+        //            0 1 2 3 4 5 6 7 8 9 10 11 12
+        const content = 'hello ![alt](url) world';
+        assert.equal(rawOffsetToRenderedOffset(content, 5), 5); // after 'o', at space
+        assert.equal(rawOffsetToRenderedOffset(content, 6), 6); // at '!' — maps to before image
+        assert.equal(rawOffsetToRenderedOffset(content, 10), 6); // inside image syntax
+        assert.equal(rawOffsetToRenderedOffset(content, 17), 7); // after ')' — after image
+        assert.equal(rawOffsetToRenderedOffset(content, 23), 13); // end
+    });
 });
 
 // ── renderedOffsetToRawOffset ───────────────────────────────────────
@@ -172,5 +186,15 @@ describe('renderedOffsetToRawOffset', () => {
         assert.equal(renderedOffsetToRawOffset(content, 4), 6); // after 'd', before closing **
         assert.equal(renderedOffsetToRawOffset(content, 9), 13); // at unmatched '*'
         assert.equal(renderedOffsetToRawOffset(content, 10), 14); // end
+    });
+
+    it('handles inline image — 1 rendered unit maps to entire syntax', () => {
+        // "hello ![alt](url) world"
+        // rendered: "hello X world" (X = image, 1 unit)
+        const content = 'hello ![alt](url) world';
+        assert.equal(renderedOffsetToRawOffset(content, 5), 5); // at space before image
+        assert.equal(renderedOffsetToRawOffset(content, 6), 6); // at image → raw start of '!'
+        assert.equal(renderedOffsetToRawOffset(content, 7), 17); // after image → raw after ')'
+        assert.equal(renderedOffsetToRawOffset(content, 13), 23); // end
     });
 });
