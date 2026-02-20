@@ -5,7 +5,10 @@
 
 /// <reference path="../../types.d.ts" />
 
+import { crc32 } from './editor/crc32.js';
+import { absoluteOffsetToCursor, cursorToAbsoluteOffset } from './editor/cursor-persistence.js';
 import { Editor } from './editor/editor.js';
+import { initPageResizeHandles } from './editor/page-resize.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
@@ -19,6 +22,8 @@ import { Toolbar } from './toolbar/toolbar.js';
  * @property {string|null} filePath - Full file path or null for untitled
  * @property {boolean} modified - Whether there are unsaved changes
  * @property {import('./editor/editor.js').TreeCursor|null} cursor - Cursor position
+ * @property {number} cursorOffset - Absolute character offset in markdown source
+ * @property {number} contentHash - CRC32 hash of the markdown content
  * @property {any[]} undoStack - Undo history
  * @property {any[]} redoStack - Redo history
  */
@@ -55,6 +60,9 @@ class App {
 
         /** @type {number} Counter for generating unique tab IDs */
         this._tabCounter = 0;
+
+        /** @type {ReturnType<typeof setTimeout>|null} */
+        this._cursorDebounce = null;
     }
 
     /**
@@ -74,6 +82,9 @@ class App {
         // Initialize editor
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
+
+        // Initialize page resize handles (focused mode only)
+        initPageResizeHandles(editorContainer);
 
         // Initialize toolbar
         this.toolbar = new Toolbar(toolbarContainer, this.editor);
@@ -105,6 +116,24 @@ class App {
             this.tabBar.onTabClose = (tabId) => this._closeTab(tabId);
         }
 
+        // Keep cursor position in sync with the main process so that
+        // saveOpenFiles() always has a fresh offset.  Debounce to avoid
+        // excessive IPC on rapid cursor movement.
+        document.addEventListener('selectionchange', () => {
+            if (this._cursorDebounce) clearTimeout(this._cursorDebounce);
+            this._cursorDebounce = setTimeout(() => this._notifyOpenFiles(), 500);
+        });
+
+        // Flush any pending cursor update before the window closes so
+        // that saveOpenFiles() in main always has the latest offset.
+        window.addEventListener('beforeunload', () => {
+            if (this._cursorDebounce) {
+                clearTimeout(this._cursorDebounce);
+                this._cursorDebounce = null;
+            }
+            this._notifyOpenFiles();
+        });
+
         // Keep tab bar in sync with editor file state
         document.addEventListener('editor:fileStateChanged', (e) => {
             const detail = /** @type {CustomEvent} */ (e).detail;
@@ -134,6 +163,9 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (!detail) return;
             const filePath = detail.filePath || null;
+            const cursorData = detail.cursorOffset
+                ? { cursorOffset: detail.cursorOffset, contentHash: detail.contentHash }
+                : undefined;
 
             // If this file is already open in another tab, switch to it
             if (filePath && this.tabBar) {
@@ -147,9 +179,9 @@ class App {
             // If the active tab is a pristine empty document, reuse it
             // instead of opening a new tab alongside it
             if (this._isActiveTabPristine()) {
-                this._loadIntoCurrentTab(filePath, detail.content ?? '');
+                this._loadIntoCurrentTab(filePath, detail.content ?? '', cursorData);
             } else {
-                this._createNewTab(filePath, detail.content ?? '');
+                this._createNewTab(filePath, detail.content ?? '', cursorData);
             }
         });
 
@@ -175,8 +207,10 @@ class App {
             if (this.editor && detail) {
                 this.editor.ensureLocalPaths = !!detail.ensureLocalPaths;
                 if (this.editor.ensureLocalPaths) {
-                    this.editor.rewriteImagePaths().then(() => {
-                        this.editor?.fullRenderAndPlaceCursor();
+                    this.editor.rewriteImagePaths().then((changedIds) => {
+                        if (this.editor && changedIds && changedIds.length > 0) {
+                            this.editor.renderNodesAndPlaceCursor({ updated: changedIds });
+                        }
                     });
                 }
             }
@@ -187,7 +221,18 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (this.editor && detail) {
                 this.editor.detailsClosed = !!detail.detailsClosed;
-                this.editor.fullRenderAndPlaceCursor();
+                // Only re-render <details> html-block nodes.
+                const detailsIds = [];
+                if (this.editor.syntaxTree) {
+                    for (const node of this.editor.syntaxTree.children) {
+                        if (node.type === 'html-block' && node.attributes.tagName === 'details') {
+                            detailsIds.push(node.id);
+                        }
+                    }
+                }
+                if (detailsIds.length > 0) {
+                    this.editor.renderNodesAndPlaceCursor({ updated: detailsIds });
+                }
             }
         });
 
@@ -223,11 +268,25 @@ class App {
         const tabId = this.tabBar?.activeTabId;
         if (!tabId || !this.editor) return;
 
+        const md = this.editor.getMarkdown();
+        let absOffset = 0;
+        if (this.editor.syntaxTree && this.editor.treeCursor) {
+            absOffset = cursorToAbsoluteOffset(
+                this.editor.syntaxTree,
+                this.editor.treeCursor,
+                this.editor.buildMarkdownLine.bind(this.editor),
+                this.editor.getPrefixLength.bind(this.editor),
+            );
+        }
+
+        const hash = crc32(md);
         this._documentStates.set(tabId, {
-            content: this.editor.getMarkdown(),
+            content: md,
             filePath: this.editor.currentFilePath,
             modified: this.editor.hasUnsavedChanges(),
             cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
+            cursorOffset: absOffset,
+            contentHash: hash,
             undoStack: [...this.editor.undoManager.undoStack],
             redoStack: [...this.editor.undoManager.redoStack],
         });
@@ -276,18 +335,65 @@ class App {
     }
 
     /**
+     * Restores the cursor to a saved absolute offset if the content hash
+     * matches.  Called after loadMarkdown() during session restore.
+     * @param {number} cursorOffset
+     * @param {number} contentHash
+     */
+    _restoreCursor(cursorOffset, contentHash) {
+        if (!this.editor?.syntaxTree || !cursorOffset || !contentHash) {
+            return;
+        }
+
+        const currentHash = crc32(this.editor.getMarkdown());
+        if (currentHash !== contentHash) return;
+
+        const cursor = absoluteOffsetToCursor(
+            this.editor.syntaxTree,
+            cursorOffset,
+            this.editor.getPrefixLength.bind(this.editor),
+        );
+        if (cursor) {
+            this.editor.treeCursor = cursor;
+            this.editor.fullRenderAndPlaceCursor();
+            this._scrollToNode(cursor.nodeId);
+        }
+    }
+
+    /**
+     * Scrolls the element for the given tree node into view within the
+     * scroll container.
+     * @param {string} nodeId
+     */
+    _scrollToNode(nodeId) {
+        if (!this.editor) return;
+        requestAnimationFrame(() => {
+            const el = this.editor?.container.querySelector(`[data-node-id="${nodeId}"]`);
+            if (el) {
+                el.scrollIntoView({ block: 'start' });
+            }
+        });
+    }
+
+    /**
      * Loads a file into the current (active) tab, replacing its content
      * without creating a new tab.
      * @param {string|null} filePath
      * @param {string} content
+     * @param {{cursorOffset?: number, contentHash?: number}} [cursorData]
      */
-    _loadIntoCurrentTab(filePath, content) {
+    _loadIntoCurrentTab(filePath, content, cursorData) {
         if (!this.editor || !this.tabBar?.activeTabId) return;
 
         this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
 
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
+
+        if (cursorData) {
+            this._restoreCursor(cursorData.cursorOffset ?? 0, cursorData.contentHash ?? 0);
+        }
+
         this.editor.updateWindowTitle();
 
         this._notifyOpenFiles();
@@ -297,8 +403,9 @@ class App {
      * Creates a new tab and loads content into it.
      * @param {string|null} filePath - File path, or null for untitled
      * @param {string} content - Markdown content to load
+     * @param {{cursorOffset?: number, contentHash?: number}} [cursorData]
      */
-    _createNewTab(filePath, content) {
+    _createNewTab(filePath, content, cursorData) {
         if (!this.editor || !this.tabBar) return;
 
         // Save the current tab's state before switching
@@ -310,6 +417,11 @@ class App {
         // Load the new content into the editor
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
+
+        if (cursorData) {
+            this._restoreCursor(cursorData.cursorOffset ?? 0, cursorData.contentHash ?? 0);
+        }
+
         this.editor.updateWindowTitle();
 
         this._notifyOpenFiles();
@@ -399,19 +511,46 @@ class App {
 
     /**
      * Sends the current list of open files to the main process
-     * so the View menu can be rebuilt.
+     * so the View menu can be rebuilt.  Includes cursor position and
+     * content hash for session restore.
      */
     _notifyOpenFiles() {
         if (!this.tabBar || !window.electronAPI) return;
 
         const labels = getDisambiguatedLabels(this.tabBar.tabs);
+        const activeTabId = this.tabBar.activeTabId;
 
-        const files = this.tabBar.tabs.map((tab) => ({
-            id: tab.id,
-            filePath: tab.filePath,
-            label: labels.get(tab.id) ?? tab.label,
-            active: tab.active,
-        }));
+        const files = this.tabBar.tabs.map((tab) => {
+            const entry = {
+                id: tab.id,
+                filePath: tab.filePath,
+                label: labels.get(tab.id) ?? tab.label,
+                active: tab.active,
+                cursorOffset: 0,
+                contentHash: 0,
+            };
+
+            if (tab.id === activeTabId && this.editor?.syntaxTree && this.editor.treeCursor) {
+                // Active tab — read live state from the editor
+                const md = this.editor.getMarkdown();
+                entry.contentHash = crc32(md);
+                entry.cursorOffset = cursorToAbsoluteOffset(
+                    this.editor.syntaxTree,
+                    this.editor.treeCursor,
+                    this.editor.buildMarkdownLine.bind(this.editor),
+                    this.editor.getPrefixLength.bind(this.editor),
+                );
+            } else {
+                // Background tab — read from cached document state
+                const state = this._documentStates.get(tab.id);
+                if (state) {
+                    entry.cursorOffset = state.cursorOffset;
+                    entry.contentHash = state.contentHash;
+                }
+            }
+
+            return entry;
+        });
 
         window.electronAPI.notifyOpenFiles(files);
     }
@@ -516,9 +655,24 @@ class App {
         window.editorAPI = {
             hasUnsavedChanges: () => this.editor?.hasUnsavedChanges() ?? false,
             getContent: () => this.editor?.getMarkdown() ?? '',
-            setContent: (content) => this.editor?.loadMarkdown(content),
+            setContent: (content) => {
+                this.editor?.loadMarkdown(content);
+                // Restore cursor from session data if available
+                const pending = /** @type {any} */ (window).__pendingCursorRestore;
+                if (pending) {
+                    /** @type {any} */ (window).__pendingCursorRestore = undefined;
+                    this._restoreCursor(pending.cursorOffset ?? 0, pending.contentHash ?? 0);
+                }
+            },
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
             setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
+            placeCursorAtNode: (/** @type {string} */ nodeId, /** @type {number} */ offset) => {
+                if (this.editor) {
+                    this.editor.treeCursor = { nodeId, offset: offset ?? 0 };
+                    this.editor.fullRenderAndPlaceCursor();
+                    this._scrollToNode(nodeId);
+                }
+            },
         };
 
         // Expose file path and cursor info as globals so the reload handler

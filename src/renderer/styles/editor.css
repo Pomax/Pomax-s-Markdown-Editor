@@ -39,6 +39,23 @@
     box-shadow: none;
 }
 
+/* ========== Page resize handles ========== */
+
+.editor-resize-handle {
+    position: fixed;
+    width: 6px;
+    cursor: ew-resize;
+    z-index: 10;
+    /* Invisible by default; highlighted on hover/drag */
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle.dragging {
+    background: var(--color-primary);
+    opacity: 0.3;
+    border-radius: 3px;
+}
+
 /* Line styling */
 .md-line {
     margin-bottom: var(--spacing-sm);

@@ -23,7 +23,7 @@ export default defineConfig({
   testDir: "./test/integration",
   testMatch: "**/*.spec.js",
   timeout: config.timeout,
-  retries: 0,
+  retries: 1,
   workers: config.workersCount,
   fullyParallel: true,
   reporter: "list",

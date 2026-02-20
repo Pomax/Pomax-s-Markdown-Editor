@@ -27,11 +27,12 @@ this **before** doing any work.
 
 ## Doing work
 
-- **Always** create a new git branch off of `main` for any new work
+- **Always** create a new git branch off of `main` for any new work, and
+  make sure that `main` is up to date with respect to the origin.
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
-- **Never** split commands with `;`, **always** use `&&` or if you can't,
-  split them up.
+- **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
+  terminal invocation must be a single command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
 - When asked to offer multiple choices, **never** present option picking
@@ -48,11 +49,29 @@ this **before** doing any work.
 - **Never** use multiline strings in terminal commands. `cmd.exe` treats
   each line as a separate command. Git commit messages must be a single
   line: `git commit -m "one line summary"`.
+- **Always** be explicit about remote and branch when pushing:
+  `git push origin <branchname>`. Never use bare `git push` or
+  `--set-upstream`.
+- Do not consider the work done until a final full test suite run passes.
+- After the work has been completed (as agreed to by the user), form a
+  final commit (**only after the full test suite confirms everything works**)
+  and write a PR comment **in raw markdown source code** inside a
+  fenced code block (` ```markdown ... ``` `), **never** as styled /
+  rendered text, that documents what was wrong, how it got changed and
+  why it needed that specific change. Make sure to also note that the
+  PR closes the issue number, if the work was part of addressing an issue.
+- **Never** hard-wrap markdown text at a fixed column width. Write each
+  paragraph or list item as a single long line and let the viewer handle
+  wrapping.
+- Note that any changes to this file should **always** be added to git
+  commits. They should never be backed out or unstaged.
 
 ## Test Runners
 
 | Kind        | Command                    | Framework                  |
 | ----------- | -------------------------- | -------------------------- |
+| Full suite  | `npm test`                 |                            |
+| Linting     | `npm run lint`             | Biome and TSC linting      |
 | Unit        | `npm run test:unit`        | Node.js native test runner |
 | Integration | `npm run test:integration` | Playwright + Firefox       |
 
@@ -64,6 +83,10 @@ this **before** doing any work.
   being asked.
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
+- **Never** interrupt the full suite or integration tests if they seem to
+  be running long, instead ask the user to tell you when they finish.
+- **Never** believe the output if it looks truncated, and instead assume
+  the tests are still running, and ask the user to tell you when they finish.
 
 ## Playwright Pitfalls
 
@@ -75,7 +98,7 @@ browser event sequence. A real human click fires:
     mousedown → (selectionchange) → mouseup → click
 
 If the editor re-renders on `selectionchange` (it does — see
-`handleSelectionChange` in `editor.js`), the DOM element that received
+`handleSelectionChange` in `event-handler.js`), the DOM element that received
 `mousedown` may be destroyed before `click` fires. A synthetic
 `locator.click()` won't reproduce this because it skips `selectionchange`.
 
@@ -131,7 +154,7 @@ treeCursor = { nodeId: string, offset: number, tagPart?: string }
 
 - `nodeId` — the id of the SyntaxNode that has focus.
 - `offset` — character offset within the node's text content.
-- `tagPart` — `'openingTag'` or `'closingTag'` when the cursor is on an
+- `tagPart` — `'opening'` or `'closing'` when the cursor is on an
   HTML tag line in source view.
 
 ### HTML block model (details/summary)

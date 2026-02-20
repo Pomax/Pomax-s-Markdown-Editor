@@ -407,6 +407,9 @@ export class FocusedRenderer {
         img.src = this.resolveImageSrc(src);
         img.alt = alt;
         img.title = alt;
+        if (attrs.style) {
+            img.setAttribute('style', attrs.style);
+        }
 
         if (attrs.href) {
             const link = document.createElement('a');
@@ -725,24 +728,30 @@ export class FocusedRenderer {
                     const code = document.createElement('code');
                     code.textContent = seg.content ?? '';
                     container.appendChild(code);
+                    // Empty text node so the cursor can land after the
+                    // element rather than being trapped inside it.
+                    container.appendChild(document.createTextNode(''));
                     break;
                 }
                 case 'bold': {
                     const strong = document.createElement('strong');
                     this.appendSegments(seg.children ?? [], strong);
                     container.appendChild(strong);
+                    container.appendChild(document.createTextNode(''));
                     break;
                 }
                 case 'italic': {
                     const em = document.createElement('em');
                     this.appendSegments(seg.children ?? [], em);
                     container.appendChild(em);
+                    container.appendChild(document.createTextNode(''));
                     break;
                 }
                 case 'strikethrough': {
                     const del = document.createElement('del');
                     this.appendSegments(seg.children ?? [], del);
                     container.appendChild(del);
+                    container.appendChild(document.createTextNode(''));
                     break;
                 }
                 case 'link': {
@@ -750,6 +759,16 @@ export class FocusedRenderer {
                     a.href = seg.href ?? '';
                     this.appendSegments(seg.children ?? [], a);
                     container.appendChild(a);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'image': {
+                    const img = document.createElement('img');
+                    img.className = 'md-image-preview';
+                    img.alt = seg.alt ?? '';
+                    img.src = this.resolveImageSrc(seg.src ?? '');
+                    container.appendChild(img);
+                    container.appendChild(document.createTextNode(''));
                     break;
                 }
                 default: {
@@ -758,6 +777,7 @@ export class FocusedRenderer {
                         const el = document.createElement(seg.tag);
                         this.appendSegments(seg.children ?? [], el);
                         container.appendChild(el);
+                        container.appendChild(document.createTextNode(''));
                     }
                     break;
                 }

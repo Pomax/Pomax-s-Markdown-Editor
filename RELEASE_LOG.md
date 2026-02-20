@@ -1,5 +1,38 @@
 # Release Log
 
+## v1.4.0
+
+### New Features
+
+- **Incremental rendering**: Edit operations now surgically patch only the affected DOM elements instead of rebuilding the entire document. `FocusedRenderer.renderNodes({ updated, added, removed })` maps node IDs to their DOM elements and replaces, inserts, or removes them in-place. Every keystroke, focus change, and formatting operation is now O(1) regardless of document size. Full renders are retained only for initialise, load, reset, view-mode switch, undo, and redo.
+- **Range handling (selection support)**: Non-collapsed selections are tracked as tree-coordinate ranges (`startNodeId`, `startOffset`, `endNodeId`, `endOffset`). Typing, backspace, delete, cut, and paste all operate on the selected range. Cross-node selections delete intermediate nodes and merge the remaining endpoints. Ctrl+A is scoped to the current block node. Cut and copy write raw markdown to the clipboard.
+- **Page resize by dragging**: In focused mode, invisible drag handles appear on the left and right edges of the page. Dragging a handle symmetrically resizes the page width, clamped between 300 px and the container width minus 40 px. The final width is persisted to settings. A `ResizeObserver` and scroll listener keep handles aligned as the layout changes. Handles are hidden in source mode.
+- **HTML `<img>` tag support**: The parser recognises `<img>` tags as image nodes, preserving `src`, `alt`, and `style` attributes. Images render visually in focused mode and as raw HTML in source mode. The image edit modal includes a style field that round-trips the `style` attribute; clearing it converts the tag back to markdown `![alt](src)` syntax.
+
+### Bug Fixes
+
+- **Bold button tree-coordinate fix**: `applyFormat()` now uses tree-coordinate selection exclusively instead of DOM-derived positions, fixing four reported bugs: toggling bold off on the first word, bolding a middle word, and bolding words in paragraphs other than the first.
+- **Collapsed-cursor bold toggling**: When the cursor is collapsed inside an existing bold span, the bold button now correctly removes the formatting. When collapsed on a plain word, it bolds that word.
+
+### Improvements
+
+- **ToC scroll uses incremental render**: Clicking a Table of Contents link now re-renders only the previously-focused and target nodes instead of the full document. A deferred `requestAnimationFrame` scroll ensures the heading lands at the top of the scroll container.
+- **`detailsClosed` setting uses incremental render**: Toggling a `<details>` disclosure widget re-renders only that node. Runtime open/closed state is preserved across re-renders.
+- **`rewriteImagePaths` uses incremental render**: After the initial full render, asynchronous image-path rewriting incrementally updates only the affected image nodes instead of triggering a second full render.
+- **BaseModal refactor**: Image, link, and table modals now extend a shared `BaseModal` class that handles dialog creation, focus trapping, open/close lifecycle, and keyboard dismissal.
+
+### Testing & CI
+
+- **Comprehensive toolbar button tests**: New integration test suites for bold, italic, strikethrough, subscript, and superscript buttons covering selection-based formatting, collapsed-cursor word detection, and toggle-off behaviour.
+- **Range handling tests**: 540+ line integration test suite covering type-over-selection, backspace/delete with selection, cross-node deletion, Ctrl+A, cut, copy, and paste.
+- **Page resize tests**: Integration tests verifying drag handles appear only in focused mode, dragging changes page width, and the new width persists to settings.
+- **HTML image tests**: Integration tests for `<img>` tag parsing, rendering in both view modes, style field editing in the modal, and style round-trip.
+- **Additional integration tests**: New or expanded suites for link single-click, ToC scroll positioning, underscore emphasis rendering, view-mode switching, and view-mode dropdown sync.
+- **Tokenizer-based offset mapping**: Replaced regex-based cursor offset mapping with the inline tokenizer, fixing inline HTML cursor positioning.
+- **CI resilience**: Electron launch retries (up to 3 attempts) for transient CI timeouts; lint fixes across the codebase.
+
+---
+
 ## v1.3.0
 
 ### New Features

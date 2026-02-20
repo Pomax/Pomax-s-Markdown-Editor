@@ -241,7 +241,11 @@ export class SourceRenderer {
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
 
-        if (attrs.href) {
+        const style = attrs.style ?? '';
+        if (style) {
+            const altAttr = alt ? ` alt="${alt}"` : '';
+            contentSpan.textContent = `<img src="${src}"${altAttr} style="${style}" />`;
+        } else if (attrs.href) {
             contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
         } else {
             contentSpan.textContent = `![${alt}](${src})`;

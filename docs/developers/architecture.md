@@ -46,6 +46,18 @@ The application follows Electron's multi-process architecture:
 │    │  ┌──────────────────┐ ┌─────────────┐              │    │
 │    │  │ SelectionManager │ │ UndoManager │              │    │
 │    │  └──────────────────┘ └─────────────┘              │    │
+│    │  ┌───────────────┐ ┌──────────────┐                │    │
+│    │  │ CursorManager │ │ TableManager │                │    │
+│    │  └───────────────┘ └──────────────┘                │    │
+│    │  ┌──────────────┐ ┌────────────────┐               │    │
+│    │  │ InputHandler │ │ EditOperations │               │    │
+│    │  └──────────────┘ └────────────────┘               │    │
+│    │  ┌────────────────┐ ┌──────────────────┐           │    │
+│    │  │RangeOperations │ │ ClipboardHandler │           │    │
+│    │  └────────────────┘ └──────────────────┘           │    │
+│    │  ┌──────────────┐ ┌─────────────┐ ┌────────────┐   │    │
+│    │  │ EventHandler │ │ ImageHelper │ │ LinkHelper │   │    │
+│    │  └──────────────┘ └─────────────┘ └────────────┘   │    │
 │    └────────────────────────────────────────────────────┘    │
 │                                                              │
 │  ┌── Toolbar ──────────────────┐  ┌── MenuHandler ─────────┐ │
@@ -153,14 +165,34 @@ The renderer entry point. Wires together all renderer components:
 
 ### Editor
 
-Core editing component (~1300 lines):
+Core editing coordinator (~500 lines). The Editor class owns the document
+state and public API, but delegates operational concerns to focused manager
+classes. Each manager receives the editor as a constructor argument and
+accesses state via `this.editor`.
 
-- Manages the document as a `SyntaxTree`
-- Coordinates parsing, rendering, and cursor placement
-- Handles keyboard input, drag & drop, clipboard operations
-- Manages undo/redo via `UndoManager`
-- Supports two view modes via swappable renderers (`SourceRenderer`, `FocusedRenderer`)
-- Provides `toRelativeImagePath()` (async, IPC-based) and `rewriteImagePaths()` for the ensure-local-paths feature
+**Manager classes:**
+
+| Class | File | Responsibility |
+|-------|------|----------------|
+| `CursorManager` | `cursor-manager.js` | DOM ↔ tree cursor synchronization and placement |
+| `TableManager` | `table-manager.js` | Table cell editing, navigation, markdown building |
+| `InputHandler` | `input-handler.js` | Keyboard and `beforeinput` event dispatch |
+| `EditOperations` | `edit-operations.js` | Tree-level edits: insert, backspace, delete, enter |
+| `RangeOperations` | `range-operations.js` | Selection range deletion and Ctrl+A |
+| `ClipboardHandler` | `clipboard-handler.js` | Cut and copy operations |
+| `EventHandler` | `event-handler.js` | Click, focus, blur, selectionchange, drag/drop |
+| `ImageHelper` | `image-helper.js` | Image modal, insert/update, path rewriting |
+| `LinkHelper` | `link-helper.js` | Link edit modal |
+
+Additionally, `offset-mapping.js` exports pure functions for raw ↔ rendered
+offset mapping (used by `CursorManager`).
+
+The Editor itself keeps:
+- Document state (`syntaxTree`, `treeCursor`, `treeRange`, `viewMode`)
+- Rendering methods (`fullRender`, `renderNodes`, `fullRenderAndPlaceCursor`)
+- Tree helpers (`getCurrentNode`, `getSiblings`, `getNodeIndex`)
+- Markdown helpers (`buildMarkdownLine`, `getPrefixLength`)
+- Public API consumed by the toolbar, IPC handlers, and tests
 
 ### MarkdownParser
 
@@ -343,10 +375,10 @@ App._notifyOpenFiles() → IPC → View menu rebuild
 User types a character
        │
        ▼
-Editor.handleKeyDown() / handleInput()
+InputHandler.handleBeforeInput() / handleKeyDown()
        │
        ▼
-Update current node content
+EditOperations updates current node content
        │
        ▼
 UndoManager.recordChange()
