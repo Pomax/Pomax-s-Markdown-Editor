@@ -158,7 +158,8 @@ export class CursorManager {
         while (node) {
             if (node === cursorNode) {
                 const renderedOff = offset + cursorOffset;
-                return this._toRawOffset(nodeElement, renderedOff);
+                const afterFmt = this._isOutsideFormatting(cursorNode, contentEl);
+                return this._toRawOffset(nodeElement, renderedOff, afterFmt);
             }
             offset += node.textContent?.length ?? 0;
             node = walker.nextNode();
@@ -189,18 +190,45 @@ export class CursorManager {
     /**
      * Converts a rendered (DOM) offset back to a raw (markdown) offset.
      * In source mode the offset is returned as-is.
+     *
+     * When {@link afterFormatting} is true the cursor sits outside all
+     * inline formatting wrappers in the DOM, so at an exact boundary
+     * the raw offset must advance past any invisible closing delimiters
+     * to avoid the cursor being placed *inside* the formatted range on
+     * the next keystroke.
+     *
      * @param {HTMLElement} nodeElement - The element with `data-node-id`
      * @param {number} renderedOffset - The offset in rendered text
+     * @param {boolean} [afterFormatting] - True when the cursor is not
+     *   inside any inline formatting element in the DOM.
      * @returns {number}
      */
-    _toRawOffset(nodeElement, renderedOffset) {
+    _toRawOffset(nodeElement, renderedOffset, afterFormatting = false) {
         if (this.editor.viewMode !== 'focused') return renderedOffset;
         const nodeId = nodeElement.dataset?.nodeId;
         if (!nodeId) return renderedOffset;
         const syntaxNode = this.editor.syntaxTree?.findNodeById(nodeId);
         if (!syntaxNode) return renderedOffset;
         if (!this._hasInlineFormatting(syntaxNode.type)) return renderedOffset;
-        return renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
+
+        let rawOffset = renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
+
+        // Forward-affinity: advance past any invisible closing delimiters
+        // that map to the same rendered offset.  This ensures the cursor
+        // ends up *after* the formatted run in the raw markdown.
+        if (afterFormatting) {
+            const content = syntaxNode.content;
+            while (rawOffset < content.length) {
+                const next = rawOffsetToRenderedOffset(content, rawOffset + 1);
+                if (next === rawOffsetToRenderedOffset(content, rawOffset)) {
+                    rawOffset++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return rawOffset;
     }
 
     /**
@@ -287,7 +315,12 @@ export class CursorManager {
 
         while (textNode) {
             const len = textNode.textContent?.length ?? 0;
-            if (remaining <= len) {
+            // Use strict < so that when remaining === len the cursor
+            // advances past the current text node.  This gives "forward
+            // affinity": after a closing delimiter the cursor lands in
+            // the empty text node *after* the formatting element rather
+            // than at the end of the text node *inside* it.
+            if (remaining < len || (remaining === 0 && len === 0)) {
                 const sel = window.getSelection();
                 if (sel) {
                     const range = document.createRange();
@@ -314,5 +347,48 @@ export class CursorManager {
                 sel.addRange(range);
             }
         }
+    }
+
+    // ── Formatting-affinity helpers ─────────────────────────────────
+
+    /** @type {Set<string>} */
+    static _FORMATTING_TAGS = new Set([
+        'EM',
+        'STRONG',
+        'DEL',
+        'A',
+        'CODE',
+        'SUB',
+        'SUP',
+        'MARK',
+        'U',
+        'B',
+        'I',
+        'S',
+    ]);
+
+    /**
+     * Returns true when {@link node} is NOT inside any inline formatting
+     * wrapper element (em, strong, del, etc.) between itself and
+     * {@link contentEl}.  Used to determine forward-affinity when mapping
+     * a DOM position back to a raw offset.
+     *
+     * @param {Node} node
+     * @param {Node} contentEl
+     * @returns {boolean}
+     */
+    _isOutsideFormatting(node, contentEl) {
+        /** @type {Node|null} */
+        let el = node.parentNode;
+        while (el && el !== contentEl) {
+            if (
+                el.nodeType === Node.ELEMENT_NODE &&
+                CursorManager._FORMATTING_TAGS.has(/** @type {Element} */ (el).tagName)
+            ) {
+                return false;
+            }
+            el = el.parentNode;
+        }
+        return el === contentEl;
     }
 }

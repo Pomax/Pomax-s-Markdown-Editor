@@ -5,7 +5,7 @@
  * that offset mapping is always in sync with the rendered DOM.
  */
 
-import { tokenizeInline } from '../parser/inline-tokenizer.js';
+import { findMatchedTokenIndices, tokenizeInline } from '../parser/inline-tokenizer.js';
 
 /**
  * Given a raw markdown string and an offset into that raw string,
@@ -26,10 +26,12 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
     if (!content || rawOffset <= 0) return 0;
 
     const tokens = tokenizeInline(content);
+    const matched = findMatchedTokenIndices(tokens);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
         const rawLen = token.raw.length;
 
         if (token.type === 'text') {
@@ -54,12 +56,19 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
             }
             rawPos += rawLen;
             renderedPos += contentLen;
-        } else {
-            // Invisible delimiter (bold-open, html-close, link-open, etc.).
+        } else if (matched.has(i)) {
+            // Matched delimiter — invisible in rendered output.
             if (rawOffset < rawPos + rawLen) {
                 return renderedPos;
             }
             rawPos += rawLen;
+        } else {
+            // Unmatched delimiter — rendered as visible text.
+            if (rawOffset <= rawPos + rawLen) {
+                return renderedPos + (rawOffset - rawPos);
+            }
+            rawPos += rawLen;
+            renderedPos += rawLen;
         }
     }
 
@@ -80,10 +89,12 @@ export function renderedOffsetToRawOffset(content, renderedOffset) {
     if (!content || renderedOffset <= 0) return 0;
 
     const tokens = tokenizeInline(content);
+    const matched = findMatchedTokenIndices(tokens);
     let rawPos = 0;
     let renderedPos = 0;
 
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
         const rawLen = token.raw.length;
 
         if (token.type === 'text') {
@@ -100,9 +111,16 @@ export function renderedOffsetToRawOffset(content, renderedOffset) {
             }
             rawPos += rawLen;
             renderedPos += contentLen;
-        } else {
-            // Invisible delimiter — advance raw position only.
+        } else if (matched.has(i)) {
+            // Matched delimiter — invisible, advance raw position only.
             rawPos += rawLen;
+        } else {
+            // Unmatched delimiter — visible as text.
+            if (renderedOffset <= renderedPos + rawLen) {
+                return rawPos + (renderedOffset - renderedPos);
+            }
+            rawPos += rawLen;
+            renderedPos += rawLen;
         }
     }
 
