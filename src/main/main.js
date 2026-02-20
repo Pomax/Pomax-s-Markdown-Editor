@@ -79,9 +79,13 @@ function saveOpenFiles() {
     const entries = menuBuilder.openFiles
         .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
         .map(
-            /** @param {{filePath: string|null, active: boolean}} f */ (f) => ({
+            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number}} f */ (
+                f,
+            ) => ({
                 filePath: f.filePath,
                 active: f.active,
+                cursorOffset: f.cursorOffset ?? 0,
+                contentHash: f.contentHash ?? 0,
             }),
         );
 
@@ -300,11 +304,11 @@ async function loadFileFromPath(window, filePath) {
  * replaces the initial pristine tab), and subsequent files are sent
  * as `file:loaded` menu actions so the renderer creates new tabs.
  * @param {BrowserWindow} window - The main window
- * @param {Array<{filePath: string, active: boolean}>} entries
+ * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number}>} entries
  */
 async function restoreOpenFiles(window, entries) {
     // Read all files up-front, dropping any that can no longer be loaded
-    /** @type {Array<{filePath: string, content: string, active: boolean}>} */
+    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number}>} */
     const loaded = [];
     for (const entry of entries) {
         const result = await fileManager.loadRecent(entry.filePath);
@@ -313,6 +317,8 @@ async function restoreOpenFiles(window, entries) {
                 filePath: result.filePath ?? entry.filePath,
                 content: result.content,
                 active: entry.active,
+                cursorOffset: entry.cursorOffset ?? 0,
+                contentHash: entry.contentHash ?? 0,
             });
         }
     }
@@ -329,6 +335,7 @@ async function restoreOpenFiles(window, entries) {
             function tryRestore() {
                 var api = window.editorAPI;
                 if (!api) { setTimeout(tryRestore, 50); return; }
+                window.__pendingCursorRestore = { cursorOffset: ${first.cursorOffset}, contentHash: ${first.contentHash} };
                 window.__editorFilePath = ${filePathJSON};
                 api.setContent(${contentJSON});
             }
@@ -343,6 +350,8 @@ async function restoreOpenFiles(window, entries) {
             success: true,
             content: loaded[i].content,
             filePath: loaded[i].filePath,
+            cursorOffset: loaded[i].cursorOffset,
+            contentHash: loaded[i].contentHash,
         });
     }
 

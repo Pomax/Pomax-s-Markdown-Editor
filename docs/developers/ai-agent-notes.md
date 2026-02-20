@@ -27,7 +27,8 @@ this **before** doing any work.
 
 ## Doing work
 
-- **Always** create a new git branch off of `main` for any new work
+- **Always** create a new git branch off of `main` for any new work, and
+  make sure that `main` is up to date with respect to the origin.
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
@@ -150,7 +151,7 @@ treeCursor = { nodeId: string, offset: number, tagPart?: string }
 
 - `nodeId` — the id of the SyntaxNode that has focus.
 - `offset` — character offset within the node's text content.
-- `tagPart` — `'openingTag'` or `'closingTag'` when the cursor is on an
+- `tagPart` — `'opening'` or `'closing'` when the cursor is on an
   HTML tag line in source view.
 
 ### HTML block model (details/summary)
