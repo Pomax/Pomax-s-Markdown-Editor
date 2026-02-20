@@ -762,6 +762,15 @@ export class FocusedRenderer {
                     container.appendChild(document.createTextNode(''));
                     break;
                 }
+                case 'image': {
+                    const img = document.createElement('img');
+                    img.className = 'md-image-preview';
+                    img.alt = seg.alt ?? '';
+                    img.src = this.resolveImageSrc(seg.src ?? '');
+                    container.appendChild(img);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
                 default: {
                     // HTML inline tags (sub, sup, mark, u, etc.)
                     if (seg.tag) {

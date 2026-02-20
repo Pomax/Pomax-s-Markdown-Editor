@@ -125,6 +125,14 @@ export class EditOperations {
             // fence pattern (```) is converted on Enter instead.
             if (parsed.type === 'code-block' && oldType !== 'code-block') {
                 node.content = newContent;
+                // Suppress image/linked-image block conversion during typing —
+                // the inline tokenizer handles ![alt](src) within paragraphs.
+            } else if (
+                (parsed.type === 'image' || parsed.type === 'linked-image') &&
+                oldType !== 'image' &&
+                oldType !== 'linked-image'
+            ) {
+                node.content = newContent;
             } else {
                 node.type = parsed.type;
                 node.content = parsed.content;

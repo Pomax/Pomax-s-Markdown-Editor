@@ -58,6 +58,46 @@ describe('tokenizeInline', () => {
         assert.equal(linkClose.href, 'https://x.com');
     });
 
+    it('tokenizes ![alt](src) as an image token', () => {
+        const tokens = tokenizeInline('see ![photo](./img.png) here');
+        assert.equal(tokens.length, 3);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[0].raw, 'see ');
+        assert.equal(tokens[1].type, 'image');
+        assert.equal(tokens[1].raw, '![photo](./img.png)');
+        assert.equal(tokens[1].alt, 'photo');
+        assert.equal(tokens[1].src, './img.png');
+        assert.equal(tokens[2].type, 'text');
+        assert.equal(tokens[2].raw, ' here');
+    });
+
+    it('tokenizes a standalone ![alt](src) image', () => {
+        const tokens = tokenizeInline('![my image](path/to/img.jpg)');
+        assert.equal(tokens.length, 1);
+        assert.equal(tokens[0].type, 'image');
+        assert.equal(tokens[0].alt, 'my image');
+        assert.equal(tokens[0].src, 'path/to/img.jpg');
+    });
+
+    it('does not treat [link](url) without ! as an image', () => {
+        const tokens = tokenizeInline('[click](https://x.com)');
+        assert.equal(
+            tokens.find((t) => t.type === 'image'),
+            undefined,
+        );
+        assert.ok(tokens.find((t) => t.type === 'link-open'));
+    });
+
+    it('handles !! before [alt](src) — first ! is text', () => {
+        const tokens = tokenizeInline('!![alt](src)');
+        assert.equal(tokens.length, 2);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[0].raw, '!');
+        assert.equal(tokens[1].type, 'image');
+        assert.equal(tokens[1].alt, 'alt');
+        assert.equal(tokens[1].src, 'src');
+    });
+
     it('tokenizes <sub> and </sub> HTML tags', () => {
         const tokens = tokenizeInline('H<sub>2</sub>O');
         assert.equal(tokens.length, 5);
@@ -162,6 +202,17 @@ describe('buildInlineTree', () => {
         assert.equal(tree[0].children[1].type, 'bold');
     });
 
+    it('builds an image segment from an image token', () => {
+        const tokens = tokenizeInline('see ![photo](./img.png) here');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 3);
+        assert.equal(tree[0].type, 'text');
+        assert.equal(tree[1].type, 'image');
+        assert.equal(tree[1].alt, 'photo');
+        assert.equal(tree[1].src, './img.png');
+        assert.equal(tree[2].type, 'text');
+    });
+
     it('handles code spans (no nesting)', () => {
         const tokens = tokenizeInline('use `<sub>` for subscript');
         const tree = buildInlineTree(tokens);
@@ -241,5 +292,13 @@ describe('findMatchedTokenIndices', () => {
         assert.ok(matched.has(2)); // bold-close
         assert.ok(!matched.has(4)); // italic-open (unmatched)
         assert.equal(matched.size, 2);
+    });
+
+    it('marks image tokens as matched', () => {
+        const tokens = tokenizeInline('see ![photo](./img.png) here');
+        const matched = findMatchedTokenIndices(tokens);
+        // tokens: [text, image, text]
+        assert.ok(matched.has(1)); // image
+        assert.equal(matched.size, 1);
     });
 });
