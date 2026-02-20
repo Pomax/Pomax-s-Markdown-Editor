@@ -37,6 +37,16 @@ export class TableOfContents {
 
         /** @type {TocPosition} */
         this._position = 'left';
+
+        /**
+         * Maps every tree node ID to the ID of the h1–h3 heading whose
+         * section it belongs to.  Rebuilt on every `refresh()`.
+         * @type {Map<string, string>}
+         */
+        this._nodeToHeadingId = new Map();
+
+        /** @type {((e: Event) => void) | null} */
+        this._scrollHandler = null;
     }
 
     /**
@@ -59,6 +69,14 @@ export class TableOfContents {
             characterData: true,
         });
 
+        // Listen for scroll on the editor's scroll container so we can
+        // highlight the ToC heading whose section is most visible.
+        const scrollContainer = this.editor.container.parentElement;
+        if (scrollContainer) {
+            this._scrollHandler = () => this._updateActiveHeading();
+            scrollContainer.addEventListener('scroll', this._scrollHandler, { passive: true });
+        }
+
         this.refresh();
     }
 
@@ -76,8 +94,12 @@ export class TableOfContents {
             return;
         }
 
+        this._buildNodeToHeadingMap(headings);
+
         const list = this._buildNestedList(headings);
         nav.replaceChildren(list);
+
+        this._updateActiveHeading();
     }
 
     /**
@@ -128,6 +150,102 @@ export class TableOfContents {
     _headingLevel(type) {
         const match = /^heading(\d)$/.exec(type);
         return match ? Number(match[1]) : 0;
+    }
+
+    /**
+     * Walks the syntax tree in document order and maps every node ID to
+     * the ID of the most recent h1–h3 heading that precedes it.  Nodes
+     * that appear before the first heading are mapped to `''` (no heading).
+     * @param {TocHeading[]} headings - The heading list produced by
+     *   `_extractHeadings()` (used to build a fast heading-ID set).
+     */
+    _buildNodeToHeadingMap(headings) {
+        this._nodeToHeadingId.clear();
+        const headingIds = new Set(headings.map((h) => h.id));
+        const tree = this.editor.syntaxTree;
+        if (!tree) return;
+
+        /** @type {string} */
+        let currentHeadingId = '';
+
+        /**
+         * @param {import('../parser/syntax-tree.js').SyntaxNode[]} nodes
+         */
+        const walk = (nodes) => {
+            for (const node of nodes) {
+                if (headingIds.has(node.id)) {
+                    currentHeadingId = node.id;
+                }
+                this._nodeToHeadingId.set(node.id, currentHeadingId);
+                if (node.children.length > 0) {
+                    walk(node.children);
+                }
+            }
+        };
+        walk(tree.children);
+    }
+
+    /**
+     * Determines which ToC heading's section occupies the most visible
+     * area in the scroll container and applies the `toc-active` CSS class
+     * to the corresponding ToC link.
+     */
+    _updateActiveHeading() {
+        const scrollContainer = this.editor.container.parentElement;
+        if (!scrollContainer) return;
+
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const viewTop = containerRect.top;
+        const viewBottom = containerRect.bottom;
+
+        /** @type {Map<string, number>} heading ID → visible pixels */
+        const visiblePixels = new Map();
+
+        const children = this.editor.container.children;
+        for (let i = 0; i < children.length; i++) {
+            const el = /** @type {HTMLElement} */ (children[i]);
+            const nodeId = el.dataset.nodeId;
+            if (!nodeId) continue;
+
+            const headingId = this._nodeToHeadingId.get(nodeId);
+            if (headingId === undefined) continue;
+
+            const rect = el.getBoundingClientRect();
+            const visTop = Math.max(rect.top, viewTop);
+            const visBottom = Math.min(rect.bottom, viewBottom);
+            const visible = Math.max(0, visBottom - visTop);
+            if (visible > 0) {
+                visiblePixels.set(headingId, (visiblePixels.get(headingId) || 0) + visible);
+            }
+        }
+
+        // Find the heading with the most visible pixels.
+        let bestId = '';
+        let bestPixels = 0;
+        for (const [id, px] of visiblePixels) {
+            if (px > bestPixels) {
+                bestId = id;
+                bestPixels = px;
+            }
+        }
+
+        // Toggle the active class on ToC links.
+        const links = this.container.querySelectorAll('.toc-link');
+        for (const link of links) {
+            const a = /** @type {HTMLElement} */ (link);
+            const isActive = a.dataset.nodeId === bestId;
+            a.classList.toggle('toc-active', isActive);
+            if (isActive) {
+                // Scroll the ToC sidebar so the active link is centered
+                // vertically within the visible area.
+                const tocRect = this.container.getBoundingClientRect();
+                const linkRect = a.getBoundingClientRect();
+                const linkCenter = linkRect.top + linkRect.height / 2;
+                const tocCenter = tocRect.top + tocRect.height / 2;
+                const offset = linkCenter - tocCenter;
+                this.container.scrollTop += offset;
+            }
+        }
     }
 
     /**
@@ -362,12 +480,19 @@ export class TableOfContents {
     }
 
     /**
-     * Tears down the observer.
+     * Tears down the observer and scroll listener.
      */
     destroy() {
         if (this._observer) {
             this._observer.disconnect();
             this._observer = null;
+        }
+        if (this._scrollHandler) {
+            const scrollContainer = this.editor.container.parentElement;
+            if (scrollContainer) {
+                scrollContainer.removeEventListener('scroll', this._scrollHandler);
+            }
+            this._scrollHandler = null;
         }
     }
 }

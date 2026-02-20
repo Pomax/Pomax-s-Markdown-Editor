@@ -58,8 +58,11 @@ this **before** doing any work.
   and write a PR comment **in raw markdown source code** inside a
   fenced code block (` ```markdown ... ``` `), **never** as styled /
   rendered text, that documents what was wrong, how it got changed and
-  why it needed that specific change.   Make sure to also note that the
+  why it needed that specific change. Make sure to also note that the
   PR closes the issue number, if the work was part of addressing an issue.
+- **Never** hard-wrap markdown text at a fixed column width. Write each
+  paragraph or list item as a single long line and let the viewer handle
+  wrapping.
 - Note that any changes to this file should **always** be added to git
   commits. They should never be backed out or unstaged.
 

@@ -117,6 +117,12 @@
     text-decoration: none;
 }
 
+.toc-link.toc-active {
+    background: var(--color-bg-secondary);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
 .toc-link:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: -1px;
@@ -136,7 +142,8 @@
     color: var(--color-text-secondary);
 }
 
-.toc-level-3 > .toc-link:hover {
+.toc-level-3 > .toc-link:hover,
+.toc-level-3 > .toc-link.toc-active {
     color: var(--color-primary);
 }
 
