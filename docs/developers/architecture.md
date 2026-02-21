@@ -184,8 +184,15 @@ accesses state via `this.editor`.
 | `ImageHelper` | `image-helper.js` | Image modal, insert/update, path rewriting |
 | `LinkHelper` | `link-helper.js` | Link edit modal |
 
-Additionally, `offset-mapping.js` exports pure functions for raw ↔ rendered
-offset mapping (used by `CursorManager`).
+**Additional editor utilities:**
+
+| Module | File | Purpose |
+|--------|------|---------|
+| `offset-mapping` | `offset-mapping.js` | Pure functions for raw ↔ rendered offset mapping (used by `CursorManager`) |
+| `crc32` | `crc32.js` | CRC32 digest for content-change detection |
+| `cursor-persistence` | `cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
+| `page-resize` | `page-resize.js` | Page resize handles for the focused-mode editor |
+| `syntax-highlighter` | `syntax-highlighter.js` | Inline syntax highlighting for source view |
 
 The Editor itself keeps:
 - Document state (`syntaxTree`, `treeCursor`, `treeRange`, `viewMode`)
@@ -277,18 +284,25 @@ Key behaviors:
 - **Copy**: writes raw markdown to clipboard without mutation
 - **Cross-node deletion**: trims endpoints, removes intermediates, merges remaining text
 
-### SyntaxHighlighter
+### InlineTokenizer
 
-Inline syntax highlighting for source view:
-- Colors markdown syntax characters (e.g. `**`, `_`, `` ` ``, `[`, `]`)
-- Handles nested formatting
-- Applied per-line within the source renderer
+Tokenizes inline markdown formatting within a line of text:
+- Splits text into segments of plain text and formatting delimiters
+- Handles bold, italic, strikethrough, code, links, images, subscript, superscript
+- Used by `SyntaxNode.toBareText()` and `SyntaxHighlighter` for inline parsing
 
-### ParseTree
+### BaseModal
 
-Lightweight helper used during keyboard input processing:
-- Tracks cursor position across parse/re-render cycles
-- Maps between text offsets and tree node positions
+Abstract base class for modal dialogs (`modal/base-modal.js`):
+- Shared open/close lifecycle and backdrop handling
+- Extended by `ImageModal`, `TableModal`, `LinkModal`, `PreferencesModal`, `WordCountModal`
+
+### LinkModal
+
+Modal for inserting and editing links (`link/link-modal.js`):
+- Set link text and URL
+- Opened by `LinkHelper` when editing or inserting a link
+- Styled in `link.css`
 
 ### Toolbar
 
