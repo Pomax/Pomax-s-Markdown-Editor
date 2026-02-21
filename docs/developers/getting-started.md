@@ -57,6 +57,7 @@ markdown-editor/
 │       │   ├── editor.css
 │       │   ├── toolbar.css
 │       │   ├── image.css
+│       │   ├── link.css
 │       │   ├── table.css
 │       │   ├── toc.css
 │       │   ├── preferences.css
@@ -70,6 +71,8 @@ markdown-editor/
 │           ├── toolbar/         # Formatting toolbar + icons
 │           ├── handlers/        # Keyboard + menu event handlers
 │           ├── image/           # Image insert/edit modal
+│           ├── link/            # Link insert/edit modal
+│           ├── modal/           # Base modal class
 │           ├── table/           # Table insert/edit modal
 │           ├── tab-bar/         # Multi-file tab bar
 │           ├── toc/             # Table of Contents sidebar
@@ -96,8 +99,7 @@ markdown-editor/
 ├── package.json
 ├── biome.json             # Biome linter/formatter config
 ├── jsconfig.json          # TypeScript type-checking config (for JSDoc)
-├── playwright.config.js   # Playwright integration test config
-└── requirements.md        # Product requirements
+└── playwright.config.js   # Playwright integration test config
 ```
 
 ### Key Files

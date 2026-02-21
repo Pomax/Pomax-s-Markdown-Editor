@@ -31,7 +31,11 @@ src/renderer/scripts/editor/
 ├── link-helper.js         # LinkHelper — link edit modal
 ├── offset-mapping.js      # Pure functions for raw ↔ rendered offset mapping
 ├── undo-manager.js        # UndoManager class
-└── selection-manager.js   # SelectionManager class
+├── selection-manager.js   # SelectionManager class
+├── crc32.js               # CRC32 digest for content-change detection
+├── cursor-persistence.js  # Cursor position ↔ absolute source offset conversion
+├── page-resize.js         # Page resize handles for focused-mode editor
+└── syntax-highlighter.js  # Inline syntax highlighting
 ```
 
 ### 3. No Nested Function Declarations
@@ -106,11 +110,13 @@ src/
 │   │   ├── editor.css       # Editor and syntax highlighting styles
 │   │   ├── toolbar.css      # Toolbar styles
 │   │   ├── image.css        # Image dialog and element styles
+│   │   ├── link.css         # Link dialog styles
 │   │   ├── table.css        # Table dialog and element styles
 │   │   ├── toc.css          # Table of Contents sidebar styles
 │   │   ├── preferences.css  # Preferences modal styles
 │   │   ├── word-count.css   # Word count modal styles
-│   │   └── search.css       # Search panel styles
+│   │   ├── search.css       # Search panel styles
+│   │   └── tab-bar.css      # Tab bar styles
 │   │
 │   └── scripts/              # JavaScript
 │       ├── app.js           # App entry, wires components together
@@ -144,8 +150,10 @@ src/
 │       │   ├── keyboard-handler.js
 │       │   └── menu-handler.js
 │       ├── image/           # Image modal
-│       │   └── image-modal.js
-│       ├── table/           # Table modal
+│       │   └── image-modal.js       ├── link/            # Link modal
+       │   └── link-modal.js
+       ├── modal/           # Base modal class
+       │   └── base-modal.js│       ├── table/           # Table modal
 │       │   └── table-modal.js
 │       ├── toc/             # Table of Contents sidebar
 │       │   └── toc.js
@@ -166,30 +174,65 @@ test/
 ├── unit/                     # Unit tests (Node.js native test runner)
 │   ├── parser/
 │   │   ├── markdown-parser.test.js
-│   │   └── syntax-tree.test.js
+│   │   ├── syntax-tree.test.js
+│   │   └── inline-tokenizer.test.js
 │   ├── editor/
-│   │   └── undo-manager.test.js
+│   │   ├── undo-manager.test.js
+│   │   ├── crc32.test.js
+│   │   ├── cursor-persistence.test.js
+│   │   ├── offset-mapping.test.js
+│   │   └── page-resize.test.js
 │   ├── table/
 │   │   └── table-modal.test.js
 │   └── word-count/
 │       └── word-count-modal.test.js
 │
 └── integration/              # Integration tests (Playwright + Firefox)
-    ├── editor.spec.js
-    ├── heading-input.spec.js
+    ├── test-utils.js
+    ├── backspace-after-html-block.spec.js
     ├── backspace-heading.spec.js
     ├── backspace-heading-to-paragraph.spec.js
+    ├── bold-button.spec.js
+    ├── click-outside-defocus.spec.js
+    ├── code-block-enter.spec.js
+    ├── cursor-scroll.spec.js
+    ├── cursor-typing-delimiters.spec.js
+    ├── details-collapse-toggle.spec.js
+    ├── details-summary-input.spec.js
+    ├── details-trailing-paragraph.spec.js
+    ├── editor.spec.js
+    ├── heading-input.spec.js
+    ├── html-block.spec.js
+    ├── html-image.spec.js
+    ├── iframe.spec.js
+    ├── image-click-edit.spec.js
     ├── image.spec.js
+    ├── inline-html.spec.js
+    ├── inline-image.spec.js
+    ├── italic-button.spec.js
+    ├── link-click-edit.spec.js
+    ├── link-single-click.spec.js
+    ├── linked-image-click-edit.spec.js
+    ├── list.spec.js
     ├── load-images.spec.js
+    ├── page-height.spec.js
+    ├── page-resize.spec.js
+    ├── range-handling.spec.js
+    ├── reload.spec.js
     ├── search.spec.js
+    ├── select-all.spec.js
+    ├── source-view-summary-edit.spec.js
+    ├── strikethrough-button.spec.js
+    ├── subscript-button.spec.js
+    ├── superscript-button.spec.js
+    ├── table-cell-edit.spec.js
     ├── table.spec.js
+    ├── toc-highlight.spec.js
     ├── toc-scroll.spec.js
     ├── toolbar-tooltip.spec.js
     ├── underscore-emphasis.spec.js
     ├── view-mode-dropdown.spec.js
-    ├── view-mode-switch.spec.js
-    ├── page-height.spec.js
-    └── reload.spec.js
+    └── view-mode-switch.spec.js
 ```
 
 ## Coding Conventions

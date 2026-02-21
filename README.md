@@ -14,7 +14,7 @@ Sorry, did you not have 8+GB if RAM and 1TB+ of disk space? Stop pretending you 
 
 ## Fine... so what is this?
 
-This is a project that was product managed by a real human (me, Pomax!) but written by Claude Opus 4.5/4.6, which is the first LLM that seems to be alright at programming. It was written in a way to be accessible by new devs as well as other AI agents, so it should be pretty damn easy to add new functionality. If using an AI, tell it to first read the `requirements.md` and `docs/developers` files, and then get to work.
+This is a project that was product managed by a real human (me, Pomax!) but written by Claude Opus 4.5/4.6, which is the first LLM that seems to be alright at programming. It was written in a way to be accessible by new devs as well as other AI agents, so it should be pretty damn easy to add new functionality. If using an AI, tell it to first read `docs/developers/ai-agent-notes.md` and the other `docs/developers` files, and then get to work.
 
 PRs are of course welcome, provided it's preceded by you filing an issue to explain what it is you want to do, why you think that should be part of the codebase, and how you're going to do that: either by yourself, or by using an AI. Note that if you want to use an AI agent, the only one I'm going to even consider fixes from is Opus 4.6 - I've watched ChatGPT and Qwen literally destroy the good work Opus has produced and replace it with completely bullshit nonsense.
 
@@ -37,6 +37,8 @@ No on has time for that.
 - **Image Support**: Insert, edit, rename, and drag & drop images; gather images into the document folder
 
 - **Table Support**: Insert and edit tables via a modal dialog
+
+- **Search**: Find text in the editor with plain text or regex, case-sensitive toggle, and match navigation (`Ctrl+F`)
 
 - **Preferences**: Configurable page margins, page width, page colors, default view mode, and TOC settings
 
@@ -93,9 +95,12 @@ npm start
 │           ├── toolbar/
 │           ├── handlers/
 │           ├── image/
+│           ├── link/
+│           ├── modal/
 │           ├── table/
 │           ├── tab-bar/
 │           ├── toc/
+│           ├── search/
 │           ├── preferences/
 │           └── word-count/
 │
@@ -139,6 +144,8 @@ npm start
 - **Link**: `Ctrl+K`
 
 - **Inline Code**: `Ctrl+\``
+
+- **Find**: `Ctrl+F`
 
 - **Heading 1-6**: `Ctrl+Alt+1` through `Ctrl+Alt+6`
 
