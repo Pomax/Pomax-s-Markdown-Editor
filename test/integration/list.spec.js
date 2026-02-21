@@ -15,6 +15,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
+    HOME,
+    MOD,
     launchApp,
     loadContent,
     projectRoot,
@@ -235,7 +237,7 @@ test('source view: Enter between marker and content splits into empty item and n
     // Move cursor to start of content (Home goes to start of visible line,
     // which in source view is the beginning of the marker, so we need to
     // position at the content start — offset 0 in tree coordinates).
-    await page.keyboard.press('Home');
+    await page.keyboard.press(HOME);
     // Move past the marker "1. " (3 chars)
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
@@ -314,8 +316,7 @@ test('Enter on empty middle ordered item renumbers remaining items', async () =>
     await page.waitForTimeout(200);
 
     // Select all text in Beta and delete it
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Shift+End');
+    await page.keyboard.press(`${MOD}+a`);
     await page.keyboard.press('Backspace');
     await page.waitForTimeout(200);
 
@@ -333,4 +334,71 @@ test('Enter on empty middle ordered item renumbers remaining items', async () =>
     expect(first).toMatch(/^1\. Alpha/);
     expect(second?.trim()).toBe('');
     expect(third).toMatch(/^2\. Gamma/);
+});
+
+test('pasting multi-line markdown with list items creates correct nodes', async () => {
+    // Start with an empty paragraph — the user's exact scenario
+    await loadContent(page, '\n');
+    await setSourceView(page);
+
+    // Focus the empty line
+    const line = page.locator('#editor .md-line').first();
+    await line.click();
+    await page.waitForTimeout(200);
+
+    // Write the full multi-line content to the clipboard and paste via Ctrl+V.
+    const pasteText = 'test\n\n1. one\n2. two\n3. three';
+    await electronApp.evaluate(({ clipboard }, text) => {
+        clipboard.writeText(text);
+    }, pasteText);
+    await page.keyboard.press(`${MOD}+v`);
+    await page.waitForTimeout(300);
+
+    // Verify the tree content via the editor API (returns raw markdown)
+    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+    expect(markdown).toContain('test');
+    expect(markdown).toContain('1. one');
+    expect(markdown).toContain('2. two');
+    expect(markdown).toContain('3. three');
+
+    // Also check the rendered DOM in source view
+    await setSourceView(page);
+    const lines = page.locator('#editor .md-line');
+    const count = await lines.count();
+    expect(count).toBe(4);
+
+    expect(await lines.nth(0).textContent()).toBe('test');
+    expect(await lines.nth(1).textContent()).toMatch(/^1\.\s+one/);
+    expect(await lines.nth(2).textContent()).toMatch(/^2\.\s+two/);
+    expect(await lines.nth(3).textContent()).toMatch(/^3\.\s+three/);
+});
+
+test('pasting multi-line markdown with CRLF line endings parses correctly', async () => {
+    await loadContent(page, '\n');
+    await setSourceView(page);
+
+    const line = page.locator('#editor .md-line').first();
+    await line.click();
+    await page.waitForTimeout(200);
+
+    // Use \r\n (Windows clipboard line endings)
+    const pasteText = 'test\r\n\r\n1. one\r\n2. two\r\n3. three';
+    await electronApp.evaluate(({ clipboard }, text) => {
+        clipboard.writeText(text);
+    }, pasteText);
+    await page.keyboard.press(`${MOD}+v`);
+    await page.waitForTimeout(300);
+
+    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+    expect(markdown).toContain('1. one');
+    expect(markdown).toContain('2. two');
+    expect(markdown).toContain('3. three');
+
+    await setSourceView(page);
+    const lines = page.locator('#editor .md-line');
+    expect(await lines.count()).toBe(4);
+    expect(await lines.nth(0).textContent()).toBe('test');
+    expect(await lines.nth(1).textContent()).toMatch(/^1\.\s+one/);
+    expect(await lines.nth(2).textContent()).toMatch(/^2\.\s+two/);
+    expect(await lines.nth(3).textContent()).toMatch(/^3\.\s+three/);
 });

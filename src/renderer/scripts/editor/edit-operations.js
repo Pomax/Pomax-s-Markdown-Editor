@@ -114,6 +114,76 @@ export class EditOperations {
             return;
         }
 
+        // ── Multi-line paste ──
+        // When the inserted text contains newlines, we must rebuild the
+        // affected portion of the tree: combine the current node's markdown
+        // prefix + left half, the pasted text, and the right half, then
+        // re-parse all resulting lines as separate nodes.
+        // Normalize Windows \r\n to \n before checking.
+        const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        if (normalizedText.includes('\n')) {
+            const prefixLen = this.editor.getPrefixLength(oldType, node.attributes);
+            const mdPrefix = this.editor
+                .buildMarkdownLine(oldType, '', node.attributes)
+                .substring(0, prefixLen);
+            const normalizedContent = left + normalizedText + right;
+            const combined = mdPrefix + normalizedContent;
+            const lines = combined.split('\n');
+
+            // Parse each line into a node (empty lines are skipped).
+            /** @type {SyntaxNode[]} */
+            const parsedNodes = [];
+            let i = 0;
+            while (i < lines.length) {
+                const result = this.editor.parser.parseLine(lines, i);
+                if (result.node) {
+                    parsedNodes.push(result.node);
+                }
+                i = result.nextIndex;
+            }
+
+            if (parsedNodes.length === 0) {
+                // Edge case: everything was blank lines — empty paragraph
+                node.type = 'paragraph';
+                node.content = '';
+                node.attributes = {};
+                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.recordAndRender(before, { updated: [node.id] });
+                return;
+            }
+
+            // Update the current node in-place with the first parsed result.
+            const first = parsedNodes[0];
+            node.type = first.type;
+            node.content = first.content;
+            node.attributes = first.attributes;
+
+            // Splice remaining parsed nodes as new siblings after the
+            // current node.
+            const siblings = this.editor.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            /** @type {string[]} */
+            const addedIds = [];
+            for (let j = 1; j < parsedNodes.length; j++) {
+                const newNode = parsedNodes[j];
+                if (node.parent) newNode.parent = node.parent;
+                siblings.splice(idx + j, 0, newNode);
+                addedIds.push(newNode.id);
+            }
+
+            // Place cursor at the end of the last node's content.
+            const lastNode = parsedNodes[parsedNodes.length - 1];
+            this.editor.treeCursor = { nodeId: lastNode.id, offset: lastNode.content.length };
+
+            /** @type {{ updated: string[], added?: string[], removed?: string[] }} */
+            const hints = { updated: [node.id] };
+            if (addedIds.length > 0) hints.added = addedIds;
+            if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
+            this.editor.recordAndRender(before, hints);
+            return;
+        }
+
+        // ── Single-line insert ──
         // Re-parse the full markdown line to detect type changes
         let newOffset;
         const wasBareText = !!node.attributes.bareText;
