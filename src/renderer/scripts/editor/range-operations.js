@@ -17,6 +17,21 @@ export class RangeOperations {
     constructor(editor) {
         /** @type {import('./editor.js').Editor} */
         this.editor = editor;
+
+        /**
+         * Tracks the current select-all cycling level.
+         * 0 = no select-all active, 1 = node, 2 = parent group, 3 = document.
+         * @type {number}
+         */
+        this._selectAllLevel = 0;
+    }
+
+    /**
+     * Resets the select-all cycling level. Call this whenever the cursor
+     * moves, content changes, or any non-select-all action occurs.
+     */
+    resetSelectAllLevel() {
+        this._selectAllLevel = 0;
     }
 
     /**
@@ -120,22 +135,66 @@ export class RangeOperations {
     }
 
     /**
-     * Handles Ctrl+A — selects all content within the current block-level
-     * context rather than the entire document.
+     * Handles Ctrl+A — cycles through increasingly broad selections:
      *
-     * Context scoping:
-     * - Code block → selects all code inside the block
-     * - List item → selects the list item text
-     * - Paragraph / heading / blockquote → selects the whole element
-     * - Text inside inline formatting (bold, italic…) in focused mode →
-     *   selects the containing block-level node, not just the span
-     * - Table cell → selects the cell content
+     * 1. First press: select the current node's content
+     * 2. Second press: if the node has a "content parent" (e.g., list run
+     *    for a list-item, html-block for its children), select that group.
+     *    If there is no content parent, jump straight to document.
+     * 3. Third press (or second if no parent): select the entire document.
+     *
+     * The cycling level resets whenever the cursor moves or an edit occurs.
      */
     handleSelectAll() {
         this.editor.syncCursorFromDOM();
         const node = this.editor.getCurrentNode();
         if (!node) return;
 
+        this._selectAllLevel++;
+
+        // Determine whether this node has a "content parent" group.
+        const hasParentGroup = this._hasContentParent(node);
+
+        // Level 1 → select the current node
+        if (this._selectAllLevel === 1) {
+            this._selectNode(node);
+            return;
+        }
+
+        // Level 2 → select parent group (if any), otherwise document
+        if (this._selectAllLevel === 2) {
+            if (hasParentGroup) {
+                this._selectContentParent(node);
+                return;
+            }
+            // No parent group — fall through to document selection
+        }
+
+        // Level 3 (or 2 when no parent) → select entire document
+        this._selectAllLevel = hasParentGroup ? 3 : 2;
+        this._selectDocument();
+    }
+
+    /**
+     * Returns true if the node belongs to a content-parent group that
+     * should be selectable as an intermediate cycling level.
+     * @param {SyntaxNode} node
+     * @returns {boolean}
+     */
+    _hasContentParent(node) {
+        // List items belong to a contiguous list run
+        if (node.type === 'list-item') return true;
+        // Nodes inside an html-block container (e.g., children of <details>)
+        if (node.parent && node.parent.type === 'html-block') return true;
+        return false;
+    }
+
+    /**
+     * Selects the content of a single node (level 1).
+     * For table cells in focused mode, selects only the cell content.
+     * @param {SyntaxNode} node
+     */
+    _selectNode(node) {
         // ── Table cell: select just the cell content ──
         if (
             node.type === 'table' &&
@@ -148,7 +207,6 @@ export class RangeOperations {
                 this.editor.treeCursor.cellRow,
                 this.editor.treeCursor.cellCol,
             );
-            // Place selection spanning the whole cell via DOM
             const nodeEl = this.editor.container.querySelector(`[data-node-id="${node.id}"]`);
             if (nodeEl) {
                 this.editor.tableManager.placeTableCellCursor(
@@ -157,10 +215,8 @@ export class RangeOperations {
                     this.editor.treeCursor.cellCol,
                     0,
                 );
-                // Extend to end
                 const sel = window.getSelection();
                 if (sel && cellText.length > 0) {
-                    // Re-select the full cell range using the DOM
                     const range = sel.getRangeAt(0);
                     const contentEl = range.startContainer.parentElement?.closest('td, th');
                     if (contentEl) {
@@ -171,13 +227,11 @@ export class RangeOperations {
                     }
                 }
             }
-            // Update treeRange from the new DOM selection.
             this.editor.syncCursorFromDOM();
             return;
         }
 
-        // For all other block-level nodes, select the entire node content
-        // by setting a DOM range over the content element.
+        // For all other block-level nodes, select the entire node content.
         const nodeEl = this.editor.container.querySelector(`[data-node-id="${node.id}"]`);
         if (!nodeEl) return;
 
@@ -190,7 +244,97 @@ export class RangeOperations {
         sel.removeAllRanges();
         sel.addRange(domRange);
 
-        // Refresh tree cursor/range from the new DOM selection.
+        this.editor.syncCursorFromDOM();
+    }
+
+    /**
+     * Selects the content-parent group of a node (level 2).
+     * - List items: selects the entire contiguous list run.
+     * - html-block children: selects all children of the html-block parent.
+     * @param {SyntaxNode} node
+     */
+    _selectContentParent(node) {
+        if (node.type === 'list-item') {
+            const siblings = this.editor.getSiblings(node);
+            const run = this.editor._getContiguousListRun(siblings, node);
+            if (run.length > 0) {
+                this._selectNodeRange(run[0], run[run.length - 1]);
+                return;
+            }
+        }
+
+        if (node.parent && node.parent.type === 'html-block') {
+            const children = node.parent.children;
+            if (children.length > 0) {
+                this._selectNodeRange(children[0], children[children.length - 1]);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Selects the entire document content (final cycling level).
+     */
+    _selectDocument() {
+        const children = this.editor.syntaxTree?.children;
+        if (!children || children.length === 0) return;
+
+        // Find the first and last leaf nodes that have DOM elements
+        const first = this._firstLeaf(children[0]);
+        const last = this._lastLeaf(children[children.length - 1]);
+        this._selectNodeRange(first, last);
+    }
+
+    /**
+     * Returns the first leaf (deepest first-child) of a node.
+     * For nodes with children (html-blocks), descends into children.
+     * @param {SyntaxNode} node
+     * @returns {SyntaxNode}
+     */
+    _firstLeaf(node) {
+        let current = node;
+        while (current.children.length > 0) {
+            current = current.children[0];
+        }
+        return current;
+    }
+
+    /**
+     * Returns the last leaf (deepest last-child) of a node.
+     * @param {SyntaxNode} node
+     * @returns {SyntaxNode}
+     */
+    _lastLeaf(node) {
+        let current = node;
+        while (current.children.length > 0) {
+            current = current.children[current.children.length - 1];
+        }
+        return current;
+    }
+
+    /**
+     * Sets a DOM selection spanning from the start of `firstNode` to
+     * the end of `lastNode`, then syncs back to tree coordinates.
+     * @param {SyntaxNode} firstNode
+     * @param {SyntaxNode} lastNode
+     */
+    _selectNodeRange(firstNode, lastNode) {
+        const firstEl = this.editor.container.querySelector(`[data-node-id="${firstNode.id}"]`);
+        const lastEl = this.editor.container.querySelector(`[data-node-id="${lastNode.id}"]`);
+        if (!firstEl || !lastEl) return;
+
+        const firstContent = firstEl.querySelector('.md-content') ?? firstEl;
+        const lastContent = lastEl.querySelector('.md-content') ?? lastEl;
+
+        const sel = window.getSelection();
+        if (!sel) return;
+
+        const domRange = document.createRange();
+        domRange.setStart(firstContent, 0);
+        domRange.setEndAfter(lastContent.lastChild ?? lastContent);
+        sel.removeAllRanges();
+        sel.addRange(domRange);
+
         this.editor.syncCursorFromDOM();
     }
 }

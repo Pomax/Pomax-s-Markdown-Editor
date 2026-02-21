@@ -11,6 +11,26 @@
 import { SyntaxNode } from '../parser/syntax-tree.js';
 
 /**
+ * Node types that should be removed when left empty after a
+ * selection-delete.  Easily extensible as new element types are added.
+ * @type {Set<string>}
+ */
+const REMOVABLE_WHEN_EMPTY = new Set([
+    'paragraph',
+    'heading1',
+    'heading2',
+    'heading3',
+    'heading4',
+    'heading5',
+    'heading6',
+    'blockquote',
+    'list-item',
+    'code-block',
+    'table',
+    'html-block',
+]);
+
+/**
  * Handles tree-level edit operations on the syntax tree.
  */
 export class EditOperations {
@@ -20,6 +40,79 @@ export class EditOperations {
     constructor(editor) {
         /** @type {import('./editor.js').Editor} */
         this.editor = editor;
+    }
+
+    /**
+     * After a selection-delete, checks whether the surviving node is empty
+     * and should be removed entirely.  If so, removes it from the tree,
+     * moves the cursor to an adjacent node, and updates the render hints.
+     *
+     * If removing the node would leave the document empty, a fresh empty
+     * paragraph is inserted instead.
+     *
+     * @param {{ before: string, hints: { updated?: string[], added?: string[], removed?: string[] } }} result
+     *     The result object from `deleteSelectedRange()`, mutated in place.
+     */
+    _cleanupEmptyNodeAfterDelete(result) {
+        const node = this.editor.getCurrentNode();
+        if (!node || !this.editor.syntaxTree) return;
+
+        // Only remove types in the extensible set.
+        if (!REMOVABLE_WHEN_EMPTY.has(node.type)) return;
+
+        // Check if the node is truly empty.
+        if (node.content !== '') return;
+        // For tables, content is '' but rows may still have data — skip.
+        if (node.type === 'table') return;
+        // For html-blocks with children, skip unless all children are gone.
+        if (node.type === 'html-block' && node.children.length > 0) return;
+
+        const siblings = this.editor.getSiblings(node);
+        const idx = siblings.indexOf(node);
+        const wasListItem = node.type === 'list-item';
+
+        // Remove the empty node from the tree.
+        siblings.splice(idx, 1);
+        node.parent = null;
+        if (!result.hints.removed) result.hints.removed = [];
+        result.hints.removed.push(node.id);
+
+        // Remove from updated hints — it no longer exists.
+        if (result.hints.updated) {
+            result.hints.updated = result.hints.updated.filter((id) => id !== node.id);
+        }
+
+        // Renumber adjacent ordered list items after removing a list item.
+        if (wasListItem && siblings.length > 0) {
+            const renumberIdx = Math.min(idx, siblings.length - 1);
+            const renumbered = this.editor.renumberAdjacentList(siblings, renumberIdx);
+            for (const id of renumbered) {
+                if (!result.hints.updated) result.hints.updated = [];
+                if (!result.hints.updated.includes(id)) {
+                    result.hints.updated.push(id);
+                }
+            }
+        }
+
+        // If document is now empty, insert a fresh paragraph.
+        if (this.editor.syntaxTree.children.length === 0) {
+            const fresh = new SyntaxNode('paragraph', '');
+            this.editor.syntaxTree.children.push(fresh);
+            if (!result.hints.added) result.hints.added = [];
+            result.hints.added.push(fresh.id);
+            this.editor.treeCursor = { nodeId: fresh.id, offset: 0 };
+            return;
+        }
+
+        // Move cursor to the adjacent node.
+        const newIdx = Math.min(idx, siblings.length - 1);
+        if (newIdx >= 0 && newIdx < siblings.length) {
+            const target = siblings[newIdx];
+            this.editor.treeCursor = {
+                nodeId: target.id,
+                offset: 0,
+            };
+        }
     }
 
     /**
@@ -253,6 +346,7 @@ export class EditOperations {
         if (this.editor.treeRange) {
             const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
             if (rangeResult) {
+                this._cleanupEmptyNodeAfterDelete(rangeResult);
                 this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
                 return;
             }
@@ -444,6 +538,7 @@ export class EditOperations {
         if (this.editor.treeRange) {
             const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
             if (rangeResult) {
+                this._cleanupEmptyNodeAfterDelete(rangeResult);
                 this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
                 return;
             }
