@@ -247,14 +247,14 @@ export class Toolbar {
                 label: 'Image',
                 icon: '🖼',
                 action: 'image:insert',
-                applicableTo: ['paragraph', 'image'],
+                applicableTo: ['paragraph', 'image', 'list-item'],
             },
             {
                 id: 'table',
                 label: 'Table',
                 icon: '▦',
                 action: 'table:insert',
-                applicableTo: ['paragraph', 'table'],
+                applicableTo: ['paragraph', 'table', 'list-item'],
             },
             {
                 id: 'separator2',

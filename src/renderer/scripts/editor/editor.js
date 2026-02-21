@@ -767,6 +767,38 @@ export class Editor {
 
         const before = this.getMarkdown();
 
+        // Multi-node selection: convert each node in the range to a list item.
+        if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
+            const nodes = this._getNodesInRange(
+                this.treeRange.startNodeId,
+                this.treeRange.endNodeId,
+            );
+            const updatedIds = [];
+            let num = 1;
+            for (const n of nodes) {
+                if (n.type === 'html-block' && n.children.length > 0) continue;
+                if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
+                n.type = 'list-item';
+                n.attributes = { ordered, indent: 0 };
+                if (ordered) {
+                    n.attributes.number = num++;
+                }
+                updatedIds.push(n.id);
+            }
+            if (updatedIds.length === 0) return;
+
+            this.treeRange = null;
+            this.undoManager.recordChange({
+                type: 'changeType',
+                before,
+                after: this.getMarkdown(),
+            });
+            this.renderNodesAndPlaceCursor({ updated: updatedIds });
+            this.setUnsavedChanges(true);
+            return;
+        }
+
+        // Single node toggle
         if (currentNode.type === 'list-item') {
             if (!!currentNode.attributes.ordered === ordered) {
                 // Same list type → convert back to paragraph
@@ -798,6 +830,27 @@ export class Editor {
 
         this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
+    }
+
+    /**
+     * Gets all nodes between two node IDs (inclusive), walking the flat
+     * top-level children of the syntax tree.
+     *
+     * @param {string} startId
+     * @param {string} endId
+     * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+     */
+    _getNodesInRange(startId, endId) {
+        if (!this.syntaxTree) return [];
+        const children = this.syntaxTree.children;
+        let collecting = false;
+        const result = [];
+        for (const child of children) {
+            if (child.id === startId) collecting = true;
+            if (collecting) result.push(child);
+            if (child.id === endId) break;
+        }
+        return result;
     }
 
     /**
