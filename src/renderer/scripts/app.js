@@ -658,6 +658,15 @@ class App {
         } catch {
             // Default is false (open)
         }
+
+        try {
+            const result = await window.electronAPI.getSetting('parser');
+            if (result.success && (result.value === 'regex' || result.value === 'dfa')) {
+                // TODO: swap parser engine when DFA is selected
+            }
+        } catch {
+            // Default is 'regex'
+        }
     }
 
     /**
