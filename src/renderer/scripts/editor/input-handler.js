@@ -51,6 +51,7 @@ export class InputHandler {
             if (this.editor.treeRange) {
                 const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
                 if (rangeResult) {
+                    this.editor.editOperations._cleanupEmptyNodeAfterDelete(rangeResult);
                     this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
                 }
             }
@@ -68,6 +69,19 @@ export class InputHandler {
      * @param {KeyboardEvent} event
      */
     handleKeyDown(event) {
+        // Reset select-all cycling for any key that is not Ctrl/Cmd+A
+        // and not a bare modifier key (pressing Ctrl alone should not
+        // reset the cycle so that repeated Ctrl+A works).
+        const isSelectAll = (event.ctrlKey || event.metaKey) && event.key === 'a';
+        const isModifierOnly =
+            event.key === 'Control' ||
+            event.key === 'Shift' ||
+            event.key === 'Alt' ||
+            event.key === 'Meta';
+        if (!isSelectAll && !isModifierOnly) {
+            this.editor.rangeOperations.resetSelectAllLevel();
+        }
+
         // ── Undo / Redo ──
         if (event.ctrlKey || event.metaKey) {
             if (event.key === 'z' && !event.shiftKey) {

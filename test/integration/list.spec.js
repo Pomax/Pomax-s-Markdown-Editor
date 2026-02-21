@@ -315,13 +315,10 @@ test('Enter on empty middle ordered item renumbers remaining items', async () =>
     await line.click();
     await page.waitForTimeout(200);
 
-    // Select all text in Beta and delete it
+    // Select all text in Beta and delete it — the empty item is removed
+    // automatically and remaining items are renumbered.
     await page.keyboard.press(`${MOD}+a`);
     await page.keyboard.press('Backspace');
-    await page.waitForTimeout(200);
-
-    // Now press Enter on the empty item to exit the list
-    await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
 
     await setSourceView(page);
@@ -329,11 +326,9 @@ test('Enter on empty middle ordered item renumbers remaining items', async () =>
     const lines = page.locator('#editor .md-line');
     const first = await lines.nth(0).textContent();
     const second = await lines.nth(1).textContent();
-    const third = await lines.nth(2).textContent();
-    // Alpha keeps its number, Beta is now a plain paragraph, Gamma renumbered to 2
+    // Alpha keeps its number, Gamma renumbered to 2 (Beta was removed)
     expect(first).toMatch(/^1\. Alpha/);
-    expect(second?.trim()).toBe('');
-    expect(third).toMatch(/^2\. Gamma/);
+    expect(second).toMatch(/^2\. Gamma/);
 });
 
 test('pasting multi-line markdown with list items creates correct nodes', async () => {

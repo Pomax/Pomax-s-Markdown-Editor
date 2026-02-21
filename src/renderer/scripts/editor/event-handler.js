@@ -54,6 +54,7 @@ export class EventHandler {
      * @param {MouseEvent} event
      */
     handleClick(event) {
+        this.editor.rangeOperations.resetSelectAllLevel();
         this.editor.syncCursorFromDOM();
 
         // Clicking on replaced/void elements like <img> or <hr> doesn't
