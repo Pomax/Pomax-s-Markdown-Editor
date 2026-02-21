@@ -303,6 +303,7 @@ export class Editor {
         } finally {
             this._isRendering = false;
         }
+        document.dispatchEvent(new CustomEvent('editor:renderComplete'));
     }
 
     /**
@@ -322,6 +323,7 @@ export class Editor {
             } finally {
                 this._isRendering = false;
             }
+            document.dispatchEvent(new CustomEvent('editor:renderComplete'));
         } else {
             this.fullRender();
         }
@@ -485,7 +487,10 @@ export class Editor {
      * @param {string} markdown - The markdown content to load
      */
     loadMarkdown(markdown) {
-        this.syntaxTree = this.parser.parse(markdown);
+        // Normalise excessive blank lines so that toMarkdown() / toBareText()
+        // always produce exactly one blank line between blocks.
+        const normalised = markdown.replace(/\n{3,}/g, '\n\n');
+        this.syntaxTree = this.parser.parse(normalised);
 
         // Ensure there is at least one node so the editor is never empty
         if (this.syntaxTree.children.length === 0) {

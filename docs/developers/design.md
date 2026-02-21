@@ -109,7 +109,8 @@ src/
 │   │   ├── table.css        # Table dialog and element styles
 │   │   ├── toc.css          # Table of Contents sidebar styles
 │   │   ├── preferences.css  # Preferences modal styles
-│   │   └── word-count.css   # Word count modal styles
+│   │   ├── word-count.css   # Word count modal styles
+│   │   └── search.css       # Search panel styles
 │   │
 │   └── scripts/              # JavaScript
 │       ├── app.js           # App entry, wires components together
@@ -150,6 +151,8 @@ src/
 │       │   └── toc.js
 │       ├── preferences/     # Preferences modal
 │       │   └── preferences-modal.js
+│       ├── search/          # Search panel
+│       │   └── search-bar.js
 │       └── word-count/      # Word count modal
 │           └── word-count-modal.js
 │
@@ -178,6 +181,7 @@ test/
     ├── backspace-heading-to-paragraph.spec.js
     ├── image.spec.js
     ├── load-images.spec.js
+    ├── search.spec.js
     ├── table.spec.js
     ├── toc-scroll.spec.js
     ├── toolbar-tooltip.spec.js

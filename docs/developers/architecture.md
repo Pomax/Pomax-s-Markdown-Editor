@@ -73,9 +73,9 @@ The application follows Electron's multi-process architecture:
 │          │ KeyboardHandler │  │ TableOfContents   │          │
 │          └─────────────────┘  └───────────────────┘          │
 │                                                              │
-│                         ┌────────┐                           │
-│                         │ TabBar │                           │
-│                         └────────┘                           │
+│              ┌────────┐  ┌───────────┐                       │
+│              │ TabBar │  │ SearchBar │                       │
+│              └────────┘  └───────────┘                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -154,7 +154,7 @@ Secure bridge between main and renderer:
 
 The renderer entry point. Wires together all renderer components:
 
-- Creates Editor, Toolbar, TabBar, TableOfContents, PreferencesModal, WordCountModal
+- Creates Editor, Toolbar, TabBar, TableOfContents, SearchBar, PreferencesModal, WordCountModal
 - Manages multi-file document state (content, cursor, undo/redo stacks per tab)
 - Handles tab creation, switching, and closing (with unsaved-changes prompts)
 - Registers IPC listeners for menu actions and external API calls
@@ -190,9 +190,27 @@ offset mapping (used by `CursorManager`).
 The Editor itself keeps:
 - Document state (`syntaxTree`, `treeCursor`, `treeRange`, `viewMode`)
 - Rendering methods (`fullRender`, `renderNodes`, `fullRenderAndPlaceCursor`)
+- Dispatches `editor:renderComplete` custom event after `fullRender()` and `renderNodes()`, used by SearchBar to re-apply highlights
 - Tree helpers (`getCurrentNode`, `getSiblings`, `getNodeIndex`)
 - Markdown helpers (`buildMarkdownLine`, `getPrefixLength`)
 - Public API consumed by the toolbar, IPC handlers, and tests
+
+### SearchBar
+
+Floating draggable search panel for finding text in the editor:
+- Opened via Ctrl+F (Cmd+F on macOS); closed via Escape or the close button
+- Supports plain text and regex search modes, with a case-sensitivity toggle
+- Plain text search requires a minimum of 2 characters
+- In source view, searches against `syntaxTree.toMarkdown()` (raw markdown)
+- In focused view, plain text search is confined to per-node boundaries using `SyntaxNode.toBareText()`; regex search uses `syntaxTree.toBareText()` across the full document
+- Builds an offset map to translate flat-document match positions back to individual syntax-tree nodes for DOM highlighting
+- Highlights matches using `<mark>` elements injected via TreeWalker-based text node splitting
+- Re-applies highlights on `editor:renderComplete` events (fired after re-renders)
+- Initial match selection starts at the match closest to the current cursor position
+- Navigation via Enter (next), Shift+Enter (previous), and prev/next buttons
+- Scrolls to the active match using `scrollIntoView({ behavior: 'instant' })`
+- Draggable via mouse (repositions with CSS `left`/`top`); position resets on each open
+- Appended to the `#app` element, styled in `search.css`
 
 ### MarkdownParser
 
@@ -208,6 +226,7 @@ Data structure for parsed documents:
 - `SyntaxTree`: root container with `children` array of `SyntaxNode`
 - `SyntaxNode`: type, content, attributes, children, unique ID, position info
 - `toMarkdown()`: serializes back to markdown text
+- `toBareText()`: returns visible/rendered text with markdown syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc. removed). Used by search in focused view.
 - `clone()`: deep cloning for undo/redo snapshots
 - Node lookup by ID or position
 
