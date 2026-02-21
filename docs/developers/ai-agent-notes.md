@@ -142,20 +142,36 @@ pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
 
 - The **parse tree** (`SyntaxTree`) is the single source of truth.
 - The DOM is **never** the source of truth; all mutations go through the
-  tree, then `render()` rebuilds the DOM.
-- `render()` in focused view destroys and recreates the entire DOM fragment.
-  Any event handler attached to a DOM element will be lost after render.
+  tree, then the renderer rebuilds the DOM.
+- There are two render paths:
+  - `fullRender()` — clears the entire container and rebuilds every node
+    from scratch. Used for initial load, view-mode switches, and a few
+    special cases. All event handlers on DOM elements are lost.
+  - `renderNodes()` / `renderNodesAndPlaceCursor()` — **incremental**:
+    only the specific nodes listed in the `hints` object are replaced,
+    added, or removed. Event handlers on untouched elements survive.
+- Most editing operations use the incremental path.
+
+### `data-node-id` scoping
+
+Every rendered block element in the editor gets a `data-node-id` attribute
+matching its syntax-tree node ID.  The ToC sidebar **also** sets
+`data-node-id` on its `<a>` link elements (same IDs).  Any query like
+`document.querySelector('[data-node-id="…"]')` may match the ToC link
+instead of the editor element.  **Always** scope queries to the editor
+container: `this.editor.container.querySelector(…)`.
 
 ### Cursor model
 
 ```
-treeCursor = { nodeId: string, offset: number, tagPart?: string }
+treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: number, cellCol?: number }
 ```
 
 - `nodeId` — the id of the SyntaxNode that has focus.
 - `offset` — character offset within the node's text content.
 - `tagPart` — `'opening'` or `'closing'` when the cursor is on an
   HTML tag line in source view.
+- `cellRow` / `cellCol` — row and column indices when editing a table cell.
 
 ### HTML block model (details/summary)
 
@@ -274,9 +290,10 @@ not the entire document.
 
 ### Cut / Copy / Paste
 
-- `_handleCut` and `_handleCopy` call `event.preventDefault()` and write
-  raw markdown to `clipboardData` so it round-trips correctly.
-- `_handleCut` then calls `deleteSelectedRange()` to remove selected content.
+- `handleCut` and `handleCopy` (in `clipboard-handler.js`) call
+  `event.preventDefault()` and write raw markdown to `clipboardData`
+  so it round-trips correctly.
+- `handleCut` then calls `deleteSelectedRange()` to remove selected content.
 - Paste goes through `insertTextAtCursor` which handles range deletion first.
 
 ### `_mapDOMPositionToTree(domNode, domOffset)`
