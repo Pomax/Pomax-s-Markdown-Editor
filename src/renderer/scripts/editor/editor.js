@@ -750,6 +750,57 @@ export class Editor {
     }
 
     /**
+     * Toggles list formatting on the current node.
+     *
+     * - Non-list → list-item (ordered or unordered)
+     * - List-item of same type → paragraph (toggle off)
+     * - List-item of other type → switch ordered ↔ unordered
+     *
+     * @param {boolean} ordered - `true` for numbered, `false` for bullet
+     */
+    toggleList(ordered) {
+        const currentNode = this.getCurrentNode();
+        if (!currentNode || !this.syntaxTree) return;
+
+        // html-block containers are structural nodes, not convertible.
+        if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+
+        const before = this.getMarkdown();
+
+        if (currentNode.type === 'list-item') {
+            if (!!currentNode.attributes.ordered === ordered) {
+                // Same list type → convert back to paragraph
+                currentNode.type = 'paragraph';
+                currentNode.attributes = {};
+            } else {
+                // Different list type → switch
+                currentNode.attributes.ordered = ordered;
+                if (ordered) {
+                    currentNode.attributes.number = currentNode.attributes.number || 1;
+                } else {
+                    currentNode.attributes.number = undefined;
+                }
+            }
+        } else {
+            // Convert non-list to list-item, preserving content
+            currentNode.type = 'list-item';
+            currentNode.attributes = { ordered, indent: 0 };
+            if (ordered) {
+                currentNode.attributes.number = 1;
+            }
+        }
+
+        this.undoManager.recordChange({
+            type: 'changeType',
+            before,
+            after: this.getMarkdown(),
+        });
+
+        this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
+        this.setUnsavedChanges(true);
+    }
+
+    /**
      * Applies formatting to the current selection.
      * @param {string} format
      */
