@@ -798,28 +798,44 @@ export class Editor {
             return;
         }
 
-        // Single node toggle
+        // Single node toggle — when on a list item, affect the entire
+        // contiguous run of list items (the "list").
         if (currentNode.type === 'list-item') {
+            const siblings = this.getSiblings(currentNode);
+            const run = this._getContiguousListRun(siblings, currentNode);
+
             if (!!currentNode.attributes.ordered === ordered) {
-                // Same list type → convert back to paragraph
-                currentNode.type = 'paragraph';
-                currentNode.attributes = {};
+                // Same list type → convert entire run back to paragraphs
+                for (const n of run) {
+                    n.type = 'paragraph';
+                    n.attributes = {};
+                }
             } else {
-                // Different list type → switch
-                currentNode.attributes.ordered = ordered;
-                if (ordered) {
-                    currentNode.attributes.number = currentNode.attributes.number || 1;
-                } else {
-                    currentNode.attributes.number = undefined;
+                // Different list type → switch entire run
+                let num = 1;
+                for (const n of run) {
+                    n.attributes.ordered = ordered;
+                    if (ordered) {
+                        n.attributes.number = num++;
+                    } else {
+                        n.attributes.number = undefined;
+                    }
                 }
             }
-        } else {
-            // Convert non-list to list-item, preserving content
-            currentNode.type = 'list-item';
-            currentNode.attributes = { ordered, indent: 0 };
-            if (ordered) {
-                currentNode.attributes.number = 1;
-            }
+
+            this.undoManager.recordChange({
+                type: 'changeType',
+                before,
+                after: this.getMarkdown(),
+            });
+            this.renderNodesAndPlaceCursor({ updated: run.map((n) => n.id) });
+            this.setUnsavedChanges(true);
+            return;
+        }
+        currentNode.type = 'list-item';
+        currentNode.attributes = { ordered, indent: 0 };
+        if (ordered) {
+            currentNode.attributes.number = 1;
         }
 
         this.undoManager.recordChange({
@@ -830,6 +846,23 @@ export class Editor {
 
         this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
+    }
+
+    /**
+     * Returns the contiguous run of `list-item` nodes surrounding `node`
+     * within the given sibling list.
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+     */
+    _getContiguousListRun(siblings, node) {
+        const idx = siblings.indexOf(node);
+        let start = idx;
+        let end = idx;
+        while (start > 0 && siblings[start - 1].type === 'list-item') start--;
+        while (end < siblings.length - 1 && siblings[end + 1].type === 'list-item') end++;
+        return siblings.slice(start, end + 1);
     }
 
     /**
