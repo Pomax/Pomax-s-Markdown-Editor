@@ -114,6 +114,76 @@ export class EditOperations {
             return;
         }
 
+        // ── Multi-line paste ──
+        // When the inserted text contains newlines, we must rebuild the
+        // affected portion of the tree: combine the current node's markdown
+        // prefix + left half, the pasted text, and the right half, then
+        // re-parse all resulting lines as separate nodes.
+        // Normalize Windows \r\n to \n before checking.
+        const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        if (normalizedText.includes('\n')) {
+            const prefixLen = this.editor.getPrefixLength(oldType, node.attributes);
+            const mdPrefix = this.editor
+                .buildMarkdownLine(oldType, '', node.attributes)
+                .substring(0, prefixLen);
+            const normalizedContent = left + normalizedText + right;
+            const combined = mdPrefix + normalizedContent;
+            const lines = combined.split('\n');
+
+            // Parse each line into a node (empty lines are skipped).
+            /** @type {SyntaxNode[]} */
+            const parsedNodes = [];
+            let i = 0;
+            while (i < lines.length) {
+                const result = this.editor.parser.parseLine(lines, i);
+                if (result.node) {
+                    parsedNodes.push(result.node);
+                }
+                i = result.nextIndex;
+            }
+
+            if (parsedNodes.length === 0) {
+                // Edge case: everything was blank lines — empty paragraph
+                node.type = 'paragraph';
+                node.content = '';
+                node.attributes = {};
+                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.recordAndRender(before, { updated: [node.id] });
+                return;
+            }
+
+            // Update the current node in-place with the first parsed result.
+            const first = parsedNodes[0];
+            node.type = first.type;
+            node.content = first.content;
+            node.attributes = first.attributes;
+
+            // Splice remaining parsed nodes as new siblings after the
+            // current node.
+            const siblings = this.editor.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            /** @type {string[]} */
+            const addedIds = [];
+            for (let j = 1; j < parsedNodes.length; j++) {
+                const newNode = parsedNodes[j];
+                if (node.parent) newNode.parent = node.parent;
+                siblings.splice(idx + j, 0, newNode);
+                addedIds.push(newNode.id);
+            }
+
+            // Place cursor at the end of the last node's content.
+            const lastNode = parsedNodes[parsedNodes.length - 1];
+            this.editor.treeCursor = { nodeId: lastNode.id, offset: lastNode.content.length };
+
+            /** @type {{ updated: string[], added?: string[], removed?: string[] }} */
+            const hints = { updated: [node.id] };
+            if (addedIds.length > 0) hints.added = addedIds;
+            if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
+            this.editor.recordAndRender(before, hints);
+            return;
+        }
+
+        // ── Single-line insert ──
         // Re-parse the full markdown line to detect type changes
         let newOffset;
         const wasBareText = !!node.attributes.bareText;
@@ -293,16 +363,34 @@ export class EditOperations {
             // If this is a heading (or blockquote, list-item, etc.) with an
             // empty content, convert it back to an empty paragraph.
             if (node.type !== 'paragraph' && node.content === '') {
+                const wasListItem = node.type === 'list-item';
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                if (wasListItem) {
+                    const siblings = this.editor.getSiblings(node);
+                    const idx = siblings.indexOf(node);
+                    const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+                    if (renumbered.length) {
+                        renderHints = { updated: [node.id, ...renumbered] };
+                    }
+                }
             } else if (node.type !== 'paragraph') {
                 // Non-paragraph with content and cursor at start: demote to paragraph,
                 // keeping the content.
+                const wasListItem = node.type === 'list-item';
                 node.type = 'paragraph';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                if (wasListItem) {
+                    const siblings = this.editor.getSiblings(node);
+                    const idx = siblings.indexOf(node);
+                    const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+                    if (renumbered.length) {
+                        renderHints = { updated: [node.id, ...renumbered] };
+                    }
+                }
             } else {
                 // Merge with the previous node (if any)
                 const siblings = this.editor.getSiblings(node);
@@ -578,6 +666,53 @@ export class EditOperations {
 
         const contentBefore = node.content.substring(0, this.editor.treeCursor.offset);
         const contentAfter = node.content.substring(this.editor.treeCursor.offset);
+
+        // ── Enter inside a list item ──
+        if (node.type === 'list-item') {
+            if (contentBefore === '' && contentAfter === '') {
+                // Empty list item → exit list: convert to empty paragraph
+                const siblings = this.editor.getSiblings(node);
+                const idx = siblings.indexOf(node);
+                node.type = 'paragraph';
+                node.content = '';
+                node.attributes = {};
+                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+                /** @type {{ updated: string[], removed?: string[] }} */
+                const listHints = { updated: [node.id, ...renumbered] };
+                if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
+                this.editor.recordAndRender(before, listHints);
+                return;
+            }
+
+            // Split: current item keeps text before cursor,
+            // new item gets text after cursor.
+            node.content = contentBefore;
+            /** @type {import('../parser/syntax-tree.js').NodeAttributes} */
+            const newAttrs = {
+                ordered: node.attributes.ordered,
+                indent: node.attributes.indent || 0,
+            };
+            if (node.attributes.ordered) {
+                newAttrs.number = (node.attributes.number || 1) + 1;
+            }
+            const newItem = new SyntaxNode('list-item', contentAfter);
+            newItem.attributes = newAttrs;
+            const siblings = this.editor.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            siblings.splice(idx + 1, 0, newItem);
+            if (node.parent) newItem.parent = node.parent;
+
+            // Renumber subsequent ordered items in the same run
+            const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+
+            this.editor.treeCursor = { nodeId: newItem.id, offset: 0 };
+            /** @type {{ updated: string[], added: string[], removed?: string[] }} */
+            const listHints = { updated: [node.id, ...renumbered], added: [newItem.id] };
+            if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
+            this.editor.recordAndRender(before, listHints);
+            return;
+        }
 
         // Current node keeps the text before the cursor
         node.content = contentBefore;

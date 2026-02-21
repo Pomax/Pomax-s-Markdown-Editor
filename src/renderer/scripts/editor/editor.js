@@ -736,8 +736,19 @@ export class Editor {
         // html-block containers are structural nodes, not type-changeable.
         if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
 
+        const wasListItem = currentNode.type === 'list-item';
+        const siblings = this.getSiblings(currentNode);
+        const idx = siblings.indexOf(currentNode);
+
         const beforeContent = this.getMarkdown();
         this.syntaxTree.changeNodeType(currentNode, elementType);
+
+        // If a list item was removed from a run, renumber the remaining items.
+        /** @type {string[]} */
+        let renumbered = [];
+        if (wasListItem && currentNode.type !== 'list-item') {
+            renumbered = this.renumberAdjacentList(siblings, idx);
+        }
 
         this.undoManager.recordChange({
             type: 'changeType',
@@ -745,8 +756,177 @@ export class Editor {
             after: this.getMarkdown(),
         });
 
+        const updatedIds = [currentNode.id, ...renumbered];
+        this.renderNodesAndPlaceCursor({ updated: updatedIds });
+        this.setUnsavedChanges(true);
+    }
+
+    /**
+     * Toggles list formatting on the current node.
+     *
+     * - Non-list → list-item (ordered or unordered)
+     * - List-item of same type → paragraph (toggle off)
+     * - List-item of other type → switch ordered ↔ unordered
+     *
+     * @param {boolean} ordered - `true` for numbered, `false` for bullet
+     */
+    toggleList(ordered) {
+        const currentNode = this.getCurrentNode();
+        if (!currentNode || !this.syntaxTree) return;
+
+        // html-block containers are structural nodes, not convertible.
+        if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+
+        const before = this.getMarkdown();
+
+        // Multi-node selection: convert each node in the range to a list item.
+        if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
+            const nodes = this._getNodesInRange(
+                this.treeRange.startNodeId,
+                this.treeRange.endNodeId,
+            );
+            const updatedIds = [];
+            let num = 1;
+            for (const n of nodes) {
+                if (n.type === 'html-block' && n.children.length > 0) continue;
+                if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
+                n.type = 'list-item';
+                n.attributes = { ordered, indent: 0 };
+                if (ordered) {
+                    n.attributes.number = num++;
+                }
+                updatedIds.push(n.id);
+            }
+            if (updatedIds.length === 0) return;
+
+            this.treeRange = null;
+            this.undoManager.recordChange({
+                type: 'changeType',
+                before,
+                after: this.getMarkdown(),
+            });
+            this.renderNodesAndPlaceCursor({ updated: updatedIds });
+            this.setUnsavedChanges(true);
+            return;
+        }
+
+        // Single node toggle — when on a list item, affect the entire
+        // contiguous run of list items (the "list").
+        if (currentNode.type === 'list-item') {
+            const siblings = this.getSiblings(currentNode);
+            const run = this._getContiguousListRun(siblings, currentNode);
+
+            if (!!currentNode.attributes.ordered === ordered) {
+                // Same list type → convert entire run back to paragraphs
+                for (const n of run) {
+                    n.type = 'paragraph';
+                    n.attributes = {};
+                }
+            } else {
+                // Different list type → switch entire run
+                let num = 1;
+                for (const n of run) {
+                    n.attributes.ordered = ordered;
+                    if (ordered) {
+                        n.attributes.number = num++;
+                    } else {
+                        n.attributes.number = undefined;
+                    }
+                }
+            }
+
+            this.undoManager.recordChange({
+                type: 'changeType',
+                before,
+                after: this.getMarkdown(),
+            });
+            this.renderNodesAndPlaceCursor({ updated: run.map((n) => n.id) });
+            this.setUnsavedChanges(true);
+            return;
+        }
+        currentNode.type = 'list-item';
+        currentNode.attributes = { ordered, indent: 0 };
+        if (ordered) {
+            currentNode.attributes.number = 1;
+        }
+
+        this.undoManager.recordChange({
+            type: 'changeType',
+            before,
+            after: this.getMarkdown(),
+        });
+
         this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
+    }
+
+    /**
+     * Returns the contiguous run of `list-item` nodes surrounding `node`
+     * within the given sibling list.
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+     */
+    _getContiguousListRun(siblings, node) {
+        const idx = siblings.indexOf(node);
+        let start = idx;
+        let end = idx;
+        while (start > 0 && siblings[start - 1].type === 'list-item') start--;
+        while (end < siblings.length - 1 && siblings[end + 1].type === 'list-item') end++;
+        return siblings.slice(start, end + 1);
+    }
+
+    /**
+     * Renumbers all ordered list items in the contiguous run surrounding
+     * `nearIndex` so they are sequential starting from 1.  Returns the
+     * IDs of every node whose number was changed (for render hints).
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
+     * @param {number} nearIndex - Index of a node in or adjacent to the run
+     * @returns {string[]} IDs of nodes that were renumbered
+     */
+    renumberAdjacentList(siblings, nearIndex) {
+        // Find the start of the contiguous list-item run
+        let start = nearIndex;
+        while (start > 0 && siblings[start - 1]?.type === 'list-item') start--;
+        // Find the end
+        let end = nearIndex;
+        while (end < siblings.length - 1 && siblings[end + 1]?.type === 'list-item') end++;
+
+        const changed = [];
+        let num = 1;
+        for (let i = start; i <= end; i++) {
+            const sib = siblings[i];
+            if (sib.type !== 'list-item' || !sib.attributes.ordered) continue;
+            if (sib.attributes.number !== num) {
+                sib.attributes.number = num;
+                changed.push(sib.id);
+            }
+            num++;
+        }
+        return changed;
+    }
+
+    /**
+     * Gets all nodes between two node IDs (inclusive), walking the flat
+     * top-level children of the syntax tree.
+     *
+     * @param {string} startId
+     * @param {string} endId
+     * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+     */
+    _getNodesInRange(startId, endId) {
+        if (!this.syntaxTree) return [];
+        const children = this.syntaxTree.children;
+        let collecting = false;
+        const result = [];
+        for (const child of children) {
+            if (child.id === startId) collecting = true;
+            if (collecting) result.push(child);
+            if (child.id === endId) break;
+        }
+        return result;
     }
 
     /**

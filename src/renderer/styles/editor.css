@@ -193,6 +193,16 @@
     margin-bottom: var(--spacing-xs);
 }
 
+/* Space at list boundaries: between a non-list element and the first/last
+   list item so lists don't run into surrounding paragraphs. */
+.md-line:not(.md-list-item) + .md-list-item {
+    margin-top: var(--spacing-sm);
+}
+
+.md-list-item + .md-line:not(.md-list-item) {
+    margin-top: var(--spacing-sm);
+}
+
 .md-list-marker {
     color: var(--color-syntax);
     font-family: var(--font-family-mono);

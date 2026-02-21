@@ -66,6 +66,7 @@ export class Toolbar {
                     'heading4',
                     'heading5',
                     'heading6',
+                    'list-item',
                 ],
             },
             {
@@ -81,6 +82,7 @@ export class Toolbar {
                     'heading4',
                     'heading5',
                     'heading6',
+                    'list-item',
                 ],
             },
             {
@@ -96,6 +98,7 @@ export class Toolbar {
                     'heading4',
                     'heading5',
                     'heading6',
+                    'list-item',
                 ],
             },
             {
@@ -111,6 +114,7 @@ export class Toolbar {
                     'heading5',
                     'heading6',
                     'blockquote',
+                    'list-item',
                 ],
             },
             {
@@ -118,14 +122,14 @@ export class Toolbar {
                 label: 'Quote',
                 icon: '"',
                 action: 'changeType:blockquote',
-                applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3'],
+                applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'list-item'],
             },
             {
                 id: 'code-block',
                 label: 'Code Block',
                 icon: '</>',
                 action: 'changeType:code-block',
-                applicableTo: ['paragraph'],
+                applicableTo: ['paragraph', 'list-item'],
             },
             {
                 id: 'separator1',
@@ -243,14 +247,14 @@ export class Toolbar {
                 label: 'Image',
                 icon: '🖼',
                 action: 'image:insert',
-                applicableTo: ['paragraph', 'image'],
+                applicableTo: ['paragraph', 'image', 'list-item'],
             },
             {
                 id: 'table',
                 label: 'Table',
                 icon: '▦',
                 action: 'table:insert',
-                applicableTo: ['paragraph', 'table'],
+                applicableTo: ['paragraph', 'table', 'list-item'],
             },
             {
                 id: 'separator2',
@@ -263,15 +267,35 @@ export class Toolbar {
                 id: 'unordered-list',
                 label: 'Bullet List',
                 icon: '•',
-                action: 'changeType:list-item',
-                applicableTo: ['paragraph'],
+                action: 'list:unordered',
+                applicableTo: [
+                    'paragraph',
+                    'heading1',
+                    'heading2',
+                    'heading3',
+                    'heading4',
+                    'heading5',
+                    'heading6',
+                    'blockquote',
+                    'list-item',
+                ],
             },
             {
                 id: 'ordered-list',
                 label: 'Numbered List',
                 icon: '1.',
-                action: 'changeType:ordered-list-item',
-                applicableTo: ['paragraph'],
+                action: 'list:ordered',
+                applicableTo: [
+                    'paragraph',
+                    'heading1',
+                    'heading2',
+                    'heading3',
+                    'heading4',
+                    'heading5',
+                    'heading6',
+                    'blockquote',
+                    'list-item',
+                ],
             },
         ];
     }
@@ -420,6 +444,9 @@ export class Toolbar {
                 break;
             case 'format':
                 this.editor.applyFormat(actionValue);
+                break;
+            case 'list':
+                this.editor.toggleList(actionValue === 'ordered');
                 break;
             case 'image':
                 this.handleImageAction();
@@ -574,6 +601,10 @@ export class Toolbar {
             if (config.action.startsWith('changeType:')) {
                 const targetType = config.action.split(':')[1];
                 button.setActive(targetType === nodeType);
+            } else if (config.action === 'list:unordered') {
+                button.setActive(nodeType === 'list-item' && !node?.attributes?.ordered);
+            } else if (config.action === 'list:ordered') {
+                button.setActive(nodeType === 'list-item' && !!node?.attributes?.ordered);
             }
         }
     }

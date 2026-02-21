@@ -350,9 +350,11 @@ export class SyntaxTree {
         // Reset type-specific attributes
         switch (newType) {
             case 'list-item':
-                if (!node.attributes.ordered) {
-                    node.attributes = { ordered: false, indent: 0 };
-                }
+                node.attributes = {
+                    ordered: !!node.attributes.ordered,
+                    indent: node.attributes.indent || 0,
+                    ...(node.attributes.ordered ? { number: node.attributes.number || 1 } : {}),
+                };
                 break;
             case 'code-block':
                 if (!node.attributes.language) {
