@@ -579,6 +579,68 @@ export class EditOperations {
         const contentBefore = node.content.substring(0, this.editor.treeCursor.offset);
         const contentAfter = node.content.substring(this.editor.treeCursor.offset);
 
+        // ── Enter inside a list item ──
+        if (node.type === 'list-item') {
+            if (contentBefore === '' && contentAfter === '') {
+                // Empty list item → exit list: convert to empty paragraph
+                node.type = 'paragraph';
+                node.content = '';
+                node.attributes = {};
+                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                /** @type {{ updated: string[], removed?: string[] }} */
+                const listHints = { updated: [node.id] };
+                if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
+                this.editor.recordAndRender(before, listHints);
+                return;
+            }
+
+            // Source view, cursor at offset 0 (before the marker): insert
+            // a blank paragraph before the list item instead of splitting.
+            if (this.editor.viewMode === 'source' && this.editor.treeCursor.offset === 0) {
+                const blank = new SyntaxNode('paragraph', '');
+                const siblings = this.editor.getSiblings(node);
+                const idx = siblings.indexOf(node);
+                siblings.splice(idx, 0, blank);
+                if (node.parent) blank.parent = node.parent;
+                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                /** @type {{ updated: string[], added: string[], removed?: string[] }} */
+                const listHints = { updated: [node.id], added: [blank.id] };
+                if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
+                this.editor.recordAndRender(before, listHints);
+                return;
+            }
+
+            // Split: current item keeps text before cursor,
+            // new item gets text after cursor.
+            node.content = contentBefore;
+            /** @type {import('../parser/syntax-tree.js').NodeAttributes} */
+            const newAttrs = {
+                ordered: node.attributes.ordered,
+                indent: node.attributes.indent || 0,
+            };
+            if (node.attributes.ordered) {
+                newAttrs.number = (node.attributes.number || 1) + 1;
+            }
+            const newItem = new SyntaxNode('list-item', contentAfter);
+            newItem.attributes = newAttrs;
+            const siblings = this.editor.getSiblings(node);
+            const idx = siblings.indexOf(node);
+            siblings.splice(idx + 1, 0, newItem);
+            if (node.parent) newItem.parent = node.parent;
+
+            // Renumber subsequent ordered items in the same run
+            if (node.attributes.ordered) {
+                this._renumberOrderedItems(siblings, idx + 2, (newAttrs.number || 1) + 1);
+            }
+
+            this.editor.treeCursor = { nodeId: newItem.id, offset: 0 };
+            /** @type {{ updated: string[], added: string[], removed?: string[] }} */
+            const listHints = { updated: [node.id], added: [newItem.id] };
+            if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
+            this.editor.recordAndRender(before, listHints);
+            return;
+        }
+
         // Current node keeps the text before the cursor
         node.content = contentBefore;
 
@@ -601,5 +663,24 @@ export class EditOperations {
         const hints = { updated: [node.id], added: [newNode.id] };
         if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
         this.editor.recordAndRender(before, hints);
+    }
+
+    /**
+     * Renumbers consecutive ordered list items starting at `fromIndex`,
+     * assigning sequential numbers beginning with `startNumber`.
+     * Stops when a non-ordered-list-item or the end of the sibling list
+     * is reached.
+     *
+     * @param {SyntaxNode[]} siblings
+     * @param {number} fromIndex
+     * @param {number} startNumber
+     */
+    _renumberOrderedItems(siblings, fromIndex, startNumber) {
+        let num = startNumber;
+        for (let i = fromIndex; i < siblings.length; i++) {
+            const sib = siblings[i];
+            if (sib.type !== 'list-item' || !sib.attributes.ordered) break;
+            sib.attributes.number = num++;
+        }
     }
 }
