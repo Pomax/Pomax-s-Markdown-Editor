@@ -61,6 +61,7 @@ markdown-editor/
 │       │   ├── toc.css
 │       │   ├── preferences.css
 │       │   ├── word-count.css
+│       │   ├── search.css
 │       │   └── tab-bar.css
 │       └── scripts/
 │           ├── app.js           # Renderer entry point
@@ -72,6 +73,7 @@ markdown-editor/
 │           ├── table/           # Table insert/edit modal
 │           ├── tab-bar/         # Multi-file tab bar
 │           ├── toc/             # Table of Contents sidebar
+│           ├── search/          # Search panel
 │           ├── preferences/     # Preferences modal
 │           └── word-count/      # Word count modal
 │

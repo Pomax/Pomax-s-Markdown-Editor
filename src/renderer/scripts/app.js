@@ -12,6 +12,7 @@ import { initPageResizeHandles } from './editor/page-resize.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
 import { MenuHandler } from './handlers/menu-handler.js';
 import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
+import { SearchBar } from './search/search-bar.js';
 import { TabBar, getDisambiguatedLabels } from './tab-bar/tab-bar.js';
 import { TableOfContents } from './toc/toc.js';
 import { Toolbar } from './toolbar/toolbar.js';
@@ -45,6 +46,9 @@ class App {
 
         /** @type {KeyboardHandler|null} */
         this.keyboardHandler = null;
+
+        /** @type {SearchBar|null} */
+        this.searchBar = null;
 
         /** @type {TableOfContents|null} */
         this.toc = null;
@@ -96,6 +100,14 @@ class App {
 
         this.keyboardHandler = new KeyboardHandler(this.editor);
         this.keyboardHandler.initialize();
+
+        // Initialize search bar
+        this.searchBar = new SearchBar(this.editor);
+        this.searchBar.initialize();
+
+        document.addEventListener('search:open', () => {
+            this.searchBar?.open();
+        });
 
         // Initialize Table of Contents sidebar
         if (tocContainer) {

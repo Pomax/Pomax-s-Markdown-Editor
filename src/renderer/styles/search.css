@@ -1,0 +1,145 @@
+/* ── Search bar (floating modal) ───────────────────────────────────── */
+
+.search-bar {
+    position: absolute;
+    top: 48px;
+    right: 16px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    cursor: grab;
+    user-select: none;
+}
+
+.search-bar:active {
+    cursor: grabbing;
+}
+
+.search-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* ── Input ────────────────────────────────────────────────────────── */
+
+.search-input {
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+}
+
+/* ── Toggle buttons (regex, case) ─────────────────────────────────── */
+
+.search-toggle {
+    flex-shrink: 0;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-bg);
+    font-family: var(--font-family-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    user-select: none;
+}
+
+.search-toggle:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.search-toggle.active {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+}
+
+/* ── Match count ──────────────────────────────────────────────────── */
+
+.search-match-count {
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    min-width: 64px;
+    text-align: center;
+}
+
+/* ── Navigation buttons (prev / next) ─────────────────────────────── */
+
+.search-nav-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.search-nav-btn:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+}
+
+/* ── Close button ─────────────────────────────────────────────────── */
+
+.search-close-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    font-size: 1.125rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    line-height: 1;
+}
+
+.search-close-btn:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+}
+
+/* ── Highlights ───────────────────────────────────────────────────── */
+
+mark.search-highlight {
+    background-color: rgba(255, 213, 0, 0.4);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0;
+}
+
+mark.search-highlight--active {
+    background-color: rgba(255, 150, 0, 0.6);
+    outline: 2px solid rgba(255, 150, 0, 0.8);
+}

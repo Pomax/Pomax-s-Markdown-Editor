@@ -254,3 +254,111 @@ describe('SyntaxTree', () => {
         });
     });
 });
+
+// ── toBareText ──────────────────────────────────────────────────────
+
+describe('SyntaxNode.toBareText', () => {
+    it('strips heading prefix', () => {
+        const node = new SyntaxNode('heading2', 'Hello World');
+        assert.strictEqual(node.toBareText(), 'Hello World');
+    });
+
+    it('strips inline bold/italic delimiters', () => {
+        const node = new SyntaxNode('paragraph', 'some **bold** and *italic*');
+        assert.strictEqual(node.toBareText(), 'some bold and italic');
+    });
+
+    it('strips inline code backticks but keeps content', () => {
+        const node = new SyntaxNode('paragraph', 'use `const x = 1`');
+        assert.strictEqual(node.toBareText(), 'use const x = 1');
+    });
+
+    it('strips strikethrough delimiters', () => {
+        const node = new SyntaxNode('paragraph', 'some ~~deleted~~ text');
+        assert.strictEqual(node.toBareText(), 'some deleted text');
+    });
+
+    it('strips HTML inline tags', () => {
+        const node = new SyntaxNode('paragraph', 'x<sub>2</sub> + y<sup>3</sup>');
+        assert.strictEqual(node.toBareText(), 'x2 + y3');
+    });
+
+    it('removes images entirely', () => {
+        const node = new SyntaxNode('paragraph', 'before ![alt](img.png) after');
+        assert.strictEqual(node.toBareText(), 'before  after');
+    });
+
+    it('keeps link text but drops URL', () => {
+        const node = new SyntaxNode('paragraph', 'click [here](http://example.com) now');
+        assert.strictEqual(node.toBareText(), 'click here now');
+    });
+
+    it('returns code-block content as-is', () => {
+        const node = new SyntaxNode('code-block', 'const x = 1;\nconsole.log(x);');
+        node.attributes.language = 'js';
+        assert.strictEqual(node.toBareText(), 'const x = 1;\nconsole.log(x);');
+    });
+
+    it('returns empty string for image nodes', () => {
+        const node = new SyntaxNode('image', '');
+        node.attributes = { alt: 'photo', url: 'pic.png' };
+        assert.strictEqual(node.toBareText(), '');
+    });
+
+    it('returns empty string for horizontal-rule', () => {
+        const node = new SyntaxNode('horizontal-rule', '---');
+        assert.strictEqual(node.toBareText(), '');
+    });
+
+    it('strips blockquote prefix', () => {
+        const node = new SyntaxNode('blockquote', 'quoted text');
+        assert.strictEqual(node.toBareText(), 'quoted text');
+    });
+
+    it('strips list-item marker', () => {
+        const node = new SyntaxNode('list-item', 'item text');
+        node.attributes = { indent: 0, ordered: false };
+        assert.strictEqual(node.toBareText(), 'item text');
+    });
+
+    it('extracts table cell text and skips separator', () => {
+        const node = new SyntaxNode('table', '| A | B |\n| --- | --- |\n| 1 | 2 |');
+        const result = node.toBareText();
+        assert.ok(result.includes('A'));
+        assert.ok(result.includes('B'));
+        assert.ok(result.includes('1'));
+        assert.ok(result.includes('2'));
+        assert.ok(!result.includes('---'));
+    });
+
+    it('handles html-block with children', () => {
+        const container = new SyntaxNode('html-block', '');
+        container.attributes = {
+            tagName: 'details',
+            openingTag: '<details>',
+            closingTag: '</details>',
+        };
+        const child = new SyntaxNode('paragraph', 'inner **text**');
+        container.appendChild(child);
+        assert.strictEqual(container.toBareText(), 'inner text');
+    });
+});
+
+describe('SyntaxTree.toBareText', () => {
+    it('joins bare text of children with double newlines', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('heading1', 'Title'));
+        tree.appendChild(new SyntaxNode('paragraph', 'Body'));
+        assert.strictEqual(tree.toBareText(), 'Title\n\nBody');
+    });
+
+    it('skips nodes with empty bare text', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('heading1', 'Title'));
+        const img = new SyntaxNode('image', '');
+        img.attributes = { alt: 'x', url: 'y' };
+        tree.appendChild(img);
+        tree.appendChild(new SyntaxNode('paragraph', 'End'));
+        assert.strictEqual(tree.toBareText(), 'Title\n\nEnd');
+    });
+});

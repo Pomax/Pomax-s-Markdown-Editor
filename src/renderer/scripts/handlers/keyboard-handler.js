@@ -55,6 +55,9 @@ export class KeyboardHandler {
             // Block shortcuts
             { key: 'q', ctrl: true, shift: true, action: 'changeType:blockquote' },
             { key: 'c', ctrl: true, shift: true, action: 'changeType:code-block' },
+
+            // Search
+            { key: 'f', ctrl: true, action: 'search:open' },
         ];
     }
 
@@ -147,6 +150,9 @@ export class KeyboardHandler {
                 break;
             case 'changeType':
                 this.editor.changeElementType(actionValue);
+                break;
+            case 'search':
+                document.dispatchEvent(new CustomEvent('search:open'));
                 break;
             default:
                 console.warn(`Unknown action type: ${actionType}`);

@@ -3,7 +3,7 @@
  * Provides a tree structure for representing parsed markdown.
  */
 
-import { tokenizeInline } from './inline-tokenizer.js';
+import { buildInlineTree, tokenizeInline } from './inline-tokenizer.js';
 
 /**
  * @typedef {Object} NodeAttributes
@@ -210,6 +210,115 @@ export class SyntaxNode {
             default:
                 return this.content;
         }
+    }
+
+    /**
+     * Returns the visible plain text for this node, with all inline
+     * formatting syntax removed.  Images and other non-text elements
+     * are omitted entirely; link text is kept but URLs are dropped.
+     *
+     * Used by the search system for focused-view matching, where the
+     * user sees rendered text rather than raw markdown.
+     *
+     * @returns {string}
+     */
+    toBareText() {
+        switch (this.type) {
+            case 'heading1':
+            case 'heading2':
+            case 'heading3':
+            case 'heading4':
+            case 'heading5':
+            case 'heading6':
+            case 'paragraph':
+            case 'blockquote':
+            case 'list-item':
+                return SyntaxNode._extractInlineText(this.content);
+
+            case 'code-block':
+                return this.content;
+
+            case 'table': {
+                // Extract visible cell text from the pipe-delimited table.
+                // Skip the separator row (e.g. |---|---|).
+                const lines = this.content.split('\n');
+                const textLines = [];
+                for (const line of lines) {
+                    if (/^\s*\|?\s*[-:]+[-|:\s]*$/.test(line)) continue;
+                    const cells = line
+                        .replace(/^\||\|$/g, '')
+                        .split('|')
+                        .map((c) => SyntaxNode._extractInlineText(c.trim()));
+                    textLines.push(cells.join('\t'));
+                }
+                return textLines.join('\n');
+            }
+
+            case 'image':
+                // Images are purely visual – no searchable text.
+                return '';
+
+            case 'horizontal-rule':
+                return '';
+
+            case 'html-block': {
+                // If the container has exactly one bare-text child,
+                // return just its text.
+                if (
+                    this.children.length === 1 &&
+                    this.children[0].attributes.bareText &&
+                    this.children[0].type === 'paragraph'
+                ) {
+                    return SyntaxNode._extractInlineText(this.children[0].content);
+                }
+
+                const parts = [];
+                for (const child of this.children) {
+                    const text = child.toBareText();
+                    if (text) parts.push(text);
+                }
+                return parts.join('\n\n');
+            }
+
+            default:
+                return SyntaxNode._extractInlineText(this.content);
+        }
+    }
+
+    /**
+     * Extracts visible text from inline markdown, stripping all
+     * formatting delimiters (`**`, `*`, `~~`, `` ` ``, HTML tags)
+     * and removing images.  Link text is preserved; link URLs are dropped.
+     *
+     * @param {string} content - Raw inline markdown content
+     * @returns {string}
+     */
+    static _extractInlineText(content) {
+        const tokens = tokenizeInline(content);
+        const segments = buildInlineTree(tokens);
+        return SyntaxNode._segmentsToText(segments);
+    }
+
+    /**
+     * Recursively extracts plain text from an InlineSegment tree.
+     *
+     * @param {import('./inline-tokenizer.js').InlineSegment[]} segments
+     * @returns {string}
+     */
+    static _segmentsToText(segments) {
+        let result = '';
+        for (const seg of segments) {
+            if (seg.type === 'text') {
+                result += seg.text ?? '';
+            } else if (seg.type === 'code') {
+                result += seg.content ?? '';
+            } else if (seg.type === 'image') {
+                // Images produce no visible text.
+            } else if (seg.children) {
+                result += SyntaxNode._segmentsToText(seg.children);
+            }
+        }
+        return result;
     }
 
     /**
@@ -601,6 +710,24 @@ export class SyntaxTree {
         }
 
         return lines.join('\n\n');
+    }
+
+    /**
+     * Returns the plain visible text of the entire document with all
+     * formatting and syntax stripped.  Used by the search system for
+     * focused-view matching.
+     *
+     * @returns {string}
+     */
+    toBareText() {
+        const parts = [];
+
+        for (const child of this.children) {
+            const text = child.toBareText();
+            if (text !== '') parts.push(text);
+        }
+
+        return parts.join('\n\n');
     }
 
     /**
