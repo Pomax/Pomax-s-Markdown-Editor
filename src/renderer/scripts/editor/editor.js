@@ -736,8 +736,19 @@ export class Editor {
         // html-block containers are structural nodes, not type-changeable.
         if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
 
+        const wasListItem = currentNode.type === 'list-item';
+        const siblings = this.getSiblings(currentNode);
+        const idx = siblings.indexOf(currentNode);
+
         const beforeContent = this.getMarkdown();
         this.syntaxTree.changeNodeType(currentNode, elementType);
+
+        // If a list item was removed from a run, renumber the remaining items.
+        /** @type {string[]} */
+        let renumbered = [];
+        if (wasListItem && currentNode.type !== 'list-item') {
+            renumbered = this.renumberAdjacentList(siblings, idx);
+        }
 
         this.undoManager.recordChange({
             type: 'changeType',
@@ -745,7 +756,8 @@ export class Editor {
             after: this.getMarkdown(),
         });
 
-        this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
+        const updatedIds = [currentNode.id, ...renumbered];
+        this.renderNodesAndPlaceCursor({ updated: updatedIds });
         this.setUnsavedChanges(true);
     }
 
@@ -863,6 +875,37 @@ export class Editor {
         while (start > 0 && siblings[start - 1].type === 'list-item') start--;
         while (end < siblings.length - 1 && siblings[end + 1].type === 'list-item') end++;
         return siblings.slice(start, end + 1);
+    }
+
+    /**
+     * Renumbers all ordered list items in the contiguous run surrounding
+     * `nearIndex` so they are sequential starting from 1.  Returns the
+     * IDs of every node whose number was changed (for render hints).
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
+     * @param {number} nearIndex - Index of a node in or adjacent to the run
+     * @returns {string[]} IDs of nodes that were renumbered
+     */
+    renumberAdjacentList(siblings, nearIndex) {
+        // Find the start of the contiguous list-item run
+        let start = nearIndex;
+        while (start > 0 && siblings[start - 1]?.type === 'list-item') start--;
+        // Find the end
+        let end = nearIndex;
+        while (end < siblings.length - 1 && siblings[end + 1]?.type === 'list-item') end++;
+
+        const changed = [];
+        let num = 1;
+        for (let i = start; i <= end; i++) {
+            const sib = siblings[i];
+            if (sib.type !== 'list-item' || !sib.attributes.ordered) continue;
+            if (sib.attributes.number !== num) {
+                sib.attributes.number = num;
+                changed.push(sib.id);
+            }
+            num++;
+        }
+        return changed;
     }
 
     /**

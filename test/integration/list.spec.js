@@ -224,16 +224,22 @@ test('Enter in ordered list creates item with incremented number', async () => {
     expect(third).toMatch(/^3\. Second/);
 });
 
-test('source view: Enter at offset 0 of list item inserts blank line before', async () => {
-    await loadContent(page, '- Test item\n');
+test('source view: Enter between marker and content splits into empty item and new item', async () => {
+    await loadContent(page, '1. Test item\n');
     await setSourceView(page);
 
     const line = page.locator('#editor .md-line', { hasText: 'Test item' }).first();
     await line.click();
     await page.waitForTimeout(200);
 
-    // Move cursor to start (Home key)
+    // Move cursor to start of content (Home goes to start of visible line,
+    // which in source view is the beginning of the marker, so we need to
+    // position at the content start — offset 0 in tree coordinates).
     await page.keyboard.press('Home');
+    // Move past the marker "1. " (3 chars)
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
 
@@ -241,13 +247,13 @@ test('source view: Enter at offset 0 of list item inserts blank line before', as
     const count = await lines.count();
     expect(count).toBeGreaterThanOrEqual(2);
 
-    // First line should be the blank paragraph
+    // First line should be the empty list item marker
     const first = await lines.nth(0).textContent();
-    expect(first?.trim()).toBe('');
+    expect(first).toMatch(/^1\.\s*$/);
 
-    // Second line should still be the list item
+    // Second line should be the new list item with content
     const second = await lines.nth(1).textContent();
-    expect(second).toMatch(/^- Test item/);
+    expect(second).toMatch(/^2\. Test item/);
 });
 
 test('toggling off a list item converts the entire contiguous list to paragraphs', async () => {
@@ -296,4 +302,35 @@ test('switching list type converts the entire contiguous list', async () => {
     expect(first).toMatch(/^1\. Alpha/);
     expect(second).toMatch(/^2\. Beta/);
     expect(third).toMatch(/^3\. Gamma/);
+});
+
+test('Enter on empty middle ordered item renumbers remaining items', async () => {
+    await loadContent(page, '1. Alpha\n2. Beta\n3. Gamma\n');
+    await setFocusedView(page);
+
+    // Click on Beta to focus it
+    const line = page.locator('#editor .md-line', { hasText: 'Beta' }).first();
+    await line.click();
+    await page.waitForTimeout(200);
+
+    // Select all text in Beta and delete it
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Shift+End');
+    await page.keyboard.press('Backspace');
+    await page.waitForTimeout(200);
+
+    // Now press Enter on the empty item to exit the list
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+
+    const lines = page.locator('#editor .md-line');
+    const first = await lines.nth(0).textContent();
+    const second = await lines.nth(1).textContent();
+    const third = await lines.nth(2).textContent();
+    // Alpha keeps its number, Beta is now a plain paragraph, Gamma renumbered to 2
+    expect(first).toMatch(/^1\. Alpha/);
+    expect(second?.trim()).toBe('');
+    expect(third).toMatch(/^2\. Gamma/);
 });

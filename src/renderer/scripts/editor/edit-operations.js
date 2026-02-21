@@ -293,16 +293,34 @@ export class EditOperations {
             // If this is a heading (or blockquote, list-item, etc.) with an
             // empty content, convert it back to an empty paragraph.
             if (node.type !== 'paragraph' && node.content === '') {
+                const wasListItem = node.type === 'list-item';
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                if (wasListItem) {
+                    const siblings = this.editor.getSiblings(node);
+                    const idx = siblings.indexOf(node);
+                    const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+                    if (renumbered.length) {
+                        renderHints = { updated: [node.id, ...renumbered] };
+                    }
+                }
             } else if (node.type !== 'paragraph') {
                 // Non-paragraph with content and cursor at start: demote to paragraph,
                 // keeping the content.
+                const wasListItem = node.type === 'list-item';
                 node.type = 'paragraph';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                if (wasListItem) {
+                    const siblings = this.editor.getSiblings(node);
+                    const idx = siblings.indexOf(node);
+                    const renumbered = this.editor.renumberAdjacentList(siblings, idx);
+                    if (renumbered.length) {
+                        renderHints = { updated: [node.id, ...renumbered] };
+                    }
+                }
             } else {
                 // Merge with the previous node (if any)
                 const siblings = this.editor.getSiblings(node);
@@ -583,28 +601,15 @@ export class EditOperations {
         if (node.type === 'list-item') {
             if (contentBefore === '' && contentAfter === '') {
                 // Empty list item → exit list: convert to empty paragraph
+                const siblings = this.editor.getSiblings(node);
+                const idx = siblings.indexOf(node);
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                const renumbered = this.editor.renumberAdjacentList(siblings, idx);
                 /** @type {{ updated: string[], removed?: string[] }} */
-                const listHints = { updated: [node.id] };
-                if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
-                this.editor.recordAndRender(before, listHints);
-                return;
-            }
-
-            // Source view, cursor at offset 0 (before the marker): insert
-            // a blank paragraph before the list item instead of splitting.
-            if (this.editor.viewMode === 'source' && this.editor.treeCursor.offset === 0) {
-                const blank = new SyntaxNode('paragraph', '');
-                const siblings = this.editor.getSiblings(node);
-                const idx = siblings.indexOf(node);
-                siblings.splice(idx, 0, blank);
-                if (node.parent) blank.parent = node.parent;
-                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
-                /** @type {{ updated: string[], added: string[], removed?: string[] }} */
-                const listHints = { updated: [node.id], added: [blank.id] };
+                const listHints = { updated: [node.id, ...renumbered] };
                 if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
                 this.editor.recordAndRender(before, listHints);
                 return;
@@ -629,13 +634,11 @@ export class EditOperations {
             if (node.parent) newItem.parent = node.parent;
 
             // Renumber subsequent ordered items in the same run
-            if (node.attributes.ordered) {
-                this._renumberOrderedItems(siblings, idx + 2, (newAttrs.number || 1) + 1);
-            }
+            const renumbered = this.editor.renumberAdjacentList(siblings, idx);
 
             this.editor.treeCursor = { nodeId: newItem.id, offset: 0 };
             /** @type {{ updated: string[], added: string[], removed?: string[] }} */
-            const listHints = { updated: [node.id], added: [newItem.id] };
+            const listHints = { updated: [node.id, ...renumbered], added: [newItem.id] };
             if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
             this.editor.recordAndRender(before, listHints);
             return;
@@ -663,24 +666,5 @@ export class EditOperations {
         const hints = { updated: [node.id], added: [newNode.id] };
         if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
         this.editor.recordAndRender(before, hints);
-    }
-
-    /**
-     * Renumbers consecutive ordered list items starting at `fromIndex`,
-     * assigning sequential numbers beginning with `startNumber`.
-     * Stops when a non-ordered-list-item or the end of the sibling list
-     * is reached.
-     *
-     * @param {SyntaxNode[]} siblings
-     * @param {number} fromIndex
-     * @param {number} startNumber
-     */
-    _renumberOrderedItems(siblings, fromIndex, startNumber) {
-        let num = startNumber;
-        for (let i = fromIndex; i < siblings.length; i++) {
-            const sib = siblings[i];
-            if (sib.type !== 'list-item' || !sib.attributes.ordered) break;
-            sib.attributes.number = num++;
-        }
     }
 }
