@@ -1,5 +1,34 @@
 # Release Log
 
+## v1.5.0
+
+### New Features
+
+- **List support**: Full markdown list editing — toolbar buttons for unordered and ordered lists, Enter key continuation (new item inherits list type), empty-item exit (Enter on an empty list item converts it to a paragraph), whole-list toggle and ordered/unordered switching, ordered list renumbering on add/remove, and multi-line paste that correctly parses list items. List boundary spacing separates lists from adjacent paragraphs visually.
+- **ToC scroll highlight**: The Table of Contents sidebar now highlights the heading whose section occupies the most viewport area. The active highlight updates on scroll and is kept vertically centred within the sidebar.
+- **Cursor position restore**: The editor remembers the cursor position for each open file and restores it when switching tabs or restarting the app.
+- **Inline image tokenization**: `![alt](src)` syntax now renders as an inline image in focused view instead of a stray `!` followed by a link.
+- **Select-all cycling**: Ctrl+A cycles through three selection levels — first selects the current node, second selects the parent group (e.g., the entire contiguous list run or all children of an html-block), and third selects the entire document. Nodes without a parent group skip straight from node to document.
+- **Empty element removal on delete**: Pressing delete or backspace on a selection removes the emptied element entirely (paragraph, heading, blockquote, list item, code block, table, or html-block) instead of leaving an empty shell. If the document becomes empty, a fresh paragraph is inserted.
+
+### Bug Fixes
+
+- **Cursor jump on inline delimiters**: Typing `*`, `_`, `~`, `<`, or `>` in focused view no longer causes the cursor to jump to the wrong position. The cursor manager now uses the inline tokenizer to map between raw markdown offsets and rendered DOM positions.
+
+### Improvements
+
+- **Editor refactor**: `editor.js` was split into focused manager classes — `EditOperations`, `InputHandler`, `EventHandler`, `CursorManager`, `RangeOperations`, `ClipboardHandler`, `SelectionManager`, `ImageHelper`, `LinkHelper`, and `UndoManager` — reducing the main file from ~2000 lines to a thin orchestration layer.
+
+### Testing & CI
+
+- **List integration tests**: 14 tests covering toolbar toggle, Enter continuation, empty-item exit, ordered numbering, list type switching, multi-line paste, and CRLF handling. Platform-aware keys for macOS CI compatibility.
+- **Select-all integration tests**: 11 tests covering cycling for paragraphs, headings, and list items, click reset, and empty-element removal for paragraphs, headings, list items, blockquotes, and full-document delete.
+- **ToC highlight tests**: Integration tests verifying scroll-based heading highlight and active link centring in the sidebar.
+- **Cursor delimiter tests**: Integration tests verifying cursor position after typing inline formatting delimiters.
+- **Cursor scroll tests**: Integration tests verifying the editor scrolls off-screen nodes into view when the cursor moves to them.
+
+---
+
 ## v1.4.0
 
 ### New Features
