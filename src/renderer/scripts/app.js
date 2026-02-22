@@ -498,6 +498,10 @@ class App {
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
 
+        // Re-attach the ToC observer to the new container so it picks
+        // up the freshly rendered content.
+        this.toc?.reobserve();
+
         // Reset scroll for the new tab
         this._scrollContainer.scrollTop = 0;
 
