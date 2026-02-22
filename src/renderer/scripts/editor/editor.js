@@ -134,12 +134,6 @@ export class Editor {
         this.detailsClosed = false;
 
         /**
-         * Tree-based cursor position.
-         * @type {TreeCursor|null}
-         */
-        this.treeCursor = null;
-
-        /**
          * Whether we are currently rendering (used to suppress input events).
          * @type {boolean}
          */
@@ -256,7 +250,6 @@ export class Editor {
         this.syntaxTree = new SyntaxTree();
         const initialNode = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(initialNode);
-        this.treeCursor = { nodeId: initialNode.id, offset: 0 };
         this.syntaxTree.treeCursor = { nodeId: initialNode.id, offset: 0 };
 
         // Set up event listeners
@@ -387,7 +380,7 @@ export class Editor {
         this.cursorManager.syncCursorFromDOM();
     }
 
-    /** Places the DOM cursor at the position described by `this.treeCursor`. */
+    /** Places the DOM cursor at the position described by `this.syntaxTree.treeCursor`. */
     placeCursor() {
         this.cursorManager.placeCursor();
     }
@@ -613,7 +606,6 @@ export class Editor {
         this._ensureTrailingParagraph();
 
         const first = this.syntaxTree.children[0];
-        this.treeCursor = { nodeId: first.id, offset: 0 };
         this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
 
         this.undoManager.clear();
@@ -647,7 +639,6 @@ export class Editor {
         this.syntaxTree = new SyntaxTree();
         const node = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(node);
-        this.treeCursor = { nodeId: node.id, offset: 0 };
         this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         this.undoManager.clear();
         this.currentFilePath = null;
@@ -742,7 +733,6 @@ export class Editor {
                 this.syntaxTree.appendChild(node);
             }
             const first = this.syntaxTree.children[0];
-            this.treeCursor = { nodeId: first.id, offset: 0 };
             this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
@@ -759,7 +749,6 @@ export class Editor {
                 this.syntaxTree.appendChild(node);
             }
             const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
-            this.treeCursor = { nodeId: last.id, offset: last.content.length };
             this.syntaxTree.treeCursor = { nodeId: last.id, offset: last.content.length };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
@@ -828,7 +817,6 @@ export class Editor {
         if (currentNode?.type === 'table') {
             // Update existing table
             currentNode.content = markdown;
-            this.treeCursor = { nodeId: currentNode.id, offset: 0 };
             this.syntaxTree.treeCursor = { nodeId: currentNode.id, offset: 0 };
             renderHints = { updated: [currentNode.id] };
         } else {
@@ -853,7 +841,6 @@ export class Editor {
                 renderHints = { added: [tableNode.id] };
             }
 
-            this.treeCursor = { nodeId: tableNode.id, offset: 0 };
             this.syntaxTree.treeCursor = { nodeId: tableNode.id, offset: 0 };
         }
 
@@ -1074,7 +1061,7 @@ export class Editor {
         // Use tree-coordinate selection (treeCursor / treeRange) — never
         // DOM-derived line/column data.
         const node = this.getCurrentNode();
-        if (!node || !this.treeCursor || !this.syntaxTree?.treeCursor) return;
+        if (!node || !this.syntaxTree?.treeCursor) return;
 
         const nodeId = this.syntaxTree.treeCursor.nodeId;
         let startOffset;
@@ -1105,7 +1092,6 @@ export class Editor {
 
         // Place cursor at the end of the formatted/unformatted text and
         // collapse the selection — the old range is no longer valid.
-        this.treeCursor.offset = newCursorOffset;
         if (this.syntaxTree?.treeCursor) this.syntaxTree.treeCursor.offset = newCursorOffset;
         this.treeRange = null;
 

@@ -100,7 +100,6 @@ export class EditOperations {
             this.editor.syntaxTree.children.push(fresh);
             if (!result.hints.added) result.hints.added = [];
             result.hints.added.push(fresh.id);
-            this.editor.treeCursor = { nodeId: fresh.id, offset: 0 };
             this.editor.syntaxTree.treeCursor = { nodeId: fresh.id, offset: 0 };
             return;
         }
@@ -109,10 +108,6 @@ export class EditOperations {
         const newIdx = Math.min(idx, siblings.length - 1);
         if (newIdx >= 0 && newIdx < siblings.length) {
             const target = siblings[newIdx];
-            this.editor.treeCursor = {
-                nodeId: target.id,
-                offset: 0,
-            };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: target.id,
                 offset: 0,
@@ -150,13 +145,7 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (
-            !node ||
-            !this.editor.syntaxTree ||
-            !this.editor.treeCursor ||
-            !this.editor.syntaxTree.treeCursor
-        )
-            return;
+        if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
@@ -170,11 +159,6 @@ export class EditOperations {
             const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
             const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
             node.attributes[attr] = left + text + right;
-            this.editor.treeCursor = {
-                nodeId: node.id,
-                offset: left.length + text.length,
-                tagPart: this.editor.syntaxTree.treeCursor.tagPart,
-            };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: node.id,
                 offset: left.length + text.length,
@@ -200,12 +184,6 @@ export class EditOperations {
             const left = cellText.substring(0, offset);
             const right = cellText.substring(offset);
             this.editor.tableManager.setTableCellText(node, cellRow, cellCol, left + text + right);
-            this.editor.treeCursor = {
-                nodeId: node.id,
-                offset: left.length + text.length,
-                cellRow,
-                cellCol,
-            };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: node.id,
                 offset: left.length + text.length,
@@ -227,7 +205,6 @@ export class EditOperations {
         // to avoid misidentifying code lines as headings, lists, etc.
         if (node.type === 'code-block') {
             node.content = newContent;
-            this.editor.treeCursor = { nodeId: node.id, offset: left.length + text.length };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: node.id,
                 offset: left.length + text.length,
@@ -259,7 +236,6 @@ export class EditOperations {
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
-                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
@@ -286,7 +262,6 @@ export class EditOperations {
 
             // Place cursor at the end of the last node's content.
             const lastNode = parsedNodes[parsedNodes.length - 1];
-            this.editor.treeCursor = { nodeId: lastNode.id, offset: lastNode.content.length };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: lastNode.id,
                 offset: lastNode.content.length,
@@ -352,7 +327,6 @@ export class EditOperations {
             newOffset = Math.max(0, rawCursorPos - newPrefix);
         }
 
-        this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         /** @type {{ updated: string[], removed?: string[] }} */
         const hints = { updated: [node.id] };
@@ -378,13 +352,7 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (
-            !node ||
-            !this.editor.syntaxTree ||
-            !this.editor.treeCursor ||
-            !this.editor.syntaxTree.treeCursor
-        )
-            return;
+        if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
@@ -399,11 +367,6 @@ export class EditOperations {
                 const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset - 1);
                 const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
                 node.attributes[attr] = left + right;
-                this.editor.treeCursor = {
-                    nodeId: node.id,
-                    offset: left.length,
-                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
-                };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
@@ -430,12 +393,6 @@ export class EditOperations {
                 const left = cellText.substring(0, offset - 1);
                 const right = cellText.substring(offset);
                 this.editor.tableManager.setTableCellText(node, cellRow, cellCol, left + right);
-                this.editor.treeCursor = {
-                    nodeId: node.id,
-                    offset: left.length,
-                    cellRow,
-                    cellCol,
-                };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
@@ -462,7 +419,6 @@ export class EditOperations {
             // Code-block content is raw code — skip re-parsing.
             if (node.type === 'code-block') {
                 node.content = newContent;
-                this.editor.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
@@ -496,7 +452,6 @@ export class EditOperations {
                 newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
             }
 
-            this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the start of the node.
@@ -507,7 +462,6 @@ export class EditOperations {
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
-                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 if (wasListItem) {
                     const siblings = this.editor.getSiblings(node);
@@ -523,7 +477,6 @@ export class EditOperations {
                 const wasListItem = node.type === 'list-item';
                 node.type = 'paragraph';
                 node.attributes = {};
-                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 if (wasListItem) {
                     const siblings = this.editor.getSiblings(node);
@@ -553,10 +506,6 @@ export class EditOperations {
                             lastChild.content += node.content;
                             siblings.splice(idx, 1);
                             node.parent = null;
-                            this.editor.treeCursor = {
-                                nodeId: lastChild.id,
-                                offset: lastChildLen,
-                            };
                             this.editor.syntaxTree.treeCursor = {
                                 nodeId: lastChild.id,
                                 offset: lastChildLen,
@@ -568,7 +517,6 @@ export class EditOperations {
                         prev.content += node.content;
                         siblings.splice(idx, 1);
                         node.parent = null;
-                        this.editor.treeCursor = { nodeId: prev.id, offset: prevLen };
                         this.editor.syntaxTree.treeCursor = { nodeId: prev.id, offset: prevLen };
                         renderHints = { updated: [prev.id], removed: [node.id] };
                     }
@@ -598,13 +546,7 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (
-            !node ||
-            !this.editor.syntaxTree ||
-            !this.editor.treeCursor ||
-            !this.editor.syntaxTree.treeCursor
-        )
-            return;
+        if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
@@ -619,11 +561,6 @@ export class EditOperations {
                 const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
                 const right = old.substring(this.editor.syntaxTree.treeCursor.offset + 1);
                 node.attributes[attr] = left + right;
-                this.editor.treeCursor = {
-                    nodeId: node.id,
-                    offset: left.length,
-                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
-                };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
@@ -650,12 +587,6 @@ export class EditOperations {
                 const left = cellText.substring(0, offset);
                 const right = cellText.substring(offset + 1);
                 this.editor.tableManager.setTableCellText(node, cellRow, cellCol, left + right);
-                this.editor.treeCursor = {
-                    nodeId: node.id,
-                    offset,
-                    cellRow,
-                    cellCol,
-                };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset,
@@ -682,7 +613,6 @@ export class EditOperations {
             // Code-block content is raw code — skip re-parsing.
             if (node.type === 'code-block') {
                 node.content = newContent;
-                this.editor.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
@@ -715,7 +645,6 @@ export class EditOperations {
                 newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
             }
 
-            this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the end — merge with the next node
@@ -742,7 +671,6 @@ export class EditOperations {
                             siblings.splice(idx + 1, 1);
                             next.parent = null;
                         }
-                        this.editor.treeCursor = { nodeId: node.id, offset: curLen };
                         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
                         renderHints =
                             next.children.length === 0
@@ -754,7 +682,6 @@ export class EditOperations {
                     node.content += next.content;
                     siblings.splice(idx + 1, 1);
                     next.parent = null;
-                    this.editor.treeCursor = { nodeId: node.id, offset: curLen };
                     this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
                     renderHints = { updated: [node.id], removed: [next.id] };
                 }
@@ -786,13 +713,7 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (
-            !node ||
-            !this.editor.syntaxTree ||
-            !this.editor.treeCursor ||
-            !this.editor.syntaxTree.treeCursor
-        )
-            return;
+        if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // html-block tag lines and containers are not splittable.
         if (
@@ -807,12 +728,6 @@ export class EditOperations {
             const { cellRow, cellCol } = this.editor.syntaxTree.treeCursor;
             const { totalRows } = this.editor.tableManager.getTableDimensions(node);
             if (cellRow < totalRows - 1) {
-                this.editor.treeCursor = {
-                    nodeId: node.id,
-                    offset: 0,
-                    cellRow: cellRow + 1,
-                    cellCol,
-                };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
@@ -833,7 +748,6 @@ export class EditOperations {
             node.type = 'code-block';
             node.content = '';
             node.attributes = { language: fenceMatch[1] || '' };
-            this.editor.treeCursor = { nodeId: node.id, offset: 0 };
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
@@ -844,7 +758,6 @@ export class EditOperations {
             const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
             const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
             node.content = `${left}\n${right}`;
-            this.editor.treeCursor = { nodeId: node.id, offset: left.length + 1 };
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
@@ -862,7 +775,6 @@ export class EditOperations {
                 node.type = 'paragraph';
                 node.content = '';
                 node.attributes = {};
-                this.editor.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 const renumbered = this.editor.renumberAdjacentList(siblings, idx);
                 /** @type {{ updated: string[], removed?: string[] }} */
@@ -893,7 +805,6 @@ export class EditOperations {
             // Renumber subsequent ordered items in the same run
             const renumbered = this.editor.renumberAdjacentList(siblings, idx);
 
-            this.editor.treeCursor = { nodeId: newItem.id, offset: 0 };
             this.editor.syntaxTree.treeCursor = { nodeId: newItem.id, offset: 0 };
             /** @type {{ updated: string[], added: string[], removed?: string[] }} */
             const listHints = { updated: [node.id, ...renumbered], added: [newItem.id] };
@@ -918,7 +829,6 @@ export class EditOperations {
         siblings.splice(idx + 1, 0, newNode);
         if (node.parent) newNode.parent = node.parent;
 
-        this.editor.treeCursor = { nodeId: newNode.id, offset: 0 };
         this.editor.syntaxTree.treeCursor = { nodeId: newNode.id, offset: 0 };
 
         /** @type {{ updated: string[], added: string[], removed?: string[] }} */
