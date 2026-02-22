@@ -6,7 +6,7 @@
 /// <reference path="../../types.d.ts" />
 
 import { crc32 } from './editor/crc32.js';
-import { absoluteOffsetToCursor, cursorToAbsoluteOffset } from './editor/cursor-persistence.js';
+import { cursorToAbsoluteOffset } from './editor/cursor-persistence.js';
 import { Editor } from './editor/editor.js';
 import { initPageResizeHandles } from './editor/page-resize.js';
 import { KeyboardHandler } from './handlers/keyboard-handler.js';
@@ -203,14 +203,6 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (!detail) return;
             const filePath = detail.filePath || null;
-            const cursorData = detail.cursorOffset
-                ? {
-                      cursorOffset: detail.cursorOffset,
-                      contentHash: detail.contentHash,
-                      scrollTop: detail.scrollTop,
-                  }
-                : undefined;
-
             // If this file is already open in another tab, switch to it
             if (filePath && this.tabBar) {
                 const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
@@ -223,9 +215,9 @@ class App {
             // If the active tab is a pristine empty document, reuse it
             // instead of opening a new tab alongside it
             if (this._isActiveTabPristine()) {
-                this._loadIntoCurrentTab(filePath, detail.content ?? '', cursorData);
+                this._loadIntoCurrentTab(filePath, detail.content ?? '');
             } else {
-                this._createNewTab(filePath, detail.content ?? '', cursorData);
+                this._createNewTab(filePath, detail.content ?? '');
             }
         });
 
@@ -441,41 +433,6 @@ class App {
     }
 
     /**
-     * Restores the cursor to a saved absolute offset if the content hash
-     * matches.  Called after loadMarkdown() during session restore.
-     * @param {number} cursorOffset
-     * @param {number} contentHash
-     * @param {number} [scrollTop]
-     */
-    _restoreCursor(cursorOffset, contentHash, scrollTop) {
-        if (!this.editor?.syntaxTree || cursorOffset == null || !contentHash) {
-            return;
-        }
-
-        const currentHash = crc32(this.editor.getMarkdown());
-        if (currentHash !== contentHash) return;
-
-        const cursor = absoluteOffsetToCursor(
-            this.editor.syntaxTree,
-            cursorOffset,
-            this.editor.getPrefixLength.bind(this.editor),
-        );
-        if (cursor) {
-            this.editor.treeCursor = cursor;
-            this.editor.fullRenderAndPlaceCursor();
-
-            // Restore the saved scroll position synchronously so that
-            // any subsequent _saveCurrentState (e.g. during multi-file
-            // restore) captures the correct scrollTop.
-            if (scrollTop != null && scrollTop > 0 && this._scrollContainer) {
-                this._scrollContainer.scrollTop = scrollTop;
-            } else {
-                this._scrollToNode(cursor.nodeId);
-            }
-        }
-    }
-
-    /**
      * Scrolls the element for the given tree node into view within the
      * scroll container.
      * @param {string} nodeId
@@ -495,23 +452,14 @@ class App {
      * without creating a new tab.
      * @param {string|null} filePath
      * @param {string} content
-     * @param {{cursorOffset?: number, contentHash?: number, scrollTop?: number}} [cursorData]
      */
-    _loadIntoCurrentTab(filePath, content, cursorData) {
+    _loadIntoCurrentTab(filePath, content) {
         if (!this.editor || !this.tabBar?.activeTabId) return;
 
         this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
 
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
-
-        if (cursorData) {
-            this._restoreCursor(
-                cursorData.cursorOffset ?? 0,
-                cursorData.contentHash ?? 0,
-                cursorData.scrollTop,
-            );
-        }
 
         this.editor.updateWindowTitle();
 
@@ -522,9 +470,8 @@ class App {
      * Creates a new tab and loads content into it.
      * @param {string|null} filePath - File path, or null for untitled
      * @param {string} content - Markdown content to load
-     * @param {{cursorOffset?: number, contentHash?: number, scrollTop?: number}} [cursorData]
      */
-    _createNewTab(filePath, content, cursorData) {
+    _createNewTab(filePath, content) {
         if (!this.editor || !this.tabBar || !this._scrollContainer) return;
 
         // Save the current tab's state before switching
@@ -551,14 +498,6 @@ class App {
 
         // Reset scroll for the new tab
         this._scrollContainer.scrollTop = 0;
-
-        if (cursorData) {
-            this._restoreCursor(
-                cursorData.cursorOffset ?? 0,
-                cursorData.contentHash ?? 0,
-                cursorData.scrollTop,
-            );
-        }
 
         this.editor.updateWindowTitle();
 
@@ -836,16 +775,6 @@ class App {
             getContent: () => this.editor?.getMarkdown() ?? '',
             setContent: (content) => {
                 this.editor?.loadMarkdown(content);
-                // Restore cursor from session data if available
-                const pending = /** @type {any} */ (window).__pendingCursorRestore;
-                if (pending) {
-                    /** @type {any} */ (window).__pendingCursorRestore = undefined;
-                    this._restoreCursor(
-                        pending.cursorOffset ?? 0,
-                        pending.contentHash ?? 0,
-                        pending.scrollTop,
-                    );
-                }
             },
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
             setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),

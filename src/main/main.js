@@ -348,7 +348,6 @@ async function restoreOpenFiles(window, entries) {
             function tryRestore() {
                 var api = window.editorAPI;
                 if (!api) { setTimeout(tryRestore, 50); return; }
-                window.__pendingCursorRestore = { cursorOffset: ${first.cursorOffset}, contentHash: ${first.contentHash}, scrollTop: ${first.scrollTop} };
                 window.__editorFilePath = ${filePathJSON};
                 api.setContent(${contentJSON});
             }
@@ -363,9 +362,6 @@ async function restoreOpenFiles(window, entries) {
             success: true,
             content: loaded[i].content,
             filePath: loaded[i].filePath,
-            cursorOffset: loaded[i].cursorOffset,
-            contentHash: loaded[i].contentHash,
-            scrollTop: loaded[i].scrollTop,
         });
     }
 
