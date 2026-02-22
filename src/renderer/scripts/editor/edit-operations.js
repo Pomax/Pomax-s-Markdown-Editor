@@ -150,26 +150,35 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (!node || !this.editor.syntaxTree || !this.editor.treeCursor) return;
+        if (
+            !node ||
+            !this.editor.syntaxTree ||
+            !this.editor.treeCursor ||
+            !this.editor.syntaxTree.treeCursor
+        )
+            return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
-        if (node.type === 'html-block' && this.editor.treeCursor.tagPart) {
+        if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
             const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
-            const attr = this.editor.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+            const attr =
+                this.editor.syntaxTree.treeCursor.tagPart === 'opening'
+                    ? 'openingTag'
+                    : 'closingTag';
             const old = node.attributes[attr] || '';
-            const left = old.substring(0, this.editor.treeCursor.offset);
-            const right = old.substring(this.editor.treeCursor.offset);
+            const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
+            const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
             node.attributes[attr] = left + text + right;
             this.editor.treeCursor = {
                 nodeId: node.id,
                 offset: left.length + text.length,
-                tagPart: this.editor.treeCursor.tagPart,
+                tagPart: this.editor.syntaxTree.treeCursor.tagPart,
             };
             this.editor.syntaxTree.treeCursor = {
                 nodeId: node.id,
                 offset: left.length + text.length,
-                tagPart: this.editor.treeCursor.tagPart,
+                tagPart: this.editor.syntaxTree.treeCursor.tagPart,
             };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
@@ -183,10 +192,10 @@ export class EditOperations {
         // ── Table cell editing ──
         if (
             node.type === 'table' &&
-            this.editor.treeCursor.cellRow !== undefined &&
-            this.editor.treeCursor.cellCol !== undefined
+            this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
+            this.editor.syntaxTree.treeCursor.cellCol !== undefined
         ) {
-            const { cellRow, cellCol, offset } = this.editor.treeCursor;
+            const { cellRow, cellCol, offset } = this.editor.syntaxTree.treeCursor;
             const cellText = this.editor.tableManager.getTableCellText(node, cellRow, cellCol);
             const left = cellText.substring(0, offset);
             const right = cellText.substring(offset);
@@ -210,8 +219,8 @@ export class EditOperations {
         const oldType = node.type;
 
         // Insert the text into the node's content at the cursor offset
-        const left = node.content.substring(0, this.editor.treeCursor.offset);
-        const right = node.content.substring(this.editor.treeCursor.offset);
+        const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
+        const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
         const newContent = left + text + right;
 
         // Code-block content is raw code, not markdown — skip re-parsing
@@ -369,28 +378,36 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (!node || !this.editor.syntaxTree || !this.editor.treeCursor) return;
+        if (
+            !node ||
+            !this.editor.syntaxTree ||
+            !this.editor.treeCursor ||
+            !this.editor.syntaxTree.treeCursor
+        )
+            return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
-        if (node.type === 'html-block' && this.editor.treeCursor.tagPart) {
-            if (this.editor.treeCursor.offset > 0) {
+        if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+            if (this.editor.syntaxTree.treeCursor.offset > 0) {
                 const before = this.editor.syntaxTree.toMarkdown();
                 const attr =
-                    this.editor.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+                    this.editor.syntaxTree.treeCursor.tagPart === 'opening'
+                        ? 'openingTag'
+                        : 'closingTag';
                 const old = node.attributes[attr] || '';
-                const left = old.substring(0, this.editor.treeCursor.offset - 1);
-                const right = old.substring(this.editor.treeCursor.offset);
+                const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset - 1);
+                const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
                 node.attributes[attr] = left + right;
                 this.editor.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
-                    tagPart: this.editor.treeCursor.tagPart,
+                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
                 };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
-                    tagPart: this.editor.treeCursor.tagPart,
+                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
                 };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
@@ -403,10 +420,10 @@ export class EditOperations {
         // ── Table cell backspace ──
         if (
             node.type === 'table' &&
-            this.editor.treeCursor.cellRow !== undefined &&
-            this.editor.treeCursor.cellCol !== undefined
+            this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
+            this.editor.syntaxTree.treeCursor.cellCol !== undefined
         ) {
-            const { cellRow, cellCol, offset } = this.editor.treeCursor;
+            const { cellRow, cellCol, offset } = this.editor.syntaxTree.treeCursor;
             if (offset > 0) {
                 const before = this.editor.syntaxTree.toMarkdown();
                 const cellText = this.editor.tableManager.getTableCellText(node, cellRow, cellCol);
@@ -435,10 +452,10 @@ export class EditOperations {
         /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
         let renderHints = { updated: [node.id] };
 
-        if (this.editor.treeCursor.offset > 0) {
+        if (this.editor.syntaxTree.treeCursor.offset > 0) {
             // Delete one character before the cursor inside this node's content
-            const left = node.content.substring(0, this.editor.treeCursor.offset - 1);
-            const right = node.content.substring(this.editor.treeCursor.offset);
+            const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset - 1);
+            const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
             const newContent = left + right;
             const oldType = node.type;
 
@@ -581,27 +598,36 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (!node || !this.editor.syntaxTree || !this.editor.treeCursor) return;
+        if (
+            !node ||
+            !this.editor.syntaxTree ||
+            !this.editor.treeCursor ||
+            !this.editor.syntaxTree.treeCursor
+        )
+            return;
 
         // When the cursor is on an html-block tag line (source view), edit
         // the openingTag / closingTag attribute directly.
-        if (node.type === 'html-block' && this.editor.treeCursor.tagPart) {
-            const attr = this.editor.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
+        if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+            const attr =
+                this.editor.syntaxTree.treeCursor.tagPart === 'opening'
+                    ? 'openingTag'
+                    : 'closingTag';
             const old = node.attributes[attr] || '';
-            if (this.editor.treeCursor.offset < old.length) {
+            if (this.editor.syntaxTree.treeCursor.offset < old.length) {
                 const before = this.editor.syntaxTree.toMarkdown();
-                const left = old.substring(0, this.editor.treeCursor.offset);
-                const right = old.substring(this.editor.treeCursor.offset + 1);
+                const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
+                const right = old.substring(this.editor.syntaxTree.treeCursor.offset + 1);
                 node.attributes[attr] = left + right;
                 this.editor.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
-                    tagPart: this.editor.treeCursor.tagPart,
+                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
                 };
                 this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: left.length,
-                    tagPart: this.editor.treeCursor.tagPart,
+                    tagPart: this.editor.syntaxTree.treeCursor.tagPart,
                 };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
@@ -614,10 +640,10 @@ export class EditOperations {
         // ── Table cell delete ──
         if (
             node.type === 'table' &&
-            this.editor.treeCursor.cellRow !== undefined &&
-            this.editor.treeCursor.cellCol !== undefined
+            this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
+            this.editor.syntaxTree.treeCursor.cellCol !== undefined
         ) {
-            const { cellRow, cellCol, offset } = this.editor.treeCursor;
+            const { cellRow, cellCol, offset } = this.editor.syntaxTree.treeCursor;
             const cellText = this.editor.tableManager.getTableCellText(node, cellRow, cellCol);
             if (offset < cellText.length) {
                 const before = this.editor.syntaxTree.toMarkdown();
@@ -646,10 +672,10 @@ export class EditOperations {
         /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
         let renderHints = { updated: [node.id] };
 
-        if (this.editor.treeCursor.offset < node.content.length) {
+        if (this.editor.syntaxTree.treeCursor.offset < node.content.length) {
             // Delete one character after the cursor
-            const left = node.content.substring(0, this.editor.treeCursor.offset);
-            const right = node.content.substring(this.editor.treeCursor.offset + 1);
+            const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
+            const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset + 1);
             const newContent = left + right;
             const oldType = node.type;
 
@@ -760,19 +786,25 @@ export class EditOperations {
         }
 
         const node = this.editor.getCurrentNode();
-        if (!node || !this.editor.syntaxTree || !this.editor.treeCursor) return;
+        if (
+            !node ||
+            !this.editor.syntaxTree ||
+            !this.editor.treeCursor ||
+            !this.editor.syntaxTree.treeCursor
+        )
+            return;
 
         // html-block tag lines and containers are not splittable.
         if (
             node.type === 'html-block' &&
-            (this.editor.treeCursor.tagPart || node.children.length > 0)
+            (this.editor.syntaxTree.treeCursor.tagPart || node.children.length > 0)
         ) {
             return;
         }
 
         // ── Enter inside a table → move to next row, same column ──
-        if (node.type === 'table' && this.editor.treeCursor.cellRow !== undefined) {
-            const { cellRow, cellCol } = this.editor.treeCursor;
+        if (node.type === 'table' && this.editor.syntaxTree.treeCursor.cellRow !== undefined) {
+            const { cellRow, cellCol } = this.editor.syntaxTree.treeCursor;
             const { totalRows } = this.editor.tableManager.getTableDimensions(node);
             if (cellRow < totalRows - 1) {
                 this.editor.treeCursor = {
@@ -809,8 +841,8 @@ export class EditOperations {
 
         // ── Enter inside a code block → insert newline ──
         if (node.type === 'code-block') {
-            const left = node.content.substring(0, this.editor.treeCursor.offset);
-            const right = node.content.substring(this.editor.treeCursor.offset);
+            const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
+            const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
             node.content = `${left}\n${right}`;
             this.editor.treeCursor = { nodeId: node.id, offset: left.length + 1 };
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
@@ -818,8 +850,8 @@ export class EditOperations {
             return;
         }
 
-        const contentBefore = node.content.substring(0, this.editor.treeCursor.offset);
-        const contentAfter = node.content.substring(this.editor.treeCursor.offset);
+        const contentBefore = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
+        const contentAfter = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
 
         // ── Enter inside a list item ──
         if (node.type === 'list-item') {
