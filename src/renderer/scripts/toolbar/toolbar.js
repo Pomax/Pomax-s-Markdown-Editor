@@ -345,7 +345,9 @@ export class Toolbar {
         this._parserToggleBtn.addEventListener('click', () => {
             const next = this.editor._parserType === 'dfa' ? 'regex' : 'dfa';
             this.editor.setParser(next);
-            this._parserToggleBtn.textContent = `Parser: ${next}`;
+            if (this._parserToggleBtn) {
+                this._parserToggleBtn.textContent = `Parser: ${next}`;
+            }
         });
         this.toolbarElement.appendChild(this._parserToggleBtn);
         // --- END TEMPORARY ---

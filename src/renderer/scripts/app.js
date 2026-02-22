@@ -25,6 +25,9 @@ import { Toolbar } from './toolbar/toolbar.js';
  * @property {import('./editor/editor.js').TreeCursor|null} cursor - Cursor position
  * @property {number} cursorOffset - Absolute character offset in markdown source
  * @property {number} contentHash - CRC32 hash of the markdown content
+ * @property {import('./parser/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
+ * @property {number} scrollTop - Scroll position of the scroll container
+ * @property {string|null} tocActiveHeadingId - The active ToC heading node ID
  * @property {any[]} undoStack - Undo history
  * @property {any[]} redoStack - Redo history
  */
@@ -62,6 +65,20 @@ class App {
          */
         this._documentStates = new Map();
 
+        /**
+         * Per-tab contenteditable container elements.
+         * Each tab gets its own div; only the active one is visible.
+         * @type {Map<string, HTMLElement>}
+         */
+        this._tabContainers = new Map();
+
+        /**
+         * The scroll container (parent of contenteditable divs).
+         * scrollTop is saved/restored per-tab since it's shared.
+         * @type {HTMLElement|null}
+         */
+        this._scrollContainer = null;
+
         /** @type {number} Counter for generating unique tab IDs */
         this._tabCounter = 0;
 
@@ -83,7 +100,11 @@ class App {
             return;
         }
 
-        // Initialize editor
+        // The scroll container is `#editor-container`; each tab will
+        // get its own contenteditable div inside it.
+        this._scrollContainer = editorContainer.parentElement;
+
+        // Initialize editor with the original contenteditable div
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
 
@@ -121,8 +142,10 @@ class App {
             this.tabBar = new TabBar(tabBarContainer);
             this.tabBar.initialize();
 
+            // Register the initial #editor element as the first tab's container
             const firstTabId = this._nextTabId();
             this.tabBar.addTab(firstTabId, null, true);
+            this._tabContainers.set(firstTabId, editorContainer);
 
             this.tabBar.onTabSelect = (tabId) => this._switchToTab(tabId);
             this.tabBar.onTabClose = (tabId) => this._closeTab(tabId);
@@ -161,6 +184,11 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (detail?.tabId) {
                 this._switchToTab(detail.tabId);
+            } else if (detail?.filePath && this.tabBar) {
+                const tab = this.tabBar.tabs.find((t) => t.filePath === detail.filePath);
+                if (tab) {
+                    this._switchToTab(tab.id);
+                }
             }
         });
 
@@ -176,7 +204,11 @@ class App {
             if (!detail) return;
             const filePath = detail.filePath || null;
             const cursorData = detail.cursorOffset
-                ? { cursorOffset: detail.cursorOffset, contentHash: detail.contentHash }
+                ? {
+                      cursorOffset: detail.cursorOffset,
+                      contentHash: detail.contentHash,
+                      scrollTop: detail.scrollTop,
+                  }
                 : undefined;
 
             // If this file is already open in another tab, switch to it
@@ -298,6 +330,17 @@ class App {
         }
 
         const hash = crc32(md);
+
+        // Capture the currently highlighted ToC heading so it can be
+        // restored without recomputing viewport-based highlighting.
+        let tocHeadingId = this.toc?._lockedHeadingId ?? null;
+        if (!tocHeadingId && this.toc) {
+            const activeLink = this.toc.container.querySelector('.toc-active');
+            if (activeLink) {
+                tocHeadingId = /** @type {HTMLElement} */ (activeLink).dataset.nodeId ?? null;
+            }
+        }
+
         this._documentStates.set(tabId, {
             content: md,
             filePath: this.editor.currentFilePath,
@@ -305,9 +348,15 @@ class App {
             cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
             cursorOffset: absOffset,
             contentHash: hash,
+            syntaxTree: this.editor.syntaxTree,
+            scrollTop: this._scrollContainer ? this._scrollContainer.scrollTop : 0,
+            tocActiveHeadingId: tocHeadingId,
             undoStack: [...this.editor.undoManager.undoStack],
             redoStack: [...this.editor.undoManager.redoStack],
         });
+
+        // Hide the current tab's container (DOM stays intact)
+        this.editor.container.style.display = 'none';
     }
 
     /**
@@ -317,17 +366,56 @@ class App {
     _restoreState(tabId) {
         if (!this.editor) return;
 
+        const targetContainer = this._tabContainers.get(tabId);
         const state = this._documentStates.get(tabId);
-        if (state) {
-            this.editor.currentFilePath = state.filePath;
-            this.editor.loadMarkdown(state.content);
-            this.editor.undoManager.undoStack = [...state.undoStack];
-            this.editor.undoManager.redoStack = [...state.redoStack];
-            if (state.cursor) {
-                this.editor.treeCursor = { ...state.cursor };
-                this.editor.placeCursor();
+
+        if (targetContainer) {
+            // Suppress the ToC's scroll handler while we swap containers
+            if (this.toc) {
+                this.toc._programmaticScroll = true;
             }
-            this.editor.setUnsavedChanges(state.modified);
+
+            // Swap the editor to the target tab's container
+            this.editor.swapContainer(targetContainer);
+            targetContainer.style.display = '';
+
+            // Restore editor state
+            if (state) {
+                this.editor.currentFilePath = state.filePath;
+                this.editor.syntaxTree = state.syntaxTree;
+                this.editor.treeCursor = state.cursor ? { ...state.cursor } : null;
+                this.editor._lastRenderedNodeId = this.editor.treeCursor?.nodeId ?? null;
+                this.editor.undoManager.undoStack = [...state.undoStack];
+                this.editor.undoManager.redoStack = [...state.redoStack];
+                this.editor.setUnsavedChanges(state.modified);
+            }
+
+            // Restore scroll position on the shared scroll container
+            if (this._scrollContainer && state?.scrollTop !== undefined) {
+                this._scrollContainer.scrollTop = state.scrollTop;
+            }
+
+            // Place cursor and focus — DOM is already intact so no
+            // browser auto-scroll fight.
+            this.editor.placeCursor();
+            this.editor.container.focus({ preventScroll: true });
+
+            if (this.toc) {
+                // Lock the ToC to the heading that was active when we
+                // left this tab so refresh() doesn't recompute it from
+                // viewport geometry.
+                this.toc._lockedHeadingId = state?.tocActiveHeadingId ?? null;
+                this.toc.reobserve();
+                // Keep the programmatic-scroll flag active until the
+                // next frame — scroll events from scrollTop / placeCursor
+                // are dispatched asynchronously and would otherwise clear
+                // the locked heading.
+                requestAnimationFrame(() => {
+                    if (this.toc) {
+                        this.toc._programmaticScroll = false;
+                    }
+                });
+            }
         } else {
             this.editor.reset();
         }
@@ -357,9 +445,10 @@ class App {
      * matches.  Called after loadMarkdown() during session restore.
      * @param {number} cursorOffset
      * @param {number} contentHash
+     * @param {number} [scrollTop]
      */
-    _restoreCursor(cursorOffset, contentHash) {
-        if (!this.editor?.syntaxTree || !cursorOffset || !contentHash) {
+    _restoreCursor(cursorOffset, contentHash, scrollTop) {
+        if (!this.editor?.syntaxTree || cursorOffset == null || !contentHash) {
             return;
         }
 
@@ -374,7 +463,20 @@ class App {
         if (cursor) {
             this.editor.treeCursor = cursor;
             this.editor.fullRenderAndPlaceCursor();
-            this._scrollToNode(cursor.nodeId);
+
+            // If we have a saved scroll position, use that instead of
+            // scrolling to the cursor node — this preserves the exact
+            // viewport the user had, including any ToC heading click.
+            if (scrollTop != null && scrollTop > 0 && this._scrollContainer) {
+                requestAnimationFrame(() => {
+                    if (this._scrollContainer) {
+                        this._scrollContainer.scrollTop = scrollTop;
+                    }
+                    this.toc?._updateActiveHeading();
+                });
+            } else {
+                this._scrollToNode(cursor.nodeId);
+            }
         }
     }
 
@@ -398,7 +500,7 @@ class App {
      * without creating a new tab.
      * @param {string|null} filePath
      * @param {string} content
-     * @param {{cursorOffset?: number, contentHash?: number}} [cursorData]
+     * @param {{cursorOffset?: number, contentHash?: number, scrollTop?: number}} [cursorData]
      */
     _loadIntoCurrentTab(filePath, content, cursorData) {
         if (!this.editor || !this.tabBar?.activeTabId) return;
@@ -409,7 +511,11 @@ class App {
         this.editor.loadMarkdown(content);
 
         if (cursorData) {
-            this._restoreCursor(cursorData.cursorOffset ?? 0, cursorData.contentHash ?? 0);
+            this._restoreCursor(
+                cursorData.cursorOffset ?? 0,
+                cursorData.contentHash ?? 0,
+                cursorData.scrollTop,
+            );
         }
 
         this.editor.updateWindowTitle();
@@ -421,10 +527,10 @@ class App {
      * Creates a new tab and loads content into it.
      * @param {string|null} filePath - File path, or null for untitled
      * @param {string} content - Markdown content to load
-     * @param {{cursorOffset?: number, contentHash?: number}} [cursorData]
+     * @param {{cursorOffset?: number, contentHash?: number, scrollTop?: number}} [cursorData]
      */
     _createNewTab(filePath, content, cursorData) {
-        if (!this.editor || !this.tabBar) return;
+        if (!this.editor || !this.tabBar || !this._scrollContainer) return;
 
         // Save the current tab's state before switching
         this._saveCurrentState();
@@ -432,12 +538,31 @@ class App {
         const tabId = this._nextTabId();
         this.tabBar.addTab(tabId, filePath, true);
 
+        // Create a new contenteditable div for this tab
+        const newContainer = document.createElement('div');
+        newContainer.className = 'editor';
+        newContainer.contentEditable = 'true';
+        newContainer.spellcheck = false;
+        newContainer.dataset.viewMode = this.editor.viewMode;
+        this._scrollContainer.appendChild(newContainer);
+
+        // Swap the editor to the new container and register it
+        this.editor.swapContainer(newContainer);
+        this._tabContainers.set(tabId, newContainer);
+
         // Load the new content into the editor
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
 
+        // Reset scroll for the new tab
+        this._scrollContainer.scrollTop = 0;
+
         if (cursorData) {
-            this._restoreCursor(cursorData.cursorOffset ?? 0, cursorData.contentHash ?? 0);
+            this._restoreCursor(
+                cursorData.cursorOffset ?? 0,
+                cursorData.contentHash ?? 0,
+                cursorData.scrollTop,
+            );
         }
 
         this.editor.updateWindowTitle();
@@ -451,7 +576,12 @@ class App {
      */
     _switchToTab(tabId) {
         if (!this.editor || !this.tabBar) return;
-        if (tabId === this.tabBar.activeTabId) return;
+        if (tabId === this.tabBar.activeTabId) {
+            // Already on this tab — just ensure the ToC reflects
+            // the current container (needed after multi-file restore).
+            this.toc?.reobserve();
+            return;
+        }
 
         // Save current tab's state
         this._saveCurrentState();
@@ -510,6 +640,13 @@ class App {
 
         this._documentStates.delete(tabId);
 
+        // Remove the tab's container element from the DOM
+        const closedContainer = this._tabContainers.get(tabId);
+        if (closedContainer) {
+            closedContainer.remove();
+            this._tabContainers.delete(tabId);
+        }
+
         // Re-check active state — it may have changed if we switched above
         const wasActive = tabId === this.tabBar.activeTabId;
         this.tabBar.removeTab(tabId);
@@ -518,6 +655,18 @@ class App {
             // Last tab was closed — create a fresh untitled tab
             const newId = this._nextTabId();
             this.tabBar.addTab(newId, null, true);
+
+            // Create a new container for the fresh tab
+            const newContainer = document.createElement('div');
+            newContainer.className = 'editor';
+            newContainer.contentEditable = 'true';
+            newContainer.spellcheck = false;
+            newContainer.dataset.viewMode = this.editor.viewMode;
+            if (this._scrollContainer) {
+                this._scrollContainer.appendChild(newContainer);
+            }
+            this.editor.swapContainer(newContainer);
+            this._tabContainers.set(newId, newContainer);
             this.editor.reset();
         } else if (wasActive && this.tabBar.activeTabId) {
             // removeTab already picked a new active tab; restore its state
@@ -546,6 +695,7 @@ class App {
                 active: tab.active,
                 cursorOffset: 0,
                 contentHash: 0,
+                scrollTop: 0,
             };
 
             if (tab.id === activeTabId && this.editor?.syntaxTree && this.editor.treeCursor) {
@@ -558,12 +708,14 @@ class App {
                     this.editor.buildMarkdownLine.bind(this.editor),
                     this.editor.getPrefixLength.bind(this.editor),
                 );
+                entry.scrollTop = this._scrollContainer ? this._scrollContainer.scrollTop : 0;
             } else {
                 // Background tab — read from cached document state
                 const state = this._documentStates.get(tab.id);
                 if (state) {
                     entry.cursorOffset = state.cursorOffset;
                     entry.contentHash = state.contentHash;
+                    entry.scrollTop = state.scrollTop ?? 0;
                 }
             }
 
@@ -690,7 +842,11 @@ class App {
                 const pending = /** @type {any} */ (window).__pendingCursorRestore;
                 if (pending) {
                     /** @type {any} */ (window).__pendingCursorRestore = undefined;
-                    this._restoreCursor(pending.cursorOffset ?? 0, pending.contentHash ?? 0);
+                    this._restoreCursor(
+                        pending.cursorOffset ?? 0,
+                        pending.contentHash ?? 0,
+                        pending.scrollTop,
+                    );
                 }
             },
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
@@ -702,6 +858,16 @@ class App {
                     this._scrollToNode(nodeId);
                 }
             },
+        };
+
+        // Expose a flush function the main process can call via
+        // executeJavaScript before persisting open-files state.
+        /** @type {any} */ (window).__flushOpenFiles = () => {
+            if (this._cursorDebounce) {
+                clearTimeout(this._cursorDebounce);
+                this._cursorDebounce = null;
+            }
+            this._notifyOpenFiles();
         };
 
         // Expose file path and cursor info as globals so the reload handler

@@ -160,6 +160,13 @@ export class Editor {
          * @type {string|null}
          */
         this._lastRenderedNodeId = null;
+
+        /**
+         * Bound event handlers, keyed by event name.
+         * Stored so they can be detached/reattached when swapping containers.
+         * @type {Record<string, EventListener>}
+         */
+        this._boundHandlers = {};
     }
 
     // ──────────────────────────────────────────────
@@ -262,54 +269,76 @@ export class Editor {
      * Sets up event listeners for the editor.
      */
     setupEventListeners() {
-        this.container.addEventListener(
-            'keydown',
-            this.inputHandler.handleKeyDown.bind(this.inputHandler),
-        );
-        this.container.addEventListener(
-            'beforeinput',
-            this.inputHandler.handleBeforeInput.bind(this.inputHandler),
-        );
+        // Store bound handlers so they can be removed/reattached
+        // when swapping to a different container element.
+        this._boundHandlers = {
+            keydown: /** @type {EventListener} */ (
+                this.inputHandler.handleKeyDown.bind(this.inputHandler)
+            ),
+            beforeinput: /** @type {EventListener} */ (
+                this.inputHandler.handleBeforeInput.bind(this.inputHandler)
+            ),
+            mousedown: /** @type {EventListener} */ (
+                this.eventHandler.handleMouseDown.bind(this.eventHandler)
+            ),
+            click: /** @type {EventListener} */ (
+                this.eventHandler.handleClick.bind(this.eventHandler)
+            ),
+            focus: /** @type {EventListener} */ (
+                this.eventHandler.handleFocus.bind(this.eventHandler)
+            ),
+            blur: /** @type {EventListener} */ (
+                this.eventHandler.handleBlur.bind(this.eventHandler)
+            ),
+            cut: /** @type {EventListener} */ (
+                this.clipboardHandler.handleCut.bind(this.clipboardHandler)
+            ),
+            copy: /** @type {EventListener} */ (
+                this.clipboardHandler.handleCopy.bind(this.clipboardHandler)
+            ),
+            dragover: /** @type {EventListener} */ (
+                this.eventHandler.handleDragOver.bind(this.eventHandler)
+            ),
+            drop: /** @type {EventListener} */ (
+                /** @type {unknown} */ (this.eventHandler.handleDrop.bind(this.eventHandler))
+            ),
+        };
 
-        this.container.addEventListener(
-            'mousedown',
-            this.eventHandler.handleMouseDown.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'click',
-            this.eventHandler.handleClick.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'focus',
-            this.eventHandler.handleFocus.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'blur',
-            this.eventHandler.handleBlur.bind(this.eventHandler),
-        );
-
-        this.container.addEventListener(
-            'cut',
-            this.clipboardHandler.handleCut.bind(this.clipboardHandler),
-        );
-        this.container.addEventListener(
-            'copy',
-            this.clipboardHandler.handleCopy.bind(this.clipboardHandler),
-        );
-
-        this.container.addEventListener(
-            'dragover',
-            this.eventHandler.handleDragOver.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'drop',
-            this.eventHandler.handleDrop.bind(this.eventHandler),
-        );
+        this._attachContainerListeners();
 
         document.addEventListener(
             'selectionchange',
             this.eventHandler.handleSelectionChange.bind(this.eventHandler),
         );
+    }
+
+    /**
+     * Attaches the stored event handlers to the current container.
+     */
+    _attachContainerListeners() {
+        for (const [event, handler] of Object.entries(this._boundHandlers)) {
+            this.container.addEventListener(event, handler);
+        }
+    }
+
+    /**
+     * Detaches the stored event handlers from the current container.
+     */
+    _detachContainerListeners() {
+        for (const [event, handler] of Object.entries(this._boundHandlers)) {
+            this.container.removeEventListener(event, handler);
+        }
+    }
+
+    /**
+     * Swaps the editor's active container to a different element.
+     * Moves event listeners from the old container to the new one.
+     * @param {HTMLElement} newContainer
+     */
+    swapContainer(newContainer) {
+        this._detachContainerListeners();
+        this.container = newContainer;
+        this._attachContainerListeners();
     }
 
     // ──────────────────────────────────────────────
@@ -631,6 +660,9 @@ export class Editor {
             console.warn(`Invalid view mode: ${mode}`);
             return;
         }
+
+        // Nothing to do if already in the requested mode.
+        if (mode === this.viewMode) return;
 
         // Anchor on the cursor's node if one exists, since that is what
         // the user is focused on.  Fall back to the node closest to the

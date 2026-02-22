@@ -47,6 +47,21 @@ export class TableOfContents {
 
         /** @type {((e: Event) => void) | null} */
         this._scrollHandler = null;
+
+        /**
+         * When non-null, the ToC link for this heading ID stays highlighted
+         * regardless of scroll position.  Set when the user clicks a ToC
+         * link and cleared on the next user-initiated scroll.
+         * @type {string|null}
+         */
+        this._lockedHeadingId = null;
+
+        /**
+         * True while a programmatic scroll (from _scrollToHeading) is in
+         * progress so we can distinguish it from a user scroll.
+         * @type {boolean}
+         */
+        this._programmaticScroll = false;
     }
 
     /**
@@ -73,10 +88,32 @@ export class TableOfContents {
         // highlight the ToC heading whose section is most visible.
         const scrollContainer = this.editor.container.parentElement;
         if (scrollContainer) {
-            this._scrollHandler = () => this._updateActiveHeading();
+            this._scrollHandler = () => {
+                if (this._programmaticScroll) return;
+                // User scrolled — clear the locked heading so normal
+                // scroll-based highlighting resumes.
+                this._lockedHeadingId = null;
+                this._updateActiveHeading();
+            };
             scrollContainer.addEventListener('scroll', this._scrollHandler, { passive: true });
         }
 
+        this.refresh();
+    }
+
+    /**
+     * Re-attaches the MutationObserver to the editor's current container.
+     * Call this after swapping the editor container (e.g. on tab switch).
+     */
+    reobserve() {
+        if (this._observer) {
+            this._observer.disconnect();
+            this._observer.observe(this.editor.container, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            });
+        }
         this.refresh();
     }
 
@@ -191,6 +228,12 @@ export class TableOfContents {
      * to the corresponding ToC link.
      */
     _updateActiveHeading() {
+        // If a heading was locked by a ToC click, keep it highlighted.
+        if (this._lockedHeadingId) {
+            this._setActiveLink(this._lockedHeadingId);
+            return;
+        }
+
         const scrollContainer = this.editor.container.parentElement;
         if (!scrollContainer) return;
 
@@ -229,11 +272,20 @@ export class TableOfContents {
             }
         }
 
-        // Toggle the active class on ToC links.
+        this._setActiveLink(bestId);
+    }
+
+    /**
+     * Applies the `toc-active` class to the link matching the given
+     * heading ID and removes it from all others.  Also scrolls the ToC
+     * sidebar so the active link is centred.
+     * @param {string} headingId
+     */
+    _setActiveLink(headingId) {
         const links = this.container.querySelectorAll('.toc-link');
         for (const link of links) {
             const a = /** @type {HTMLElement} */ (link);
-            const isActive = a.dataset.nodeId === bestId;
+            const isActive = a.dataset.nodeId === headingId;
             a.classList.toggle('toc-active', isActive);
             if (isActive) {
                 // Scroll the ToC sidebar so the active link is centered
@@ -337,10 +389,16 @@ export class TableOfContents {
         this.editor.renderNodesAndPlaceCursor({ updated });
         this.editor._lastRenderedNodeId = nodeId;
 
+        // Lock the ToC highlight to the clicked heading until the
+        // user scrolls the document themselves.
+        this._lockedHeadingId = nodeId;
+        this._setActiveLink(nodeId);
+
         // Defer the scroll to the next animation frame so it runs
         // *after* any browser-initiated scroll-into-view triggered by
         // the selection change above.  This guarantees our scroll
         // position wins.
+        this._programmaticScroll = true;
         requestAnimationFrame(() => {
             const target = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
             if (!target) return;
@@ -354,6 +412,12 @@ export class TableOfContents {
                     behavior: 'instant',
                 });
             }
+
+            // Clear the programmatic-scroll flag after the browser has
+            // finished processing the scroll.
+            requestAnimationFrame(() => {
+                this._programmaticScroll = false;
+            });
         });
     }
 

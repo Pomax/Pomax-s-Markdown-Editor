@@ -284,10 +284,10 @@ export class EventHandler {
             return;
         }
 
-        // When focus moves to a toolbar button (e.g. the view-mode toggle),
-        // preserve the tree cursor so the toolbar action can operate on
-        // the correct cursor position.
-        if (related?.closest?.('#toolbar-container')) {
+        // When focus moves to a toolbar button (e.g. the view-mode toggle)
+        // or the tab bar, preserve the tree cursor so the toolbar action
+        // or tab-switch logic can operate on the correct cursor position.
+        if (related?.closest?.('#toolbar-container') || related?.closest?.('#tab-bar')) {
             return;
         }
 
