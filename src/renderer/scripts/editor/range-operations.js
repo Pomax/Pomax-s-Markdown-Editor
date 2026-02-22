@@ -201,20 +201,20 @@ export class RangeOperations {
         if (
             node.type === 'table' &&
             this.editor.viewMode === 'focused' &&
-            this.editor.treeCursor?.cellRow !== undefined &&
-            this.editor.treeCursor?.cellCol !== undefined
+            this.editor.syntaxTree?.treeCursor?.cellRow !== undefined &&
+            this.editor.syntaxTree?.treeCursor?.cellCol !== undefined
         ) {
             const cellText = this.editor.tableManager.getTableCellText(
                 node,
-                this.editor.treeCursor.cellRow,
-                this.editor.treeCursor.cellCol,
+                this.editor.syntaxTree.treeCursor.cellRow,
+                this.editor.syntaxTree.treeCursor.cellCol,
             );
             const nodeEl = this.editor.container.querySelector(`[data-node-id="${node.id}"]`);
             if (nodeEl) {
                 this.editor.tableManager.placeTableCellCursor(
                     /** @type {HTMLElement} */ (nodeEl),
-                    this.editor.treeCursor.cellRow,
-                    this.editor.treeCursor.cellCol,
+                    this.editor.syntaxTree.treeCursor.cellRow,
+                    this.editor.syntaxTree.treeCursor.cellCol,
                     0,
                 );
                 const sel = window.getSelection();
