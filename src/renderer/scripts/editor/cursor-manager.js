@@ -38,7 +38,6 @@ export class CursorManager {
         const startInfo = this._mapDOMPositionToTree(range.startContainer, range.startOffset);
         if (!startInfo) return;
 
-        this.editor.treeCursor = startInfo.cursor;
         if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = startInfo.cursor;
 
         // If the selection is collapsed there is no range.
