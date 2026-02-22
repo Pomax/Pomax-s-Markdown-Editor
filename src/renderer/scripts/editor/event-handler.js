@@ -69,7 +69,6 @@ export class EventHandler {
             let el = /** @type {HTMLElement|null} */ (event.target);
             while (el && el !== this.editor.container) {
                 if (el.dataset?.nodeId) {
-                    this.editor.treeCursor = { nodeId: el.dataset.nodeId, offset: 0 };
                     if (this.editor.syntaxTree)
                         this.editor.syntaxTree.treeCursor = {
                             nodeId: el.dataset.nodeId,
@@ -258,7 +257,6 @@ export class EventHandler {
 
         // Place the cursor on the trailing empty paragraph
         const afterNode = imgSiblings[imgIdx + 1];
-        this.editor.treeCursor = { nodeId: afterNode.id, offset: 0 };
         this.editor.syntaxTree.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
@@ -306,7 +304,6 @@ export class EventHandler {
         // will restore the cursor via handleClick / handleSelectionChange.
         if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
             const previousNodeId = this.editor.syntaxTree.treeCursor.nodeId;
-            this.editor.treeCursor = null;
             if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = null;
             this.editor.renderNodes({ updated: [previousNodeId] });
         }
