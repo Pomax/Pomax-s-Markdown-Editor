@@ -377,7 +377,6 @@ class App {
             if (state) {
                 this.editor.currentFilePath = state.filePath;
                 this.editor.syntaxTree = state.syntaxTree;
-                this.editor.treeCursor = state.cursor ? { ...state.cursor } : null;
                 if (this.editor.syntaxTree)
                     this.editor.syntaxTree.treeCursor = state.cursor ? { ...state.cursor } : null;
                 this.editor._lastRenderedNodeId =
@@ -796,7 +795,6 @@ class App {
             setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
             placeCursorAtNode: (/** @type {string} */ nodeId, /** @type {number} */ offset) => {
                 if (this.editor) {
-                    this.editor.treeCursor = { nodeId, offset: offset ?? 0 };
                     if (this.editor.syntaxTree)
                         this.editor.syntaxTree.treeCursor = { nodeId, offset: offset ?? 0 };
                     this.editor.fullRenderAndPlaceCursor();
@@ -845,10 +843,6 @@ class App {
         window.addEventListener('__restoreCursor', (e) => {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (this.editor && detail?.nodeId) {
-                this.editor.treeCursor = {
-                    nodeId: detail.nodeId,
-                    offset: detail.offset ?? 0,
-                };
                 if (this.editor.syntaxTree)
                     this.editor.syntaxTree.treeCursor = {
                         nodeId: detail.nodeId,
