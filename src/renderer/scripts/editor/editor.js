@@ -352,8 +352,8 @@ export class Editor {
      * @returns {SyntaxNode|null}
      */
     getCurrentNode() {
-        if (!this.treeCursor || !this.syntaxTree) return null;
-        return this.syntaxTree.findNodeById(this.treeCursor.nodeId);
+        if (!this.syntaxTree?.treeCursor) return null;
+        return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId);
     }
 
     /**
@@ -443,7 +443,7 @@ export class Editor {
      */
     fullRenderAndPlaceCursor() {
         this.fullRender();
-        this._lastRenderedNodeId = this.treeCursor?.nodeId ?? null;
+        this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
         this.placeCursor();
     }
 
@@ -680,12 +680,12 @@ export class Editor {
             const containerRect = scrollContainer.getBoundingClientRect();
 
             // Prefer the cursor's node as anchor.
-            if (this.treeCursor) {
+            if (this.syntaxTree?.treeCursor) {
                 const cursorEl = this.container.querySelector(
-                    `[data-node-id="${this.treeCursor.nodeId}"]`,
+                    `[data-node-id="${this.syntaxTree.treeCursor.nodeId}"]`,
                 );
                 if (cursorEl) {
-                    anchorNodeId = this.treeCursor.nodeId;
+                    anchorNodeId = this.syntaxTree.treeCursor.nodeId;
                     savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
                 }
             }
@@ -1074,9 +1074,9 @@ export class Editor {
         // Use tree-coordinate selection (treeCursor / treeRange) — never
         // DOM-derived line/column data.
         const node = this.getCurrentNode();
-        if (!node || !this.treeCursor) return;
+        if (!node || !this.treeCursor || !this.syntaxTree?.treeCursor) return;
 
-        const nodeId = this.treeCursor.nodeId;
+        const nodeId = this.syntaxTree.treeCursor.nodeId;
         let startOffset;
         let endOffset;
 
@@ -1090,8 +1090,8 @@ export class Editor {
         } else {
             // Collapsed cursor — pass the cursor position; applyFormat will
             // detect the word boundaries or existing format span.
-            startOffset = this.treeCursor.offset;
-            endOffset = this.treeCursor.offset;
+            startOffset = this.syntaxTree.treeCursor.offset;
+            endOffset = this.syntaxTree.treeCursor.offset;
         }
 
         const beforeContent = this.getMarkdown();

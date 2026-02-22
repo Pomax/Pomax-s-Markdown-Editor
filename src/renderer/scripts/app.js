@@ -312,10 +312,10 @@ class App {
 
         const md = this.editor.getMarkdown();
         let absOffset = 0;
-        if (this.editor.syntaxTree && this.editor.treeCursor) {
+        if (this.editor.syntaxTree?.treeCursor) {
             absOffset = cursorToAbsoluteOffset(
                 this.editor.syntaxTree,
-                this.editor.treeCursor,
+                this.editor.syntaxTree.treeCursor,
                 this.editor.buildMarkdownLine.bind(this.editor),
                 this.editor.getPrefixLength.bind(this.editor),
             );
@@ -337,7 +337,9 @@ class App {
             content: md,
             filePath: this.editor.currentFilePath,
             modified: this.editor.hasUnsavedChanges(),
-            cursor: this.editor.treeCursor ? { ...this.editor.treeCursor } : null,
+            cursor: this.editor.syntaxTree?.treeCursor
+                ? { ...this.editor.syntaxTree.treeCursor }
+                : null,
             cursorOffset: absOffset,
             contentHash: hash,
             syntaxTree: this.editor.syntaxTree,
@@ -378,7 +380,8 @@ class App {
                 this.editor.treeCursor = state.cursor ? { ...state.cursor } : null;
                 if (this.editor.syntaxTree)
                     this.editor.syntaxTree.treeCursor = state.cursor ? { ...state.cursor } : null;
-                this.editor._lastRenderedNodeId = this.editor.treeCursor?.nodeId ?? null;
+                this.editor._lastRenderedNodeId =
+                    this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
                 this.editor.undoManager.undoStack = [...state.undoStack];
                 this.editor.undoManager.redoStack = [...state.redoStack];
                 this.editor.setUnsavedChanges(state.modified);
@@ -639,13 +642,13 @@ class App {
                 cursorPath: /** @type {number[]|null} */ (null),
             };
 
-            if (tab.id === activeTabId && this.editor?.syntaxTree && this.editor.treeCursor) {
+            if (tab.id === activeTabId && this.editor?.syntaxTree?.treeCursor) {
                 // Active tab — read live state from the editor
                 const md = this.editor.getMarkdown();
                 entry.contentHash = crc32(md);
                 entry.cursorOffset = cursorToAbsoluteOffset(
                     this.editor.syntaxTree,
-                    this.editor.treeCursor,
+                    this.editor.syntaxTree.treeCursor,
                     this.editor.buildMarkdownLine.bind(this.editor),
                     this.editor.getPrefixLength.bind(this.editor),
                 );
@@ -822,11 +825,11 @@ class App {
             configurable: true,
         });
         Object.defineProperty(window, '__editorCursorNodeId', {
-            get: () => this.editor?.treeCursor?.nodeId ?? null,
+            get: () => this.editor?.syntaxTree?.treeCursor?.nodeId ?? null,
             configurable: true,
         });
         Object.defineProperty(window, '__editorCursorOffset', {
-            get: () => this.editor?.treeCursor?.offset ?? 0,
+            get: () => this.editor?.syntaxTree?.treeCursor?.offset ?? 0,
             configurable: true,
         });
 
