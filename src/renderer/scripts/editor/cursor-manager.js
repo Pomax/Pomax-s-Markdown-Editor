@@ -256,7 +256,7 @@ export class CursorManager {
     }
 
     /**
-     * Places the DOM cursor at the position described by `editor.treeCursor`.
+     * Places the DOM cursor at the position described by `editor.syntaxTree.treeCursor`.
      */
     placeCursor() {
         if (!this.editor.syntaxTree?.treeCursor) return;
