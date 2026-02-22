@@ -464,16 +464,11 @@ class App {
             this.editor.treeCursor = cursor;
             this.editor.fullRenderAndPlaceCursor();
 
-            // If we have a saved scroll position, use that instead of
-            // scrolling to the cursor node — this preserves the exact
-            // viewport the user had, including any ToC heading click.
+            // Restore the saved scroll position synchronously so that
+            // any subsequent _saveCurrentState (e.g. during multi-file
+            // restore) captures the correct scrollTop.
             if (scrollTop != null && scrollTop > 0 && this._scrollContainer) {
-                requestAnimationFrame(() => {
-                    if (this._scrollContainer) {
-                        this._scrollContainer.scrollTop = scrollTop;
-                    }
-                    this.toc?._updateActiveHeading();
-                });
+                this._scrollContainer.scrollTop = scrollTop;
             } else {
                 this._scrollToNode(cursor.nodeId);
             }
@@ -722,7 +717,7 @@ class App {
             return entry;
         });
 
-        window.electronAPI.notifyOpenFiles(files);
+        return window.electronAPI.notifyOpenFiles(files);
     }
 
     /**
@@ -867,7 +862,7 @@ class App {
                 clearTimeout(this._cursorDebounce);
                 this._cursorDebounce = null;
             }
-            this._notifyOpenFiles();
+            return this._notifyOpenFiles();
         };
 
         // Expose file path and cursor info as globals so the reload handler
