@@ -380,7 +380,7 @@ export class TableOfContents {
         // Move the editor cursor to the target heading.  Only re-render
         // the previously-focused node and the new target — there is no
         // reason to rebuild the entire DOM.
-        const oldNodeId = this.editor.treeCursor?.nodeId;
+        const oldNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
         this.editor.treeCursor = { nodeId, offset: 0 };
         if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = { nodeId, offset: 0 };
         this.editor.container.focus({ preventScroll: true });
