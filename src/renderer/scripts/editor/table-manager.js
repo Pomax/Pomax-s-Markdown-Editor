@@ -243,12 +243,12 @@ export class TableManager {
             !node ||
             !this.editor.treeCursor ||
             !this.editor.syntaxTree ||
-            this.editor.treeCursor.cellRow === undefined ||
-            this.editor.treeCursor.cellCol === undefined
+            this.editor.syntaxTree.treeCursor?.cellRow === undefined ||
+            this.editor.syntaxTree.treeCursor?.cellCol === undefined
         )
             return;
 
-        const { cellRow, cellCol } = this.editor.treeCursor;
+        const { cellRow, cellCol } = this.editor.syntaxTree.treeCursor;
         const { totalRows, columns } = this.getTableDimensions(node);
 
         if (shiftKey) {
