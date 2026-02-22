@@ -362,3 +362,74 @@ describe('SyntaxTree.toBareText', () => {
         assert.strictEqual(tree.toBareText(), 'Title\n\nEnd');
     });
 });
+
+describe('SyntaxTree.getPathToCursor', () => {
+    it('returns null when treeCursor is null', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
+        assert.strictEqual(tree.getPathToCursor(null), null);
+    });
+
+    it('returns null when the cursor node is not in the tree', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
+        assert.strictEqual(tree.getPathToCursor({ nodeId: 'nonexistent', offset: 0 }), null);
+    });
+
+    it('returns [childIndex, offset] for a top-level node', () => {
+        const tree = new SyntaxTree();
+        const n0 = new SyntaxNode('heading1', 'Title');
+        const n1 = new SyntaxNode('paragraph', 'Body text');
+        tree.appendChild(n0);
+        tree.appendChild(n1);
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: n1.id, offset: 4 }), [1, 4]);
+    });
+
+    it('returns [0, offset] for the first top-level node', () => {
+        const tree = new SyntaxTree();
+        const n0 = new SyntaxNode('heading1', 'Title');
+        tree.appendChild(n0);
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: n0.id, offset: 0 }), [0, 0]);
+    });
+
+    it('returns path through nested children', () => {
+        const tree = new SyntaxTree();
+        const container = new SyntaxNode('html-block', '');
+        container.attributes = { tagName: 'details' };
+        const child0 = new SyntaxNode('paragraph', 'summary');
+        const child1 = new SyntaxNode('paragraph', 'detail text');
+        container.appendChild(child0);
+        container.appendChild(child1);
+        tree.appendChild(new SyntaxNode('heading1', 'Title'));
+        tree.appendChild(container);
+        // cursor is at offset 6 in the 2nd child of the 2nd top-level node
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: child1.id, offset: 6 }), [1, 1, 6]);
+    });
+
+    it('returns path for deeply nested node', () => {
+        const tree = new SyntaxTree();
+        const outer = new SyntaxNode('html-block', '');
+        const inner = new SyntaxNode('html-block', '');
+        const leaf = new SyntaxNode('paragraph', 'deep content');
+        inner.appendChild(leaf);
+        outer.appendChild(new SyntaxNode('paragraph', 'filler'));
+        outer.appendChild(inner);
+        tree.appendChild(outer);
+        // path: outer is child 0, inner is child 1 of outer, leaf is child 0 of inner, offset 3
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: leaf.id, offset: 3 }), [0, 1, 0, 3]);
+    });
+
+    it('returns offset 0 when cursor is at the start', () => {
+        const tree = new SyntaxTree();
+        const node = new SyntaxNode('paragraph', 'Hello');
+        tree.appendChild(node);
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: node.id, offset: 0 }), [0, 0]);
+    });
+
+    it('handles cursor at end of content', () => {
+        const tree = new SyntaxTree();
+        const node = new SyntaxNode('paragraph', 'Hello');
+        tree.appendChild(node);
+        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: node.id, offset: 5 }), [0, 5]);
+    });
+});

@@ -764,4 +764,53 @@ export class SyntaxTree {
         countRecursive(this.children);
         return count;
     }
+
+    /**
+     * Returns the path from the tree root to the node that currently has the
+     * cursor, with the cursor's character offset appended as the final element.
+     *
+     * Every element except the last is a zero-based child index at that level
+     * of the tree.  The last element is `treeCursor.offset` (the character
+     * position within the node's content).
+     *
+     * Returns `null` when there is no active cursor or the cursor's node
+     * cannot be found in the tree.
+     *
+     * @param {import('../editor/editor.js').TreeCursor|null} treeCursor
+     * @returns {number[]|null}
+     *
+     * @example
+     * // Cursor at offset 5 in the 3rd child of the 1st top-level node:
+     * tree.getPathToCursor(treeCursor); // → [0, 2, 5]
+     */
+    getPathToCursor(treeCursor) {
+        if (!treeCursor) return null;
+
+        /** @type {number[]} */
+        const path = [];
+
+        /**
+         * @param {SyntaxNode[]} children
+         * @returns {boolean}
+         */
+        const search = (children) => {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i].id === treeCursor.nodeId) {
+                    path.push(i);
+                    return true;
+                }
+                if (children[i].children.length > 0) {
+                    path.push(i);
+                    if (search(children[i].children)) return true;
+                    path.pop();
+                }
+            }
+            return false;
+        };
+
+        if (!search(this.children)) return null;
+
+        path.push(treeCursor.offset);
+        return path;
+    }
 }

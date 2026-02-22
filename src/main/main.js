@@ -79,7 +79,7 @@ function saveOpenFiles() {
     const entries = menuBuilder.openFiles
         .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
         .map(
-            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number}} f */ (
+            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null}} f */ (
                 f,
             ) => ({
                 filePath: f.filePath,
@@ -87,6 +87,7 @@ function saveOpenFiles() {
                 cursorOffset: f.cursorOffset ?? 0,
                 contentHash: f.contentHash ?? 0,
                 scrollTop: f.scrollTop ?? 0,
+                cursorPath: f.cursorPath ?? null,
             }),
         );
 

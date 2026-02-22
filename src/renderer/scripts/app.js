@@ -691,6 +691,7 @@ class App {
                 cursorOffset: 0,
                 contentHash: 0,
                 scrollTop: 0,
+                cursorPath: /** @type {number[]|null} */ (null),
             };
 
             if (tab.id === activeTabId && this.editor?.syntaxTree && this.editor.treeCursor) {
@@ -703,6 +704,7 @@ class App {
                     this.editor.buildMarkdownLine.bind(this.editor),
                     this.editor.getPrefixLength.bind(this.editor),
                 );
+                entry.cursorPath = this.editor.syntaxTree.getPathToCursor(this.editor.treeCursor);
                 entry.scrollTop = this._scrollContainer ? this._scrollContainer.scrollTop : 0;
             } else {
                 // Background tab — read from cached document state
@@ -711,6 +713,7 @@ class App {
                     entry.cursorOffset = state.cursorOffset;
                     entry.contentHash = state.contentHash;
                     entry.scrollTop = state.scrollTop ?? 0;
+                    entry.cursorPath = state.syntaxTree?.getPathToCursor(state.cursor) ?? null;
                 }
             }
 
