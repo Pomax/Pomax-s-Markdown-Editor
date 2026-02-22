@@ -39,6 +39,7 @@ export class CursorManager {
         if (!startInfo) return;
 
         this.editor.treeCursor = startInfo.cursor;
+        if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = startInfo.cursor;
 
         // If the selection is collapsed there is no range.
         if (selection.isCollapsed) {

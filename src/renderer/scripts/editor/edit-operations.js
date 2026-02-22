@@ -101,6 +101,7 @@ export class EditOperations {
             if (!result.hints.added) result.hints.added = [];
             result.hints.added.push(fresh.id);
             this.editor.treeCursor = { nodeId: fresh.id, offset: 0 };
+            this.editor.syntaxTree.treeCursor = { nodeId: fresh.id, offset: 0 };
             return;
         }
 
@@ -109,6 +110,10 @@ export class EditOperations {
         if (newIdx >= 0 && newIdx < siblings.length) {
             const target = siblings[newIdx];
             this.editor.treeCursor = {
+                nodeId: target.id,
+                offset: 0,
+            };
+            this.editor.syntaxTree.treeCursor = {
                 nodeId: target.id,
                 offset: 0,
             };
@@ -161,6 +166,11 @@ export class EditOperations {
                 offset: left.length + text.length,
                 tagPart: this.editor.treeCursor.tagPart,
             };
+            this.editor.syntaxTree.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                tagPart: this.editor.treeCursor.tagPart,
+            };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -187,6 +197,12 @@ export class EditOperations {
                 cellRow,
                 cellCol,
             };
+            this.editor.syntaxTree.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+                cellRow,
+                cellCol,
+            };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -203,6 +219,10 @@ export class EditOperations {
         if (node.type === 'code-block') {
             node.content = newContent;
             this.editor.treeCursor = { nodeId: node.id, offset: left.length + text.length };
+            this.editor.syntaxTree.treeCursor = {
+                nodeId: node.id,
+                offset: left.length + text.length,
+            };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -231,6 +251,7 @@ export class EditOperations {
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
             }
@@ -257,6 +278,10 @@ export class EditOperations {
             // Place cursor at the end of the last node's content.
             const lastNode = parsedNodes[parsedNodes.length - 1];
             this.editor.treeCursor = { nodeId: lastNode.id, offset: lastNode.content.length };
+            this.editor.syntaxTree.treeCursor = {
+                nodeId: lastNode.id,
+                offset: lastNode.content.length,
+            };
 
             /** @type {{ updated: string[], added?: string[], removed?: string[] }} */
             const hints = { updated: [node.id] };
@@ -319,6 +344,7 @@ export class EditOperations {
         }
 
         this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
+        this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         /** @type {{ updated: string[], removed?: string[] }} */
         const hints = { updated: [node.id] };
         if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;
@@ -361,6 +387,11 @@ export class EditOperations {
                     offset: left.length,
                     tagPart: this.editor.treeCursor.tagPart,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.editor.treeCursor.tagPart,
+                };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
             return;
@@ -388,6 +419,12 @@ export class EditOperations {
                     cellRow,
                     cellCol,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    cellRow,
+                    cellCol,
+                };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
             // At offset 0 — no-op (don't merge cells or break table)
@@ -409,6 +446,7 @@ export class EditOperations {
             if (node.type === 'code-block') {
                 node.content = newContent;
                 this.editor.treeCursor = { nodeId: node.id, offset: left.length };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
             }
@@ -442,6 +480,7 @@ export class EditOperations {
             }
 
             this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
+            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the start of the node.
             // If this is a heading (or blockquote, list-item, etc.) with an
@@ -452,6 +491,7 @@ export class EditOperations {
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 if (wasListItem) {
                     const siblings = this.editor.getSiblings(node);
                     const idx = siblings.indexOf(node);
@@ -467,6 +507,7 @@ export class EditOperations {
                 node.type = 'paragraph';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 if (wasListItem) {
                     const siblings = this.editor.getSiblings(node);
                     const idx = siblings.indexOf(node);
@@ -499,6 +540,10 @@ export class EditOperations {
                                 nodeId: lastChild.id,
                                 offset: lastChildLen,
                             };
+                            this.editor.syntaxTree.treeCursor = {
+                                nodeId: lastChild.id,
+                                offset: lastChildLen,
+                            };
                             renderHints = { updated: [lastChild.id], removed: [node.id] };
                         }
                     } else {
@@ -507,6 +552,7 @@ export class EditOperations {
                         siblings.splice(idx, 1);
                         node.parent = null;
                         this.editor.treeCursor = { nodeId: prev.id, offset: prevLen };
+                        this.editor.syntaxTree.treeCursor = { nodeId: prev.id, offset: prevLen };
                         renderHints = { updated: [prev.id], removed: [node.id] };
                     }
                 }
@@ -552,6 +598,11 @@ export class EditOperations {
                     offset: left.length,
                     tagPart: this.editor.treeCursor.tagPart,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length,
+                    tagPart: this.editor.treeCursor.tagPart,
+                };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
             return;
@@ -579,6 +630,12 @@ export class EditOperations {
                     cellRow,
                     cellCol,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset,
+                    cellRow,
+                    cellCol,
+                };
                 this.editor.recordAndRender(before, { updated: [node.id] });
             }
             // At end of cell — no-op
@@ -600,6 +657,7 @@ export class EditOperations {
             if (node.type === 'code-block') {
                 node.content = newContent;
                 this.editor.treeCursor = { nodeId: node.id, offset: left.length };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
             }
@@ -632,6 +690,7 @@ export class EditOperations {
             }
 
             this.editor.treeCursor = { nodeId: node.id, offset: newOffset };
+            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the end — merge with the next node
             const siblings = this.editor.getSiblings(node);
@@ -658,6 +717,7 @@ export class EditOperations {
                             next.parent = null;
                         }
                         this.editor.treeCursor = { nodeId: node.id, offset: curLen };
+                        this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
                         renderHints =
                             next.children.length === 0
                                 ? { updated: [node.id], removed: [next.id] }
@@ -669,6 +729,7 @@ export class EditOperations {
                     siblings.splice(idx + 1, 1);
                     next.parent = null;
                     this.editor.treeCursor = { nodeId: node.id, offset: curLen };
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
                     renderHints = { updated: [node.id], removed: [next.id] };
                 }
             }
@@ -720,6 +781,12 @@ export class EditOperations {
                     cellRow: cellRow + 1,
                     cellCol,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol,
+                };
                 this.editor.placeCursor();
             }
             // On last row — no-op
@@ -735,6 +802,7 @@ export class EditOperations {
             node.content = '';
             node.attributes = { language: fenceMatch[1] || '' };
             this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -745,6 +813,7 @@ export class EditOperations {
             const right = node.content.substring(this.editor.treeCursor.offset);
             node.content = `${left}\n${right}`;
             this.editor.treeCursor = { nodeId: node.id, offset: left.length + 1 };
+            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -762,6 +831,7 @@ export class EditOperations {
                 node.content = '';
                 node.attributes = {};
                 this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 const renumbered = this.editor.renumberAdjacentList(siblings, idx);
                 /** @type {{ updated: string[], removed?: string[] }} */
                 const listHints = { updated: [node.id, ...renumbered] };
@@ -792,6 +862,7 @@ export class EditOperations {
             const renumbered = this.editor.renumberAdjacentList(siblings, idx);
 
             this.editor.treeCursor = { nodeId: newItem.id, offset: 0 };
+            this.editor.syntaxTree.treeCursor = { nodeId: newItem.id, offset: 0 };
             /** @type {{ updated: string[], added: string[], removed?: string[] }} */
             const listHints = { updated: [node.id, ...renumbered], added: [newItem.id] };
             if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
@@ -816,6 +887,7 @@ export class EditOperations {
         if (node.parent) newNode.parent = node.parent;
 
         this.editor.treeCursor = { nodeId: newNode.id, offset: 0 };
+        this.editor.syntaxTree.treeCursor = { nodeId: newNode.id, offset: 0 };
 
         /** @type {{ updated: string[], added: string[], removed?: string[] }} */
         const hints = { updated: [node.id], added: [newNode.id] };

@@ -70,6 +70,11 @@ export class EventHandler {
             while (el && el !== this.editor.container) {
                 if (el.dataset?.nodeId) {
                     this.editor.treeCursor = { nodeId: el.dataset.nodeId, offset: 0 };
+                    if (this.editor.syntaxTree)
+                        this.editor.syntaxTree.treeCursor = {
+                            nodeId: el.dataset.nodeId,
+                            offset: 0,
+                        };
                     break;
                 }
                 el = el.parentElement;
@@ -254,6 +259,7 @@ export class EventHandler {
         // Place the cursor on the trailing empty paragraph
         const afterNode = imgSiblings[imgIdx + 1];
         this.editor.treeCursor = { nodeId: afterNode.id, offset: 0 };
+        this.editor.syntaxTree.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
     /** Handles focus events. */
@@ -301,6 +307,7 @@ export class EventHandler {
         if (this.editor.viewMode === 'focused' && this.editor.treeCursor) {
             const previousNodeId = this.editor.treeCursor.nodeId;
             this.editor.treeCursor = null;
+            if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = null;
             this.editor.renderNodes({ updated: [previousNodeId] });
         }
     }

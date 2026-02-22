@@ -67,6 +67,7 @@ export class LinkHelper {
         node.content = node.content.replace(oldMarkdown, newMarkdown);
 
         this.editor.treeCursor = { nodeId: node.id, offset: 0 };
+        this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         this.editor.recordAndRender(before, { updated: [node.id] });
     }
 }

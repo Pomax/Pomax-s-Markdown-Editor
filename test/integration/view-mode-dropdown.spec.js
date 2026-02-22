@@ -88,19 +88,19 @@ test('toggle stays in sync when view mode changes via menu', async () => {
     const toggle = page.locator('.toolbar-view-mode-toggle');
 
     // Set up: ensure we start in focused mode.
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    await page.evaluate(() => window.editorAPI?.setViewMode('focused'));
     await page.locator('#editor[data-view-mode="focused"]').waitFor();
     await expect(toggle).toHaveText('Focused Writing');
 
-    // Switch to source via the IPC (simulating a menu action).
-    await page.evaluate(() => window.electronAPI?.setSourceView());
+    // Switch to source programmatically (simulating a menu action).
+    await page.evaluate(() => window.editorAPI?.setViewMode('source'));
     await page.locator('#editor[data-view-mode="source"]').waitFor();
 
     // The toggle should reflect the new mode.
     await expect(toggle).toHaveText('Source View');
 
-    // Switch back via IPC.
-    await page.evaluate(() => window.electronAPI?.setFocusedView());
+    // Switch back programmatically.
+    await page.evaluate(() => window.editorAPI?.setViewMode('focused'));
     await page.locator('#editor[data-view-mode="focused"]').waitFor();
 
     await expect(toggle).toHaveText('Focused Writing');

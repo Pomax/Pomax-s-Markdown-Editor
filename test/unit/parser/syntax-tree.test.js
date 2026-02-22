@@ -367,13 +367,15 @@ describe('SyntaxTree.getPathToCursor', () => {
     it('returns null when treeCursor is null', () => {
         const tree = new SyntaxTree();
         tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
-        assert.strictEqual(tree.getPathToCursor(null), null);
+        tree.treeCursor = null;
+        assert.strictEqual(tree.getPathToCursor(), null);
     });
 
     it('returns null when the cursor node is not in the tree', () => {
         const tree = new SyntaxTree();
         tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
-        assert.strictEqual(tree.getPathToCursor({ nodeId: 'nonexistent', offset: 0 }), null);
+        tree.treeCursor = { nodeId: 'nonexistent', offset: 0 };
+        assert.strictEqual(tree.getPathToCursor(), null);
     });
 
     it('returns [childIndex, offset] for a top-level node', () => {
@@ -382,14 +384,16 @@ describe('SyntaxTree.getPathToCursor', () => {
         const n1 = new SyntaxNode('paragraph', 'Body text');
         tree.appendChild(n0);
         tree.appendChild(n1);
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: n1.id, offset: 4 }), [1, 4]);
+        tree.treeCursor = { nodeId: n1.id, offset: 4 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [1, 4]);
     });
 
     it('returns [0, offset] for the first top-level node', () => {
         const tree = new SyntaxTree();
         const n0 = new SyntaxNode('heading1', 'Title');
         tree.appendChild(n0);
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: n0.id, offset: 0 }), [0, 0]);
+        tree.treeCursor = { nodeId: n0.id, offset: 0 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [0, 0]);
     });
 
     it('returns path through nested children', () => {
@@ -403,7 +407,8 @@ describe('SyntaxTree.getPathToCursor', () => {
         tree.appendChild(new SyntaxNode('heading1', 'Title'));
         tree.appendChild(container);
         // cursor is at offset 6 in the 2nd child of the 2nd top-level node
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: child1.id, offset: 6 }), [1, 1, 6]);
+        tree.treeCursor = { nodeId: child1.id, offset: 6 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [1, 1, 6]);
     });
 
     it('returns path for deeply nested node', () => {
@@ -416,20 +421,97 @@ describe('SyntaxTree.getPathToCursor', () => {
         outer.appendChild(inner);
         tree.appendChild(outer);
         // path: outer is child 0, inner is child 1 of outer, leaf is child 0 of inner, offset 3
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: leaf.id, offset: 3 }), [0, 1, 0, 3]);
+        tree.treeCursor = { nodeId: leaf.id, offset: 3 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [0, 1, 0, 3]);
     });
 
     it('returns offset 0 when cursor is at the start', () => {
         const tree = new SyntaxTree();
         const node = new SyntaxNode('paragraph', 'Hello');
         tree.appendChild(node);
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: node.id, offset: 0 }), [0, 0]);
+        tree.treeCursor = { nodeId: node.id, offset: 0 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [0, 0]);
     });
 
     it('handles cursor at end of content', () => {
         const tree = new SyntaxTree();
         const node = new SyntaxNode('paragraph', 'Hello');
         tree.appendChild(node);
-        assert.deepStrictEqual(tree.getPathToCursor({ nodeId: node.id, offset: 5 }), [0, 5]);
+        tree.treeCursor = { nodeId: node.id, offset: 5 };
+        assert.deepStrictEqual(tree.getPathToCursor(), [0, 5]);
+    });
+});
+
+describe('SyntaxTree.setCursorPath', () => {
+    it('sets treeCursor for a top-level node', () => {
+        const tree = new SyntaxTree();
+        const n0 = new SyntaxNode('heading1', 'Title');
+        const n1 = new SyntaxNode('paragraph', 'Body');
+        tree.appendChild(n0);
+        tree.appendChild(n1);
+        tree.setCursorPath([1, 3]);
+        assert.ok(tree.treeCursor);
+        assert.strictEqual(tree.treeCursor.nodeId, n1.id);
+        assert.strictEqual(tree.treeCursor.offset, 3);
+    });
+
+    it('sets treeCursor for a nested node', () => {
+        const tree = new SyntaxTree();
+        const container = new SyntaxNode('html-block', '');
+        const child0 = new SyntaxNode('paragraph', 'first');
+        const child1 = new SyntaxNode('paragraph', 'second');
+        container.appendChild(child0);
+        container.appendChild(child1);
+        tree.appendChild(container);
+        tree.setCursorPath([0, 1, 4]);
+        assert.ok(tree.treeCursor);
+        assert.strictEqual(tree.treeCursor.nodeId, child1.id);
+        assert.strictEqual(tree.treeCursor.offset, 4);
+    });
+
+    it('does nothing when path is null', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
+        tree.treeCursor = null;
+        tree.setCursorPath(null);
+        assert.strictEqual(tree.treeCursor, null);
+    });
+
+    it('does nothing when path is too short', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
+        tree.treeCursor = null;
+        tree.setCursorPath([5]);
+        assert.strictEqual(tree.treeCursor, null);
+    });
+
+    it('does nothing when child index is out of bounds', () => {
+        const tree = new SyntaxTree();
+        tree.appendChild(new SyntaxNode('paragraph', 'Hello'));
+        tree.treeCursor = null;
+        tree.setCursorPath([99, 0]);
+        assert.strictEqual(tree.treeCursor, null);
+    });
+
+    it('roundtrips with getPathToCursor', () => {
+        const tree = new SyntaxTree();
+        const container = new SyntaxNode('html-block', '');
+        const child = new SyntaxNode('paragraph', 'inner text');
+        container.appendChild(child);
+        tree.appendChild(new SyntaxNode('heading1', 'Title'));
+        tree.appendChild(container);
+
+        tree.treeCursor = { nodeId: child.id, offset: 5 };
+        const path = tree.getPathToCursor();
+        assert.deepStrictEqual(path, [1, 0, 5]);
+
+        // Now reset and restore via setCursorPath
+        tree.treeCursor = null;
+        tree.setCursorPath(path);
+        /** @type {any} */
+        const restored = tree.treeCursor;
+        assert.ok(restored);
+        assert.strictEqual(restored.nodeId, child.id);
+        assert.strictEqual(restored.offset, 5);
     });
 });

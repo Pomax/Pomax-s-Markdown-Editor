@@ -10,6 +10,7 @@ interface EditorAPI {
     getContent(): string;
     setContent(content: string): void;
     getViewMode(): string;
+    setViewMode(mode: string): void;
     setUnsavedChanges(hasChanges: boolean): void;
     placeCursorAtNode(nodeId: string, offset: number): void;
 }

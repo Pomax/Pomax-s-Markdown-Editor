@@ -260,8 +260,20 @@ export class TableManager {
                     cellRow,
                     cellCol: cellCol - 1,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol - 1,
+                };
             } else if (cellRow > 0) {
                 this.editor.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow - 1,
+                    cellCol: columns - 1,
+                };
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: cellRow - 1,
@@ -278,8 +290,20 @@ export class TableManager {
                     cellRow,
                     cellCol: cellCol + 1,
                 };
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow,
+                    cellCol: cellCol + 1,
+                };
             } else if (cellRow < totalRows - 1) {
                 this.editor.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: cellRow + 1,
+                    cellCol: 0,
+                };
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: cellRow + 1,
@@ -290,6 +314,12 @@ export class TableManager {
                 const before = this.editor.syntaxTree.toMarkdown();
                 const newRowIdx = this.tableAddRow(node);
                 this.editor.treeCursor = {
+                    nodeId: node.id,
+                    offset: 0,
+                    cellRow: newRowIdx,
+                    cellCol: 0,
+                };
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: newRowIdx,

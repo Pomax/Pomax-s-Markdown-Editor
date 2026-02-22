@@ -349,6 +349,12 @@ export class SyntaxTree {
          * @type {SyntaxNode[]}
          */
         this.children = [];
+
+        /**
+         * Tree-based cursor position.
+         * @type {import('../editor/editor.js').TreeCursor|null}
+         */
+        this.treeCursor = null;
     }
 
     /**
@@ -776,18 +782,18 @@ export class SyntaxTree {
      * Returns `null` when there is no active cursor or the cursor's node
      * cannot be found in the tree.
      *
-     * @param {import('../editor/editor.js').TreeCursor|null} treeCursor
      * @returns {number[]|null}
      *
      * @example
      * // Cursor at offset 5 in the 3rd child of the 1st top-level node:
-     * tree.getPathToCursor(treeCursor); // → [0, 2, 5]
+     * tree.getPathToCursor(); // → [0, 2, 5]
      */
-    getPathToCursor(treeCursor) {
-        if (!treeCursor) return null;
+    getPathToCursor() {
+        if (!this.treeCursor) return null;
 
         /** @type {number[]} */
         const path = [];
+        const treeCursor = this.treeCursor;
 
         /**
          * @param {SyntaxNode[]} children
@@ -812,5 +818,33 @@ export class SyntaxTree {
 
         path.push(treeCursor.offset);
         return path;
+    }
+
+    /**
+     * Restores the cursor from a path previously produced by
+     * {@link getPathToCursor}.  Each element except the last is a
+     * zero-based child index used to descend into the tree; the last
+     * element is the character offset within the target node's content.
+     *
+     * Does nothing if `cursorPath` is `null`, empty, or any index is
+     * out of bounds.
+     *
+     * @param {number[]|null} cursorPath
+     */
+    setCursorPath(cursorPath) {
+        if (!cursorPath) return;
+        if (cursorPath.length < 2) return;
+
+        let children = this.children;
+        for (let i = 0; i < cursorPath.length - 1; i++) {
+            const index = cursorPath[i];
+            if (index < 0 || index >= children.length) return;
+            const node = children[index];
+            if (i === cursorPath.length - 2) {
+                this.treeCursor = { nodeId: node.id, offset: cursorPath[cursorPath.length - 1] };
+                return;
+            }
+            children = node.children;
+        }
     }
 }

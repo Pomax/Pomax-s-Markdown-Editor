@@ -376,6 +376,8 @@ class App {
                 this.editor.currentFilePath = state.filePath;
                 this.editor.syntaxTree = state.syntaxTree;
                 this.editor.treeCursor = state.cursor ? { ...state.cursor } : null;
+                if (this.editor.syntaxTree)
+                    this.editor.syntaxTree.treeCursor = state.cursor ? { ...state.cursor } : null;
                 this.editor._lastRenderedNodeId = this.editor.treeCursor?.nodeId ?? null;
                 this.editor.undoManager.undoStack = [...state.undoStack];
                 this.editor.undoManager.redoStack = [...state.redoStack];
@@ -643,7 +645,7 @@ class App {
                     this.editor.buildMarkdownLine.bind(this.editor),
                     this.editor.getPrefixLength.bind(this.editor),
                 );
-                entry.cursorPath = this.editor.syntaxTree.getPathToCursor(this.editor.treeCursor);
+                entry.cursorPath = this.editor.syntaxTree.getPathToCursor();
                 entry.scrollTop = this._scrollContainer ? this._scrollContainer.scrollTop : 0;
             } else {
                 // Background tab — read from cached document state
@@ -652,7 +654,7 @@ class App {
                     entry.cursorOffset = state.cursorOffset;
                     entry.contentHash = state.contentHash;
                     entry.scrollTop = state.scrollTop ?? 0;
-                    entry.cursorPath = state.syntaxTree?.getPathToCursor(state.cursor) ?? null;
+                    entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? null;
                 }
             }
 
@@ -770,6 +772,7 @@ class App {
      * Exposes the editor API to the main process.
      */
     exposeEditorAPI() {
+        /** @type {any} */ (window).__editor = this.editor;
         window.editorAPI = {
             hasUnsavedChanges: () => this.editor?.hasUnsavedChanges() ?? false,
             getContent: () => this.editor?.getMarkdown() ?? '',
@@ -777,10 +780,18 @@ class App {
                 this.editor?.loadMarkdown(content);
             },
             getViewMode: () => this.editor?.getViewMode() ?? 'source',
+            setViewMode: (/** @type {string} */ mode) => {
+                this.editor?.setViewMode(
+                    /** @type {import('./editor/editor.js').ViewMode} */ (mode),
+                );
+                this.toolbar?.setViewMode(mode);
+            },
             setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
             placeCursorAtNode: (/** @type {string} */ nodeId, /** @type {number} */ offset) => {
                 if (this.editor) {
                     this.editor.treeCursor = { nodeId, offset: offset ?? 0 };
+                    if (this.editor.syntaxTree)
+                        this.editor.syntaxTree.treeCursor = { nodeId, offset: offset ?? 0 };
                     this.editor.fullRenderAndPlaceCursor();
                     this._scrollToNode(nodeId);
                 }
@@ -831,6 +842,11 @@ class App {
                     nodeId: detail.nodeId,
                     offset: detail.offset ?? 0,
                 };
+                if (this.editor.syntaxTree)
+                    this.editor.syntaxTree.treeCursor = {
+                        nodeId: detail.nodeId,
+                        offset: detail.offset ?? 0,
+                    };
                 this.editor.placeCursor();
             }
         });
@@ -879,9 +895,11 @@ class App {
                 break;
             case 'view:source':
                 this.editor.setViewMode('source');
+                this.toolbar?.setViewMode('source');
                 break;
             case 'view:focused':
                 this.editor.setViewMode('focused');
+                this.toolbar?.setViewMode('focused');
                 break;
             case 'document:getContent':
                 // Response would be handled via IPC

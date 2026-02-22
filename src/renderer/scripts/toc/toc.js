@@ -382,6 +382,7 @@ export class TableOfContents {
         // reason to rebuild the entire DOM.
         const oldNodeId = this.editor.treeCursor?.nodeId;
         this.editor.treeCursor = { nodeId, offset: 0 };
+        if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = { nodeId, offset: 0 };
         this.editor.container.focus({ preventScroll: true });
 
         const updated = [nodeId];

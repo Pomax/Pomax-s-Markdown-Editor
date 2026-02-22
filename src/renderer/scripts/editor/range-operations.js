@@ -89,6 +89,7 @@ export class RangeOperations {
             const right = startNode.content.substring(endOffset);
             startNode.content = left + right;
             this.editor.treeCursor = { nodeId: startNode.id, offset: startOffset };
+            this.editor.syntaxTree.treeCursor = { nodeId: startNode.id, offset: startOffset };
             this.editor.treeRange = null;
             return { before, hints: { updated: [startNode.id] } };
         }
@@ -130,6 +131,7 @@ export class RangeOperations {
         siblings.splice(firstIdx + 1, lastIdx - firstIdx);
 
         this.editor.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
+        this.editor.syntaxTree.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
         this.editor.treeRange = null;
         return { before, hints: { updated: [firstNode.id], removed: removedIds } };
     }

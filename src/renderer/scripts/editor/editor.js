@@ -119,6 +119,7 @@ export class Editor {
 
         /** @type {ViewMode} */
         this.viewMode = 'focused';
+        this.container.dataset.viewMode = 'focused';
 
         /** @type {boolean} */
         this._hasUnsavedChanges = false;
@@ -256,6 +257,7 @@ export class Editor {
         const initialNode = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(initialNode);
         this.treeCursor = { nodeId: initialNode.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: initialNode.id, offset: 0 };
 
         // Set up event listeners
         this.setupEventListeners();
@@ -612,6 +614,7 @@ export class Editor {
 
         const first = this.syntaxTree.children[0];
         this.treeCursor = { nodeId: first.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
 
         this.undoManager.clear();
         this.setUnsavedChanges(false);
@@ -645,6 +648,7 @@ export class Editor {
         const node = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(node);
         this.treeCursor = { nodeId: node.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         this.undoManager.clear();
         this.currentFilePath = null;
         this.setUnsavedChanges(false);
@@ -739,6 +743,7 @@ export class Editor {
             }
             const first = this.syntaxTree.children[0];
             this.treeCursor = { nodeId: first.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
@@ -755,6 +760,7 @@ export class Editor {
             }
             const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
             this.treeCursor = { nodeId: last.id, offset: last.content.length };
+            this.syntaxTree.treeCursor = { nodeId: last.id, offset: last.content.length };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
@@ -823,6 +829,7 @@ export class Editor {
             // Update existing table
             currentNode.content = markdown;
             this.treeCursor = { nodeId: currentNode.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: currentNode.id, offset: 0 };
             renderHints = { updated: [currentNode.id] };
         } else {
             // Insert a new table node
@@ -847,6 +854,7 @@ export class Editor {
             }
 
             this.treeCursor = { nodeId: tableNode.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: tableNode.id, offset: 0 };
         }
 
         this.recordAndRender(before, renderHints);
@@ -1098,6 +1106,7 @@ export class Editor {
         // Place cursor at the end of the formatted/unformatted text and
         // collapse the selection — the old range is no longer valid.
         this.treeCursor.offset = newCursorOffset;
+        if (this.syntaxTree?.treeCursor) this.syntaxTree.treeCursor.offset = newCursorOffset;
         this.treeRange = null;
 
         this.renderNodesAndPlaceCursor({ updated: [nodeId] });
