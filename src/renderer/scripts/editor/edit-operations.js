@@ -221,19 +221,9 @@ export class EditOperations {
                 .substring(0, prefixLen);
             const normalizedContent = left + normalizedText + right;
             const combined = mdPrefix + normalizedContent;
-            const lines = combined.split('\n');
 
-            // Parse each line into a node (empty lines are skipped).
-            /** @type {SyntaxNode[]} */
-            const parsedNodes = [];
-            let i = 0;
-            while (i < lines.length) {
-                const result = this.editor.parser.parseLine(lines, i);
-                if (result.node) {
-                    parsedNodes.push(result.node);
-                }
-                i = result.nextIndex;
-            }
+            // Parse into nodes via the currently active parser.
+            const parsedNodes = this.editor._parseMultiLine(combined);
 
             if (parsedNodes.length === 0) {
                 // Edge case: everything was blank lines — empty paragraph
@@ -281,7 +271,7 @@ export class EditOperations {
         let newOffset;
         const wasBareText = !!node.attributes.bareText;
         const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-        const parsed = this.editor.parser.parseSingleLine(fullLine);
+        const parsed = this.editor._reparseLine(fullLine);
 
         if (parsed) {
             // Suppress code-block fence conversion during typing — the
@@ -427,7 +417,7 @@ export class EditOperations {
             let newOffset;
             const wasBareText = !!node.attributes.bareText;
             const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-            const parsed = this.editor.parser.parseSingleLine(fullLine);
+            const parsed = this.editor._reparseLine(fullLine);
 
             if (parsed) {
                 node.type = parsed.type;
@@ -618,7 +608,7 @@ export class EditOperations {
             let newOffset;
             const wasBareText = !!node.attributes.bareText;
             const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-            const parsed = this.editor.parser.parseSingleLine(fullLine);
+            const parsed = this.editor._reparseLine(fullLine);
 
             if (parsed) {
                 node.type = parsed.type;

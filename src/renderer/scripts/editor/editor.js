@@ -13,6 +13,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { DFAParser } from '../parser/dfa-parser.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { ClipboardHandler } from './clipboard-handler.js';
@@ -64,8 +65,11 @@ export class Editor {
         /** @type {HTMLElement} */
         this.container = container;
 
-        /** @type {MarkdownParser} */
+        /** @type {MarkdownParser|DFAParser} */
         this.parser = new MarkdownParser();
+
+        /** @type {'regex'|'dfa'} */
+        this._parserType = 'regex';
 
         /** @type {SyntaxTree|null} */
         this.syntaxTree = null;
@@ -156,6 +160,80 @@ export class Editor {
          * @type {string|null}
          */
         this._lastRenderedNodeId = null;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Parser management
+    // ──────────────────────────────────────────────
+
+    /**
+     * Switches the parser engine. If a document is loaded and the type
+     * actually changed, re-parses it with the new parser and re-renders.
+     * @param {'regex'|'dfa'} type
+     */
+    setParser(type) {
+        if (type !== 'regex' && type !== 'dfa') {
+            throw new Error(`Unknown parser type: ${type}`);
+        }
+
+        // Nothing to do if the type hasn't changed.
+        if (type === this._parserType) return;
+
+        if (type === 'regex') {
+            this.parser = new MarkdownParser();
+        } else {
+            this.parser = new DFAParser();
+        }
+        this._parserType = type;
+
+        // Re-parse the current document if one is loaded
+        if (this.syntaxTree) {
+            const markdown = this.syntaxTree.toMarkdown();
+            this.loadMarkdown(markdown);
+        }
+    }
+
+    /**
+     * Re-parses a single markdown line to detect type changes during
+     * editing. Delegates to the appropriate parser API.
+     * @param {string} text
+     * @returns {SyntaxNode|null}
+     */
+    _reparseLine(text) {
+        if (this._parserType === 'regex') {
+            return /** @type {MarkdownParser} */ (this.parser).parseSingleLine(text);
+        }
+        if (this._parserType === 'dfa') {
+            return this.parser.parse(text).children[0] ?? null;
+        }
+        throw new Error(`Unknown parser type: ${this._parserType}`);
+    }
+
+    /**
+     * Parses a multi-line markdown string (e.g. from a paste) into an
+     * array of nodes. Delegates to the appropriate parser API.
+     * @param {string} combined - The full markdown string to parse.
+     * @returns {SyntaxNode[]}
+     */
+    _parseMultiLine(combined) {
+        if (this._parserType === 'regex') {
+            const lines = combined.split('\n');
+            /** @type {SyntaxNode[]} */
+            const nodes = [];
+            let i = 0;
+            while (i < lines.length) {
+                const result = /** @type {MarkdownParser} */ (this.parser).parseLine(lines, i);
+                if (result.node) {
+                    nodes.push(result.node);
+                }
+                i = result.nextIndex;
+            }
+            return nodes;
+        }
+        if (this._parserType === 'dfa') {
+            return [...this.parser.parse(combined).children];
+        }
+        throw new Error(`Unknown parser type: ${this._parserType}`);
     }
 
     // ──────────────────────────────────────────────
@@ -554,9 +632,9 @@ export class Editor {
             return;
         }
 
-        // Find the node element closest to the vertical centre of the visible
-        // viewport and remember its offset from the container top.  This keeps
-        // the content the user is looking at in the same place after re-render.
+        // Anchor on the cursor's node if one exists, since that is what
+        // the user is focused on.  Fall back to the node closest to the
+        // viewport centre so content doesn't jump when there is no cursor.
         const scrollContainer = this.container.parentElement;
         /** @type {string|null} */
         let anchorNodeId = null;
@@ -564,20 +642,33 @@ export class Editor {
 
         if (scrollContainer) {
             const containerRect = scrollContainer.getBoundingClientRect();
-            const centreY = containerRect.top + containerRect.height / 2;
 
-            const nodeEls = this.container.querySelectorAll('[data-node-id]');
-            let bestDistance = Number.POSITIVE_INFINITY;
+            // Prefer the cursor's node as anchor.
+            if (this.treeCursor) {
+                const cursorEl = this.container.querySelector(
+                    `[data-node-id="${this.treeCursor.nodeId}"]`,
+                );
+                if (cursorEl) {
+                    anchorNodeId = this.treeCursor.nodeId;
+                    savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
+                }
+            }
 
-            for (const el of nodeEls) {
-                const rect = el.getBoundingClientRect();
-                // Distance from the element's vertical midpoint to the viewport centre
-                const mid = rect.top + rect.height / 2;
-                const dist = Math.abs(mid - centreY);
-                if (dist < bestDistance) {
-                    bestDistance = dist;
-                    anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
-                    savedOffsetFromTop = rect.top - containerRect.top;
+            // Fallback: node closest to the viewport centre.
+            if (!anchorNodeId) {
+                const centreY = containerRect.top + containerRect.height / 2;
+                const nodeEls = this.container.querySelectorAll('[data-node-id]');
+                let bestDistance = Number.POSITIVE_INFINITY;
+
+                for (const el of nodeEls) {
+                    const rect = el.getBoundingClientRect();
+                    const mid = rect.top + rect.height / 2;
+                    const dist = Math.abs(mid - centreY);
+                    if (dist < bestDistance) {
+                        bestDistance = dist;
+                        anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
+                        savedOffsetFromTop = rect.top - containerRect.top;
+                    }
                 }
             }
         }
@@ -591,8 +682,7 @@ export class Editor {
             const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
             if (el) {
                 const containerRect = scrollContainer.getBoundingClientRect();
-                const elRect = el.getBoundingClientRect();
-                const currentOffsetFromTop = elRect.top - containerRect.top;
+                const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
                 scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
             }
         }

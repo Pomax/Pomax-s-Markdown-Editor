@@ -233,6 +233,12 @@ class App {
             const detail = /** @type {CustomEvent} */ (e).detail;
             if (this.editor && detail) {
                 this.editor.detailsClosed = !!detail.detailsClosed;
+
+                // Switch parser engine if changed
+                if (detail.parser === 'regex' || detail.parser === 'dfa') {
+                    this.editor.setParser(detail.parser);
+                }
+
                 // Only re-render <details> html-block nodes.
                 const detailsIds = [];
                 if (this.editor.syntaxTree) {
@@ -662,7 +668,9 @@ class App {
         try {
             const result = await window.electronAPI.getSetting('parser');
             if (result.success && (result.value === 'regex' || result.value === 'dfa')) {
-                // TODO: swap parser engine when DFA is selected
+                if (this.editor) {
+                    this.editor.setParser(result.value);
+                }
             }
         } catch {
             // Default is 'regex'
