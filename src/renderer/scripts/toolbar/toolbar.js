@@ -331,6 +331,27 @@ export class Toolbar {
             }
         }
 
+        // --- TEMPORARY: parser toggle button for testing ---
+        const parserSep = document.createElement('div');
+        parserSep.className = 'toolbar-separator';
+        this.toolbarElement.appendChild(parserSep);
+
+        this._parserToggleBtn = document.createElement('button');
+        this._parserToggleBtn.type = 'button';
+        this._parserToggleBtn.style.cssText =
+            'padding:2px 8px;font-size:12px;cursor:pointer;border:1px solid #888;border-radius:3px;background:#eee;color:#333;';
+        this._parserToggleBtn.textContent = `Parser: ${this.editor._parserType ?? 'regex'}`;
+        this._parserToggleBtn.title = 'Toggle parser engine (temporary)';
+        this._parserToggleBtn.addEventListener('click', () => {
+            const next = this.editor._parserType === 'dfa' ? 'regex' : 'dfa';
+            this.editor.setParser(next);
+            if (this._parserToggleBtn) {
+                this._parserToggleBtn.textContent = `Parser: ${next}`;
+            }
+        });
+        this.toolbarElement.appendChild(this._parserToggleBtn);
+        // --- END TEMPORARY ---
+
         this.container.appendChild(this.toolbarElement);
 
         // Scale toolbar down when container is narrower than the toolbar's

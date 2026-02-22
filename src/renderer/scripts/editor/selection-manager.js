@@ -131,7 +131,7 @@ export class SelectionManager {
         // Prefer the editor's treeCursor (set by syncCursorFromDOM via a
         // DOM data-node-id walk) because the text-offset-based line
         // calculation can be thrown off by html-block container elements.
-        const cursorNodeId = this.editor.treeCursor?.nodeId;
+        const cursorNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
         if (cursorNodeId) {
             this.currentNode = this.editor.syntaxTree.findNodeById(cursorNodeId);
             if (this.currentNode) return;

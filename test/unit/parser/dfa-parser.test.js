@@ -528,42 +528,6 @@ describe('DFAParser', () => {
         });
     });
 
-    // ── parseSingleLine ─────────────────────────────────────────
-
-    describe('parseSingleLine', () => {
-        it('should return null for empty input', () => {
-            assert.strictEqual(parser.parseSingleLine(''), null);
-        });
-
-        it('should parse a heading', () => {
-            const node = parser.parseSingleLine('## Title');
-            assert.ok(node);
-            assert.strictEqual(node.type, 'heading2');
-            assert.strictEqual(node.content, 'Title');
-        });
-
-        it('should parse a paragraph', () => {
-            const node = parser.parseSingleLine('Just text');
-            assert.ok(node);
-            assert.strictEqual(node.type, 'paragraph');
-            assert.strictEqual(node.content, 'Just text');
-        });
-
-        it('should parse a list item', () => {
-            const node = parser.parseSingleLine('- item');
-            assert.ok(node);
-            assert.strictEqual(node.type, 'list-item');
-            assert.strictEqual(node.content, 'item');
-        });
-
-        it('should parse a blockquote', () => {
-            const node = parser.parseSingleLine('> quote');
-            assert.ok(node);
-            assert.strictEqual(node.type, 'blockquote');
-            assert.strictEqual(node.content, 'quote');
-        });
-    });
-
     // ── Complex documents ───────────────────────────────────────
 
     describe('complex documents', () => {

@@ -127,27 +127,6 @@ export class DFAParser {
         return tree;
     }
 
-    /**
-     * Parses a single line of markdown (for live-editing re-parse).
-     * @param {string} line
-     * @returns {SyntaxNode|null}
-     */
-    parseSingleLine(line) {
-        const tokens = tokenize(line);
-        const ctx = { tokens, pos: 0, line: 0 };
-
-        // Skip leading newlines
-        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
-            ctx.pos++;
-        }
-
-        if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type === 'EOF') {
-            return null;
-        }
-
-        return this._parseBlock(ctx);
-    }
-
     // ── Block dispatch ──────────────────────────────────────────
 
     /**

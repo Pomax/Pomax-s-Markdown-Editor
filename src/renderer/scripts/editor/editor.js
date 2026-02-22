@@ -13,6 +13,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { DFAParser } from '../parser/dfa-parser.js';
 import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { ClipboardHandler } from './clipboard-handler.js';
@@ -64,8 +65,11 @@ export class Editor {
         /** @type {HTMLElement} */
         this.container = container;
 
-        /** @type {MarkdownParser} */
+        /** @type {MarkdownParser|DFAParser} */
         this.parser = new MarkdownParser();
+
+        /** @type {'regex'|'dfa'} */
+        this._parserType = 'regex';
 
         /** @type {SyntaxTree|null} */
         this.syntaxTree = null;
@@ -115,6 +119,7 @@ export class Editor {
 
         /** @type {ViewMode} */
         this.viewMode = 'focused';
+        this.container.dataset.viewMode = 'focused';
 
         /** @type {boolean} */
         this._hasUnsavedChanges = false;
@@ -127,12 +132,6 @@ export class Editor {
 
         /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in focused view. */
         this.detailsClosed = false;
-
-        /**
-         * Tree-based cursor position.
-         * @type {TreeCursor|null}
-         */
-        this.treeCursor = null;
 
         /**
          * Whether we are currently rendering (used to suppress input events).
@@ -156,6 +155,87 @@ export class Editor {
          * @type {string|null}
          */
         this._lastRenderedNodeId = null;
+
+        /**
+         * Bound event handlers, keyed by event name.
+         * Stored so they can be detached/reattached when swapping containers.
+         * @type {Record<string, EventListener>}
+         */
+        this._boundHandlers = {};
+    }
+
+    // ──────────────────────────────────────────────
+    //  Parser management
+    // ──────────────────────────────────────────────
+
+    /**
+     * Switches the parser engine. If a document is loaded and the type
+     * actually changed, re-parses it with the new parser and re-renders.
+     * @param {'regex'|'dfa'} type
+     */
+    setParser(type) {
+        if (type !== 'regex' && type !== 'dfa') {
+            throw new Error(`Unknown parser type: ${type}`);
+        }
+
+        // Nothing to do if the type hasn't changed.
+        if (type === this._parserType) return;
+
+        if (type === 'regex') {
+            this.parser = new MarkdownParser();
+        } else {
+            this.parser = new DFAParser();
+        }
+        this._parserType = type;
+
+        // Re-parse the current document if one is loaded
+        if (this.syntaxTree) {
+            const markdown = this.syntaxTree.toMarkdown();
+            this.loadMarkdown(markdown);
+        }
+    }
+
+    /**
+     * Re-parses a single markdown line to detect type changes during
+     * editing. Delegates to the appropriate parser API.
+     * @param {string} text
+     * @returns {SyntaxNode|null}
+     */
+    _reparseLine(text) {
+        if (this._parserType === 'regex') {
+            return /** @type {MarkdownParser} */ (this.parser).parseSingleLine(text);
+        }
+        if (this._parserType === 'dfa') {
+            return this.parser.parse(text).children[0] ?? null;
+        }
+        throw new Error(`Unknown parser type: ${this._parserType}`);
+    }
+
+    /**
+     * Parses a multi-line markdown string (e.g. from a paste) into an
+     * array of nodes. Delegates to the appropriate parser API.
+     * @param {string} combined - The full markdown string to parse.
+     * @returns {SyntaxNode[]}
+     */
+    _parseMultiLine(combined) {
+        if (this._parserType === 'regex') {
+            const lines = combined.split('\n');
+            /** @type {SyntaxNode[]} */
+            const nodes = [];
+            let i = 0;
+            while (i < lines.length) {
+                const result = /** @type {MarkdownParser} */ (this.parser).parseLine(lines, i);
+                if (result.node) {
+                    nodes.push(result.node);
+                }
+                i = result.nextIndex;
+            }
+            return nodes;
+        }
+        if (this._parserType === 'dfa') {
+            return [...this.parser.parse(combined).children];
+        }
+        throw new Error(`Unknown parser type: ${this._parserType}`);
     }
 
     // ──────────────────────────────────────────────
@@ -170,7 +250,7 @@ export class Editor {
         this.syntaxTree = new SyntaxTree();
         const initialNode = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(initialNode);
-        this.treeCursor = { nodeId: initialNode.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: initialNode.id, offset: 0 };
 
         // Set up event listeners
         this.setupEventListeners();
@@ -184,54 +264,76 @@ export class Editor {
      * Sets up event listeners for the editor.
      */
     setupEventListeners() {
-        this.container.addEventListener(
-            'keydown',
-            this.inputHandler.handleKeyDown.bind(this.inputHandler),
-        );
-        this.container.addEventListener(
-            'beforeinput',
-            this.inputHandler.handleBeforeInput.bind(this.inputHandler),
-        );
+        // Store bound handlers so they can be removed/reattached
+        // when swapping to a different container element.
+        this._boundHandlers = {
+            keydown: /** @type {EventListener} */ (
+                this.inputHandler.handleKeyDown.bind(this.inputHandler)
+            ),
+            beforeinput: /** @type {EventListener} */ (
+                this.inputHandler.handleBeforeInput.bind(this.inputHandler)
+            ),
+            mousedown: /** @type {EventListener} */ (
+                this.eventHandler.handleMouseDown.bind(this.eventHandler)
+            ),
+            click: /** @type {EventListener} */ (
+                this.eventHandler.handleClick.bind(this.eventHandler)
+            ),
+            focus: /** @type {EventListener} */ (
+                this.eventHandler.handleFocus.bind(this.eventHandler)
+            ),
+            blur: /** @type {EventListener} */ (
+                this.eventHandler.handleBlur.bind(this.eventHandler)
+            ),
+            cut: /** @type {EventListener} */ (
+                this.clipboardHandler.handleCut.bind(this.clipboardHandler)
+            ),
+            copy: /** @type {EventListener} */ (
+                this.clipboardHandler.handleCopy.bind(this.clipboardHandler)
+            ),
+            dragover: /** @type {EventListener} */ (
+                this.eventHandler.handleDragOver.bind(this.eventHandler)
+            ),
+            drop: /** @type {EventListener} */ (
+                /** @type {unknown} */ (this.eventHandler.handleDrop.bind(this.eventHandler))
+            ),
+        };
 
-        this.container.addEventListener(
-            'mousedown',
-            this.eventHandler.handleMouseDown.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'click',
-            this.eventHandler.handleClick.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'focus',
-            this.eventHandler.handleFocus.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'blur',
-            this.eventHandler.handleBlur.bind(this.eventHandler),
-        );
-
-        this.container.addEventListener(
-            'cut',
-            this.clipboardHandler.handleCut.bind(this.clipboardHandler),
-        );
-        this.container.addEventListener(
-            'copy',
-            this.clipboardHandler.handleCopy.bind(this.clipboardHandler),
-        );
-
-        this.container.addEventListener(
-            'dragover',
-            this.eventHandler.handleDragOver.bind(this.eventHandler),
-        );
-        this.container.addEventListener(
-            'drop',
-            this.eventHandler.handleDrop.bind(this.eventHandler),
-        );
+        this._attachContainerListeners();
 
         document.addEventListener(
             'selectionchange',
             this.eventHandler.handleSelectionChange.bind(this.eventHandler),
         );
+    }
+
+    /**
+     * Attaches the stored event handlers to the current container.
+     */
+    _attachContainerListeners() {
+        for (const [event, handler] of Object.entries(this._boundHandlers)) {
+            this.container.addEventListener(event, handler);
+        }
+    }
+
+    /**
+     * Detaches the stored event handlers from the current container.
+     */
+    _detachContainerListeners() {
+        for (const [event, handler] of Object.entries(this._boundHandlers)) {
+            this.container.removeEventListener(event, handler);
+        }
+    }
+
+    /**
+     * Swaps the editor's active container to a different element.
+     * Moves event listeners from the old container to the new one.
+     * @param {HTMLElement} newContainer
+     */
+    swapContainer(newContainer) {
+        this._detachContainerListeners();
+        this.container = newContainer;
+        this._attachContainerListeners();
     }
 
     // ──────────────────────────────────────────────
@@ -243,8 +345,8 @@ export class Editor {
      * @returns {SyntaxNode|null}
      */
     getCurrentNode() {
-        if (!this.treeCursor || !this.syntaxTree) return null;
-        return this.syntaxTree.findNodeById(this.treeCursor.nodeId);
+        if (!this.syntaxTree?.treeCursor) return null;
+        return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId);
     }
 
     /**
@@ -278,7 +380,7 @@ export class Editor {
         this.cursorManager.syncCursorFromDOM();
     }
 
-    /** Places the DOM cursor at the position described by `this.treeCursor`. */
+    /** Places the DOM cursor at the position described by `this.syntaxTree.treeCursor`. */
     placeCursor() {
         this.cursorManager.placeCursor();
     }
@@ -334,7 +436,7 @@ export class Editor {
      */
     fullRenderAndPlaceCursor() {
         this.fullRender();
-        this._lastRenderedNodeId = this.treeCursor?.nodeId ?? null;
+        this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
         this.placeCursor();
     }
 
@@ -504,7 +606,7 @@ export class Editor {
         this._ensureTrailingParagraph();
 
         const first = this.syntaxTree.children[0];
-        this.treeCursor = { nodeId: first.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
 
         this.undoManager.clear();
         this.setUnsavedChanges(false);
@@ -537,7 +639,7 @@ export class Editor {
         this.syntaxTree = new SyntaxTree();
         const node = new SyntaxNode('paragraph', '');
         this.syntaxTree.appendChild(node);
-        this.treeCursor = { nodeId: node.id, offset: 0 };
+        this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         this.undoManager.clear();
         this.currentFilePath = null;
         this.setUnsavedChanges(false);
@@ -554,9 +656,12 @@ export class Editor {
             return;
         }
 
-        // Find the node element closest to the vertical centre of the visible
-        // viewport and remember its offset from the container top.  This keeps
-        // the content the user is looking at in the same place after re-render.
+        // Nothing to do if already in the requested mode.
+        if (mode === this.viewMode) return;
+
+        // Anchor on the cursor's node if one exists, since that is what
+        // the user is focused on.  Fall back to the node closest to the
+        // viewport centre so content doesn't jump when there is no cursor.
         const scrollContainer = this.container.parentElement;
         /** @type {string|null} */
         let anchorNodeId = null;
@@ -564,20 +669,33 @@ export class Editor {
 
         if (scrollContainer) {
             const containerRect = scrollContainer.getBoundingClientRect();
-            const centreY = containerRect.top + containerRect.height / 2;
 
-            const nodeEls = this.container.querySelectorAll('[data-node-id]');
-            let bestDistance = Number.POSITIVE_INFINITY;
+            // Prefer the cursor's node as anchor.
+            if (this.syntaxTree?.treeCursor) {
+                const cursorEl = this.container.querySelector(
+                    `[data-node-id="${this.syntaxTree.treeCursor.nodeId}"]`,
+                );
+                if (cursorEl) {
+                    anchorNodeId = this.syntaxTree.treeCursor.nodeId;
+                    savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
+                }
+            }
 
-            for (const el of nodeEls) {
-                const rect = el.getBoundingClientRect();
-                // Distance from the element's vertical midpoint to the viewport centre
-                const mid = rect.top + rect.height / 2;
-                const dist = Math.abs(mid - centreY);
-                if (dist < bestDistance) {
-                    bestDistance = dist;
-                    anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
-                    savedOffsetFromTop = rect.top - containerRect.top;
+            // Fallback: node closest to the viewport centre.
+            if (!anchorNodeId) {
+                const centreY = containerRect.top + containerRect.height / 2;
+                const nodeEls = this.container.querySelectorAll('[data-node-id]');
+                let bestDistance = Number.POSITIVE_INFINITY;
+
+                for (const el of nodeEls) {
+                    const rect = el.getBoundingClientRect();
+                    const mid = rect.top + rect.height / 2;
+                    const dist = Math.abs(mid - centreY);
+                    if (dist < bestDistance) {
+                        bestDistance = dist;
+                        anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
+                        savedOffsetFromTop = rect.top - containerRect.top;
+                    }
                 }
             }
         }
@@ -591,8 +709,7 @@ export class Editor {
             const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
             if (el) {
                 const containerRect = scrollContainer.getBoundingClientRect();
-                const elRect = el.getBoundingClientRect();
-                const currentOffsetFromTop = elRect.top - containerRect.top;
+                const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
                 scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
             }
         }
@@ -616,7 +733,7 @@ export class Editor {
                 this.syntaxTree.appendChild(node);
             }
             const first = this.syntaxTree.children[0];
-            this.treeCursor = { nodeId: first.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
@@ -632,7 +749,7 @@ export class Editor {
                 this.syntaxTree.appendChild(node);
             }
             const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
-            this.treeCursor = { nodeId: last.id, offset: last.content.length };
+            this.syntaxTree.treeCursor = { nodeId: last.id, offset: last.content.length };
             this.fullRenderAndPlaceCursor();
             this.setUnsavedChanges(true);
         }
@@ -700,7 +817,7 @@ export class Editor {
         if (currentNode?.type === 'table') {
             // Update existing table
             currentNode.content = markdown;
-            this.treeCursor = { nodeId: currentNode.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: currentNode.id, offset: 0 };
             renderHints = { updated: [currentNode.id] };
         } else {
             // Insert a new table node
@@ -724,7 +841,7 @@ export class Editor {
                 renderHints = { added: [tableNode.id] };
             }
 
-            this.treeCursor = { nodeId: tableNode.id, offset: 0 };
+            this.syntaxTree.treeCursor = { nodeId: tableNode.id, offset: 0 };
         }
 
         this.recordAndRender(before, renderHints);
@@ -944,9 +1061,9 @@ export class Editor {
         // Use tree-coordinate selection (treeCursor / treeRange) — never
         // DOM-derived line/column data.
         const node = this.getCurrentNode();
-        if (!node || !this.treeCursor) return;
+        if (!node || !this.syntaxTree?.treeCursor) return;
 
-        const nodeId = this.treeCursor.nodeId;
+        const nodeId = this.syntaxTree.treeCursor.nodeId;
         let startOffset;
         let endOffset;
 
@@ -960,8 +1077,8 @@ export class Editor {
         } else {
             // Collapsed cursor — pass the cursor position; applyFormat will
             // detect the word boundaries or existing format span.
-            startOffset = this.treeCursor.offset;
-            endOffset = this.treeCursor.offset;
+            startOffset = this.syntaxTree.treeCursor.offset;
+            endOffset = this.syntaxTree.treeCursor.offset;
         }
 
         const beforeContent = this.getMarkdown();
@@ -975,7 +1092,7 @@ export class Editor {
 
         // Place cursor at the end of the formatted/unformatted text and
         // collapse the selection — the old range is no longer valid.
-        this.treeCursor.offset = newCursorOffset;
+        if (this.syntaxTree?.treeCursor) this.syntaxTree.treeCursor.offset = newCursorOffset;
         this.treeRange = null;
 
         this.renderNodesAndPlaceCursor({ updated: [nodeId] });
