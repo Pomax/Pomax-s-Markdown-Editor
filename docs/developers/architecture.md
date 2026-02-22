@@ -188,7 +188,7 @@ Additionally, `offset-mapping.js` exports pure functions for raw ↔ rendered
 offset mapping (used by `CursorManager`).
 
 The Editor itself keeps:
-- Document state (`syntaxTree`, `treeCursor`, `treeRange`, `viewMode`)
+- Document state (`syntaxTree`, `treeRange`, `viewMode`) — cursor state lives on `syntaxTree.treeCursor`
 - Rendering methods (`fullRender`, `renderNodes`, `fullRenderAndPlaceCursor`)
 - Dispatches `editor:renderComplete` custom event after `fullRender()` and `renderNodes()`, used by SearchBar to re-apply highlights
 - Tree helpers (`getCurrentNode`, `getSiblings`, `getNodeIndex`)

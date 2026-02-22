@@ -163,8 +163,10 @@ container: `this.editor.container.querySelector(…)`.
 
 ### Cursor model
 
+The cursor state lives on the `SyntaxTree` instance as `syntaxTree.treeCursor` (not on the Editor directly).
+
 ```
-treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: number, cellCol?: number }
+syntaxTree.treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: number, cellCol?: number }
 ```
 
 - `nodeId` — the id of the SyntaxNode that has focus.
