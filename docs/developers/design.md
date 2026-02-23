@@ -140,7 +140,9 @@ src/
 │       │       ├── source-renderer.js
 │       │       └── focused-renderer.js
 │       ├── parser/          # Markdown parser
-│       │   ├── markdown-parser.js
+│       │   ├── dfa-tokenizer.js
+│       │   ├── dfa-parser.js
+│       │   ├── inline-tokenizer.js
 │       │   └── syntax-tree.js
 │       ├── toolbar/         # Toolbar UI
 │       │   ├── toolbar.js
@@ -173,7 +175,7 @@ src/
 test/
 ├── unit/                     # Unit tests (Node.js native test runner)
 │   ├── parser/
-│   │   ├── markdown-parser.test.js
+│   │   ├── dfa-parser.test.js
 │   │   ├── syntax-tree.test.js
 │   │   └── inline-tokenizer.test.js
 │   ├── editor/

@@ -1,9 +1,8 @@
 /**
  * @fileoverview Unit tests for the DFA-based markdown parser.
  *
- * These tests verify that DFAParser produces the same SyntaxTree
- * output as the regex-based MarkdownParser for all supported
- * markdown constructs.
+ * These tests verify that DFAParser produces the correct SyntaxTree
+ * output for all supported markdown constructs.
  */
 
 import assert from 'node:assert';
