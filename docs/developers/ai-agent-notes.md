@@ -175,6 +175,8 @@ syntaxTree.treeCursor = { nodeId: string, offset: number, tagPart?: string, cell
   HTML tag line in source view.
 - `cellRow` / `cellCol` — row and column indices when editing a table cell.
 
+Node IDs are ephemeral (regenerated on every parse), so cursor and ToC heading positions are persisted as **index paths** — arrays of zero-based child indices that walk the tree from root to the target node. For cursors the final element is the character offset. Methods: `getPathToCursor()` / `setCursorPath()` for cursors, `getPathToNode()` / `getNodeAtPath()` for arbitrary nodes (e.g. the active ToC heading).
+
 ### HTML block model (details/summary)
 
 ```
