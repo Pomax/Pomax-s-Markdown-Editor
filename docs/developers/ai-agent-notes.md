@@ -228,9 +228,9 @@ arrives.
 ### bareText preservation
 
 When `insertTextAtCursor`, `handleBackspace`, or `handleDelete` re-parse a
-single line via `parseSingleLine`, they must check whether the node had
+single line via `_reparseLine`, they must check whether the node had
 `bareText: true` before the re-parse and restore it afterward, because
-`parseSingleLine` does not know about the HTML-block context.
+`_reparseLine` does not know about the HTML-block context.
 
 ### Backspace/delete at html-block boundaries
 
