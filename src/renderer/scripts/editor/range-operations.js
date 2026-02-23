@@ -147,7 +147,7 @@ export class RangeOperations {
      */
     handleSelectAll() {
         this.editor.syncCursorFromDOM();
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node) return;
 
         this._selectAllLevel++;

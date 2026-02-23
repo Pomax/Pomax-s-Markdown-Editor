@@ -134,7 +134,7 @@ export class InputHandler {
         // ── Tab / Shift+Tab inside a table ──
         if (event.key === 'Tab' && this.editor.viewMode === 'focused') {
             this.editor.syncCursorFromDOM();
-            const node = this.editor.getCurrentNode();
+            const node = this.editor.getCurrentBlockNode();
             if (
                 node?.type === 'table' &&
                 this.editor.syntaxTree?.treeCursor?.cellRow !== undefined

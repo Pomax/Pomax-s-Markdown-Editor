@@ -54,7 +54,7 @@ export class EditOperations {
      *     The result object from `deleteSelectedRange()`, mutated in place.
      */
     _cleanupEmptyNodeAfterDelete(result) {
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node || !this.editor.syntaxTree) return;
 
         // Only remove types in the extensible set.
@@ -144,7 +144,7 @@ export class EditOperations {
             }
         }
 
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
@@ -351,7 +351,7 @@ export class EditOperations {
             }
         }
 
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
@@ -545,7 +545,7 @@ export class EditOperations {
             }
         }
 
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // When the cursor is on an html-block tag line (source view), edit
@@ -712,7 +712,7 @@ export class EditOperations {
             }
         }
 
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
         // html-block tag lines and containers are not splittable.

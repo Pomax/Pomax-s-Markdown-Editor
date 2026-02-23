@@ -132,6 +132,54 @@ export class Toolbar {
                 applicableTo: ['paragraph', 'list-item'],
             },
             {
+                id: 'image',
+                label: 'Image',
+                icon: '🖼',
+                action: 'image:insert',
+                applicableTo: ['paragraph', 'image', 'list-item'],
+            },
+            {
+                id: 'table',
+                label: 'Table',
+                icon: '▦',
+                action: 'table:insert',
+                applicableTo: ['paragraph', 'table', 'list-item'],
+            },
+            {
+                id: 'unordered-list',
+                label: 'Bullet List',
+                icon: '•',
+                action: 'list:unordered',
+                applicableTo: [
+                    'paragraph',
+                    'heading1',
+                    'heading2',
+                    'heading3',
+                    'heading4',
+                    'heading5',
+                    'heading6',
+                    'blockquote',
+                    'list-item',
+                ],
+            },
+            {
+                id: 'ordered-list',
+                label: 'Numbered List',
+                icon: '1.',
+                action: 'list:ordered',
+                applicableTo: [
+                    'paragraph',
+                    'heading1',
+                    'heading2',
+                    'heading3',
+                    'heading4',
+                    'heading5',
+                    'heading6',
+                    'blockquote',
+                    'list-item',
+                ],
+            },
+            {
                 id: 'separator1',
                 label: '',
                 icon: '',
@@ -238,61 +286,6 @@ export class Toolbar {
                     'heading1',
                     'heading2',
                     'heading3',
-                    'blockquote',
-                    'list-item',
-                ],
-            },
-            {
-                id: 'image',
-                label: 'Image',
-                icon: '🖼',
-                action: 'image:insert',
-                applicableTo: ['paragraph', 'image', 'list-item'],
-            },
-            {
-                id: 'table',
-                label: 'Table',
-                icon: '▦',
-                action: 'table:insert',
-                applicableTo: ['paragraph', 'table', 'list-item'],
-            },
-            {
-                id: 'separator2',
-                label: '',
-                icon: '',
-                action: 'separator',
-            },
-            // List operations
-            {
-                id: 'unordered-list',
-                label: 'Bullet List',
-                icon: '•',
-                action: 'list:unordered',
-                applicableTo: [
-                    'paragraph',
-                    'heading1',
-                    'heading2',
-                    'heading3',
-                    'heading4',
-                    'heading5',
-                    'heading6',
-                    'blockquote',
-                    'list-item',
-                ],
-            },
-            {
-                id: 'ordered-list',
-                label: 'Numbered List',
-                icon: '1.',
-                action: 'list:ordered',
-                applicableTo: [
-                    'paragraph',
-                    'heading1',
-                    'heading2',
-                    'heading3',
-                    'heading4',
-                    'heading5',
-                    'heading6',
                     'blockquote',
                     'list-item',
                 ],
@@ -466,7 +459,7 @@ export class Toolbar {
         const imageModal = this.editor.getImageModal();
 
         // Check if cursor is on an image node
-        const currentNode = this.editor.getCurrentNode();
+        const currentNode = this.editor.getCurrentBlockNode();
         /** @type {Partial<import('../image/image-modal.js').ImageData>|undefined} */
         let existing;
 
@@ -558,7 +551,7 @@ export class Toolbar {
             this.tableModal = new TableModal();
         }
 
-        const currentNode = this.editor.getCurrentNode();
+        const currentNode = this.editor.getCurrentBlockNode();
         /** @type {import('../table/table-modal.js').TableData|null} */
         let existing = null;
 
@@ -582,29 +575,72 @@ export class Toolbar {
     }
 
     /**
+     * Maps inline node types to the toolbar button IDs they activate.
+     * `bold-italic` activates both `bold` and `italic`.
+     * @type {Record<string, string[]>}
+     */
+    static INLINE_TYPE_TO_BUTTONS = {
+        bold: ['bold'],
+        italic: ['italic'],
+        'bold-italic': ['bold', 'italic'],
+        strikethrough: ['strikethrough'],
+        sub: ['subscript'],
+        sup: ['superscript'],
+        'inline-code': ['code'],
+        link: ['link'],
+    };
+
+    /**
      * Updates button states based on the current node.
+     *
+     * When the cursor is inside inline formatting, `node` is the inline
+     * child (e.g. a `bold` SyntaxNode).  We walk up to the block parent
+     * to determine block-level state (heading, list, etc.) and collect
+     * the set of active inline formats along the way.
+     *
      * @param {import('../parser/syntax-tree.js').SyntaxNode|null} node - The current node
      */
     updateButtonStates(node) {
-        const nodeType = node?.type || 'paragraph';
+        // Walk from the (potentially inline) node up to its block parent,
+        // collecting every inline format type encountered on the way.
+        /** @type {Set<string>} */
+        const activeFormats = new Set();
+        let blockNode = node;
+        if (node?.isInlineNode()) {
+            /** @type {import('../parser/syntax-tree.js').SyntaxNode|null} */
+            let walk = node;
+            while (walk?.isInlineNode()) {
+                const buttons = Toolbar.INLINE_TYPE_TO_BUTTONS[walk.type];
+                if (buttons) buttons.forEach((b) => activeFormats.add(b));
+                walk = walk.parent;
+            }
+            blockNode = walk;
+        }
+
+        const blockType = blockNode?.type || 'paragraph';
 
         for (const button of this.buttons) {
             const config = button.config;
 
-            // Check if this button is applicable to the current node type
+            // Applicable-to checks use the block-level type.
             if (config.applicableTo) {
-                const isApplicable = config.applicableTo.includes(nodeType);
+                const isApplicable = config.applicableTo.includes(blockType);
                 button.setEnabled(isApplicable);
             }
 
-            // Check if this button represents the current state
+            // Block-type active state.
             if (config.action.startsWith('changeType:')) {
                 const targetType = config.action.split(':')[1];
-                button.setActive(targetType === nodeType);
+                button.setActive(targetType === blockType);
             } else if (config.action === 'list:unordered') {
-                button.setActive(nodeType === 'list-item' && !node?.attributes?.ordered);
+                button.setActive(blockType === 'list-item' && !blockNode?.attributes?.ordered);
             } else if (config.action === 'list:ordered') {
-                button.setActive(nodeType === 'list-item' && !!node?.attributes?.ordered);
+                button.setActive(blockType === 'list-item' && !!blockNode?.attributes?.ordered);
+            }
+
+            // Inline format active state.
+            if (config.action.startsWith('format:')) {
+                button.setActive(activeFormats.has(config.id));
             }
         }
     }

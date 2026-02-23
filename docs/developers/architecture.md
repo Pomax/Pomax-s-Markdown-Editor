@@ -200,7 +200,7 @@ The Editor itself keeps:
 - Document state (`syntaxTree`, `treeRange`, `viewMode`) — cursor state lives on `syntaxTree.treeCursor`
 - Rendering methods (`fullRender`, `renderNodes`, `fullRenderAndPlaceCursor`)
 - Dispatches `editor:renderComplete` custom event after `fullRender()` and `renderNodes()`, used by SearchBar to re-apply highlights
-- Tree helpers (`getCurrentNode`, `getSiblings`, `getNodeIndex`)
+- Tree helpers (`getCurrentNode`, `getCurrentBlockNode`, `getBlockNodeId`, `getSiblings`, `getNodeIndex`) — `getCurrentNode()` returns the inline node when the cursor is inside formatting; `getCurrentBlockNode()` always returns the block-level parent
 - Markdown helpers (`buildMarkdownLine`, `getPrefixLength`)
 - Public API consumed by the toolbar, IPC handlers, and tests
 
@@ -248,7 +248,11 @@ Block-level nodes that contain inline formatting (paragraphs, headings, blockquo
 
 Inline node types: `text`, `inline-code`, `inline-image`, `bold`, `italic`, `bold-italic`, `strikethrough`, `link`, and HTML inline tags (e.g. `sub`, `sup`). Container types like `bold` and `link` can have their own inline children recursively.
 
-Traversal methods like `findDeepestNodeAtPosition()` do **not** descend into inline children — those are for introspection (e.g. detecting active formats at a cursor position), not for cursor/editing operations which work on the parent block node's `content` string.
+Helper methods on `SyntaxNode`:
+- `isInlineNode()` — returns `true` if this node is an inline child (`getBlockParent() !== this`).
+- `getBlockParent()` — walks `.parent` up to the nearest block-level ancestor (an `INLINE_CONTENT_TYPES` node).
+
+In focused mode, inline formatting elements in the DOM carry `data-node-id` matching their inline child node IDs. The cursor manager (`_mapDOMPositionToTree`) detects these and records the inline node as `treeCursor.nodeId` while computing offset relative to the block parent. Editing operations use `getCurrentBlockNode()` to work on the block's `content` string; the toolbar uses `getCurrentNode()` (the inline node) to detect active formats by walking `.parent`.
 
 ### Renderers
 

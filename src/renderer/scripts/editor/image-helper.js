@@ -88,7 +88,7 @@ export class ImageHelper {
         if (!this.editor.syntaxTree) return;
 
         const before = this.editor.syntaxTree.toMarkdown();
-        const currentNode = this.editor.getCurrentNode();
+        const currentNode = this.editor.getCurrentBlockNode();
         let renderHints;
 
         if (currentNode?.type === 'image') {
@@ -194,7 +194,7 @@ export class ImageHelper {
 
         // Update the node directly — after the modal closes the cursor
         // may have moved, so we cannot rely on insertOrUpdateImage which
-        // reads getCurrentNode().
+        // reads getCurrentBlockNode().
         if (!this.editor.syntaxTree) return;
         const before = this.editor.syntaxTree.toMarkdown();
         node.content = result.alt;

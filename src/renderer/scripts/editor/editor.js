@@ -35,8 +35,16 @@ import { UndoManager } from './undo-manager.js';
 
 /**
  * @typedef {Object} TreeCursor
- * @property {string} nodeId - The ID of the node the cursor is in
- * @property {number} offset - The character offset within the node's content
+ * @property {string} nodeId - The ID of the node the cursor is in.  When the
+ *     cursor is inside an inline formatting element (bold, italic, etc.),
+ *     this is the inline child node's ID.  Otherwise it is the block
+ *     node's ID.
+ * @property {string} [blockNodeId] - The ID of the enclosing block-level
+ *     node (paragraph, heading, list-item, etc.).  Set by DOM cursor sync
+ *     when the cursor is inside an inline formatting element.  When absent,
+ *     `nodeId` is itself the block node.
+ * @property {number} offset - The character offset within the block node's
+ *     raw content string (always relative to the block, not the inline).
  * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
  *     html-block container's opening or closing tag line (source view only).
  * @property {number} [cellRow] - Row index for table cell editing (0 = header).
@@ -288,11 +296,37 @@ export class Editor {
 
     /**
      * Returns the SyntaxNode that the tree cursor currently points at.
+     * When the cursor is inside inline formatting, this returns the
+     * inline child node.
      * @returns {SyntaxNode|null}
      */
     getCurrentNode() {
         if (!this.syntaxTree?.treeCursor) return null;
         return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId);
+    }
+
+    /**
+     * Returns the block-level node ID from the tree cursor.
+     * Uses `blockNodeId` when set (cursor is inside inline formatting),
+     * otherwise falls back to `nodeId`.
+     * @returns {string|null}
+     */
+    getBlockNodeId() {
+        if (!this.syntaxTree?.treeCursor) return null;
+        return this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
+    }
+
+    /**
+     * Returns the block-level SyntaxNode for the current cursor position.
+     * When the cursor is inside inline formatting, this resolves through
+     * `blockNodeId` to return the paragraph/heading/list-item that owns
+     * the raw content string.
+     * @returns {SyntaxNode|null}
+     */
+    getCurrentBlockNode() {
+        const blockId = this.getBlockNodeId();
+        if (!blockId || !this.syntaxTree) return null;
+        return this.syntaxTree.findNodeById(blockId);
     }
 
     /**
@@ -382,7 +416,7 @@ export class Editor {
      */
     fullRenderAndPlaceCursor() {
         this.fullRender();
-        this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
+        this._lastRenderedNodeId = this.getBlockNodeId();
         this.placeCursor();
     }
 
@@ -618,11 +652,12 @@ export class Editor {
 
             // Prefer the cursor's node as anchor.
             if (this.syntaxTree?.treeCursor) {
-                const cursorEl = this.container.querySelector(
-                    `[data-node-id="${this.syntaxTree.treeCursor.nodeId}"]`,
-                );
-                if (cursorEl) {
-                    anchorNodeId = this.syntaxTree.treeCursor.nodeId;
+                const blockId = this.getBlockNodeId();
+                const cursorEl = blockId
+                    ? this.container.querySelector(`[data-node-id="${blockId}"]`)
+                    : null;
+                if (cursorEl && blockId) {
+                    anchorNodeId = blockId;
                     savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
                 }
             }
@@ -757,7 +792,7 @@ export class Editor {
         const markdown = this.tableManager.buildTableMarkdown(tableData);
 
         const before = this.syntaxTree.toMarkdown();
-        const currentNode = this.getCurrentNode();
+        const currentNode = this.getCurrentBlockNode();
         let renderHints;
 
         if (currentNode?.type === 'table') {
@@ -798,7 +833,7 @@ export class Editor {
      * @param {string} elementType
      */
     changeElementType(elementType) {
-        const currentNode = this.getCurrentNode();
+        const currentNode = this.getCurrentBlockNode();
         if (!currentNode || !this.syntaxTree) return;
 
         // html-block containers are structural nodes, not type-changeable.
@@ -839,7 +874,7 @@ export class Editor {
      * @param {boolean} ordered - `true` for numbered, `false` for bullet
      */
     toggleList(ordered) {
-        const currentNode = this.getCurrentNode();
+        const currentNode = this.getCurrentBlockNode();
         if (!currentNode || !this.syntaxTree) return;
 
         // html-block containers are structural nodes, not convertible.
@@ -1006,10 +1041,9 @@ export class Editor {
 
         // Use tree-coordinate selection (treeCursor / treeRange) — never
         // DOM-derived line/column data.
-        const node = this.getCurrentNode();
-        if (!node || !this.syntaxTree?.treeCursor) return;
-
-        const nodeId = this.syntaxTree.treeCursor.nodeId;
+        const nodeId = this.getBlockNodeId();
+        const node = this.getCurrentBlockNode();
+        if (!nodeId || !node || !this.syntaxTree?.treeCursor) return;
         let startOffset;
         let endOffset;
 

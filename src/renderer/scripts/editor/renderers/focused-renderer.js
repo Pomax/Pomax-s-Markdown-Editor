@@ -56,7 +56,7 @@ export class FocusedRenderer {
         // Use the tree cursor (the canonical cursor position) to determine
         // which node is focused, rather than the selection manager which
         // may be stale when switching view modes.
-        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.getBlockNodeId();
 
         // Clear and rebuild content
         container.innerHTML = '';
@@ -124,7 +124,7 @@ export class FocusedRenderer {
         const tree = this.editor.syntaxTree;
         if (!tree) return;
 
-        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.getBlockNodeId();
 
         // 1. Remove DOM elements for deleted nodes.
         for (const nodeId of removed) {
@@ -290,7 +290,7 @@ export class FocusedRenderer {
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan);
+        this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply heading styling
@@ -308,7 +308,7 @@ export class FocusedRenderer {
      * @returns {HTMLElement}
      */
     renderParagraph(node, element, isFocused) {
-        this.renderInlineContent(node.content, element);
+        this.renderInlineContent(node, element);
         return element;
     }
 
@@ -322,7 +322,7 @@ export class FocusedRenderer {
     renderBlockquote(node, element, isFocused) {
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan);
+        this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
 
         // Apply blockquote styling
@@ -384,7 +384,7 @@ export class FocusedRenderer {
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
-        this.renderInlineContent(node.content, contentSpan);
+        this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
 
         return element;
@@ -471,7 +471,7 @@ export class FocusedRenderer {
 
             for (const cellContent of cells) {
                 const cell = document.createElement(i === 0 ? 'th' : 'td');
-                this.renderInlineContent(cellContent.trim(), cell);
+                this.renderInlineString(cellContent.trim(), cell);
                 row.appendChild(cell);
             }
 
@@ -528,7 +528,7 @@ export class FocusedRenderer {
         this.applyHtmlAttributes(container, attrs.openingTag || '');
 
         // Determine which child (if any) is focused
-        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.getBlockNodeId();
 
         for (const child of node.children) {
             const childFocused = child.id === currentNodeId;
@@ -578,7 +578,7 @@ export class FocusedRenderer {
         // Copy any extra attributes from the original opening tag
         this.applyHtmlAttributes(container, attrs.openingTag || '');
 
-        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.getBlockNodeId();
 
         // Split children into summary child and body children
         /** @type {import('../../parser/syntax-tree.js').SyntaxNode|null} */
@@ -688,17 +688,40 @@ export class FocusedRenderer {
     }
 
     /**
-     * Renders inline content with formatting.
-     * @param {string} content - The content to render
+     * Renders inline content from a SyntaxNode's inline children.
+     * Each formatting element gets a `data-node-id` attribute so the
+     * cursor manager can resolve the cursor to the correct inline node.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode} node - The block-level node
      * @param {HTMLElement} container - The container element
      */
-    renderInlineContent(content, container) {
-        if (!content) {
+    renderInlineContent(node, container) {
+        if (!node.content) {
             container.appendChild(document.createElement('br'));
             return;
         }
 
-        // Parse and recursively render formatted inline elements.
+        if (node.children && node.children.length > 0) {
+            this.renderSyntaxNodeChildren(node.children, container);
+        } else {
+            // Fallback for nodes without inline children
+            this.renderInlineParts(node.content, container);
+        }
+    }
+
+    /**
+     * Renders inline content from a raw string (no SyntaxNode children
+     * available).  Used for table cells whose content is extracted from
+     * the raw table markdown.
+     *
+     * @param {string} content - The raw inline text
+     * @param {HTMLElement} container - The container element
+     */
+    renderInlineString(content, container) {
+        if (!content) {
+            container.appendChild(document.createElement('br'));
+            return;
+        }
         this.renderInlineParts(content, container);
     }
 
@@ -714,7 +737,98 @@ export class FocusedRenderer {
     }
 
     /**
+     * Recursively renders inline SyntaxNode children into the DOM.
+     * Formatting elements receive `data-node-id` so that cursor tracking
+     * can resolve to the correct inline node.
+     *
+     * @param {import('../../parser/syntax-tree.js').SyntaxNode[]} children
+     * @param {HTMLElement} container
+     */
+    renderSyntaxNodeChildren(children, container) {
+        for (const child of children) {
+            switch (child.type) {
+                case 'text':
+                    container.appendChild(document.createTextNode(child.content));
+                    break;
+                case 'inline-code': {
+                    const code = document.createElement('code');
+                    code.dataset.nodeId = child.id;
+                    code.textContent = child.content;
+                    container.appendChild(code);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'inline-image': {
+                    const img = document.createElement('img');
+                    img.dataset.nodeId = child.id;
+                    img.className = 'md-image-preview';
+                    img.alt = child.attributes.alt ?? '';
+                    img.src = this.resolveImageSrc(child.attributes.src ?? '');
+                    container.appendChild(img);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'bold': {
+                    const strong = document.createElement('strong');
+                    strong.dataset.nodeId = child.id;
+                    this.renderSyntaxNodeChildren(child.children, strong);
+                    container.appendChild(strong);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'bold-italic': {
+                    const strong = document.createElement('strong');
+                    strong.dataset.nodeId = child.id;
+                    const em = document.createElement('em');
+                    this.renderSyntaxNodeChildren(child.children, em);
+                    strong.appendChild(em);
+                    container.appendChild(strong);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'italic': {
+                    const em = document.createElement('em');
+                    em.dataset.nodeId = child.id;
+                    this.renderSyntaxNodeChildren(child.children, em);
+                    container.appendChild(em);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'strikethrough': {
+                    const del = document.createElement('del');
+                    del.dataset.nodeId = child.id;
+                    this.renderSyntaxNodeChildren(child.children, del);
+                    container.appendChild(del);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                case 'link': {
+                    const a = document.createElement('a');
+                    a.dataset.nodeId = child.id;
+                    a.href = child.attributes.href ?? '';
+                    this.renderSyntaxNodeChildren(child.children, a);
+                    container.appendChild(a);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
+                default: {
+                    // HTML inline tags (sub, sup, mark, u, etc.)
+                    if (child.attributes.tag) {
+                        const el = document.createElement(child.attributes.tag);
+                        el.dataset.nodeId = child.id;
+                        this.renderSyntaxNodeChildren(child.children, el);
+                        container.appendChild(el);
+                        container.appendChild(document.createTextNode(''));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * Recursively walks an InlineSegment tree and appends DOM nodes.
+     * Used as fallback when SyntaxNode children are not available.
      * @param {import('../../parser/inline-tokenizer.js').InlineSegment[]} segments
      * @param {HTMLElement} container
      */
@@ -728,8 +842,6 @@ export class FocusedRenderer {
                     const code = document.createElement('code');
                     code.textContent = seg.content ?? '';
                     container.appendChild(code);
-                    // Empty text node so the cursor can land after the
-                    // element rather than being trapped inside it.
                     container.appendChild(document.createTextNode(''));
                     break;
                 }
