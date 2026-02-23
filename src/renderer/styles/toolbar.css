@@ -3,7 +3,7 @@
  * Contains styles for the formatting toolbar and its buttons.
  */
 
-/* Toolbar container */
+/* Toolbar container – three-area grid: file buttons | content toolbar | (empty) */
 #toolbar-container {
     flex-shrink: 0;
     background-color: var(--color-bg);
@@ -12,17 +12,32 @@
     position: relative;
     z-index: 10;
     overflow: visible;
+
+    display: grid;
+    grid-template-areas: "left center right";
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+}
+
+/* File-button group (left area) */
+.toolbar-file-group {
+    grid-area: left;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 /* Toolbar element */
 .toolbar {
+    grid-area: center;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-xs);
     max-width: var(--page-max-width);
-    margin: 0 auto;
     width: max-content;
+    margin: 0 auto;
     transform-origin: left center;
 }
 
@@ -173,6 +188,11 @@
 /* Lists – orange (organisational) */
 .toolbar-button[data-button-id="unordered-list"] { color: #ea580c; }
 .toolbar-button[data-button-id="ordered-list"]   { color: #ea580c; }
+
+/* File buttons – slate (neutral utility) */
+.toolbar-button[data-button-id="file-new"]  { color: #475569; }
+.toolbar-button[data-button-id="file-open"] { color: #475569; }
+.toolbar-button[data-button-id="file-save"] { color: #475569; }
 
 /* Separator */
 .toolbar-separator {

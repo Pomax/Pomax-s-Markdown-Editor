@@ -232,6 +232,11 @@ class App {
             }
         });
 
+        // Handle File → Save: save the active document
+        document.addEventListener('file:save', () => {
+            this.menuHandler?.handleSave();
+        });
+
         // Handle File → Close: close the active tab
         document.addEventListener('file:close', () => {
             if (this.tabBar?.activeTabId) {

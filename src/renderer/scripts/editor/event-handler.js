@@ -117,21 +117,20 @@ export class EventHandler {
         }
 
         // In focused view the active node shows raw markdown syntax, so we
-        // must re-render whenever the cursor moves to a different node.
-        // Compare against _lastRenderedNodeId for the same reason as in
-        // handleSelectionChange — treeCursor was already mutated.
-        // Use blockNodeId because re-rendering is a block-level operation.
-        const clickBlockId = this.editor.getBlockNodeId();
-        if (
-            this.editor.viewMode === 'focused' &&
-            clickBlockId &&
-            clickBlockId !== this.editor._lastRenderedNodeId
-        ) {
-            const nodesToUpdate = [clickBlockId];
-            if (this.editor._lastRenderedNodeId)
-                nodesToUpdate.push(this.editor._lastRenderedNodeId);
-            this.editor._lastRenderedNodeId = clickBlockId;
+        // must re-render whenever the cursor moves to a different block.
+        // Compare block parents of the old and new node IDs — moving
+        // between inline children inside the same block should not
+        // trigger a re-render.
+        const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        const newBlockId = this.editor.resolveBlockId(newNodeId);
+        const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+        if (this.editor.viewMode === 'focused' && newBlockId && newBlockId !== oldBlockId) {
+            const nodesToUpdate = [newBlockId];
+            if (oldBlockId) nodesToUpdate.push(oldBlockId);
+            this.editor._lastRenderedNodeId = newNodeId;
             this.editor.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
+        } else {
+            this.editor._lastRenderedNodeId = newNodeId;
         }
     }
 
@@ -325,24 +324,17 @@ export class EventHandler {
             if (selection && !selection.isCollapsed) return;
 
             // In focused view the active node shows raw markdown syntax, so we
-            // must re-render whenever the cursor moves to a different node.
-            // Only the two affected nodes need updating.
-            // We compare against _lastRenderedNodeId (not treeCursor before
-            // sync) because syncCursorFromDOM already mutated treeCursor and
-            // the non-collapsed guard above may have skipped earlier renders.
-            // Use blockNodeId for the comparison because re-rendering is a
-            // block-level operation — moving between inline children inside
-            // the same paragraph should not trigger a re-render.
-            const newBlockId = this.editor.getBlockNodeId();
-            if (
-                this.editor.viewMode === 'focused' &&
-                newBlockId &&
-                newBlockId !== this.editor._lastRenderedNodeId
-            ) {
+            // must re-render whenever the cursor moves to a different block.
+            // Compare block parents of the old and new node IDs — moving
+            // between inline children inside the same block should not
+            // trigger a re-render.
+            const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+            const newBlockId = this.editor.resolveBlockId(newNodeId);
+            const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+            if (this.editor.viewMode === 'focused' && newBlockId && newBlockId !== oldBlockId) {
                 const nodesToUpdate = [newBlockId];
-                if (this.editor._lastRenderedNodeId)
-                    nodesToUpdate.push(this.editor._lastRenderedNodeId);
-                this.editor._lastRenderedNodeId = newBlockId;
+                if (oldBlockId) nodesToUpdate.push(oldBlockId);
+                this.editor._lastRenderedNodeId = newNodeId;
                 this.editor.renderNodes({ updated: nodesToUpdate });
                 this.editor.placeCursor();
 
@@ -358,6 +350,8 @@ export class EventHandler {
                         this.editor.linkHelper.openLinkModalForNode(node, anchor);
                     }
                 }
+            } else {
+                this.editor._lastRenderedNodeId = newNodeId;
             }
         }
     }
