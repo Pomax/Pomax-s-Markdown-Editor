@@ -513,15 +513,11 @@ export class DFAParser {
         }
         if (count < 3) return false;
 
-        // Only spaces allowed after the run, then NEWLINE or EOF
+        // Only spaces allowed after the run, then NEWLINE (not EOF)
         while (i < ctx.tokens.length && ctx.tokens[i].type === 'SPACE') {
             i++;
         }
-        return (
-            i >= ctx.tokens.length ||
-            ctx.tokens[i].type === 'NEWLINE' ||
-            ctx.tokens[i].type === 'EOF'
-        );
+        return i < ctx.tokens.length && ctx.tokens[i].type === 'NEWLINE';
     }
 
     /**

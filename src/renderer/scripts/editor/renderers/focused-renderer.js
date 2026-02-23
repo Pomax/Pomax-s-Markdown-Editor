@@ -740,6 +740,15 @@ export class FocusedRenderer {
                     container.appendChild(document.createTextNode(''));
                     break;
                 }
+                case 'bold-italic': {
+                    const strong = document.createElement('strong');
+                    const em = document.createElement('em');
+                    this.appendSegments(seg.children ?? [], em);
+                    strong.appendChild(em);
+                    container.appendChild(strong);
+                    container.appendChild(document.createTextNode(''));
+                    break;
+                }
                 case 'italic': {
                     const em = document.createElement('em');
                     this.appendSegments(seg.children ?? [], em);

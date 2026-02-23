@@ -21,6 +21,7 @@ const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
 
 /**
  * @typedef {'text'|'bold-open'|'bold-close'|'italic-open'|'italic-close'
+ *   |'bold-italic-open'|'bold-italic-close'
  *   |'strikethrough-open'|'strikethrough-close'|'code'
  *   |'link-open'|'link-close'|'link-href'
  *   |'image'
@@ -76,8 +77,48 @@ export function tokenizeInline(input) {
             }
         }
 
+        // ── **** or more: nonsense, treat as plain text ──────
+        if (ch === '*' && input[i + 1] === '*' && input[i + 2] === '*' && input[i + 3] === '*') {
+            // Count the full run of asterisks and leave them as text
+            let end = i + 4;
+            while (end < input.length && input[end] === '*') end++;
+            // Don't flush — let the asterisks accumulate in the text span
+            i = end;
+            continue;
+        }
+
+        // ── *** bold+italic (single delimiter) ─────────────────
+        if (ch === '*' && input[i + 1] === '*' && input[i + 2] === '*') {
+            flushText(i);
+            const isClose = tokens.some(
+                (t) =>
+                    t.type === 'bold-italic-open' &&
+                    !tokens.some(
+                        (u) =>
+                            u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+                    ),
+            );
+            tokens.push({ type: isClose ? 'bold-italic-close' : 'bold-italic-open', raw: '***' });
+            i += 3;
+            textStart = i;
+            continue;
+        }
+
         // ── ** bold ─────────────────────────────────────────────
         if (ch === '*' && input[i + 1] === '*') {
+            // If *** is open, * and ** are just text — only *** can close it.
+            const hasBoldItalicOpen = tokens.some(
+                (t) =>
+                    t.type === 'bold-italic-open' &&
+                    !tokens.some(
+                        (u) =>
+                            u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+                    ),
+            );
+            if (hasBoldItalicOpen) {
+                i++;
+                continue;
+            }
             flushText(i);
             // Determine open vs close: if we have an unclosed bold-open
             // on the stack, this is a close; otherwise it's an open.
@@ -142,6 +183,19 @@ export function tokenizeInline(input) {
 
         // ── * single-star italic ────────────────────────────────
         if (ch === '*' && input[i + 1] !== '*') {
+            // If *** is open, * and ** are just text — only *** can close it.
+            const hasBoldItalicOpen = tokens.some(
+                (t) =>
+                    t.type === 'bold-italic-open' &&
+                    !tokens.some(
+                        (u) =>
+                            u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+                    ),
+            );
+            if (hasBoldItalicOpen) {
+                i++;
+                continue;
+            }
             flushText(i);
             const isClose = tokens.some(
                 (t) =>
@@ -327,6 +381,7 @@ export function findMatchedTokenIndices(tokens) {
         if (
             token.type === 'bold-close' ||
             token.type === 'italic-close' ||
+            token.type === 'bold-italic-close' ||
             token.type === 'strikethrough-close'
         ) {
             const idx = _findOpenIdx(openStack, token.type);
@@ -404,6 +459,7 @@ function _findOpenIdx(openStack, closeType) {
 const CLOSE_TYPE_FOR = {
     'bold-open': 'bold-close',
     'italic-open': 'italic-close',
+    'bold-italic-open': 'bold-italic-close',
     'strikethrough-open': 'strikethrough-close',
     'link-open': 'link-close',
 };
@@ -415,6 +471,7 @@ const CLOSE_TYPE_FOR = {
 const SEGMENT_TYPE_FOR = {
     'bold-open': 'bold',
     'italic-open': 'italic',
+    'bold-italic-open': 'bold-italic',
     'strikethrough-open': 'strikethrough',
     'link-open': 'link',
 };
@@ -476,6 +533,7 @@ export function buildInlineTree(tokens) {
         if (
             token.type === 'bold-close' ||
             token.type === 'italic-close' ||
+            token.type === 'bold-italic-close' ||
             token.type === 'strikethrough-close'
         ) {
             // Find the matching open on the stack

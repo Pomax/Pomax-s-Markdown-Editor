@@ -36,6 +36,33 @@ describe('tokenizeInline', () => {
         assert.equal(tokens[3].type, 'italic-close');
     });
 
+    it('tokenizes ***bold+italic*** as a single bold-italic open/close pair', () => {
+        const tokens = tokenizeInline('a ***b*** c');
+        assert.equal(tokens.length, 5);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[1].type, 'bold-italic-open');
+        assert.equal(tokens[1].raw, '***');
+        assert.equal(tokens[2].type, 'text');
+        assert.equal(tokens[2].raw, 'b');
+        assert.equal(tokens[3].type, 'bold-italic-close');
+        assert.equal(tokens[3].raw, '***');
+        assert.equal(tokens[4].type, 'text');
+    });
+
+    it('treats **** (four or more asterisks) as plain text', () => {
+        const tokens = tokenizeInline('a **** b');
+        assert.equal(tokens.length, 1);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[0].raw, 'a **** b');
+    });
+
+    it('treats ***** (five asterisks) as plain text', () => {
+        const tokens = tokenizeInline('hello ***** world');
+        assert.equal(tokens.length, 1);
+        assert.equal(tokens[0].type, 'text');
+        assert.equal(tokens[0].raw, 'hello ***** world');
+    });
+
     it('tokenizes ~~strikethrough~~ markers', () => {
         const tokens = tokenizeInline('a ~~b~~ c');
         assert.equal(tokens[1].type, 'strikethrough-open');
@@ -200,6 +227,26 @@ describe('buildInlineTree', () => {
         assert.equal(tree[0].children.length, 2);
         assert.equal(tree[0].children[0].type, 'text');
         assert.equal(tree[0].children[1].type, 'bold');
+    });
+
+    it('builds bold-italic segment from ***word***', () => {
+        const tokens = tokenizeInline('test ***word*** end');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 3);
+        assert.equal(tree[0].type, 'text');
+        assert.equal(tree[0].text, 'test ');
+        assert.equal(tree[1].type, 'bold-italic');
+        assert.equal(tree[1].children.length, 1);
+        assert.equal(tree[1].children[0].text, 'word');
+        assert.equal(tree[2].type, 'text');
+    });
+
+    it('treats **** as plain text in tree', () => {
+        const tokens = tokenizeInline('test **** end');
+        const tree = buildInlineTree(tokens);
+        assert.equal(tree.length, 1);
+        assert.equal(tree[0].type, 'text');
+        assert.equal(tree[0].text, 'test **** end');
     });
 
     it('builds an image segment from an image token', () => {
