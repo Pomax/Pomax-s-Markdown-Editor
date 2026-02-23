@@ -155,6 +155,12 @@ pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
     added, or removed. Event handlers on untouched elements survive.
 - Most editing operations use the incremental path.
 
+### Inline children model
+
+Block-level nodes that contain inline formatting (`paragraph`, `heading1`–`heading6`, `blockquote`, `list-item`) automatically build inline child `SyntaxNode` instances when their `content` is set. The `content` property is a getter/setter — setting it triggers `buildInlineChildren()` which tokenizes the raw markdown and converts the segments into a tree of inline nodes (types: `text`, `inline-code`, `inline-image`, `bold`, `italic`, `bold-italic`, `strikethrough`, `link`, plus HTML inline tags like `sub`/`sup`).
+
+These inline children are for **introspection only** (e.g. detecting which formatting is active at a cursor offset). Editing operations work on the parent block node's raw `content` string — never on the inline children directly. Traversal methods like `findDeepestNodeAtPosition()` do not descend into inline children.
+
 ### `data-node-id` scoping
 
 Every rendered block element in the editor gets a `data-node-id` attribute

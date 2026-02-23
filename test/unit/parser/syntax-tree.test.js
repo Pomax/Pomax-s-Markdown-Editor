@@ -20,8 +20,15 @@ describe('SyntaxNode', () => {
             assert.notStrictEqual(node1.id, node2.id);
         });
 
-        it('should initialize with empty children array', () => {
+        it('should build inline children for inline-containing types', () => {
             const node = new SyntaxNode('paragraph', 'Hello');
+            assert.strictEqual(node.children.length, 1);
+            assert.strictEqual(node.children[0].type, 'text');
+            assert.strictEqual(node.children[0].content, 'Hello');
+        });
+
+        it('should initialize with empty children for non-inline types', () => {
+            const node = new SyntaxNode('code-block', 'console.log()');
             assert.deepStrictEqual(node.children, []);
         });
     });
@@ -234,12 +241,13 @@ describe('SyntaxTree', () => {
     });
 
     describe('getNodeCount', () => {
-        it('should count all nodes', () => {
+        it('should count all nodes including inline children', () => {
             tree.appendChild(new SyntaxNode('heading1', 'Title'));
             tree.appendChild(new SyntaxNode('paragraph', 'Content'));
             tree.appendChild(new SyntaxNode('paragraph', 'More'));
 
-            assert.strictEqual(tree.getNodeCount(), 3);
+            // 3 block nodes + 3 inline text children = 6
+            assert.strictEqual(tree.getNodeCount(), 6);
         });
     });
 

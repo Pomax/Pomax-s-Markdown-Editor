@@ -45,11 +45,18 @@ export function computeNewWidth({ startWidth, startX, currentX, side, maxContain
 /**
  * Initialises left and right resize handles for the editor page.
  *
+ * Returns a function that re-targets the handles to a different editor
+ * element (used when switching tabs).
+ *
  * @param {HTMLElement} editor - The `.editor` paper element (`#editor`).
+ * @returns {((newEditor: HTMLElement) => void) | undefined}
  */
 export function initPageResizeHandles(editor) {
     const container = editor.parentElement;
     if (!container) return;
+
+    /** @type {{ current: HTMLElement }} */
+    const editorRef = { current: editor };
 
     const leftHandle = _createHandle('left');
     const rightHandle = _createHandle('right');
@@ -57,7 +64,7 @@ export function initPageResizeHandles(editor) {
     document.body.appendChild(leftHandle);
     document.body.appendChild(rightHandle);
 
-    const update = () => _positionHandles(editor, leftHandle, rightHandle);
+    const update = () => _positionHandles(editorRef.current, leftHandle, rightHandle);
 
     update();
 
@@ -69,8 +76,20 @@ export function initPageResizeHandles(editor) {
     // Re-position on scroll (the editor container is the scroll parent).
     container.addEventListener('scroll', update, { passive: true });
 
-    _attachDrag(editor, leftHandle, 'left', rightHandle);
-    _attachDrag(editor, rightHandle, 'right', leftHandle);
+    _attachDrag(editorRef, leftHandle, 'left', rightHandle);
+    _attachDrag(editorRef, rightHandle, 'right', leftHandle);
+
+    /**
+     * Re-targets the resize handles to a different editor element.
+     * Called when switching tabs so the handles track the new container.
+     * @param {HTMLElement} newEditor
+     */
+    return (newEditor) => {
+        ro.unobserve(editorRef.current);
+        editorRef.current = newEditor;
+        ro.observe(newEditor);
+        update();
+    };
 }
 
 // ── Private helpers ──────────────────────────────────────────────────
@@ -133,12 +152,12 @@ function _positionHandles(editor, leftHandle, rightHandle) {
  * page width on mousedown, then computes `initialWidth + delta` during
  * mousemove so there is zero visual jump at the start of the drag.
  *
- * @param {HTMLElement} editor       - The paper element
+ * @param {{ current: HTMLElement }} editorRef - Mutable ref to the active paper element
  * @param {HTMLDivElement} handle    - The handle being dragged
  * @param {'left' | 'right'} side   - Which side this handle sits on
  * @param {HTMLDivElement} otherHandle - The opposite handle (for re-positioning)
  */
-function _attachDrag(editor, handle, side, otherHandle) {
+function _attachDrag(editorRef, handle, side, otherHandle) {
     /** @type {number} Mouse X at the moment of mousedown */
     let startX = 0;
     /** @type {number} Editor width (px) at the moment of mousedown */
@@ -154,7 +173,7 @@ function _attachDrag(editor, handle, side, otherHandle) {
 
     /** Calls the exported computeNewWidth with current drag state. */
     const getNewWidth = () => {
-        const container = editor.parentElement;
+        const container = editorRef.current.parentElement;
         const maxContainerWidth = container ? container.clientWidth : 2040;
         return computeNewWidth({
             startWidth,
@@ -177,7 +196,7 @@ function _attachDrag(editor, handle, side, otherHandle) {
             const newWidth = getNewWidth();
 
             // Set inline style directly — avoids CSS variable cascade reflow.
-            editor.style.maxWidth = `${newWidth}px`;
+            editorRef.current.style.maxWidth = `${newWidth}px`;
 
             // Position handles directly from the delta — no layout thrash.
             const halfGrowth = (newWidth - startWidth) / 2;
@@ -203,12 +222,12 @@ function _attachDrag(editor, handle, side, otherHandle) {
 
         // Compute final width from the delta (don't rely on rAF having run).
         const finalWidth = getNewWidth();
-        editor.style.maxWidth = '';
+        editorRef.current.style.maxWidth = '';
         applyPageWidth({ useFixed: false, width: finalWidth, unit: 'px' });
 
         // Snap handles to actual editor rect now that the CSS variable is set.
         _positionHandles(
-            editor,
+            editorRef.current,
             side === 'left' ? handle : otherHandle,
             side === 'right' ? handle : otherHandle,
         );
@@ -219,10 +238,10 @@ function _attachDrag(editor, handle, side, otherHandle) {
     handle.addEventListener('mousedown', (e) => {
         e.preventDefault();
         startX = e.clientX;
-        startWidth = editor.getBoundingClientRect().width;
+        startWidth = editorRef.current.getBoundingClientRect().width;
 
         // Capture both handles' current viewport X positions.
-        const editorRect = editor.getBoundingClientRect();
+        const editorRect = editorRef.current.getBoundingClientRect();
         startLeftX = editorRect.left;
         startRightX = editorRect.right;
 

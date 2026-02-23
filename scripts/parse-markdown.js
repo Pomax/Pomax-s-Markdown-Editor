@@ -45,9 +45,14 @@ const tree = parser.parse(input);
 function printNode(/** @type {any} */ node, /** @type {string} */ indent) {
     const attrs =
         Object.keys(node.attributes).length > 0 ? ` ${JSON.stringify(node.attributes)}` : '';
-    const content = node.content
-        ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
-        : '';
+    // Skip content on the parent line when inline children already represent it
+    const hasInlineChildren =
+        node.children.length > 0 &&
+        node.children.some((/** @type {any} */ c) => c.type !== 'html-block');
+    const content =
+        node.content && !hasInlineChildren
+            ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
+            : '';
     console.log(`${indent}${node.type}${content}${attrs}  [L${node.startLine}-${node.endLine}]`);
     for (const child of node.children) {
         printNode(child, `${indent}  `);

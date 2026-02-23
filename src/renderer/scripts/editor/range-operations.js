@@ -293,7 +293,10 @@ export class RangeOperations {
      */
     _firstLeaf(node) {
         let current = node;
-        while (current.children.length > 0) {
+        // Only descend into block-level children (html-block containers).
+        // Inline children (text, bold, etc.) are not rendered as separate
+        // DOM elements with data-node-id, so we must stop at block nodes.
+        while (current.type === 'html-block' && current.children.length > 0) {
             current = current.children[0];
         }
         return current;
@@ -306,7 +309,7 @@ export class RangeOperations {
      */
     _lastLeaf(node) {
         let current = node;
-        while (current.children.length > 0) {
+        while (current.type === 'html-block' && current.children.length > 0) {
             current = current.children[current.children.length - 1];
         }
         return current;
