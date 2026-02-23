@@ -14,7 +14,6 @@
 /// <reference path="../../../types.d.ts" />
 
 import { DFAParser } from '../parser/dfa-parser.js';
-import { MarkdownParser } from '../parser/markdown-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
 import { ClipboardHandler } from './clipboard-handler.js';
 import { CursorManager } from './cursor-manager.js';
@@ -65,11 +64,8 @@ export class Editor {
         /** @type {HTMLElement} */
         this.container = container;
 
-        /** @type {MarkdownParser|DFAParser} */
-        this.parser = new MarkdownParser();
-
-        /** @type {'regex'|'dfa'} */
-        this._parserType = 'regex';
+        /** @type {DFAParser} */
+        this.parser = new DFAParser();
 
         /** @type {SyntaxTree|null} */
         this.syntaxTree = null;
@@ -165,50 +161,17 @@ export class Editor {
     }
 
     // ──────────────────────────────────────────────
-    //  Parser management
+    //  Parser helpers
     // ──────────────────────────────────────────────
 
     /**
-     * Switches the parser engine. If a document is loaded and the type
-     * actually changed, re-parses it with the new parser and re-renders.
-     * @param {'regex'|'dfa'} type
-     */
-    setParser(type) {
-        if (type !== 'regex' && type !== 'dfa') {
-            throw new Error(`Unknown parser type: ${type}`);
-        }
-
-        // Nothing to do if the type hasn't changed.
-        if (type === this._parserType) return;
-
-        if (type === 'regex') {
-            this.parser = new MarkdownParser();
-        } else {
-            this.parser = new DFAParser();
-        }
-        this._parserType = type;
-
-        // Re-parse the current document if one is loaded
-        if (this.syntaxTree) {
-            const markdown = this.syntaxTree.toMarkdown();
-            this.loadMarkdown(markdown);
-        }
-    }
-
-    /**
      * Re-parses a single markdown line to detect type changes during
-     * editing. Delegates to the appropriate parser API.
+     * editing.
      * @param {string} text
      * @returns {SyntaxNode|null}
      */
     _reparseLine(text) {
-        if (this._parserType === 'regex') {
-            return /** @type {MarkdownParser} */ (this.parser).parseSingleLine(text);
-        }
-        if (this._parserType === 'dfa') {
-            return this.parser.parse(text).children[0] ?? null;
-        }
-        throw new Error(`Unknown parser type: ${this._parserType}`);
+        return this.parser.parse(text).children[0] ?? null;
     }
 
     /**
@@ -218,24 +181,7 @@ export class Editor {
      * @returns {SyntaxNode[]}
      */
     _parseMultiLine(combined) {
-        if (this._parserType === 'regex') {
-            const lines = combined.split('\n');
-            /** @type {SyntaxNode[]} */
-            const nodes = [];
-            let i = 0;
-            while (i < lines.length) {
-                const result = /** @type {MarkdownParser} */ (this.parser).parseLine(lines, i);
-                if (result.node) {
-                    nodes.push(result.node);
-                }
-                i = result.nextIndex;
-            }
-            return nodes;
-        }
-        if (this._parserType === 'dfa') {
-            return [...this.parser.parse(combined).children];
-        }
-        throw new Error(`Unknown parser type: ${this._parserType}`);
+        return [...this.parser.parse(combined).children];
     }
 
     // ──────────────────────────────────────────────

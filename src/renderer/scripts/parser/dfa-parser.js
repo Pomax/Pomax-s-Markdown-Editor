@@ -139,9 +139,12 @@ export class DFAParser {
     _parseBlock(ctx) {
         const tok = ctx.tokens[ctx.pos];
 
-        // Heading: one or more HASH at start of line
+        // Heading: one or more HASH at start of line, followed by a space
         if (tok.type === 'HASH') {
-            return this._parseHeading(ctx);
+            const saved = ctx.pos;
+            const node = this._parseHeading(ctx);
+            if (node) return node;
+            ctx.pos = saved;
         }
 
         // Code fence: three BACKTICK tokens
@@ -220,7 +223,7 @@ export class DFAParser {
 
     /**
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode}
+     * @returns {SyntaxNode|null}
      */
     _parseHeading(ctx) {
         const startLine = ctx.line;
@@ -232,10 +235,15 @@ export class DFAParser {
             ctx.pos++;
         }
 
+        // A space after the hashes is required for a valid heading
+        if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'SPACE') {
+            return null;
+        }
+
         if (level > 6) level = 6;
 
-        // Skip the space after hashes
-        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+        // Skip all spaces after hashes
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
             ctx.pos++;
         }
 

@@ -275,7 +275,7 @@ focused manager classes that receive the editor as a constructor argument:
 ```javascript
 class Editor {
     constructor(container) {
-        this.parser = new MarkdownParser();
+        this.parser = new DFAParser();
         this.syntaxTree = null;
         this.sourceRenderer = new SourceRenderer(this);
         this.focusedRenderer = new FocusedRenderer(this);
@@ -309,26 +309,25 @@ surface, document state, and rendering methods.
 
 ### Parser Pattern
 
-The parser uses pattern matching:
+The parser uses a token-driven DFA. A character-level tokenizer produces a flat token stream, then the parser dispatches to block-specific sub-parsers based on the current token:
 
 ```javascript
-class MarkdownParser {
-    constructor() {
-        this.blockPatterns = [
-            { type: 'heading', pattern: /^(#{1,6})\s+(.*)$/, handler: this.parseHeading },
-            { type: 'blockquote', pattern: /^>\s*(.*)$/, handler: this.parseBlockquote },
-            // ...
-        ];
-    }
+class DFAParser {
+    parse(markdown) {
+        const tokens = tokenize(markdown);
+        const tree = new SyntaxTree();
+        const ctx = { tokens, pos: 0, line: 0 };
 
-    parseLine(line) {
-        for (const { pattern, handler } of this.blockPatterns) {
-            const match = line.match(pattern);
-            if (match) {
-                return handler.call(this, match);
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+            if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+                continue;
             }
+            const node = this._parseBlock(ctx);
+            if (node) tree.appendChild(node);
         }
-        return this.parseParagraph(line);
+        return tree;
     }
 }
 ```
@@ -477,9 +476,9 @@ Use CSS custom properties for theming:
 Test individual functions and classes:
 
 ```javascript
-describe('MarkdownParser', () => {
+describe('DFAParser', () => {
     it('should parse heading level 1', () => {
-        const parser = new MarkdownParser();
+        const parser = new DFAParser();
         const tree = parser.parse('# Title');
         assert.strictEqual(tree.children[0].type, 'heading1');
     });
@@ -504,8 +503,8 @@ test('should allow typing in the editor', async () => {
 
 ### Adding a New Element Type
 
-1. Add pattern to `MarkdownParser.blockPatterns`
-2. Create handler method in `MarkdownParser`
+1. Add block dispatch case in `DFAParser._parseBlock()`
+2. Create sub-parser method in `DFAParser`
 3. Add `toMarkdown()` case in `SyntaxNode`
 4. Add render method in `SourceRenderer`
 5. Add render method in `FocusedRenderer`

@@ -38,7 +38,7 @@ The application follows Electron's multi-process architecture:
 │                     Renderer Process (app.js)                │
 │    ┌── Editor ──────────────────────────────────────────┐    │
 │    │  ┌────────────────┐  ┌──────────────────────────┐  │    │
-│    │  │ MarkdownParser │──│       SyntaxTree         │  │    │
+│    │  │   DFAParser    │──│       SyntaxTree         │  │    │
 │    │  └────────────────┘  └──────────────────────────┘  │    │
 │    │  ┌─────────────────┐ ┌────────────────┐            │    │
 │    │  │ FocusedRenderer │ │ SourceRenderer │            │    │
@@ -214,11 +214,12 @@ Floating draggable search panel for finding text in the editor:
 - Draggable via mouse (repositions with CSS `left`/`top`); position resets on each open
 - Appended to the `#app` element, styled in `search.css`
 
-### MarkdownParser
+### DFAParser
 
-Converts markdown text to a syntax tree:
+Converts markdown text to a syntax tree using a token-driven DFA (no regular expressions):
+- Character-level tokenizer (`dfa-tokenizer.js`) produces a flat token stream
 - Block-level parsing (headings, paragraphs, code blocks, blockquotes, lists, images, tables, horizontal rules)
-- Pattern-based recognition with ordered priority
+- Token-based recognition with ordered priority
 - Position tracking (start/end line) for each node
 - Multi-line block handling (code blocks, tables)
 
@@ -380,7 +381,7 @@ App: reuse pristine tab or create new tab
 Editor.loadMarkdown()
        │
        ▼
-MarkdownParser.parse() → SyntaxTree
+DFAParser.parse() → SyntaxTree
        │
        ▼
 rewriteImagePaths() (async, if ensureLocalPaths enabled)

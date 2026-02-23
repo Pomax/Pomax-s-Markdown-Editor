@@ -215,8 +215,8 @@ Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.ym
 
 ### Adding a New Markdown Element
 
-1. Add pattern to `MarkdownParser.blockPatterns` in `src/renderer/scripts/parser/markdown-parser.js`
-2. Add handler method in `MarkdownParser`
+1. Add block dispatch case in `DFAParser._parseBlock()` in `src/renderer/scripts/parser/dfa-parser.js`
+2. Add sub-parser method in `DFAParser`
 3. Add `toMarkdown()` case in `SyntaxNode` (`src/renderer/scripts/parser/syntax-tree.js`)
 4. Add rendering in both `SourceRenderer` and `FocusedRenderer`
 5. Add tests for parser and rendering
