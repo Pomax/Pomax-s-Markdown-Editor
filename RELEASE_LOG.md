@@ -1,5 +1,28 @@
 # Release Log
 
+## v1.7.0
+
+### New Features
+
+- **Bold-italic formatting (`***text***`)**: The inline tokenizer now supports `***` as an atomic bold-italic delimiter. `***word***` renders as bold-italic (`<strong><em>…</em></strong>`) in focused view. Four or more consecutive asterisks (`****`+) are treated as plain text.
+
+### Bug Fixes
+
+- **Horizontal rule eating content at EOF**: The DFA parser's `_isHorizontalRule` treated EOF as equivalent to NEWLINE, so typing `***` at the end of a line caused the parser to consume the entire paragraph as a horizontal rule. Fixed to require an actual NEWLINE token — EOF no longer qualifies. (#70)
+
+### Improvements
+
+- **DFA parser is the sole parser**: The regex-based `MarkdownParser` has been removed. The DFA parser (`dfa-parser.js` / `dfa-tokenizer.js`) is now the only parsing pipeline. The parser-switching UI in preferences and the `setParser()` API have been removed. (#69)
+- **Dead code removal**: Deleted `markdown-parser.js` and its test file `markdown-parser.test.js`. Updated all doc references to point to the DFA parser.
+
+### Testing & CI
+
+- **Bold-italic unit tests**: 5 new unit tests for the inline tokenizer covering `***` token output, tree building, and `****`+ plain-text handling.
+- **Bold-italic integration tests**: 4 new integration tests for typing `***word***` and `****` delimiters, verifying cursor position and rendered output.
+- **DFA parser HR tests updated**: 4 horizontal rule unit tests updated to include the required trailing newline in test inputs.
+
+---
+
 ## v1.6.0
 
 ### New Features

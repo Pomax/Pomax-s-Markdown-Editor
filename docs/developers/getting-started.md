@@ -115,7 +115,8 @@ markdown-editor/
 | `src/main/api-registry.js` | External scripting API |
 | `src/renderer/scripts/app.js` | Renderer entry point, wires everything together |
 | `src/renderer/scripts/editor/editor.js` | Core editor class (coordinator) |
-| `src/renderer/scripts/parser/markdown-parser.js` | Markdown → syntax tree |
+| `src/renderer/scripts/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
+| `src/renderer/scripts/parser/dfa-parser.js` | Markdown → syntax tree |
 | `src/renderer/scripts/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
 | `src/types.d.ts` | Global TypeScript type declarations |
 
@@ -130,7 +131,7 @@ npm run test:unit
 
 Run a specific test file:
 ```sh
-node --test test/unit/parser/markdown-parser.test.js
+node --test test/unit/parser/dfa-parser.test.js
 ```
 
 ### Integration Tests
