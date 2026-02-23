@@ -317,6 +317,19 @@ export class Editor {
     }
 
     /**
+     * Resolves an arbitrary node ID to its block-level parent ID.
+     * If the node is already block-level, returns the same ID.
+     * @param {string|null} nodeId
+     * @returns {string|null}
+     */
+    resolveBlockId(nodeId) {
+        if (!nodeId || !this.syntaxTree) return null;
+        const node = this.syntaxTree.findNodeById(nodeId);
+        if (!node) return nodeId;
+        return node.getBlockParent().id;
+    }
+
+    /**
      * Returns the block-level SyntaxNode for the current cursor position.
      * When the cursor is inside inline formatting, this resolves through
      * `blockNodeId` to return the paragraph/heading/list-item that owns
@@ -416,7 +429,7 @@ export class Editor {
      */
     fullRenderAndPlaceCursor() {
         this.fullRender();
-        this._lastRenderedNodeId = this.getBlockNodeId();
+        this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
         this.placeCursor();
     }
 

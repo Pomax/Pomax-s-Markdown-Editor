@@ -263,6 +263,7 @@ export class SelectionManager {
      */
     dispatchSelectionChange() {
         const event = new CustomEvent('editor:selectionchange', {
+            bubbles: true,
             detail: {
                 selection: this.currentSelection,
                 node: this.currentNode,

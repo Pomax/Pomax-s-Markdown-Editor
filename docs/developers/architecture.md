@@ -325,7 +325,9 @@ Modal for inserting and editing links (`link/link-modal.js`):
 
 ### Toolbar
 
-WYSIWYG formatting toolbar:
+WYSIWYG formatting toolbar using a CSS grid layout with three areas (`left`, `center`, `right`):
+- **File buttons** (left-aligned): New File, Open File, Save File — wired to existing file events (`file:new`, `file:loaded`, `file:save`)
+- **Content toolbar** (centred): formatting and element-type buttons
 - Lucide SVG icons with per-button coloring
 - Context-aware button visibility (buttons only shown when applicable to current element type)
 - Element type buttons (H1–H3, paragraph, blockquote, code block)

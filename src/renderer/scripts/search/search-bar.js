@@ -68,6 +68,13 @@ export class SearchBar {
         this._documentText = '';
 
         /**
+         * The view mode the current offset map was built for.
+         * Used to detect view-mode switches so we can rebuild.
+         * @type {string|null}
+         */
+        this._searchViewMode = null;
+
+        /**
          * Bound handler for render-complete events so we can remove it.
          * @type {(() => void)|null}
          */
@@ -169,8 +176,17 @@ export class SearchBar {
         // Start hidden
         this.container.style.display = 'none';
 
-        // Listen for renders so we can re-apply highlights
-        this._renderCompleteHandler = () => this._applyHighlights();
+        // Listen for renders so we can re-apply highlights.
+        // If the view mode changed since we last searched, rebuild
+        // the offset map and re-run the search so highlights stay
+        // correct across source ↔ focused switches.
+        this._renderCompleteHandler = () => {
+            if (this._visible && this.editor.viewMode !== this._searchViewMode) {
+                this._onSearchChanged();
+            } else {
+                this._applyHighlights();
+            }
+        };
         document.addEventListener('editor:renderComplete', this._renderCompleteHandler);
     }
 
@@ -352,6 +368,7 @@ export class SearchBar {
         }
 
         const isSource = this.editor.viewMode === 'source';
+        this._searchViewMode = this.editor.viewMode;
         /** @type {OffsetMapEntry[]} */
         const map = [];
         let pos = 0;

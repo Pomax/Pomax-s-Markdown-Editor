@@ -170,6 +170,10 @@ In **focused mode**, the renderer places `data-node-id` attributes on the inline
 
 The toolbar receives the current node (possibly inline) via the `editor:selectionchange` event. `updateButtonStates(node)` walks from the node up through its parents to collect active inline formats, and resolves to the block parent for block-type button states (heading, paragraph, list, etc.). The mapping from inline node types to button IDs is defined in `Toolbar.INLINE_TYPE_TO_BUTTONS`.
 
+### Toolbar layout
+
+The `#toolbar-container` uses CSS grid with three named areas: `left`, `center`, `right`. The file-button group (New, Open, Save) sits in the `left` area. The content toolbar (view mode toggle + formatting buttons) sits in the `center` area and is centred via `margin: 0 auto`. The `right` area is currently empty. File buttons dispatch document-level custom events (`file:new`, `file:loaded`, `file:save`) that the `App` class listens for.
+
 ### `data-node-id` scoping
 
 Every rendered block element in the editor gets a `data-node-id` attribute

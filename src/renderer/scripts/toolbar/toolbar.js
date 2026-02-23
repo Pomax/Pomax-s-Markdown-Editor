@@ -297,6 +297,10 @@ export class Toolbar {
      * Initializes the toolbar.
      */
     initialize() {
+        // ── File-button group (grid-area: left) ──
+        this._createFileButtonGroup();
+
+        // ── Content toolbar (grid-area: center) ──
         this.toolbarElement = document.createElement('div');
         this.toolbarElement.className = 'toolbar';
         this.toolbarElement.setAttribute('role', 'toolbar');
@@ -331,8 +335,9 @@ export class Toolbar {
         this._resizeObserver = new ResizeObserver(() => this._scaleToolbar());
         this._resizeObserver.observe(this.container);
 
-        // Listen for selection changes
-        this.editor.container.addEventListener(
+        // Listen for selection changes on document so tab switches
+        // (which swap editor.container) keep working.
+        document.addEventListener(
             'editor:selectionchange',
             /** @type {EventListener} */ (this.handleSelectionChange.bind(this)),
         );
@@ -377,6 +382,53 @@ export class Toolbar {
         focused: 'Focused Writing',
         source: 'Source View',
     };
+
+    /**
+     * File-button definitions: id, label, and click handler.
+     * @type {{id: string, label: string, handler: () => void}[]}
+     */
+    static FILE_BUTTONS = [
+        {
+            id: 'file-new',
+            label: 'New File',
+            handler: () => document.dispatchEvent(new CustomEvent('file:new')),
+        },
+        {
+            id: 'file-open',
+            label: 'Open File',
+            handler: async () => {
+                if (!window.electronAPI) return;
+                const result = await window.electronAPI.loadFile();
+                if (result?.success && result.content !== undefined) {
+                    document.dispatchEvent(new CustomEvent('file:loaded', { detail: result }));
+                }
+            },
+        },
+        {
+            id: 'file-save',
+            label: 'Save File',
+            handler: () => document.dispatchEvent(new CustomEvent('file:save')),
+        },
+    ];
+
+    /**
+     * Creates the file-button group and appends it to the container.
+     * These buttons live in the grid "left" area.
+     */
+    _createFileButtonGroup() {
+        const group = document.createElement('div');
+        group.className = 'toolbar-file-group';
+
+        for (const def of Toolbar.FILE_BUTTONS) {
+            const btn = new ToolbarButton(
+                { id: def.id, label: def.label, icon: '', action: '' },
+                () => def.handler(),
+            );
+            group.appendChild(btn.element);
+        }
+
+        this.container.appendChild(group);
+    }
 
     /**
      * Creates the view-mode toggle button with a label.

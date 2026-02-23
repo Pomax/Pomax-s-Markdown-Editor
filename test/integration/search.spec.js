@@ -68,6 +68,17 @@ test('Escape closes the search bar', async () => {
     await expect(page.locator('.search-bar')).toBeHidden();
 });
 
+test('Escape closes the search bar when editor is focused', async () => {
+    await loadContent(page, FIXTURE);
+    await page.keyboard.press(`${MOD}+f`);
+    await expect(page.locator('.search-bar')).toBeVisible();
+
+    // Move focus back to the editor
+    await page.locator('#editor').focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.search-bar')).toBeHidden();
+});
+
 test('Ctrl+F while open selects the search text', async () => {
     await loadContent(page, FIXTURE);
     await page.keyboard.press(`${MOD}+f`);

@@ -131,6 +131,10 @@ class App {
             this.searchBar?.open();
         });
 
+        document.addEventListener('search:close', () => {
+            if (this.searchBar?.isOpen) this.searchBar.close();
+        });
+
         // Initialize Table of Contents sidebar
         if (tocContainer) {
             this.toc = new TableOfContents(tocContainer, this.editor);
@@ -230,6 +234,11 @@ class App {
             } else {
                 this._createNewTab(filePath, detail.content ?? '');
             }
+        });
+
+        // Handle File → Save: save the active document
+        document.addEventListener('file:save', () => {
+            this.menuHandler?.handleSave();
         });
 
         // Handle File → Close: close the active tab
