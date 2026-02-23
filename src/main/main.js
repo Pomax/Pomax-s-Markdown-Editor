@@ -79,7 +79,7 @@ function saveOpenFiles() {
     const entries = menuBuilder.openFiles
         .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
         .map(
-            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null}} f */ (
+            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}} f */ (
                 f,
             ) => ({
                 filePath: f.filePath,
@@ -88,6 +88,7 @@ function saveOpenFiles() {
                 contentHash: f.contentHash ?? 0,
                 scrollTop: f.scrollTop ?? 0,
                 cursorPath: f.cursorPath ?? null,
+                tocHeadingPath: f.tocHeadingPath ?? null,
             }),
         );
 
@@ -316,11 +317,11 @@ async function loadFileFromPath(window, filePath) {
  * replaces the initial pristine tab), and subsequent files are sent
  * as `file:loaded` menu actions so the renderer creates new tabs.
  * @param {BrowserWindow} window - The main window
- * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number}>} entries
+ * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
  */
 async function restoreOpenFiles(window, entries) {
     // Read all files up-front, dropping any that can no longer be loaded
-    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number}>} */
+    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[]|null, tocHeadingPath: number[]|null}>} */
     const loaded = [];
     for (const entry of entries) {
         const result = await fileManager.loadRecent(entry.filePath);
@@ -332,6 +333,8 @@ async function restoreOpenFiles(window, entries) {
                 cursorOffset: entry.cursorOffset ?? 0,
                 contentHash: entry.contentHash ?? 0,
                 scrollTop: entry.scrollTop ?? 0,
+                cursorPath: entry.cursorPath ?? null,
+                tocHeadingPath: entry.tocHeadingPath ?? null,
             });
         }
     }
@@ -374,6 +377,21 @@ async function restoreOpenFiles(window, entries) {
         filePath: activeEntry.filePath,
     });
 
+    // Send session-restore data so the renderer can reposition the
+    // cursor and highlight the correct ToC heading once the document
+    // and table-of-contents are fully rendered.
+    const restoreEntries = loaded
+        .filter((e) => e.cursorPath || e.tocHeadingPath)
+        .map((e) => ({
+            filePath: e.filePath,
+            active: e.active,
+            cursorPath: e.cursorPath,
+            tocHeadingPath: e.tocHeadingPath,
+        }));
+    if (restoreEntries.length > 0) {
+        window.webContents.send('menu:action', 'session:restore', restoreEntries);
+    }
+
     menuBuilder.refreshMenu();
 }
 
@@ -382,6 +400,17 @@ app.whenReady().then(async () => {
     // Initialize settings before creating the window so saved bounds are available
     settingsManager = new SettingsManager();
     settingsManager.initialize();
+
+    // Expose internals for integration tests so they can trigger
+    // saveOpenFiles / restoreOpenFiles without bypassing the normal flow.
+    if (process.env.TESTING) {
+        /** @type {any} */ (global).__saveOpenFiles = () => saveOpenFiles();
+        /** @type {any} */ (global).__settingsManager = settingsManager;
+        /** @type {any} */ (global).__restoreOpenFiles = (
+            /** @type {any} */ win,
+            /** @type {any} */ entries,
+        ) => restoreOpenFiles(win, entries);
+    }
 
     const window = createWindow();
     await initialize(window);

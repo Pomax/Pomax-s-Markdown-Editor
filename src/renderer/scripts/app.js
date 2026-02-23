@@ -179,6 +179,16 @@ class App {
             }
         });
 
+        // Handle session restore after close-and-reopen: wait for
+        // the document and ToC to be fully loaded, then restore the
+        // cursor position and ToC heading highlight.
+        document.addEventListener('session:restore', (e) => {
+            const detail = /** @type {CustomEvent} */ (e).detail;
+            if (detail) {
+                this._restoreSession(detail);
+            }
+        });
+
         // Handle file switching from the View menu
         document.addEventListener('view:switchFile', (e) => {
             const detail = /** @type {CustomEvent} */ (e).detail;
@@ -386,9 +396,22 @@ class App {
                 this.editor.setUnsavedChanges(state.modified);
             }
 
-            // Restore scroll position on the shared scroll container
-            if (this._scrollContainer && state?.scrollTop !== undefined) {
-                this._scrollContainer.scrollTop = state.scrollTop;
+            // Restore scroll position on the shared scroll container.
+            // If scrollTop is 0 but we have a saved ToC heading, scroll
+            // to that heading instead — this happens after a session
+            // restore where the tab was loaded fresh (scrollTop reset
+            // to 0) but the heading was preserved.
+            if (this._scrollContainer && state) {
+                if (state.scrollTop) {
+                    this._scrollContainer.scrollTop = state.scrollTop;
+                } else if (state.tocActiveHeadingId) {
+                    const el = this.editor.container.querySelector(
+                        `[data-node-id="${state.tocActiveHeadingId}"]`,
+                    );
+                    if (el) {
+                        el.scrollIntoView({ block: 'start' });
+                    }
+                }
             }
 
             // Place cursor and focus — DOM is already intact so no
@@ -434,6 +457,102 @@ class App {
             !this.editor.hasUnsavedChanges() &&
             this.editor.getMarkdown().trim() === ''
         );
+    }
+
+    /**
+     * Restores cursor position and ToC heading after a session restore.
+     * Waits for the document and ToC to be fully loaded before applying.
+     * For the active tab, restores live. For background tabs, patches
+     * their saved document state.
+     * @param {Array<{filePath: string, active: boolean, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
+     */
+    _restoreSession(entries) {
+        const tryRestore = () => {
+            // Wait for the syntax tree to be parsed
+            if (!this.editor?.syntaxTree?.children?.length) {
+                requestAnimationFrame(tryRestore);
+                return;
+            }
+
+            // Wait for the ToC to have rendered its links
+            const tocLinks = this.toc?.container.querySelectorAll('.toc-link');
+            if (!tocLinks?.length) {
+                requestAnimationFrame(tryRestore);
+                return;
+            }
+
+            // Restore background tabs by patching their document states
+            for (const entry of entries) {
+                if (entry.active) continue;
+
+                // Find the tab for this file
+                const tab = this.tabBar?.tabs.find((t) => t.filePath === entry.filePath);
+                if (!tab) continue;
+
+                const state = this._documentStates.get(tab.id);
+                if (!state?.syntaxTree) continue;
+
+                // Restore cursor on the background tab's syntax tree
+                if (entry.cursorPath) {
+                    state.syntaxTree.setCursorPath(entry.cursorPath);
+                    state.cursor = state.syntaxTree.treeCursor
+                        ? { ...state.syntaxTree.treeCursor }
+                        : null;
+                }
+
+                // Restore ToC heading for the background tab
+                if (entry.tocHeadingPath) {
+                    const node = state.syntaxTree.getNodeAtPath(entry.tocHeadingPath);
+                    if (node) {
+                        state.tocActiveHeadingId = node.id;
+                    }
+                }
+            }
+
+            // Restore the active tab live
+            const activeEntry = entries.find((e) => e.active) ?? entries[0];
+            if (!activeEntry) return;
+
+            // Lock the ToC heading BEFORE any re-render so that
+            // MutationObserver-triggered refresh() respects it.
+            let tocNode = null;
+            if (activeEntry.tocHeadingPath && this.toc) {
+                tocNode = this.editor.syntaxTree.getNodeAtPath(activeEntry.tocHeadingPath);
+                if (tocNode) {
+                    this.toc._programmaticScroll = true;
+                    this.toc._lockedHeadingId = tocNode.id;
+                    this.toc._setActiveLink(tocNode.id);
+                }
+            }
+
+            // Restore cursor position from the saved path.
+            // fullRenderAndPlaceCursor re-renders the focused node so
+            // the DOM matches the cursor position in focused mode.
+            if (activeEntry.cursorPath) {
+                this.editor.syntaxTree.setCursorPath(activeEntry.cursorPath);
+                this.editor.fullRenderAndPlaceCursor();
+                this.editor.container.focus({ preventScroll: true });
+            }
+
+            // Scroll the document to the ToC heading
+            if (tocNode && this.toc) {
+                requestAnimationFrame(() => {
+                    const el = this.editor?.container.querySelector(
+                        `[data-node-id="${tocNode.id}"]`,
+                    );
+                    if (el) {
+                        el.scrollIntoView({ block: 'start' });
+                    }
+                    requestAnimationFrame(() => {
+                        if (this.toc) {
+                            this.toc._programmaticScroll = false;
+                        }
+                    });
+                });
+            }
+        };
+
+        requestAnimationFrame(tryRestore);
     }
 
     /**
@@ -639,6 +758,7 @@ class App {
                 contentHash: 0,
                 scrollTop: 0,
                 cursorPath: /** @type {number[]|null} */ (null),
+                tocHeadingPath: /** @type {number[]|null} */ (null),
             };
 
             if (tab.id === activeTabId && this.editor?.syntaxTree?.treeCursor) {
@@ -653,6 +773,15 @@ class App {
                 );
                 entry.cursorPath = this.editor.syntaxTree.getPathToCursor();
                 entry.scrollTop = this._scrollContainer ? this._scrollContainer.scrollTop : 0;
+                const tocId =
+                    this.toc?._lockedHeadingId ??
+                    /** @type {HTMLElement|null} */ (
+                        this.toc?.container.querySelector('.toc-active')
+                    )?.dataset?.nodeId ??
+                    null;
+                if (tocId && this.editor.syntaxTree) {
+                    entry.tocHeadingPath = this.editor.syntaxTree.getPathToNode(tocId);
+                }
             } else {
                 // Background tab — read from cached document state
                 const state = this._documentStates.get(tab.id);
@@ -661,6 +790,10 @@ class App {
                     entry.contentHash = state.contentHash;
                     entry.scrollTop = state.scrollTop ?? 0;
                     entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? null;
+                    const bgTocId = state.tocActiveHeadingId ?? null;
+                    if (bgTocId && state.syntaxTree) {
+                        entry.tocHeadingPath = state.syntaxTree.getPathToNode(bgTocId);
+                    }
                 }
             }
 

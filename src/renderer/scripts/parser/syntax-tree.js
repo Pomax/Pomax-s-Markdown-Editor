@@ -847,4 +847,61 @@ export class SyntaxTree {
             children = node.children;
         }
     }
+
+    /**
+     * Returns the index path from the tree root to the node with the
+     * given ID.  Each element is a zero-based child index at that level.
+     *
+     * Returns `null` when the node cannot be found.
+     *
+     * @param {string} nodeId
+     * @returns {number[]|null}
+     */
+    getPathToNode(nodeId) {
+        /** @type {number[]} */
+        const path = [];
+
+        /**
+         * @param {SyntaxNode[]} children
+         * @returns {boolean}
+         */
+        const search = (children) => {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i].id === nodeId) {
+                    path.push(i);
+                    return true;
+                }
+                if (children[i].children.length > 0) {
+                    path.push(i);
+                    if (search(children[i].children)) return true;
+                    path.pop();
+                }
+            }
+            return false;
+        };
+
+        return search(this.children) ? path : null;
+    }
+
+    /**
+     * Resolves an index path (produced by {@link getPathToNode}) back
+     * to the node at that position in the tree.
+     *
+     * Returns `null` when any index is out of bounds.
+     *
+     * @param {number[]|null} nodePath
+     * @returns {SyntaxNode|null}
+     */
+    getNodeAtPath(nodePath) {
+        if (!nodePath || nodePath.length === 0) return null;
+
+        let children = this.children;
+        for (let i = 0; i < nodePath.length; i++) {
+            const index = nodePath[i];
+            if (index < 0 || index >= children.length) return null;
+            if (i === nodePath.length - 1) return children[index];
+            children = children[index].children;
+        }
+        return null;
+    }
 }

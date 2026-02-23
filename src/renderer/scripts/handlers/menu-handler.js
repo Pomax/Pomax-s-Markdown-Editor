@@ -95,6 +95,9 @@ export class MenuHandler {
             case 'view:switchFile':
                 this.handleSwitchFile(args[0]);
                 break;
+            case 'session:restore':
+                document.dispatchEvent(new CustomEvent('session:restore', { detail: args[0] }));
+                break;
             case 'element:changeType':
                 this.handleChangeType(args[0]);
                 break;

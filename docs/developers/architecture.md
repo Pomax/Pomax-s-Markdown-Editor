@@ -88,7 +88,8 @@ Entry point for the Electron main process. Responsibilities:
 - Window creation with security settings (`contextIsolation: true`, `nodeIntegration: false`)
 - Menu setup via MenuBuilder
 - IPC handler registration
-- Persisting and restoring all open files across sessions
+- Persisting and restoring all open files across sessions (file paths, cursor paths, ToC heading paths, scroll positions)
+- Sending `session:restore` events to the renderer after file restore so cursor/ToC state can be reapplied once the document is fully parsed
 
 ### FileManager
 
@@ -162,6 +163,7 @@ The renderer entry point. Wires together all renderer components:
 - Listens for custom events from modals (e.g. `toc:settingsChanged`, `imageHandling:settingsChanged`)
 - Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
+- Handles `session:restore` events to restore cursor position, ToC heading highlight, and scroll position for all tabs after a close-and-reopen. Active tab is restored live; background tabs are patched in `_documentStates`.
 
 ### Editor
 
@@ -229,6 +231,8 @@ Data structure for parsed documents:
 - `toBareText()`: returns visible/rendered text with markdown syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc. removed). Used by search in focused view.
 - `clone()`: deep cloning for undo/redo snapshots
 - Node lookup by ID or position
+- `getPathToCursor()` / `setCursorPath(path)`: serialize and restore cursor position as an index path (array of child indices + character offset). Used for session persistence — node IDs are ephemeral but tree structure is deterministic for the same document.
+- `getPathToNode(nodeId)` / `getNodeAtPath(path)`: convert between node IDs and index paths. Used to persist the active ToC heading across sessions.
 
 ### Renderers
 
