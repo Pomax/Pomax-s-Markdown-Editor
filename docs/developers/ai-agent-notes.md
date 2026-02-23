@@ -24,6 +24,9 @@ this **before** doing any work.
   workspace root already. **Do not blindly prepend `cd …` to commands.**
 - **Never** use `2>&1` in terminal commands.
 - The project root is the workspace folder (the one containing `package.json`).
+- **Never** modify `package.json` version manually. Versioning is done with
+  `npm version` — that command handles `package.json`, `package-lock.json`,
+  the git tag, and the commit all in one step.
 
 ## Doing work
 
