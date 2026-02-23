@@ -293,7 +293,9 @@ Key behaviors:
 
 Tokenizes inline markdown formatting within a line of text:
 - Splits text into segments of plain text and formatting delimiters
-- Handles bold, italic, strikethrough, code, links, images, subscript, superscript
+- Handles bold, italic, bold-italic (`***`), strikethrough, code, links, images, subscript, superscript
+- Treats `***` as an atomic bold-italic delimiter (single open/close token pair)
+- Treats four or more consecutive asterisks (`****`+) as plain text
 - Used by `SyntaxNode.toBareText()` and `SyntaxHighlighter` for inline parsing
 
 ### BaseModal

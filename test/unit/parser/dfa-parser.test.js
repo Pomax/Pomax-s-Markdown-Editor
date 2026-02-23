@@ -276,23 +276,23 @@ describe('DFAParser', () => {
 
     describe('horizontal rules', () => {
         it('should parse horizontal rule with dashes', () => {
-            const tree = parser.parse('---');
+            const tree = parser.parse('---\n');
             assert.strictEqual(tree.children.length, 1);
             assert.strictEqual(tree.children[0].type, 'horizontal-rule');
         });
 
         it('should parse horizontal rule with asterisks', () => {
-            const tree = parser.parse('***');
+            const tree = parser.parse('***\n');
             assert.strictEqual(tree.children[0].type, 'horizontal-rule');
         });
 
         it('should parse horizontal rule with underscores', () => {
-            const tree = parser.parse('___');
+            const tree = parser.parse('___\n');
             assert.strictEqual(tree.children[0].type, 'horizontal-rule');
         });
 
         it('should parse horizontal rule with more than three chars', () => {
-            const tree = parser.parse('-----');
+            const tree = parser.parse('-----\n');
             assert.strictEqual(tree.children[0].type, 'horizontal-rule');
         });
     });

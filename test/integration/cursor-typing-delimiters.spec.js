@@ -130,6 +130,40 @@ test('cursor stays correct when completing italic *text*', async () => {
     expect(cursorOffset).toBe(6);
 });
 
+test('cursor stays correct when completing bold+italic ***text***', async () => {
+    const { cursorOffset, lineText } = await typeAndGetCursor(page, '***word***');
+    // After the closing ***, the rendered text is just "word" and cursor
+    // should be at the end of the visible text.
+    expect(lineText).toBe('word');
+    expect(cursorOffset).toBe(4);
+});
+
+test('typing ***word*** renders as bold inside italic in source view', async () => {
+    await loadContent(page, '');
+    await setFocusedView(page);
+    const editor = page.locator('#editor');
+    await editor.click();
+    await page.waitForTimeout(100);
+
+    for (const ch of 'test ***word***') {
+        await page.keyboard.press(ch === ' ' ? 'Space' : ch);
+        await page.waitForTimeout(50);
+    }
+    await page.waitForTimeout(100);
+
+    const { setSourceView } = await import('./test-utils.js');
+    await setSourceView(page);
+    const srcLine = page.locator('#editor .md-line').first();
+    const srcText = await srcLine.textContent();
+    expect(srcText).toContain('***word***');
+});
+
+test('typing **** is treated as plain text', async () => {
+    const { cursorOffset, lineText } = await typeAndGetCursor(page, 'test ****');
+    expect(lineText).toContain('****');
+    expect(cursorOffset).toBe(lineText.length);
+});
+
 test('typing after closing * produces plain text, not italic', async () => {
     // Type "this is a *test*" then type " hello"
     // The " hello" must NOT be inside the <em> — it should be plain text.
@@ -208,4 +242,18 @@ test('typing after closing ~~ produces plain text, not strikethrough', async () 
     const srcLine = page.locator('#editor .md-line').first();
     const srcText = await srcLine.textContent();
     expect(srcText).toMatch(/~~struck~~ after/);
+});
+
+test('typing ***word*** produces bold-in-italic, not raw asterisks', async () => {
+    const { cursorOffset, lineText } = await typeAndGetCursor(page, '***word***');
+    // In focused view the delimiters are invisible, so the rendered
+    // text should just be "word".
+    expect(lineText).toBe('word');
+    expect(cursorOffset).toBe(4);
+});
+
+test('typing **** produces plain text (nonsense delimiter)', async () => {
+    const { cursorOffset, lineText } = await typeAndGetCursor(page, 'test ****');
+    expect(lineText).toContain('test ****');
+    expect(cursorOffset).toBe(lineText.length);
 });
