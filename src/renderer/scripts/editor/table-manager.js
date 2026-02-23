@@ -241,27 +241,26 @@ export class TableManager {
         const node = this.editor.getCurrentNode();
         if (
             !node ||
-            !this.editor.treeCursor ||
             !this.editor.syntaxTree ||
-            this.editor.treeCursor.cellRow === undefined ||
-            this.editor.treeCursor.cellCol === undefined
+            this.editor.syntaxTree.treeCursor?.cellRow === undefined ||
+            this.editor.syntaxTree.treeCursor?.cellCol === undefined
         )
             return;
 
-        const { cellRow, cellCol } = this.editor.treeCursor;
+        const { cellRow, cellCol } = this.editor.syntaxTree.treeCursor;
         const { totalRows, columns } = this.getTableDimensions(node);
 
         if (shiftKey) {
             // Move to previous cell
             if (cellCol > 0) {
-                this.editor.treeCursor = {
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow,
                     cellCol: cellCol - 1,
                 };
             } else if (cellRow > 0) {
-                this.editor.treeCursor = {
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: cellRow - 1,
@@ -272,14 +271,14 @@ export class TableManager {
         } else {
             // Move to next cell
             if (cellCol < columns - 1) {
-                this.editor.treeCursor = {
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow,
                     cellCol: cellCol + 1,
                 };
             } else if (cellRow < totalRows - 1) {
-                this.editor.treeCursor = {
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: cellRow + 1,
@@ -289,7 +288,7 @@ export class TableManager {
                 // Last cell — add a new row
                 const before = this.editor.syntaxTree.toMarkdown();
                 const newRowIdx = this.tableAddRow(node);
-                this.editor.treeCursor = {
+                this.editor.syntaxTree.treeCursor = {
                     nodeId: node.id,
                     offset: 0,
                     cellRow: newRowIdx,

@@ -62,14 +62,18 @@ export class EventHandler {
         // cursor.  Fall back to walking up from the click target to find
         // the nearest element with a data-node-id attribute.
         if (
-            (!this.editor.treeCursor ||
-                this.editor.treeCursor.nodeId === this.editor._lastRenderedNodeId) &&
+            (!this.editor.syntaxTree?.treeCursor ||
+                this.editor.syntaxTree.treeCursor.nodeId === this.editor._lastRenderedNodeId) &&
             event.target instanceof HTMLElement
         ) {
             let el = /** @type {HTMLElement|null} */ (event.target);
             while (el && el !== this.editor.container) {
                 if (el.dataset?.nodeId) {
-                    this.editor.treeCursor = { nodeId: el.dataset.nodeId, offset: 0 };
+                    if (this.editor.syntaxTree)
+                        this.editor.syntaxTree.treeCursor = {
+                            nodeId: el.dataset.nodeId,
+                            offset: 0,
+                        };
                     break;
                 }
                 el = el.parentElement;
@@ -79,7 +83,7 @@ export class EventHandler {
         this.editor.selectionManager.updateFromDOM();
 
         // In focused view, clicking an image opens the edit modal directly.
-        if (this.editor.viewMode === 'focused' && this.editor.treeCursor) {
+        if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
             const clickedNode = this.editor.getCurrentNode();
             if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
                 this.editor.imageHelper.openImageModalForNode(clickedNode);
@@ -118,13 +122,13 @@ export class EventHandler {
         // handleSelectionChange — treeCursor was already mutated.
         if (
             this.editor.viewMode === 'focused' &&
-            this.editor.treeCursor &&
-            this.editor.treeCursor.nodeId !== this.editor._lastRenderedNodeId
+            this.editor.syntaxTree?.treeCursor &&
+            this.editor.syntaxTree.treeCursor.nodeId !== this.editor._lastRenderedNodeId
         ) {
-            const nodesToUpdate = [this.editor.treeCursor.nodeId];
+            const nodesToUpdate = [this.editor.syntaxTree.treeCursor.nodeId];
             if (this.editor._lastRenderedNodeId)
                 nodesToUpdate.push(this.editor._lastRenderedNodeId);
-            this.editor._lastRenderedNodeId = this.editor.treeCursor.nodeId;
+            this.editor._lastRenderedNodeId = this.editor.syntaxTree.treeCursor.nodeId;
             this.editor.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
         }
     }
@@ -253,7 +257,7 @@ export class EventHandler {
 
         // Place the cursor on the trailing empty paragraph
         const afterNode = imgSiblings[imgIdx + 1];
-        this.editor.treeCursor = { nodeId: afterNode.id, offset: 0 };
+        this.editor.syntaxTree.treeCursor = { nodeId: afterNode.id, offset: 0 };
     }
 
     /** Handles focus events. */
@@ -265,7 +269,7 @@ export class EventHandler {
         // Restore the browser caret so the user sees their cursor again.
         if (this._blurredByModal) {
             this._blurredByModal = false;
-            if (this.editor.treeCursor) {
+            if (this.editor.syntaxTree?.treeCursor) {
                 this.editor.placeCursor();
             }
         }
@@ -284,10 +288,10 @@ export class EventHandler {
             return;
         }
 
-        // When focus moves to a toolbar button (e.g. the view-mode toggle),
-        // preserve the tree cursor so the toolbar action can operate on
-        // the correct cursor position.
-        if (related?.closest?.('#toolbar-container')) {
+        // When focus moves to a toolbar button (e.g. the view-mode toggle)
+        // or the tab bar, preserve the tree cursor so the toolbar action
+        // or tab-switch logic can operate on the correct cursor position.
+        if (related?.closest?.('#toolbar-container') || related?.closest?.('#tab-bar')) {
             return;
         }
 
@@ -298,9 +302,9 @@ export class EventHandler {
         // cursor and re-render the previously focused node so it shows
         // its "unfocused" presentation.  Clicking back into the editor
         // will restore the cursor via handleClick / handleSelectionChange.
-        if (this.editor.viewMode === 'focused' && this.editor.treeCursor) {
-            const previousNodeId = this.editor.treeCursor.nodeId;
-            this.editor.treeCursor = null;
+        if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
+            const previousNodeId = this.editor.syntaxTree.treeCursor.nodeId;
+            if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = null;
             this.editor.renderNodes({ updated: [previousNodeId] });
         }
     }
@@ -324,7 +328,7 @@ export class EventHandler {
             // We compare against _lastRenderedNodeId (not treeCursor before
             // sync) because syncCursorFromDOM already mutated treeCursor and
             // the non-collapsed guard above may have skipped earlier renders.
-            const newNodeId = this.editor.treeCursor?.nodeId ?? null;
+            const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
             if (
                 this.editor.viewMode === 'focused' &&
                 newNodeId &&

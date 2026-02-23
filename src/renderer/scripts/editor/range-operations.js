@@ -88,7 +88,7 @@ export class RangeOperations {
             const left = startNode.content.substring(0, startOffset);
             const right = startNode.content.substring(endOffset);
             startNode.content = left + right;
-            this.editor.treeCursor = { nodeId: startNode.id, offset: startOffset };
+            this.editor.syntaxTree.treeCursor = { nodeId: startNode.id, offset: startOffset };
             this.editor.treeRange = null;
             return { before, hints: { updated: [startNode.id] } };
         }
@@ -129,7 +129,7 @@ export class RangeOperations {
         // Remove them from the siblings array.
         siblings.splice(firstIdx + 1, lastIdx - firstIdx);
 
-        this.editor.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
+        this.editor.syntaxTree.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
         this.editor.treeRange = null;
         return { before, hints: { updated: [firstNode.id], removed: removedIds } };
     }
@@ -199,20 +199,20 @@ export class RangeOperations {
         if (
             node.type === 'table' &&
             this.editor.viewMode === 'focused' &&
-            this.editor.treeCursor?.cellRow !== undefined &&
-            this.editor.treeCursor?.cellCol !== undefined
+            this.editor.syntaxTree?.treeCursor?.cellRow !== undefined &&
+            this.editor.syntaxTree?.treeCursor?.cellCol !== undefined
         ) {
             const cellText = this.editor.tableManager.getTableCellText(
                 node,
-                this.editor.treeCursor.cellRow,
-                this.editor.treeCursor.cellCol,
+                this.editor.syntaxTree.treeCursor.cellRow,
+                this.editor.syntaxTree.treeCursor.cellCol,
             );
             const nodeEl = this.editor.container.querySelector(`[data-node-id="${node.id}"]`);
             if (nodeEl) {
                 this.editor.tableManager.placeTableCellCursor(
                     /** @type {HTMLElement} */ (nodeEl),
-                    this.editor.treeCursor.cellRow,
-                    this.editor.treeCursor.cellCol,
+                    this.editor.syntaxTree.treeCursor.cellRow,
+                    this.editor.syntaxTree.treeCursor.cellCol,
                     0,
                 );
                 const sel = window.getSelection();

@@ -24,6 +24,9 @@ this **before** doing any work.
   workspace root already. **Do not blindly prepend `cd …` to commands.**
 - **Never** use `2>&1` in terminal commands.
 - The project root is the workspace folder (the one containing `package.json`).
+- **Never** modify `package.json` version manually. Versioning is done with
+  `npm version` — that command handles `package.json`, `package-lock.json`,
+  the git tag, and the commit all in one step.
 
 ## Doing work
 
@@ -52,7 +55,8 @@ this **before** doing any work.
 - **Always** be explicit about remote and branch when pushing:
   `git push origin <branchname>`. Never use bare `git push` or
   `--set-upstream`.
-- Do not consider the work done until a final full test suite run passes.
+- Do not consider the work done until a final full test suite run passes:
+  you run the test suite, but you wait for the user to tell you the result.
 - After the work has been completed **ask the user to manually test the work**.
 - After testing finishes, update the docs to ensure they're still correct
   with respect to the current code.
@@ -80,9 +84,6 @@ this **before** doing any work.
 - **Do not** use vitest — the project does not use it.
 - **Never** use `npx` to run tools — always use the corresponding `npm run`
   script. To run a single spec file: `npm run test:integration -- path/to/file.spec.js`.
-- The user runs the full Playwright suite themselves; you can run individual
-  spec files to verify your work, but do not run the entire suite without
-  being asked.
 - **ALways** update integrations test for UX that gets changed
 - **Always** write new integration tests for new UX
 - **Never** interrupt the full suite or integration tests if they seem to
@@ -165,8 +166,10 @@ container: `this.editor.container.querySelector(…)`.
 
 ### Cursor model
 
+The cursor state lives on the `SyntaxTree` instance as `syntaxTree.treeCursor` (not on the Editor directly).
+
 ```
-treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: number, cellCol?: number }
+syntaxTree.treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: number, cellCol?: number }
 ```
 
 - `nodeId` — the id of the SyntaxNode that has focus.
@@ -174,6 +177,8 @@ treeCursor = { nodeId: string, offset: number, tagPart?: string, cellRow?: numbe
 - `tagPart` — `'opening'` or `'closing'` when the cursor is on an
   HTML tag line in source view.
 - `cellRow` / `cellCol` — row and column indices when editing a table cell.
+
+Node IDs are ephemeral (regenerated on every parse), so cursor and ToC heading positions are persisted as **index paths** — arrays of zero-based child indices that walk the tree from root to the target node. For cursors the final element is the character offset. Methods: `getPathToCursor()` / `setCursorPath()` for cursors, `getPathToNode()` / `getNodeAtPath()` for arbitrary nodes (e.g. the active ToC heading).
 
 ### HTML block model (details/summary)
 

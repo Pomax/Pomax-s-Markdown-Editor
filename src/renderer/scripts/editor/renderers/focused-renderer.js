@@ -56,7 +56,7 @@ export class FocusedRenderer {
         // Use the tree cursor (the canonical cursor position) to determine
         // which node is focused, rather than the selection manager which
         // may be stale when switching view modes.
-        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
 
         // Clear and rebuild content
         container.innerHTML = '';
@@ -124,7 +124,7 @@ export class FocusedRenderer {
         const tree = this.editor.syntaxTree;
         if (!tree) return;
 
-        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
 
         // 1. Remove DOM elements for deleted nodes.
         for (const nodeId of removed) {
@@ -528,7 +528,7 @@ export class FocusedRenderer {
         this.applyHtmlAttributes(container, attrs.openingTag || '');
 
         // Determine which child (if any) is focused
-        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
 
         for (const child of node.children) {
             const childFocused = child.id === currentNodeId;
@@ -578,7 +578,7 @@ export class FocusedRenderer {
         // Copy any extra attributes from the original opening tag
         this.applyHtmlAttributes(container, attrs.openingTag || '');
 
-        const currentNodeId = this.editor.treeCursor?.nodeId ?? null;
+        const currentNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
 
         // Split children into summary child and body children
         /** @type {import('../../parser/syntax-tree.js').SyntaxNode|null} */

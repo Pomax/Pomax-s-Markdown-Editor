@@ -95,6 +95,9 @@ export class MenuHandler {
             case 'view:switchFile':
                 this.handleSwitchFile(args[0]);
                 break;
+            case 'session:restore':
+                document.dispatchEvent(new CustomEvent('session:restore', { detail: args[0] }));
+                break;
             case 'element:changeType':
                 this.handleChangeType(args[0]);
                 break;
@@ -221,10 +224,18 @@ export class MenuHandler {
 
     /**
      * Handles switching to a different open file tab.
-     * @param {string} tabId - The tab identifier to switch to
+     * @param {string | {filePath: string}} arg - Tab ID or object with filePath
      */
-    handleSwitchFile(tabId) {
-        document.dispatchEvent(new CustomEvent('view:switchFile', { detail: { tabId } }));
+    handleSwitchFile(arg) {
+        // arg may be a tabId string (from menu clicks) or an object
+        // with { filePath } (from session restore).
+        if (typeof arg === 'object' && arg?.filePath) {
+            document.dispatchEvent(
+                new CustomEvent('view:switchFile', { detail: { filePath: arg.filePath } }),
+            );
+        } else {
+            document.dispatchEvent(new CustomEvent('view:switchFile', { detail: { tabId: arg } }));
+        }
     }
 
     /**

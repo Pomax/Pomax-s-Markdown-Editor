@@ -349,6 +349,12 @@ export class SyntaxTree {
          * @type {SyntaxNode[]}
          */
         this.children = [];
+
+        /**
+         * Tree-based cursor position.
+         * @type {import('../editor/editor.js').TreeCursor|null}
+         */
+        this.treeCursor = null;
     }
 
     /**
@@ -763,5 +769,139 @@ export class SyntaxTree {
 
         countRecursive(this.children);
         return count;
+    }
+
+    /**
+     * Returns the path from the tree root to the node that currently has the
+     * cursor, with the cursor's character offset appended as the final element.
+     *
+     * Every element except the last is a zero-based child index at that level
+     * of the tree.  The last element is `treeCursor.offset` (the character
+     * position within the node's content).
+     *
+     * Returns `null` when there is no active cursor or the cursor's node
+     * cannot be found in the tree.
+     *
+     * @returns {number[]|null}
+     *
+     * @example
+     * // Cursor at offset 5 in the 3rd child of the 1st top-level node:
+     * tree.getPathToCursor(); // → [0, 2, 5]
+     */
+    getPathToCursor() {
+        if (!this.treeCursor) return null;
+
+        /** @type {number[]} */
+        const path = [];
+        const treeCursor = this.treeCursor;
+
+        /**
+         * @param {SyntaxNode[]} children
+         * @returns {boolean}
+         */
+        const search = (children) => {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i].id === treeCursor.nodeId) {
+                    path.push(i);
+                    return true;
+                }
+                if (children[i].children.length > 0) {
+                    path.push(i);
+                    if (search(children[i].children)) return true;
+                    path.pop();
+                }
+            }
+            return false;
+        };
+
+        if (!search(this.children)) return null;
+
+        path.push(treeCursor.offset);
+        return path;
+    }
+
+    /**
+     * Restores the cursor from a path previously produced by
+     * {@link getPathToCursor}.  Each element except the last is a
+     * zero-based child index used to descend into the tree; the last
+     * element is the character offset within the target node's content.
+     *
+     * Does nothing if `cursorPath` is `null`, empty, or any index is
+     * out of bounds.
+     *
+     * @param {number[]|null} cursorPath
+     */
+    setCursorPath(cursorPath) {
+        if (!cursorPath) return;
+        if (cursorPath.length < 2) return;
+
+        let children = this.children;
+        for (let i = 0; i < cursorPath.length - 1; i++) {
+            const index = cursorPath[i];
+            if (index < 0 || index >= children.length) return;
+            const node = children[index];
+            if (i === cursorPath.length - 2) {
+                this.treeCursor = { nodeId: node.id, offset: cursorPath[cursorPath.length - 1] };
+                return;
+            }
+            children = node.children;
+        }
+    }
+
+    /**
+     * Returns the index path from the tree root to the node with the
+     * given ID.  Each element is a zero-based child index at that level.
+     *
+     * Returns `null` when the node cannot be found.
+     *
+     * @param {string} nodeId
+     * @returns {number[]|null}
+     */
+    getPathToNode(nodeId) {
+        /** @type {number[]} */
+        const path = [];
+
+        /**
+         * @param {SyntaxNode[]} children
+         * @returns {boolean}
+         */
+        const search = (children) => {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i].id === nodeId) {
+                    path.push(i);
+                    return true;
+                }
+                if (children[i].children.length > 0) {
+                    path.push(i);
+                    if (search(children[i].children)) return true;
+                    path.pop();
+                }
+            }
+            return false;
+        };
+
+        return search(this.children) ? path : null;
+    }
+
+    /**
+     * Resolves an index path (produced by {@link getPathToNode}) back
+     * to the node at that position in the tree.
+     *
+     * Returns `null` when any index is out of bounds.
+     *
+     * @param {number[]|null} nodePath
+     * @returns {SyntaxNode|null}
+     */
+    getNodeAtPath(nodePath) {
+        if (!nodePath || nodePath.length === 0) return null;
+
+        let children = this.children;
+        for (let i = 0; i < nodePath.length; i++) {
+            const index = nodePath[i];
+            if (index < 0 || index >= children.length) return null;
+            if (i === nodePath.length - 1) return children[index];
+            children = children[index].children;
+        }
+        return null;
     }
 }

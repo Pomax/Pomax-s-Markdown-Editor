@@ -79,13 +79,16 @@ function saveOpenFiles() {
     const entries = menuBuilder.openFiles
         .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
         .map(
-            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number}} f */ (
+            /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}} f */ (
                 f,
             ) => ({
                 filePath: f.filePath,
                 active: f.active,
                 cursorOffset: f.cursorOffset ?? 0,
                 contentHash: f.contentHash ?? 0,
+                scrollTop: f.scrollTop ?? 0,
+                cursorPath: f.cursorPath ?? null,
+                tocHeadingPath: f.tocHeadingPath ?? null,
             }),
         );
 
@@ -166,6 +169,16 @@ function createWindow() {
         if (process.env.TESTING) {
             win.destroy();
             return;
+        }
+
+        // Ask the renderer to flush cursor/state data for all tabs,
+        // then persist it.  The renderer's _notifyOpenFiles() sends an
+        // IPC that updates menuBuilder.openFiles synchronously, so by
+        // the time executeJavaScript resolves we have fresh data.
+        try {
+            await win.webContents.executeJavaScript('window.__flushOpenFiles?.()');
+        } catch {
+            // If the renderer is gone, fall through to stale data
         }
 
         saveOpenFiles();
@@ -304,11 +317,11 @@ async function loadFileFromPath(window, filePath) {
  * replaces the initial pristine tab), and subsequent files are sent
  * as `file:loaded` menu actions so the renderer creates new tabs.
  * @param {BrowserWindow} window - The main window
- * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number}>} entries
+ * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
  */
 async function restoreOpenFiles(window, entries) {
     // Read all files up-front, dropping any that can no longer be loaded
-    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number}>} */
+    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[]|null, tocHeadingPath: number[]|null}>} */
     const loaded = [];
     for (const entry of entries) {
         const result = await fileManager.loadRecent(entry.filePath);
@@ -319,6 +332,9 @@ async function restoreOpenFiles(window, entries) {
                 active: entry.active,
                 cursorOffset: entry.cursorOffset ?? 0,
                 contentHash: entry.contentHash ?? 0,
+                scrollTop: entry.scrollTop ?? 0,
+                cursorPath: entry.cursorPath ?? null,
+                tocHeadingPath: entry.tocHeadingPath ?? null,
             });
         }
     }
@@ -335,7 +351,6 @@ async function restoreOpenFiles(window, entries) {
             function tryRestore() {
                 var api = window.editorAPI;
                 if (!api) { setTimeout(tryRestore, 50); return; }
-                window.__pendingCursorRestore = { cursorOffset: ${first.cursorOffset}, contentHash: ${first.contentHash} };
                 window.__editorFilePath = ${filePathJSON};
                 api.setContent(${contentJSON});
             }
@@ -350,29 +365,31 @@ async function restoreOpenFiles(window, entries) {
             success: true,
             content: loaded[i].content,
             filePath: loaded[i].filePath,
-            cursorOffset: loaded[i].cursorOffset,
-            contentHash: loaded[i].contentHash,
         });
     }
 
-    // If the previously active file is not the first one, tell the
-    // renderer to switch to it
-    const activeEntry = loaded.find((e) => e.active);
-    if (activeEntry && activeEntry !== first) {
-        // The renderer will receive a switchFile event once the tabs
-        // exist.  We use a short delay to let the tab creation settle.
-        const activePathJSON = JSON.stringify(activeEntry.filePath);
-        window.webContents.executeJavaScript(`
-            setTimeout(function () {
-                var tabs = document.querySelectorAll('.tab-button');
-                for (var i = 0; i < tabs.length; i++) {
-                    if (tabs[i].title === ${activePathJSON}) {
-                        tabs[i].click();
-                        break;
-                    }
-                }
-            }, 100);
-        `);
+    // Tell the renderer to switch to the previously active file.
+    // This must always fire — even when the active entry is the
+    // first one — because subsequent file:loaded events may have
+    // changed which tab the renderer considers active.
+    const activeEntry = loaded.find((e) => e.active) || first;
+    window.webContents.send('menu:action', 'view:switchFile', {
+        filePath: activeEntry.filePath,
+    });
+
+    // Send session-restore data so the renderer can reposition the
+    // cursor and highlight the correct ToC heading once the document
+    // and table-of-contents are fully rendered.
+    const restoreEntries = loaded
+        .filter((e) => e.cursorPath || e.tocHeadingPath)
+        .map((e) => ({
+            filePath: e.filePath,
+            active: e.active,
+            cursorPath: e.cursorPath,
+            tocHeadingPath: e.tocHeadingPath,
+        }));
+    if (restoreEntries.length > 0) {
+        window.webContents.send('menu:action', 'session:restore', restoreEntries);
     }
 
     menuBuilder.refreshMenu();
@@ -383,6 +400,17 @@ app.whenReady().then(async () => {
     // Initialize settings before creating the window so saved bounds are available
     settingsManager = new SettingsManager();
     settingsManager.initialize();
+
+    // Expose internals for integration tests so they can trigger
+    // saveOpenFiles / restoreOpenFiles without bypassing the normal flow.
+    if (process.env.TESTING) {
+        /** @type {any} */ (global).__saveOpenFiles = () => saveOpenFiles();
+        /** @type {any} */ (global).__settingsManager = settingsManager;
+        /** @type {any} */ (global).__restoreOpenFiles = (
+            /** @type {any} */ win,
+            /** @type {any} */ entries,
+        ) => restoreOpenFiles(win, entries);
+    }
 
     const window = createWindow();
     await initialize(window);

@@ -38,7 +38,7 @@ export class CursorManager {
         const startInfo = this._mapDOMPositionToTree(range.startContainer, range.startOffset);
         if (!startInfo) return;
 
-        this.editor.treeCursor = startInfo.cursor;
+        if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = startInfo.cursor;
 
         // If the selection is collapsed there is no range.
         if (selection.isCollapsed) {
@@ -256,24 +256,24 @@ export class CursorManager {
     }
 
     /**
-     * Places the DOM cursor at the position described by `editor.treeCursor`.
+     * Places the DOM cursor at the position described by `editor.syntaxTree.treeCursor`.
      */
     placeCursor() {
-        if (!this.editor.treeCursor) return;
+        if (!this.editor.syntaxTree?.treeCursor) return;
 
         // When the cursor targets a tag line (source view), there may be
         // multiple elements with the same data-node-id (opening & closing).
         // Select the one matching the tagPart.
         /** @type {Element|null} */
         let nodeElement = null;
-        if (this.editor.treeCursor.tagPart) {
+        if (this.editor.syntaxTree.treeCursor.tagPart) {
             nodeElement = this.editor.container.querySelector(
-                `[data-node-id="${this.editor.treeCursor.nodeId}"][data-tag-part="${this.editor.treeCursor.tagPart}"]`,
+                `[data-node-id="${this.editor.syntaxTree.treeCursor.nodeId}"][data-tag-part="${this.editor.syntaxTree.treeCursor.tagPart}"]`,
             );
         }
         if (!nodeElement) {
             nodeElement = this.editor.container.querySelector(
-                `[data-node-id="${this.editor.treeCursor.nodeId}"]`,
+                `[data-node-id="${this.editor.syntaxTree.treeCursor.nodeId}"]`,
             );
         }
         if (!nodeElement) return;
@@ -281,14 +281,14 @@ export class CursorManager {
         // ── Table cell cursor placement ──
         if (
             this.editor.viewMode === 'focused' &&
-            this.editor.treeCursor.cellRow !== undefined &&
-            this.editor.treeCursor.cellCol !== undefined
+            this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
+            this.editor.syntaxTree.treeCursor.cellCol !== undefined
         ) {
             this.editor.tableManager.placeTableCellCursor(
                 /** @type {HTMLElement} */ (nodeElement),
-                this.editor.treeCursor.cellRow,
-                this.editor.treeCursor.cellCol,
-                this.editor.treeCursor.offset,
+                this.editor.syntaxTree.treeCursor.cellRow,
+                this.editor.syntaxTree.treeCursor.cellCol,
+                this.editor.syntaxTree.treeCursor.offset,
             );
             return;
         }
@@ -300,7 +300,7 @@ export class CursorManager {
         // Only applies to node types that render inline formatting (paragraph,
         // heading, blockquote, list-item).  Other types (table, code-block,
         // image, horizontal-rule) don't use inline markup rendering.
-        let cursorOffset = this.editor.treeCursor.offset;
+        let cursorOffset = this.editor.syntaxTree.treeCursor.offset;
         if (this.editor.viewMode === 'focused') {
             const node = this.editor.getCurrentNode();
             if (node && this._hasInlineFormatting(node.type)) {

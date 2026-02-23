@@ -101,7 +101,7 @@ export class ImageHelper {
             if (style) {
                 currentNode.attributes.style = style;
             }
-            this.editor.treeCursor = { nodeId: currentNode.id, offset: alt.length };
+            this.editor.syntaxTree.treeCursor = { nodeId: currentNode.id, offset: alt.length };
             renderHints = { updated: [currentNode.id] };
         } else {
             // Insert a new image node
@@ -134,7 +134,7 @@ export class ImageHelper {
                 renderHints = { added: [imageNode.id] };
             }
 
-            this.editor.treeCursor = { nodeId: imageNode.id, offset: alt.length };
+            this.editor.syntaxTree.treeCursor = { nodeId: imageNode.id, offset: alt.length };
         }
 
         this.editor.recordAndRender(before, renderHints);
@@ -205,7 +205,7 @@ export class ImageHelper {
         if (result.style) {
             node.attributes.style = result.style;
         }
-        this.editor.treeCursor = { nodeId: node.id, offset: result.alt.length };
+        this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: result.alt.length };
         this.editor.recordAndRender(before, { updated: [node.id] });
     }
 

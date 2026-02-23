@@ -300,7 +300,7 @@ export class SearchBar {
     _findClosestMatchIndex() {
         if (this._matches.length === 0) return -1;
 
-        const cursor = this.editor.treeCursor;
+        const cursor = this.editor.syntaxTree?.treeCursor;
         if (!cursor) return 0;
 
         // Convert the cursor's (nodeId, offset) to a document-level

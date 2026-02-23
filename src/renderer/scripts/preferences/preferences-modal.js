@@ -55,6 +55,12 @@ const DEFAULT_ENSURE_LOCAL_PATHS = true;
 const DEFAULT_DETAILS_CLOSED = false;
 
 /**
+ * Default parser engine.
+ * @type {'regex' | 'dfa'}
+ */
+const DEFAULT_PARSER = 'regex';
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -95,7 +101,8 @@ export class PreferencesModal {
                 <div class="preferences-layout">
                     <nav class="preferences-nav">
                         <ul class="preferences-nav-list">
-                            <li><a href="#" class="preferences-nav-link active" data-section="pref-default-view">Default View</a></li>
+                            <li><a href="#" class="preferences-nav-link active" data-section="pref-parser">Parser</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-default-view">Default View</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-page-width">Page Width</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-margins">Margins</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-colors">Colors</a></li>
@@ -105,6 +112,17 @@ export class PreferencesModal {
                         </ul>
                     </nav>
                     <div class="preferences-body">
+                        <fieldset class="preferences-fieldset" id="pref-parser">
+                            <legend>Parser</legend>
+                            <div class="parser-row">
+                                <label for="parser-select">Parser engine</label>
+                                <select id="parser-select" name="parser">
+                                    <option value="regex">Regex (default)</option>
+                                    <option value="dfa">DFA (experimental)</option>
+                                </select>
+                            </div>
+                            <p class="preferences-hint">Choose which parser engine is used to convert markdown to the internal syntax tree. The DFA parser is token-driven and does not use regular expressions.</p>
+                        </fieldset>
                         <fieldset class="preferences-fieldset" id="pref-default-view">
                             <legend>Default View</legend>
                         <div class="default-view-row">
@@ -576,6 +594,13 @@ export class PreferencesModal {
         this._build();
         if (!this.dialog || this.dialog.open) return;
 
+        // Load saved parser setting
+        const parser = await this._loadParser();
+        const parserSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#parser-select')
+        );
+        parserSelect.value = parser;
+
         // Load saved default view setting
         const defaultView = await this._loadDefaultView();
         const viewSelect = /** @type {HTMLSelectElement} */ (
@@ -817,6 +842,25 @@ export class PreferencesModal {
     }
 
     /**
+     * Loads the parser engine setting from the settings database.
+     * @returns {Promise<'regex' | 'dfa'>}
+     */
+    async _loadParser() {
+        if (!window.electronAPI) return DEFAULT_PARSER;
+
+        try {
+            const result = await window.electronAPI.getSetting('parser');
+            if (result.success && (result.value === 'regex' || result.value === 'dfa')) {
+                return result.value;
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return DEFAULT_PARSER;
+    }
+
+    /**
      * Loads the details-closed setting from the settings database.
      * @returns {Promise<boolean>}
      */
@@ -840,6 +884,11 @@ export class PreferencesModal {
      */
     async _save() {
         if (!this.dialog) return;
+
+        const parserSelect = /** @type {HTMLSelectElement} */ (
+            this.dialog.querySelector('#parser-select')
+        );
+        const parser = parserSelect.value === 'dfa' ? 'dfa' : 'regex';
 
         const viewSelect = /** @type {HTMLSelectElement} */ (
             this.dialog.querySelector('#default-view-select')
@@ -899,6 +948,7 @@ export class PreferencesModal {
 
         // Persist to database
         if (window.electronAPI) {
+            await window.electronAPI.setSetting('parser', parser);
             await window.electronAPI.setSetting('defaultView', defaultView);
             await window.electronAPI.setSetting('pageWidth', pageWidth);
             await window.electronAPI.setSetting('margins', margins);
@@ -931,7 +981,7 @@ export class PreferencesModal {
         // Notify listeners about content settings
         document.dispatchEvent(
             new CustomEvent('content:settingsChanged', {
-                detail: { detailsClosed },
+                detail: { detailsClosed, parser },
             }),
         );
 
