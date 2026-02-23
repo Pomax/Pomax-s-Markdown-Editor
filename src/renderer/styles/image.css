@@ -220,3 +220,8 @@
 .md-image a {
     display: inline-block;
 }
+
+figcaption {
+    font-size: 85%;
+    font-style: italic;
+}

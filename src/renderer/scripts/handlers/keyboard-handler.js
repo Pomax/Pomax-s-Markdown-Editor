@@ -86,6 +86,12 @@ export class KeyboardHandler {
      * @param {KeyboardEvent} event - The keyboard event
      */
     handleKeyDown(event) {
+        // Escape dismisses the search bar from anywhere.
+        if (event.key === 'Escape') {
+            document.dispatchEvent(new CustomEvent('search:close'));
+            return;
+        }
+
         // Find matching shortcut
         const shortcut = this.findMatchingShortcut(event);
 

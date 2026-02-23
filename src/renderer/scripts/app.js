@@ -131,6 +131,10 @@ class App {
             this.searchBar?.open();
         });
 
+        document.addEventListener('search:close', () => {
+            if (this.searchBar?.isOpen) this.searchBar.close();
+        });
+
         // Initialize Table of Contents sidebar
         if (tocContainer) {
             this.toc = new TableOfContents(tocContainer, this.editor);
