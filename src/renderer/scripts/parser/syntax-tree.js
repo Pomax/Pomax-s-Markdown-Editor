@@ -6,6 +6,23 @@
 import { buildInlineTree, tokenizeInline } from './inline-tokenizer.js';
 
 /**
+ * Node types whose content contains inline formatting and should be
+ * modelled as inline child nodes (text, bold, italic, link, etc.).
+ * @type {Set<string>}
+ */
+const INLINE_CONTENT_TYPES = new Set([
+    'paragraph',
+    'heading1',
+    'heading2',
+    'heading3',
+    'heading4',
+    'heading5',
+    'heading6',
+    'blockquote',
+    'list-item',
+]);
+
+/**
  * @typedef {Object} NodeAttributes
  * @property {string} [language] - Language for code blocks
  * @property {number} [indent] - Indentation level for list items
@@ -14,7 +31,9 @@ import { buildInlineTree, tokenizeInline } from './inline-tokenizer.js';
  * @property {string} [url] - URL for links and images
  * @property {string} [title] - Title for links and images
  * @property {string} [alt] - Alt text for images
- * @property {string} [href] - Link URL for linked images
+ * @property {string} [href] - Link URL for linked images or link nodes
+ * @property {string} [src] - Image source URL (for inline-image nodes)
+ * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
@@ -59,13 +78,16 @@ export class SyntaxNode {
         this.type = type;
 
         /**
-         * The text content.
+         * The raw text content (backing field for the `content` accessor).
          * @type {string}
          */
-        this.content = content;
+        this._content = content;
 
         /**
-         * Child nodes.
+         * Child nodes.  For inline-containing block types (paragraph,
+         * heading, blockquote, list-item), children are inline nodes
+         * (text, bold, italic, link, etc.).  For container blocks
+         * (html-block), children are other block-level nodes.
          * @type {SyntaxNode[]}
          */
         this.children = [];
@@ -93,6 +115,72 @@ export class SyntaxNode {
          * @type {number}
          */
         this.endLine = 0;
+
+        // Build inline children for types that contain inline formatting.
+        if (content && INLINE_CONTENT_TYPES.has(type)) {
+            this.buildInlineChildren();
+        }
+    }
+
+    /** @returns {string} */
+    get content() {
+        return this._content;
+    }
+
+    /** @param {string} val */
+    set content(val) {
+        this._content = val;
+        if (INLINE_CONTENT_TYPES.has(this.type)) {
+            this.buildInlineChildren();
+        }
+    }
+
+    /**
+     * (Re)builds inline child nodes from this node's raw content.
+     * Only meaningful for inline-containing types (paragraph, heading,
+     * blockquote, list-item).
+     */
+    buildInlineChildren() {
+        this.children = [];
+        if (!this._content) return;
+        const tokens = tokenizeInline(this._content);
+        const segments = buildInlineTree(tokens);
+        for (const seg of segments) {
+            this.appendChild(SyntaxNode._segmentToNode(seg));
+        }
+    }
+
+    /**
+     * Converts an InlineSegment (from buildInlineTree) into a SyntaxNode.
+     * @param {import('./inline-tokenizer.js').InlineSegment} segment
+     * @returns {SyntaxNode}
+     */
+    static _segmentToNode(segment) {
+        switch (segment.type) {
+            case 'text':
+                return new SyntaxNode('text', segment.text ?? '');
+            case 'code':
+                return new SyntaxNode('inline-code', segment.content ?? '');
+            case 'image': {
+                const img = new SyntaxNode('inline-image', '');
+                img.attributes.alt = segment.alt ?? '';
+                img.attributes.src = segment.src ?? '';
+                return img;
+            }
+            default: {
+                // Containers: bold, italic, bold-italic, strikethrough,
+                // link, and HTML inline tags (sub, sup, etc.)
+                const node = new SyntaxNode(segment.type, '');
+                if (segment.href) node.attributes.href = segment.href;
+                if (segment.tag) node.attributes.tag = segment.tag;
+                if (segment.children) {
+                    for (const child of segment.children) {
+                        node.appendChild(SyntaxNode._segmentToNode(child));
+                    }
+                }
+                return node;
+            }
+        }
     }
 
     /**
@@ -233,7 +321,7 @@ export class SyntaxNode {
             case 'paragraph':
             case 'blockquote':
             case 'list-item':
-                return SyntaxNode._extractInlineText(this.content);
+                return SyntaxNode._inlineChildrenToText(this.children);
 
             case 'code-block':
                 return this.content;
@@ -269,7 +357,7 @@ export class SyntaxNode {
                     this.children[0].attributes.bareText &&
                     this.children[0].type === 'paragraph'
                 ) {
-                    return SyntaxNode._extractInlineText(this.children[0].content);
+                    return SyntaxNode._inlineChildrenToText(this.children[0].children);
                 }
 
                 const parts = [];
@@ -322,11 +410,39 @@ export class SyntaxNode {
     }
 
     /**
+     * Recursively extracts plain text from inline SyntaxNode children.
+     * Similar to _segmentsToText but operates on SyntaxNode children
+     * instead of InlineSegment objects.
+     *
+     * @param {SyntaxNode[]} children
+     * @returns {string}
+     */
+    static _inlineChildrenToText(children) {
+        let result = '';
+        for (const child of children) {
+            if (child.type === 'text') {
+                result += child._content;
+            } else if (child.type === 'inline-code') {
+                result += child._content;
+            } else if (child.type === 'inline-image') {
+                // Images produce no visible text.
+            } else if (child.children.length > 0) {
+                result += SyntaxNode._inlineChildrenToText(child.children);
+            }
+        }
+        return result;
+    }
+
+    /**
      * Creates a deep clone of this node.
      * @returns {SyntaxNode}
      */
     clone() {
         const cloned = new SyntaxNode(this.type, this.content);
+        // The constructor may have auto-built inline children from
+        // content; clear them so we clone the original's children
+        // instead (they carry the same structure but the right IDs).
+        cloned.children = [];
         cloned.attributes = { ...this.attributes };
         cloned.startLine = this.startLine;
         cloned.endLine = this.endLine;
@@ -444,7 +560,10 @@ export class SyntaxTree {
      * @returns {SyntaxNode}
      */
     findDeepestNodeAtPosition(node, line, column) {
-        if (node.children.length > 0) {
+        // Only descend into block-level children (e.g. html-block
+        // containers).  Inline children (text, bold, italic, etc.)
+        // share the parent's line range and should not be traversed.
+        if (!INLINE_CONTENT_TYPES.has(node.type) && node.children.length > 0) {
             for (const child of node.children) {
                 if (line >= child.startLine && line <= child.endLine) {
                     return this.findDeepestNodeAtPosition(child, line, column);
@@ -460,7 +579,17 @@ export class SyntaxTree {
      * @param {string} newType - The new type
      */
     changeNodeType(node, newType) {
+        const wasInline = INLINE_CONTENT_TYPES.has(node.type);
         node.type = newType;
+        const isInline = INLINE_CONTENT_TYPES.has(newType);
+
+        // If transitioning between inline-containing and non-inline types,
+        // rebuild or clear the inline children accordingly.
+        if (isInline && !wasInline) {
+            node.buildInlineChildren();
+        } else if (!isInline && wasInline) {
+            node.children = [];
+        }
 
         // Reset type-specific attributes
         switch (newType) {

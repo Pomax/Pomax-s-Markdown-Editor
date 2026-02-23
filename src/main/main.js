@@ -449,9 +449,7 @@ app.on('window-all-closed', () => {
     if (settingsManager) {
         settingsManager.close();
     }
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    app.quit();
 });
 
 // Run with unlimited memory

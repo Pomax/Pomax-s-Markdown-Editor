@@ -108,8 +108,9 @@ class App {
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
 
-        // Initialize page resize handles (focused mode only)
-        initPageResizeHandles(editorContainer);
+        // Initialize page resize handles (focused mode only).
+        // Store the retarget function so tab switches can update the handles.
+        this._retargetResizeHandles = initPageResizeHandles(editorContainer) ?? null;
 
         // Initialize toolbar
         this.toolbar = new Toolbar(toolbarContainer, this.editor);
@@ -378,6 +379,11 @@ class App {
             this.editor.swapContainer(targetContainer);
             targetContainer.style.display = '';
 
+            // Re-target resize handles to the new container
+            if (this._retargetResizeHandles) {
+                this._retargetResizeHandles(targetContainer);
+            }
+
             // Restore editor state
             if (state) {
                 this.editor.currentFilePath = state.filePath;
@@ -610,6 +616,11 @@ class App {
         this.editor.swapContainer(newContainer);
         this._tabContainers.set(tabId, newContainer);
 
+        // Re-target resize handles to the new container
+        if (this._retargetResizeHandles) {
+            this._retargetResizeHandles(newContainer);
+        }
+
         // Load the new content into the editor
         this.editor.currentFilePath = filePath;
         this.editor.loadMarkdown(content);
@@ -723,6 +734,12 @@ class App {
             }
             this.editor.swapContainer(newContainer);
             this._tabContainers.set(newId, newContainer);
+
+            // Re-target resize handles to the new container
+            if (this._retargetResizeHandles) {
+                this._retargetResizeHandles(newContainer);
+            }
+
             this.editor.reset();
         } else if (wasActive && this.tabBar.activeTabId) {
             // removeTab already picked a new active tab; restore its state

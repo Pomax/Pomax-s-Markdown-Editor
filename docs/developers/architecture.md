@@ -242,6 +242,14 @@ Data structure for parsed documents:
 - `getPathToCursor()` / `setCursorPath(path)`: serialize and restore cursor position as an index path (array of child indices + character offset). Used for session persistence — node IDs are ephemeral but tree structure is deterministic for the same document.
 - `getPathToNode(nodeId)` / `getNodeAtPath(path)`: convert between node IDs and index paths. Used to persist the active ToC heading across sessions.
 
+#### Inline children model
+
+Block-level nodes that contain inline formatting (paragraphs, headings, blockquotes, list items) automatically build inline child nodes when their `content` is set. The `content` property is a getter/setter backed by a `_content` field — setting it triggers `buildInlineChildren()`, which tokenizes the raw markdown text via `InlineTokenizer` and converts the resulting segments into child `SyntaxNode` instances.
+
+Inline node types: `text`, `inline-code`, `inline-image`, `bold`, `italic`, `bold-italic`, `strikethrough`, `link`, and HTML inline tags (e.g. `sub`, `sup`). Container types like `bold` and `link` can have their own inline children recursively.
+
+Traversal methods like `findDeepestNodeAtPosition()` do **not** descend into inline children — those are for introspection (e.g. detecting active formats at a cursor position), not for cursor/editing operations which work on the parent block node's `content` string.
+
 ### Renderers
 
 #### SourceRenderer
@@ -296,7 +304,7 @@ Tokenizes inline markdown formatting within a line of text:
 - Handles bold, italic, bold-italic (`***`), strikethrough, code, links, images, subscript, superscript
 - Treats `***` as an atomic bold-italic delimiter (single open/close token pair)
 - Treats four or more consecutive asterisks (`****`+) as plain text
-- Used by `SyntaxNode.toBareText()` and `SyntaxHighlighter` for inline parsing
+- Used by `SyntaxNode.buildInlineChildren()` to populate inline child nodes, by `SyntaxNode.toBareText()` for text extraction, and by `SyntaxHighlighter` for inline syntax coloring
 
 ### BaseModal
 
