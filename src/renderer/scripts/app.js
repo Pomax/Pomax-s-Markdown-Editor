@@ -424,10 +424,19 @@ class App {
                 }
             }
 
-            // Place cursor and focus — DOM is already intact so no
-            // browser auto-scroll fight.
-            this.editor.placeCursor();
+            // Place cursor and focus.  In focused mode, the cursor's
+            // node must be re-rendered so it shows raw markdown syntax
+            // and the md-focused highlight.  The DOM was saved without
+            // focused styling (blur clears it), so a render is needed.
             this.editor.container.focus({ preventScroll: true });
+            if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
+                const blockId = this.editor.getBlockNodeId();
+                if (blockId) {
+                    this.editor.renderNodesAndPlaceCursor({ updated: [blockId] });
+                }
+            } else {
+                this.editor.placeCursor();
+            }
 
             if (this.toc) {
                 // Lock the ToC to the heading that was active when we
