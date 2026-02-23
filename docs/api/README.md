@@ -8,7 +8,7 @@ The Markdown Editor exposes a comprehensive API for external scripting via IPC (
 
 Current Version: **1.0.0**
 
-*Generated: 2026-02-08T19:18:46.549Z*
+*Generated: 2026-02-21T18:07:37.089Z*
 
 ## Connection
 
