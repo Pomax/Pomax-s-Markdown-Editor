@@ -256,6 +256,10 @@
 
 /* ========== View Modes ========== */
 /* Source view specific styles */
+.source-view .md-code-block {
+    background-color: unset;
+}
+
 .source-view .md-syntax {
     display: inline;
 }

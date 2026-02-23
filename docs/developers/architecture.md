@@ -164,6 +164,7 @@ The renderer entry point. Wires together all renderer components:
 - Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
 - Handles `session:restore` events to restore cursor position, ToC heading highlight, and scroll position for all tabs after a close-and-reopen. Active tab is restored live; background tabs are patched in `_documentStates`.
+- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` sets `_isRendering = true` around `focus()` + `placeCursor()` to suppress the `selectionchange` handler. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`.
 
 ### Editor
 
@@ -193,7 +194,7 @@ accesses state via `this.editor`.
 | `offset-mapping` | `offset-mapping.js` | Pure functions for raw ↔ rendered offset mapping (used by `CursorManager`) |
 | `crc32` | `crc32.js` | CRC32 digest for content-change detection |
 | `cursor-persistence` | `cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
-| `page-resize` | `page-resize.js` | Page resize handles for the focused-mode editor |
+| `page-resize` | `page-resize.js` | Page resize handles for the editor (both source and focused modes) |
 | `syntax-highlighter` | `syntax-highlighter.js` | Inline syntax highlighting for source view |
 
 The Editor itself keeps:
@@ -282,7 +283,7 @@ Unlimited undo/redo history:
 Tracks and manipulates text selection:
 - Converts between DOM positions and logical tree cursor positions
 - Tracks current node at cursor
-- Dispatches selection change events
+- Dispatches `editor:selectionchange` custom event with `bubbles: true` so ancestor elements (e.g. the toolbar listening on `document`) can observe selection changes across tabs
 
 ### Range Handling
 

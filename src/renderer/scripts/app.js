@@ -424,19 +424,14 @@ class App {
                 }
             }
 
-            // Place cursor and focus.  In focused mode, the cursor's
-            // node must be re-rendered so it shows raw markdown syntax
-            // and the md-focused highlight.  The DOM was saved without
-            // focused styling (blur clears it), so a render is needed.
+            // Place cursor and focus.  The DOM and syntax tree are
+            // identical — nothing changed — so just set the browser
+            // selection.  Suppress selectionchange so the event handler
+            // doesn't trigger a spurious re-render.
+            this.editor._isRendering = true;
             this.editor.container.focus({ preventScroll: true });
-            if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
-                const blockId = this.editor.getBlockNodeId();
-                if (blockId) {
-                    this.editor.renderNodesAndPlaceCursor({ updated: [blockId] });
-                }
-            } else {
-                this.editor.placeCursor();
-            }
+            this.editor.placeCursor();
+            this.editor._isRendering = false;
 
             if (this.toc) {
                 // Lock the ToC to the heading that was active when we

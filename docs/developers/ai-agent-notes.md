@@ -155,6 +155,12 @@ pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
     added, or removed. Event handlers on untouched elements survive.
 - Most editing operations use the incremental path.
 
+### Tab switching vs. session restore
+
+When the user **switches tabs**, the DOM container and syntax tree are preserved in `_documentStates` — nothing changes. The only action needed is placing the browser selection caret. **Do NOT re-render or re-parse anything on tab switch.** The `_restoreState` method sets `editor._isRendering = true` around `focus()` + `placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render.
+
+When the app **relaunches** (session restore), the DOM is rebuilt from scratch, so `fullRenderAndPlaceCursor()` is correct there.
+
 ### Inline children model
 
 Block-level nodes that contain inline formatting (`paragraph`, `heading1`–`heading6`, `blockquote`, `list-item`) automatically build inline child `SyntaxNode` instances when their `content` is set. The `content` property is a getter/setter — setting it triggers `buildInlineChildren()` which tokenizes the raw markdown and converts the segments into a tree of inline nodes (types: `text`, `inline-code`, `inline-image`, `bold`, `italic`, `bold-italic`, `strikethrough`, `link`, plus HTML inline tags like `sub`/`sup`).
@@ -212,6 +218,7 @@ syntaxTree.treeCursor = {
 - `getCurrentNode()` — resolves `treeCursor.nodeId` to a SyntaxNode (may be inline).
 - `getCurrentBlockNode()` — resolves `blockNodeId ?? nodeId` to the block-level SyntaxNode. **All editing operations must use this** because they work on the block node's `content` string.
 - `getBlockNodeId()` — returns `blockNodeId ?? nodeId` as a string.
+- `resolveBlockId(nodeId)` — resolves any node ID (inline or block) to its block parent's ID via `node.getBlockParent().id`. Used by `EventHandler` when comparing the current node against `_lastRenderedNodeId` to decide whether a re-render is needed.
 
 **Rule of thumb:** code that _reads_ the cursor to detect formatting uses `getCurrentNode()` (to see the inline node); code that _mutates_ content or checks block type uses `getCurrentBlockNode()`.
 

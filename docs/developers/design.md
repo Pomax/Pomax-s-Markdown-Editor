@@ -34,7 +34,7 @@ src/renderer/scripts/editor/
 ├── selection-manager.js   # SelectionManager class
 ├── crc32.js               # CRC32 digest for content-change detection
 ├── cursor-persistence.js  # Cursor position ↔ absolute source offset conversion
-├── page-resize.js         # Page resize handles for focused-mode editor
+├── page-resize.js         # Page resize handles (both source and focused modes)
 └── syntax-highlighter.js  # Inline syntax highlighting
 ```
 
@@ -198,11 +198,13 @@ test/
     ├── click-outside-defocus.spec.js
     ├── code-block-enter.spec.js
     ├── cursor-scroll.spec.js
+    ├── cursor-sync.spec.js
     ├── cursor-typing-delimiters.spec.js
     ├── details-collapse-toggle.spec.js
     ├── details-summary-input.spec.js
     ├── details-trailing-paragraph.spec.js
     ├── editor.spec.js
+    ├── file-buttons.spec.js
     ├── heading-input.spec.js
     ├── html-block.spec.js
     ├── html-image.spec.js
@@ -223,6 +225,7 @@ test/
     ├── reload.spec.js
     ├── search.spec.js
     ├── select-all.spec.js
+    ├── session-save.spec.js
     ├── source-view-summary-edit.spec.js
     ├── strikethrough-button.spec.js
     ├── subscript-button.spec.js
@@ -231,6 +234,7 @@ test/
     ├── table.spec.js
     ├── toc-highlight.spec.js
     ├── toc-scroll.spec.js
+    ├── toolbar-active.spec.js
     ├── toolbar-tooltip.spec.js
     ├── underscore-emphasis.spec.js
     ├── view-mode-dropdown.spec.js
