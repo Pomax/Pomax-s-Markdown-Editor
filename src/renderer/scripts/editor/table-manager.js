@@ -238,7 +238,7 @@ export class TableManager {
      * @param {boolean} shiftKey - True for Shift+Tab (move backward)
      */
     handleTableTab(shiftKey) {
-        const node = this.editor.getCurrentNode();
+        const node = this.editor.getCurrentBlockNode();
         if (
             !node ||
             !this.editor.syntaxTree ||

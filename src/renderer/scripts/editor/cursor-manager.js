@@ -54,9 +54,9 @@ export class CursorManager {
         }
 
         this.editor.treeRange = {
-            startNodeId: startInfo.cursor.nodeId,
+            startNodeId: startInfo.cursor.blockNodeId ?? startInfo.cursor.nodeId,
             startOffset: startInfo.cursor.offset,
-            endNodeId: endInfo.cursor.nodeId,
+            endNodeId: endInfo.cursor.blockNodeId ?? endInfo.cursor.nodeId,
             endOffset: endInfo.cursor.offset,
         };
     }
@@ -65,11 +65,19 @@ export class CursorManager {
      * Maps a DOM position (node + offset) to tree coordinates by walking up
      * to the nearest element with a `data-node-id` attribute.
      *
+     * In focused mode, inline formatting elements (bold, italic, etc.)
+     * also carry `data-node-id`.  When the cursor is inside one of those,
+     * the returned cursor records the inline node id while computing the
+     * offset relative to the enclosing block-level element.
+     *
      * @param {Node} domNode - The DOM node the position is in
      * @param {number} domOffset - The offset within `domNode`
      * @returns {{ cursor: import('./editor.js').TreeCursor } | null}
      */
     _mapDOMPositionToTree(domNode, domOffset) {
+        /** @type {string|null} */
+        let inlineNodeId = null;
+
         /** @type {Node|null} */
         let el = domNode;
         while (el && el !== this.editor.container) {
@@ -77,8 +85,17 @@ export class CursorManager {
                 const htmlEl = /** @type {HTMLElement} */ (el);
                 const nodeId = htmlEl.dataset?.nodeId;
                 if (nodeId) {
-                    // Check if the cursor is inside a table cell
                     const node = this.editor.syntaxTree?.findNodeById(nodeId);
+
+                    // If this is an inline node (bold, italic, etc.),
+                    // record its id and keep walking to find the block parent.
+                    if (node?.isInlineNode()) {
+                        if (!inlineNodeId) inlineNodeId = nodeId;
+                        el = el.parentNode;
+                        continue;
+                    }
+
+                    // Check if the cursor is inside a table cell
                     if (node?.type === 'table' && this.editor.viewMode === 'focused') {
                         const pos = this.editor.tableManager.computeTableCellPosition(
                             htmlEl,
@@ -87,7 +104,8 @@ export class CursorManager {
                         );
                         return {
                             cursor: {
-                                nodeId,
+                                nodeId: inlineNodeId ?? nodeId,
+                                blockNodeId: nodeId,
                                 offset: pos.offset,
                                 cellRow: pos.cellRow,
                                 cellCol: pos.cellCol,
@@ -97,7 +115,11 @@ export class CursorManager {
 
                     const offset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
                     /** @type {import('./editor.js').TreeCursor} */
-                    const cursor = { nodeId, offset };
+                    const cursor = {
+                        nodeId: inlineNodeId ?? nodeId,
+                        blockNodeId: nodeId,
+                        offset,
+                    };
                     // If this element represents an html-block tag line in
                     // source view, record which part so edit methods can
                     // route changes to the correct attribute.
@@ -257,9 +279,15 @@ export class CursorManager {
 
     /**
      * Places the DOM cursor at the position described by `editor.syntaxTree.treeCursor`.
+     * Always resolves to the block-level DOM element for cursor placement,
+     * since the offset is relative to the block node's raw content.
      */
     placeCursor() {
         if (!this.editor.syntaxTree?.treeCursor) return;
+
+        const blockId =
+            this.editor.syntaxTree.treeCursor.blockNodeId ??
+            this.editor.syntaxTree.treeCursor.nodeId;
 
         // When the cursor targets a tag line (source view), there may be
         // multiple elements with the same data-node-id (opening & closing).
@@ -268,13 +296,11 @@ export class CursorManager {
         let nodeElement = null;
         if (this.editor.syntaxTree.treeCursor.tagPart) {
             nodeElement = this.editor.container.querySelector(
-                `[data-node-id="${this.editor.syntaxTree.treeCursor.nodeId}"][data-tag-part="${this.editor.syntaxTree.treeCursor.tagPart}"]`,
+                `[data-node-id="${blockId}"][data-tag-part="${this.editor.syntaxTree.treeCursor.tagPart}"]`,
             );
         }
         if (!nodeElement) {
-            nodeElement = this.editor.container.querySelector(
-                `[data-node-id="${this.editor.syntaxTree.treeCursor.nodeId}"]`,
-            );
+            nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
         }
         if (!nodeElement) return;
 
@@ -302,7 +328,7 @@ export class CursorManager {
         // image, horizontal-rule) don't use inline markup rendering.
         let cursorOffset = this.editor.syntaxTree.treeCursor.offset;
         if (this.editor.viewMode === 'focused') {
-            const node = this.editor.getCurrentNode();
+            const node = this.editor.getCurrentBlockNode();
             if (node && this._hasInlineFormatting(node.type)) {
                 cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
             }

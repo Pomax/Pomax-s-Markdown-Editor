@@ -193,6 +193,30 @@ export class SyntaxNode {
     }
 
     /**
+     * Returns the nearest block-level ancestor (an INLINE_CONTENT_TYPES node),
+     * or `this` if this node is itself a block-level node.
+     * @returns {SyntaxNode}
+     */
+    getBlockParent() {
+        /** @type {SyntaxNode} */
+        let node = this;
+        while (node.parent) {
+            if (INLINE_CONTENT_TYPES.has(node.type)) return node;
+            node = node.parent;
+        }
+        return node;
+    }
+
+    /**
+     * Returns true if this node is an inline child (created by
+     * buildInlineChildren), not a block-level node.
+     * @returns {boolean}
+     */
+    isInlineNode() {
+        return this.getBlockParent() !== this;
+    }
+
+    /**
      * Removes a child node.
      * @param {SyntaxNode} child - The child node to remove
      * @returns {boolean} Whether the child was found and removed
@@ -661,10 +685,28 @@ export class SyntaxTree {
             return span.openStart + contentLen;
         }
 
+        // ── Mutual exclusion: sub ↔ sup — strip the opposite first ──
+        if (format === 'subscript' || format === 'superscript') {
+            const opposite = format === 'subscript' ? 'superscript' : 'subscript';
+            const oppositeSpan = this._findFormatSpan(node.content, selStart, selEnd, opposite);
+            if (oppositeSpan) {
+                // Remove the opposite wrapper, then re-wrap with the new format.
+                const withoutClose =
+                    node.content.substring(0, oppositeSpan.closeStart) +
+                    node.content.substring(oppositeSpan.closeEnd);
+                node.content =
+                    withoutClose.substring(0, oppositeSpan.openStart) +
+                    withoutClose.substring(oppositeSpan.openEnd);
+                // Adjust selection to the now-unwrapped content region.
+                selStart = oppositeSpan.openStart;
+                selEnd = oppositeSpan.openStart + (oppositeSpan.closeStart - oppositeSpan.openEnd);
+            }
+        }
+
         // ── Toggle-on: wrap the selected text in format markers ──────────
-        const before = content.substring(0, selStart);
-        let selected = content.substring(selStart, selEnd);
-        const after = content.substring(selEnd);
+        const before = node.content.substring(0, selStart);
+        let selected = node.content.substring(selStart, selEnd);
+        const after = node.content.substring(selEnd);
 
         // Trim trailing whitespace so markers hug the text
         // (e.g. **word** not **word **).
@@ -756,7 +798,47 @@ export class SyntaxTree {
             strikethrough: { open: 'strikethrough-open', close: 'strikethrough-close' },
         };
         const spec = typeMap[format];
-        if (!spec) return null; // sub, sup, link — no toggle
+
+        // ── HTML-tag formats: subscript / superscript ───────────
+        if (!spec) {
+            /** @type {Record<string, string>} */
+            const htmlTagMap = {
+                subscript: 'sub',
+                superscript: 'sup',
+            };
+            const tagName = htmlTagMap[format];
+            if (!tagName) return null; // link — no toggle
+
+            let rawPos = 0;
+            /** @type {{ rawStart: number, rawEnd: number }[]} */
+            const htmlOpens = [];
+
+            for (const token of tokens) {
+                const tokenStart = rawPos;
+                rawPos += token.raw.length;
+
+                if (token.type === 'html-open' && token.tag === tagName) {
+                    htmlOpens.push({ rawStart: tokenStart, rawEnd: rawPos });
+                } else if (
+                    token.type === 'html-close' &&
+                    token.tag === tagName &&
+                    htmlOpens.length > 0
+                ) {
+                    const open = /** @type {{ rawStart: number, rawEnd: number }} */ (
+                        htmlOpens.pop()
+                    );
+                    if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+                        return {
+                            openStart: open.rawStart,
+                            openEnd: open.rawEnd,
+                            closeStart: tokenStart,
+                            closeEnd: rawPos,
+                        };
+                    }
+                }
+            }
+            return null;
+        }
 
         let rawPos = 0;
         /** @type {{ rawStart: number, rawEnd: number }[]} */
