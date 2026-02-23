@@ -1,5 +1,35 @@
 # Release Log
 
+## v1.6.0
+
+### New Features
+
+- **Search bar**: Floating, draggable search panel opened via Ctrl+F. Supports plain text search (minimum 2 characters) and regex mode, with a case-sensitivity toggle. In source view searches raw markdown; in focused view searches rendered text per-node (plain text) or across the full document (regex). Highlights matches with `<mark>` elements, navigates with Enter/Shift+Enter, and scrolls to the active match. Re-applies highlights automatically after editor re-renders.
+- **DFA-based tokenizer and parser**: New `dfa-tokenizer.js` and `dfa-parser.js` modules provide an alternative parsing pipeline using a deterministic finite automaton. Includes a standalone `scripts/parse-markdown.js` CLI tool for testing the parser output. Comprehensive unit test suite with 700+ lines of coverage.
+- **Session restore (cursor, ToC, scroll)**: Closing and reopening the app now fully restores cursor position, Table of Contents heading highlight, and scroll position for all open tabs — not just the active one. Cursor and ToC heading positions are persisted as deterministic index paths (`getPathToCursor`/`setCursorPath`, `getPathToNode`/`getNodeAtPath`) that survive node ID regeneration across parses. Background tabs are restored lazily when switched to.
+- **View mode dropdown in toolbar**: The toolbar now includes a dropdown for switching between source and focused view modes, complementing the existing menu and keyboard shortcuts.
+- **Cursor sync integration tests**: New test suite verifying that the tree cursor stays in sync with DOM selection changes across editing operations, tab switches, and view mode changes.
+
+### Bug Fixes
+
+- **Cursor and document restore on close-and-reopen**: Fixed issue where cursor position, ToC heading highlight, and scroll position were lost when the app was closed and reopened. The root cause was that `cursorOffset` (a flat character offset) couldn't reliably reconstruct cursor position because node IDs are ephemeral. Replaced with tree-path-based serialization. (#62)
+
+### Improvements
+
+- **Cursor model moved to SyntaxTree**: `treeCursor` now lives on the `SyntaxTree` instance rather than the `Editor`, making it part of the document state that travels with tab switches and undo/redo snapshots. All editor subsystems (`CursorManager`, `EditOperations`, `EventHandler`, `TableManager`, etc.) updated to reference `syntaxTree.treeCursor`.
+- **Per-tab document state expanded**: `_documentStates` now tracks `tocActiveHeadingId` for ToC heading persistence across tab switches, and `cursorPath`/`tocHeadingPath` for session restore across app restarts.
+- **`SyntaxNode.toBareText()`**: New method returns visible plain text with all formatting syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc.). Used by the search system for focused-view matching.
+
+### Testing & CI
+
+- **Search integration tests**: 427-line test suite covering plain text search, regex search, case sensitivity, match navigation, cursor-relative initial match, and re-highlight after re-render.
+- **Session save/restore tests**: Three integration tests — flushing saves `cursorPath`, flushing saves `tocHeadingPath`, and a full two-phase close-and-reopen restore test. All use `waitForFunction` polling instead of `waitForTimeout`.
+- **Cursor sync tests**: Integration tests verifying tree cursor synchronization with DOM selection across editing, tab switching, and view mode changes.
+- **DFA parser unit tests**: 700+ lines of unit tests covering block-level parsing, list handling, code blocks, HTML blocks, and edge cases.
+- **SyntaxTree unit tests**: New unit tests for `toBareText()`, `getPathToCursor()`/`setCursorPath()`, and `getPathToNode()`/`getNodeAtPath()`.
+
+---
+
 ## v1.5.0
 
 ### New Features
