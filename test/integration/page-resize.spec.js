@@ -1,9 +1,9 @@
 /**
  * @fileoverview Integration tests for page resize handles.
  *
- * Verifies that the drag handles appear in focused mode, are hidden in
- * source mode, and that dragging a handle changes the page width and
- * persists the new value to settings.
+ * Verifies that the drag handles appear in both focused and source modes,
+ * and that dragging a handle changes the page width and persists the new
+ * value to settings.
  *
  * Drag tests dispatch real DOM MouseEvents via page.evaluate() rather
  * than using Playwright's mouse abstraction, which does not reliably
@@ -71,12 +71,12 @@ test('resize handles are visible in focused mode', async () => {
     await expect(right).toBeAttached();
 });
 
-test('resize handles are hidden in source mode', async () => {
+test('resize handles are visible in source mode', async () => {
     await setSourceView(page);
     const left = page.locator('.editor-resize-handle--left');
     const right = page.locator('.editor-resize-handle--right');
-    await expect(left).toBeHidden();
-    await expect(right).toBeHidden();
+    await expect(left).toBeAttached();
+    await expect(right).toBeAttached();
     await setFocusedView(page);
 });
 

@@ -536,12 +536,13 @@ class App {
             }
 
             // Restore cursor position from the saved path.
-            // fullRenderAndPlaceCursor re-renders the focused node so
-            // the DOM matches the cursor position in focused mode.
+            // Focus the container first so the DOM selection set by
+            // placeCursor() is visible (selections on unfocused elements
+            // are silently discarded by the browser).
             if (activeEntry.cursorPath) {
                 this.editor.syntaxTree.setCursorPath(activeEntry.cursorPath);
-                this.editor.fullRenderAndPlaceCursor();
                 this.editor.container.focus({ preventScroll: true });
+                this.editor.fullRenderAndPlaceCursor();
             }
 
             // Scroll the document to the ToC heading

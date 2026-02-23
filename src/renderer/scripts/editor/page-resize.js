@@ -1,5 +1,5 @@
 /**
- * @fileoverview Page resize handles for the focused-mode editor.
+ * @fileoverview Page resize handles for the editor.
  *
  * Adds invisible drag handles to the left and right edges of the "paper"
  * element.  Dragging either handle resizes the page width symmetrically
@@ -116,12 +116,6 @@ function _createHandle(side) {
  * @param {HTMLDivElement} rightHandle
  */
 function _positionHandles(editor, leftHandle, rightHandle) {
-    // Hide in source mode (no fixed-width paper to resize)
-    if (editor.dataset.viewMode === 'source') {
-        leftHandle.style.display = 'none';
-        rightHandle.style.display = 'none';
-        return;
-    }
     leftHandle.style.display = '';
     rightHandle.style.display = '';
 

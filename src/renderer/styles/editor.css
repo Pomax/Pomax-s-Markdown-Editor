@@ -27,17 +27,7 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Source view: blend with the application background */
-.editor[data-view-mode="source"] {
-    background: transparent;
-    box-shadow: none;
-    max-width: none;
-    min-height: auto;
-}
 
-.editor[data-view-mode="source"]:focus {
-    box-shadow: none;
-}
 
 /* ========== Page resize handles ========== */
 
