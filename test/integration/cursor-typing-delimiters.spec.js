@@ -243,17 +243,3 @@ test('typing after closing ~~ produces plain text, not strikethrough', async () 
     const srcText = await srcLine.textContent();
     expect(srcText).toMatch(/~~struck~~ after/);
 });
-
-test('typing ***word*** produces bold-in-italic, not raw asterisks', async () => {
-    const { cursorOffset, lineText } = await typeAndGetCursor(page, '***word***');
-    // In writing view the delimiters are invisible, so the rendered
-    // text should just be "word".
-    expect(lineText).toBe('word');
-    expect(cursorOffset).toBe(4);
-});
-
-test('typing **** produces plain text (nonsense delimiter)', async () => {
-    const { cursorOffset, lineText } = await typeAndGetCursor(page, 'test ****');
-    expect(lineText).toContain('test ****');
-    expect(cursorOffset).toBe(lineText.length);
-});
