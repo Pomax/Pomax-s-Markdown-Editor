@@ -456,21 +456,28 @@ export class EditOperations {
         } else {
             // Cursor is at the start of the node.
 
-            // Code-block with empty content: backspace peels back the
-            // creation step-by-step.  First remove the language indicator
-            // one character at a time; once the language is gone, revert
-            // to a paragraph containing just the fence characters.
+            // Code-block with empty content: in source view, revert to
+            // a paragraph containing the fence + language text so the
+            // user can continue editing normally.  In writing view, the
+            // fences are not visible, so backspace simply converts to
+            // an empty paragraph.
             if (node.type === 'code-block' && node.content === '') {
-                const language = node.attributes.language || '';
-                if (language.length > 0) {
-                    node.attributes.language = language.slice(0, -1);
-                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
-                } else {
+                if (this.editor.viewMode === 'source') {
                     const fence = '`'.repeat(node.attributes.fenceCount || 3);
+                    const language = node.attributes.language || '';
+                    const text = `${fence}${language}`;
                     node.type = 'paragraph';
-                    node.content = fence;
+                    node.content = text;
                     node.attributes = {};
-                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: fence.length };
+                    this.editor.syntaxTree.treeCursor = {
+                        nodeId: node.id,
+                        offset: text.length,
+                    };
+                } else {
+                    node.type = 'paragraph';
+                    node.content = '';
+                    node.attributes = {};
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
                 }
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
