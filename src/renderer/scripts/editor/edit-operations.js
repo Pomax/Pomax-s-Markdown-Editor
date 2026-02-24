@@ -455,6 +455,34 @@ export class EditOperations {
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
             // Cursor is at the start of the node.
+
+            // Code-block with empty content: in source view, revert to
+            // a paragraph containing the fence + language text so the
+            // user can continue editing normally.  In writing view, the
+            // fences are not visible, so backspace simply converts to
+            // an empty paragraph.
+            if (node.type === 'code-block' && node.content === '') {
+                if (this.editor.viewMode === 'source') {
+                    const fence = '`'.repeat(node.attributes.fenceCount || 3);
+                    const language = node.attributes.language || '';
+                    const text = `${fence}${language}`;
+                    node.type = 'paragraph';
+                    node.content = text;
+                    node.attributes = {};
+                    this.editor.syntaxTree.treeCursor = {
+                        nodeId: node.id,
+                        offset: text.length,
+                    };
+                } else {
+                    node.type = 'paragraph';
+                    node.content = '';
+                    node.attributes = {};
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
+                }
+                this.editor.recordAndRender(before, { updated: [node.id] });
+                return;
+            }
+
             // If this is a heading (or blockquote, list-item, etc.) with an
             // empty content, convert it back to an empty paragraph.
             if (node.type !== 'paragraph' && node.content === '') {
@@ -743,14 +771,35 @@ export class EditOperations {
         const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
 
         // ── Early conversion: ```lang + Enter → code block ──
-        const fenceMatch = node.type === 'paragraph' && node.content.match(/^```(\w*)$/);
-        if (fenceMatch) {
-            node.type = 'code-block';
-            node.content = '';
-            node.attributes = { language: fenceMatch[1] || '' };
-            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
-            this.editor.recordAndRender(before, { updated: [node.id] });
-            return;
+        // Walk the content character by character: 3+ backticks, optional
+        // word chars (language), nothing else.  Enter supplies the newline.
+        if (node.type === 'paragraph') {
+            const text = node.content;
+            let i = 0;
+            while (i < text.length && text[i] === '`') i++;
+            if (i >= 3) {
+                const fenceCount = i;
+                let language = '';
+                let valid = true;
+                while (i < text.length) {
+                    const ch = text[i];
+                    if (/\w/.test(ch)) {
+                        language += ch;
+                    } else {
+                        valid = false;
+                        break;
+                    }
+                    i++;
+                }
+                if (valid) {
+                    node.type = 'code-block';
+                    node.content = '';
+                    node.attributes = { language, fenceCount };
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
+                    this.editor.recordAndRender(before, { updated: [node.id] });
+                    return;
+                }
+            }
         }
 
         // ── Enter inside a code block → insert newline ──

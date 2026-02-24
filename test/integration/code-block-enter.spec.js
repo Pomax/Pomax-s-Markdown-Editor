@@ -4,10 +4,13 @@
  * Typing ``` (with optional language) on a paragraph and pressing Enter should
  * immediately convert the paragraph into a code-block node.  Pressing Enter
  * inside an existing code block should insert a newline rather than splitting.
+ *
+ * Typing tests are run in both writing view and source view to ensure the
+ * fence-to-code-block conversion works in both rendering paths.
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp } from './test-utils.js';
+import { clickInEditor, launchApp, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -23,28 +26,31 @@ test.afterAll(async () => {
     await electronApp.close();
 });
 
-test.describe('Code-block early conversion', () => {
+// ── Typing tests in writing view ────────────────────────────
+
+test.describe('Code-block early conversion — writing view', () => {
     test('typing ``` + Enter creates an empty code block', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
+
         const editor = page.locator('#editor');
         await clickInEditor(page, editor);
 
-        // Type the fence and press Enter
         await page.keyboard.type('```');
         await page.keyboard.press('Enter');
 
-        // A code-block element should now be present
         const codeBlock = editor.locator('.md-line.md-code-block');
         await expect(codeBlock).toBeVisible();
 
-        // The underlying markdown should have fenced code block syntax
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
         expect(markdown).toContain('```\n');
     });
 
     test('typing ```js + Enter creates a code block with language', async () => {
-        // Start fresh
         await page.evaluate(() => window.editorAPI?.setContent(''));
         await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
 
         const editor = page.locator('#editor');
         await clickInEditor(page, editor);
@@ -55,54 +61,239 @@ test.describe('Code-block early conversion', () => {
         const codeBlock = editor.locator('.md-line.md-code-block');
         await expect(codeBlock).toBeVisible();
 
-        // The markdown source should contain the language identifier
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
         expect(markdown).toContain('```js\n');
     });
 
-    test('Enter inside a code block inserts a newline', async () => {
-        // Start fresh with a code block
+    test('typing ```` + Enter creates a code block with fenceCount 4', async () => {
         await page.evaluate(() => window.editorAPI?.setContent(''));
         await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
 
         const editor = page.locator('#editor');
         await clickInEditor(page, editor);
 
-        // Create the code block
-        await page.keyboard.type('```');
+        await page.keyboard.type('````');
         await page.keyboard.press('Enter');
 
-        // Now type some code with Enter in the middle
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('````\n');
+    });
+
+    test('typing ``````js + Enter creates a code block with fenceCount 6 and language', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('``````js');
+        await page.keyboard.press('Enter');
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('``````js\n');
+    });
+
+    test('Enter inside a code block inserts a newline', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('```');
+        await page.keyboard.press('Enter');
         await page.keyboard.type('line one');
         await page.keyboard.press('Enter');
         await page.keyboard.type('line two');
 
-        // Verify the code block contains both lines
         const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
         expect(markdown).toContain('line one\nline two');
 
-        // There should still be only one code-block element (not split)
         const codeBlocks = editor.locator('.md-line.md-code-block');
         await expect(codeBlocks).toHaveCount(1);
     });
 
     test('backtick fence text is not converted until Enter', async () => {
-        // Start fresh
         await page.evaluate(() => window.editorAPI?.setContent(''));
         await page.waitForSelector('#editor .md-line');
+        await setWritingView(page);
 
         const editor = page.locator('#editor');
         await clickInEditor(page, editor);
 
-        // Type the fence but don't press Enter
         await page.keyboard.type('```');
 
-        // The node should still be a paragraph, not a code-block
         const paragraph = editor.locator('.md-line.md-paragraph');
         await expect(paragraph).toBeVisible();
 
-        // No code-block element should exist
         const codeBlock = editor.locator('.md-line.md-code-block');
         await expect(codeBlock).toHaveCount(0);
+    });
+});
+
+// ── Typing tests in source view ─────────────────────────────
+
+test.describe('Code-block early conversion — source view', () => {
+    test('typing ``` + Enter creates an empty code block', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setSourceView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('```');
+        await page.keyboard.press('Enter');
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('```\n');
+    });
+
+    test('typing ```js + Enter creates a code block with language', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setSourceView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('```js');
+        await page.keyboard.press('Enter');
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('```js\n');
+    });
+
+    test('typing ```` + Enter creates a code block with fenceCount 4', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setSourceView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('````');
+        await page.keyboard.press('Enter');
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('````\n');
+    });
+
+    test('typing ``````js + Enter creates a code block with fenceCount 6 and language', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setSourceView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('``````js');
+        await page.keyboard.press('Enter');
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toBeVisible();
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toContain('``````js\n');
+    });
+
+    test('backtick fence text is not converted until Enter', async () => {
+        await page.evaluate(() => window.editorAPI?.setContent(''));
+        await page.waitForSelector('#editor .md-line');
+        await setSourceView(page);
+
+        const editor = page.locator('#editor');
+        await clickInEditor(page, editor);
+
+        await page.keyboard.type('````');
+
+        const paragraph = editor.locator('.md-line.md-paragraph');
+        await expect(paragraph).toBeVisible();
+
+        const codeBlock = editor.locator('.md-line.md-code-block');
+        await expect(codeBlock).toHaveCount(0);
+    });
+});
+
+// ── Loading/parsing tests (view-independent) ────────────────
+
+test.describe('Code-block parsing — issue #82 examples', () => {
+    test('loading markdown with four-backtick fence preserves nested three-backtick fences', async () => {
+        const md = '````\n```\nnested\n```\n````';
+        await page.evaluate((content) => window.editorAPI?.setContent(content), md);
+        await page.waitForSelector('#editor .md-line');
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toBe(md);
+    });
+
+    test('issue #82 example 1: four-backtick fence with nested three-backtick literal text', async () => {
+        const md = [
+            'This is a paragraph of text.',
+            '',
+            '````',
+            'This is a code block, opened with four backticks rather than three, so any sequence of backticks up to but not including four is treated as just literal text, not active markdown:',
+            '```',
+            'This should just show literal backticks instead of getting parsed as a nested code block (which would be against markdown specs).',
+            '```',
+            'The codeblock only closes on the next sequence of four backticks, marking the opening sequence:',
+            '````',
+            '',
+            'And this is regular text again.',
+        ].join('\n');
+
+        await page.evaluate((content) => window.editorAPI?.setContent(content), md);
+        await page.waitForSelector('#editor .md-line');
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toBe(md);
+
+        const nodes = await page.evaluate(() => {
+            const e = /** @type {any} */ (window).__editor;
+            return e?.syntaxTree?.children?.map((/** @type {any} */ n) => n.type) ?? [];
+        });
+        expect(nodes).toEqual(['paragraph', 'code-block', 'paragraph']);
+    });
+
+    test('issue #82 example 2: ten-backtick fence with nine-backtick literal text', async () => {
+        const md = [
+            'This is text',
+            '',
+            '``````````',
+            "This is code, with ````````` in it as plain inert text because it doesn't match the opening block",
+            '``````````',
+            '',
+            'But this is text again, because the preceding backticks was the same sequence as the opening code fence.',
+        ].join('\n');
+
+        await page.evaluate((content) => window.editorAPI?.setContent(content), md);
+        await page.waitForSelector('#editor .md-line');
+
+        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+        expect(markdown).toBe(md);
+
+        const nodes = await page.evaluate(() => {
+            const e = /** @type {any} */ (window).__editor;
+            return e?.syntaxTree?.children?.map((/** @type {any} */ n) => n.type) ?? [];
+        });
+        expect(nodes).toEqual(['paragraph', 'code-block', 'paragraph']);
     });
 });

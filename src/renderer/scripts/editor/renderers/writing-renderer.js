@@ -349,8 +349,10 @@ export class WritingRenderer {
 
         const code = document.createElement('code');
         if (isFocused) {
-            // Plain text when focused so cursor positions map 1:1
-            code.textContent = node.content;
+            // Plain text when focused so cursor positions map 1:1.
+            // Append a trailing newline so the last line always has
+            // visual height (trailing newlines collapse even in <pre>).
+            code.textContent = `${node.content}\n`;
         } else {
             code.appendChild(highlight(node.content, language));
         }

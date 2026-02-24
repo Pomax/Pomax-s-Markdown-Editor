@@ -181,22 +181,28 @@ export class SourceRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
+        const fence = '`'.repeat(attrs.fenceCount || 3);
+
         // Opening fence
         const openFence = document.createElement('div');
         openFence.className = 'md-code-fence';
-        openFence.textContent = `\`\`\`${language}`;
+        openFence.textContent = `${fence}${language}`;
         element.appendChild(openFence);
 
         // Code content
         const codeContent = document.createElement('div');
-        codeContent.className = 'md-code-content';
-        codeContent.textContent = node.content;
+        codeContent.className = 'md-code-content md-content';
+        // Trailing newlines (and empty content) collapse in a div with
+        // pre-wrap.  Append an extra newline to the display text so the
+        // last line always has visual height.  This does not alter the
+        // node's content — the cursor offset stays within the text node.
+        codeContent.textContent = `${node.content}\n`;
         element.appendChild(codeContent);
 
         // Closing fence
         const closeFence = document.createElement('div');
         closeFence.className = 'md-code-fence';
-        closeFence.textContent = '```';
+        closeFence.textContent = fence;
         element.appendChild(closeFence);
 
         return element;

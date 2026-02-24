@@ -190,6 +190,7 @@ describe('DFAParser', () => {
             assert.strictEqual(tree.children.length, 1);
             assert.strictEqual(tree.children[0].type, 'code-block');
             assert.strictEqual(tree.children[0].content, 'code here');
+            assert.strictEqual(tree.children[0].attributes.fenceCount, 3);
         });
 
         it('should parse a code block with language', () => {
@@ -216,6 +217,96 @@ describe('DFAParser', () => {
             assert.strictEqual(tree.children[0].type, 'code-block');
             assert.ok(tree.children[0].content.includes('# not a heading'));
             assert.ok(tree.children[0].content.includes('> not a quote'));
+        });
+
+        it('should parse a four-backtick code fence', () => {
+            const tree = parser.parse('````\ncode\n````');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'code-block');
+            assert.strictEqual(tree.children[0].content, 'code');
+            assert.strictEqual(tree.children[0].attributes.fenceCount, 4);
+        });
+
+        it('should parse a four-backtick fence with language', () => {
+            const tree = parser.parse('````js\ncode\n````');
+            assert.strictEqual(tree.children[0].type, 'code-block');
+            assert.strictEqual(tree.children[0].attributes.language, 'js');
+            assert.strictEqual(tree.children[0].attributes.fenceCount, 4);
+        });
+
+        it('should treat three backticks inside a four-backtick fence as literal text', () => {
+            const tree = parser.parse('````\n```\nstill code\n```\n````');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'code-block');
+            assert.strictEqual(tree.children[0].content, '```\nstill code\n```');
+        });
+
+        it('should require exact backtick count to close', () => {
+            const tree = parser.parse('`````\n```\n````\nstill code\n`````');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'code-block');
+            assert.strictEqual(tree.children[0].content, '```\n````\nstill code');
+            assert.strictEqual(tree.children[0].attributes.fenceCount, 5);
+        });
+
+        it('should not treat backticks at EOF as a code fence', () => {
+            const tree = parser.parse('```');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+        });
+
+        it('should not treat backticks with language at EOF as a code fence', () => {
+            const tree = parser.parse('```js');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+        });
+
+        it('should round-trip a four-backtick code block', () => {
+            const md = '````\ncode with ``` inside\n````';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should round-trip a six-backtick code block', () => {
+            const md = '``````\n````` inside\n``````';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse text after a closed four-backtick fence', () => {
+            const tree = parser.parse('````\ncode\n````\n\ntext after');
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(tree.children[0].type, 'code-block');
+            assert.strictEqual(tree.children[1].type, 'paragraph');
+            assert.strictEqual(tree.children[1].content, 'text after');
+        });
+
+        // ── Issue #82 examples ──────────────────────────────────
+
+        it('issue #82 example 1: four-backtick fence with nested three-backtick literal text', () => {
+            const md =
+                'This is a paragraph of text.\n\n````\ncode with ``` in it\nand more ``` here\n````\n\nAnd this is regular text again.';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+            assert.strictEqual(tree.children[1].type, 'code-block');
+            assert.strictEqual(tree.children[1].attributes.fenceCount, 4);
+            assert.strictEqual(tree.children[1].content, 'code with ``` in it\nand more ``` here');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('issue #82 example 2: ten-backtick fence with nine-backtick literal text', () => {
+            const md =
+                'This is text\n\n``````````\nThis is code, with ````````` in it\n``````````\n\nBut this is text again.';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+            assert.strictEqual(tree.children[1].type, 'code-block');
+            assert.strictEqual(tree.children[1].attributes.fenceCount, 10);
+            assert.strictEqual(tree.children[1].content, 'This is code, with ````````` in it');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+            assert.strictEqual(tree.toMarkdown(), md);
         });
     });
 
@@ -638,6 +729,12 @@ code
 
         it('should round-trip a code block', () => {
             const md = '```js\nconst x = 1;\n```';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should round-trip a four-backtick code block with nested three-backtick fence', () => {
+            const md = '````\n```\nnested\n```\n````';
             const tree = parser.parse(md);
             assert.strictEqual(tree.toMarkdown(), md);
         });
