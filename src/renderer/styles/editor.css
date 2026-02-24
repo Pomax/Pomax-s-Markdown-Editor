@@ -149,6 +149,7 @@
     font-size: 0.9em;
     white-space: pre-wrap;
     word-break: break-word;
+    min-height: 1lh;
 }
 
 .md-code-content code {
