@@ -191,7 +191,7 @@ export class SourceRenderer {
 
         // Code content
         const codeContent = document.createElement('div');
-        codeContent.className = 'md-code-content';
+        codeContent.className = 'md-code-content md-content';
         codeContent.textContent = node.content;
         element.appendChild(codeContent);
 
