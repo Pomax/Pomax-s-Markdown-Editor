@@ -1,7 +1,7 @@
 /**
- * @fileoverview Integration test for switching between source and focused view modes.
+ * @fileoverview Integration test for switching between source and writing view modes.
  * Loads the project README.md, verifies source mode shows `#` syntax, then
- * switches to focused writing mode and verifies WYSIWYG rendering (no `#`
+ * switches to writing mode and verifies WYSIWYG rendering (no `#`
  * prefix on headings, even the active one).
  */
 
@@ -13,8 +13,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
@@ -34,12 +34,12 @@ test.afterAll(async () => {
     await electronApp.close();
 });
 
-test('switching to focused mode hides heading syntax on unfocused headings', async () => {
+test('switching to writing mode hides heading syntax on unfocused headings', async () => {
     // Load the README.md content into the editor.
     // loadMarkdown places the cursor on the first node (the h1).
     await loadContent(page, readmeContent);
 
-    // The editor defaults to focused mode — switch to source first.
+    // The editor defaults to writing mode — switch to source first.
     await setSourceView(page);
 
     // Sanity-check: in source view the first line should contain the `#` prefix.
@@ -47,9 +47,9 @@ test('switching to focused mode hides heading syntax on unfocused headings', asy
     const sourceText = await firstLineSource.innerText();
     expect(sourceText).toContain("# Pomax's Markdown Editor");
 
-    // Switch to focused writing mode via the menu action IPC.
+    // Switch to writing mode via the menu action IPC.
     // In WYSIWYG mode ALL nodes render formatted output — even the active one.
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const firstLineFocusedOnH1 = page.locator('#editor .md-line').first();
     const focusedOnH1Text = await firstLineFocusedOnH1.innerText();

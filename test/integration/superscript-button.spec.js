@@ -21,8 +21,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
@@ -118,7 +118,7 @@ async function getSourceLineText(pg, index) {
 test.describe('Superscript first word, paragraph 1', () => {
     test('superscript first word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -135,7 +135,7 @@ test.describe('Superscript first word, paragraph 1', () => {
 test.describe('Superscript middle word, paragraph 1', () => {
     test('superscript middle word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -152,7 +152,7 @@ test.describe('Superscript middle word, paragraph 1', () => {
 test.describe('Superscript first word, paragraph 2', () => {
     test('superscript first word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'first');
@@ -171,7 +171,7 @@ test.describe('Superscript first word, paragraph 2', () => {
 test.describe('Superscript middle word, paragraph 2', () => {
     test('superscript middle word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'middle');
@@ -190,7 +190,7 @@ test.describe('Superscript middle word, paragraph 2', () => {
 test.describe('Cursor position after superscript', () => {
     test('cursor is at end of superscripted middle word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -279,7 +279,7 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
 test.describe('Collapsed cursor — superscript word under caret', () => {
     test('clicking superscript with cursor on a plain word applies superscript', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');

@@ -18,7 +18,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
+    setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'toolbar-active.md');
@@ -49,7 +50,7 @@ test.afterAll(async () => {
 async function clickInlineElement(pg, lineIndex, selector) {
     const line = pg.locator('#editor .md-line').nth(lineIndex);
     // Click the line first to make it the focused node (ensures inline
-    // elements are rendered in focused view).
+    // elements are rendered in writing view).
     await clickInEditor(pg, line);
     await pg.waitForTimeout(200);
 
@@ -89,7 +90,7 @@ async function getFormatButtonStates(pg) {
 
 test('bold button is active when cursor is inside bold text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 0: "This is **bold text** here."
     // Click inside the <strong> element.
@@ -104,7 +105,7 @@ test('bold button is active when cursor is inside bold text', async () => {
 
 test('italic button is active when cursor is inside italic text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 1: "This is *italic text* here."
     await clickInlineElement(page, 1, 'em');
@@ -118,7 +119,7 @@ test('italic button is active when cursor is inside italic text', async () => {
 
 test('bold and italic buttons are active when cursor is inside bold-italic text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 2: "This is ***bold italic*** here."
     // bold-italic renders as <strong><em>...</em></strong>
@@ -133,7 +134,7 @@ test('bold and italic buttons are active when cursor is inside bold-italic text'
 
 test('strikethrough button is active when cursor is inside strikethrough text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 3: "This is ~~struck~~ here."
     await clickInlineElement(page, 3, 'del');
@@ -147,7 +148,7 @@ test('strikethrough button is active when cursor is inside strikethrough text', 
 
 test('code button is active when cursor is inside inline code', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 4: "This is `code` here."
     await clickInlineElement(page, 4, 'code');
@@ -161,7 +162,7 @@ test('code button is active when cursor is inside inline code', async () => {
 
 test('no format buttons are active when cursor is in plain text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 5: "Plain paragraph."
     const line = page.locator('#editor .md-line').nth(5);
@@ -178,11 +179,177 @@ test('no format buttons are active when cursor is in plain text', async () => {
 
 test('paragraph button stays active when cursor is inside bold text in a paragraph', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 0: paragraph with bold text
     await clickInlineElement(page, 0, 'strong');
 
     const paragraphActive = await isButtonActive(page, 'paragraph');
     expect(paragraphActive).toBe(true);
+});
+
+// ─── HTML tag equivalents ──────────────────────────────────────────
+
+test('bold button is active when cursor is inside <strong> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 6: "This is <strong>strong text</strong> here."
+    await clickInlineElement(page, 6, 'strong');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(true);
+    expect(states.italic).toBe(false);
+    expect(states.strikethrough).toBe(false);
+});
+
+test('bold button is active when cursor is inside <b> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 7: "This is <b>bold tag</b> here."
+    await clickInlineElement(page, 7, 'b');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(true);
+    expect(states.italic).toBe(false);
+    expect(states.strikethrough).toBe(false);
+});
+
+test('italic button is active when cursor is inside <em> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 8: "This is <em>emphasis text</em> here."
+    await clickInlineElement(page, 8, 'em');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(false);
+    expect(states.italic).toBe(true);
+    expect(states.strikethrough).toBe(false);
+});
+
+test('italic button is active when cursor is inside <i> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 9: "This is <i>italic tag</i> here."
+    await clickInlineElement(page, 9, 'i');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(false);
+    expect(states.italic).toBe(true);
+    expect(states.strikethrough).toBe(false);
+});
+
+test('strikethrough button is active when cursor is inside <del> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 10: "This is <del>deleted text</del> here."
+    await clickInlineElement(page, 10, 'del');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(false);
+    expect(states.italic).toBe(false);
+    expect(states.strikethrough).toBe(true);
+});
+
+test('strikethrough button is active when cursor is inside <s> tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 11: "This is <s>struck tag</s> here."
+    await clickInlineElement(page, 11, 's');
+
+    const states = await getFormatButtonStates(page);
+    expect(states.bold).toBe(false);
+    expect(states.italic).toBe(false);
+    expect(states.strikethrough).toBe(true);
+});
+
+// ─── HTML tag toggle-off (strip tags via toolbar button) ───────────
+
+test('clicking bold button inside <strong> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 6: "This is <strong>strong text</strong> here."
+    await clickInlineElement(page, 6, 'strong');
+    await page.locator('[data-button-id="bold"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(6).innerText();
+    expect(line).toBe('This is strong text here.');
+});
+
+test('clicking bold button inside <b> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 7: "This is <b>bold tag</b> here."
+    await clickInlineElement(page, 7, 'b');
+    await page.locator('[data-button-id="bold"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(7).innerText();
+    expect(line).toBe('This is bold tag here.');
+});
+
+test('clicking italic button inside <em> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 8: "This is <em>emphasis text</em> here."
+    await clickInlineElement(page, 8, 'em');
+    await page.locator('[data-button-id="italic"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(8).innerText();
+    expect(line).toBe('This is emphasis text here.');
+});
+
+test('clicking italic button inside <i> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 9: "This is <i>italic tag</i> here."
+    await clickInlineElement(page, 9, 'i');
+    await page.locator('[data-button-id="italic"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(9).innerText();
+    expect(line).toBe('This is italic tag here.');
+});
+
+test('clicking strikethrough button inside <del> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 10: "This is <del>deleted text</del> here."
+    await clickInlineElement(page, 10, 'del');
+    await page.locator('[data-button-id="strikethrough"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(10).innerText();
+    expect(line).toBe('This is deleted text here.');
+});
+
+test('clicking strikethrough button inside <s> tag strips the tag', async () => {
+    await loadContent(page, fixtureContent);
+    await setWritingView(page);
+
+    // Line 11: "This is <s>struck tag</s> here."
+    await clickInlineElement(page, 11, 's');
+    await page.locator('[data-button-id="strikethrough"]').click();
+    await page.waitForTimeout(200);
+
+    await setSourceView(page);
+    const line = await page.locator('#editor .md-line').nth(11).innerText();
+    expect(line).toBe('This is struck tag here.');
 });

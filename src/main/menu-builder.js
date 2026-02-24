@@ -212,9 +212,9 @@ export class MenuBuilder {
                 click: () => this.sendMenuAction('view:source'),
             },
             {
-                label: 'Focused Writing',
+                label: 'Writing View',
                 accelerator: 'CmdOrCtrl+2',
-                click: () => this.sendMenuAction('view:focused'),
+                click: () => this.sendMenuAction('view:writing'),
             },
         ];
 

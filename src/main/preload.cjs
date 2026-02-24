@@ -86,10 +86,10 @@ const electronAPI = {
     setSourceView: () => ipcRenderer.invoke('view:source'),
 
     /**
-     * Switches to focused writing view mode.
+     * Switches to writing view mode.
      * @returns {Promise<{success: boolean}>}
      */
-    setFocusedView: () => ipcRenderer.invoke('view:focused'),
+    setWritingView: () => ipcRenderer.invoke('view:writing'),
 
     /**
      * Sends the current list of open files to the main process so the

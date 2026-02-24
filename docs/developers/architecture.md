@@ -41,7 +41,7 @@ The application follows Electron's multi-process architecture:
 │    │  │   DFAParser    │──│       SyntaxTree         │  │    │
 │    │  └────────────────┘  └──────────────────────────┘  │    │
 │    │  ┌─────────────────┐ ┌────────────────┐            │    │
-│    │  │ FocusedRenderer │ │ SourceRenderer │            │    │
+│    │  │ WritingRenderer │ │ SourceRenderer │            │    │
 │    │  └─────────────────┘ └────────────────┘            │    │
 │    │  ┌──────────────────┐ ┌─────────────┐              │    │
 │    │  │ SelectionManager │ │ UndoManager │              │    │
@@ -105,7 +105,7 @@ Handles all file system operations:
 Constructs the application menu:
 - **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Exit
 - **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
-- **View**: Source View (`Ctrl+1`), Focused Writing (`Ctrl+2`), open file list with checkmarks
+- **View**: Source View (`Ctrl+1`), Writing View (`Ctrl+2`), open file list with checkmarks
 - **Help**: Reload, Debug, About
 
 Menu actions are sent to the renderer via the `menu:action` IPC channel.
@@ -115,7 +115,7 @@ Menu actions are sent to the renderer via the `menu:action` IPC channel.
 Central hub for IPC communication. Registers handlers for:
 - File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
 - Document operations (`document:undo`, `document:redo`)
-- View operations (`view:source`, `view:focused`, `view:openFilesChanged`)
+- View operations (`view:source`, `view:writing`, `view:openFilesChanged`)
 - Element operations (`element:changeType`, `element:format`)
 - Settings operations (`settings:get`, `settings:set`, `settings:getAll`)
 - Image operations (`image:browse`, `image:rename`)
@@ -164,6 +164,7 @@ The renderer entry point. Wires together all renderer components:
 - Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
 - Handles `session:restore` events to restore cursor position, ToC heading highlight, and scroll position for all tabs after a close-and-reopen. Active tab is restored live; background tabs are patched in `_documentStates`.
+- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` sets `_isRendering = true` around `focus()` + `placeCursor()` to suppress the `selectionchange` handler. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`.
 
 ### Editor
 
@@ -193,7 +194,7 @@ accesses state via `this.editor`.
 | `offset-mapping` | `offset-mapping.js` | Pure functions for raw ↔ rendered offset mapping (used by `CursorManager`) |
 | `crc32` | `crc32.js` | CRC32 digest for content-change detection |
 | `cursor-persistence` | `cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
-| `page-resize` | `page-resize.js` | Page resize handles for the focused-mode editor |
+| `page-resize` | `page-resize.js` | Page resize handles for the editor (both source and writing modes) |
 | `syntax-highlighter` | `syntax-highlighter.js` | Inline syntax highlighting for source view |
 
 The Editor itself keeps:
@@ -211,7 +212,7 @@ Floating draggable search panel for finding text in the editor:
 - Supports plain text and regex search modes, with a case-sensitivity toggle
 - Plain text search requires a minimum of 2 characters
 - In source view, searches against `syntaxTree.toMarkdown()` (raw markdown)
-- In focused view, plain text search is confined to per-node boundaries using `SyntaxNode.toBareText()`; regex search uses `syntaxTree.toBareText()` across the full document
+- In writing view, plain text search is confined to per-node boundaries using `SyntaxNode.toBareText()`; regex search uses `syntaxTree.toBareText()` across the full document
 - Builds an offset map to translate flat-document match positions back to individual syntax-tree nodes for DOM highlighting
 - Highlights matches using `<mark>` elements injected via TreeWalker-based text node splitting
 - Re-applies highlights on `editor:renderComplete` events (fired after re-renders)
@@ -236,7 +237,7 @@ Data structure for parsed documents:
 - `SyntaxTree`: root container with `children` array of `SyntaxNode`
 - `SyntaxNode`: type, content, attributes, children, unique ID, position info
 - `toMarkdown()`: serializes back to markdown text
-- `toBareText()`: returns visible/rendered text with markdown syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc. removed). Used by search in focused view.
+- `toBareText()`: returns visible/rendered text with markdown syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc. removed). Used by search in writing view.
 - `clone()`: deep cloning for undo/redo snapshots
 - Node lookup by ID or position
 - `getPathToCursor()` / `setCursorPath(path)`: serialize and restore cursor position as an index path (array of child indices + character offset). Used for session persistence — node IDs are ephemeral but tree structure is deterministic for the same document.
@@ -252,7 +253,7 @@ Helper methods on `SyntaxNode`:
 - `isInlineNode()` — returns `true` if this node is an inline child (`getBlockParent() !== this`).
 - `getBlockParent()` — walks `.parent` up to the nearest block-level ancestor (an `INLINE_CONTENT_TYPES` node).
 
-In focused mode, inline formatting elements in the DOM carry `data-node-id` matching their inline child node IDs. The cursor manager (`_mapDOMPositionToTree`) detects these and records the inline node as `treeCursor.nodeId` while computing offset relative to the block parent. Editing operations use `getCurrentBlockNode()` to work on the block's `content` string; the toolbar uses `getCurrentNode()` (the inline node) to detect active formats by walking `.parent`.
+In writing mode, inline formatting elements in the DOM carry `data-node-id` matching their inline child node IDs. The cursor manager (`_mapDOMPositionToTree`) detects these and records the inline node as `treeCursor.nodeId` while computing offset relative to the block parent. Editing operations use `getCurrentBlockNode()` to work on the block's `content` string; the toolbar uses `getCurrentNode()` (the inline node) to detect active formats by walking `.parent`.
 
 ### Renderers
 
@@ -263,7 +264,7 @@ Displays markdown with syntax highlighting:
 - Uses `SyntaxHighlighter` for inline syntax coloring
 - Maintains editability
 
-#### FocusedRenderer
+#### WritingRenderer
 WYSIWYG-style display:
 - Hides syntax when not focused
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
@@ -282,7 +283,7 @@ Unlimited undo/redo history:
 Tracks and manipulates text selection:
 - Converts between DOM positions and logical tree cursor positions
 - Tracks current node at cursor
-- Dispatches selection change events
+- Dispatches `editor:selectionchange` custom event with `bubbles: true` so ancestor elements (e.g. the toolbar listening on `document`) can observe selection changes across tabs
 
 ### Range Handling
 
@@ -477,7 +478,7 @@ CSS custom properties updated → immediate visual change
 - Syntax characters are styled with distinct colors
 - Best for users who know markdown
 
-### Focused Writing View
+### Writing View
 
 - Hides markdown syntax for unfocused elements
 - Shows formatted preview (rendered images, tables, horizontal rules)

@@ -1,12 +1,12 @@
 /**
  * @fileoverview Integration test for underscore emphasis (_italic_) support.
  * Verifies that `_text_`, `__text__`, `**_text_**`, and `_**text**_` are
- * rendered correctly in focused mode: formatting is always applied (WYSIWYG),
+ * rendered correctly in writing mode: formatting is always applied (WYSIWYG),
  * both when the node is focused and unfocused.
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, setFocusedView, setSourceView } from './test-utils.js';
+import { clickInEditor, launchApp, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -28,7 +28,7 @@ test('underscore emphasis _text_ renders as <em> when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node also renders formatted output.
@@ -62,7 +62,7 @@ test('double underscore __text__ renders as <em> when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node also renders formatted output.
@@ -97,7 +97,7 @@ test('nested **_text_** renders as bold+italic when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node renders formatted output.
@@ -136,7 +136,7 @@ test('nested _**text**_ renders as italic+bold when unfocused', async () => {
         window.editorAPI?.setContent(content);
     }, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // In WYSIWYG mode the focused node renders formatted output.

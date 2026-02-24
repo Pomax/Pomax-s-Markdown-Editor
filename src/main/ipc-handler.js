@@ -150,10 +150,10 @@ export class IPCHandler {
             return { success: true };
         });
 
-        ipcMain.handle('view:focused', async (event) => {
+        ipcMain.handle('view:writing', async (event) => {
             const window = BrowserWindow.fromWebContents(event.sender);
             if (window) {
-                window.webContents.send('menu:action', 'view:focused');
+                window.webContents.send('menu:action', 'view:writing');
             }
             return { success: true };
         });

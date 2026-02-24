@@ -34,7 +34,7 @@ src/renderer/scripts/editor/
 ├── selection-manager.js   # SelectionManager class
 ├── crc32.js               # CRC32 digest for content-change detection
 ├── cursor-persistence.js  # Cursor position ↔ absolute source offset conversion
-├── page-resize.js         # Page resize handles for focused-mode editor
+├── page-resize.js         # Page resize handles (both source and writing modes)
 └── syntax-highlighter.js  # Inline syntax highlighting
 ```
 
@@ -138,7 +138,7 @@ src/
 │       │   ├── parse-tree.js          # Parse tree cursor helper
 │       │   └── renderers/
 │       │       ├── source-renderer.js
-│       │       └── focused-renderer.js
+│       │       └── writing-renderer.js
 │       ├── parser/          # Markdown parser
 │       │   ├── dfa-tokenizer.js
 │       │   ├── dfa-parser.js
@@ -198,11 +198,13 @@ test/
     ├── click-outside-defocus.spec.js
     ├── code-block-enter.spec.js
     ├── cursor-scroll.spec.js
+    ├── cursor-sync.spec.js
     ├── cursor-typing-delimiters.spec.js
     ├── details-collapse-toggle.spec.js
     ├── details-summary-input.spec.js
     ├── details-trailing-paragraph.spec.js
     ├── editor.spec.js
+    ├── file-buttons.spec.js
     ├── heading-input.spec.js
     ├── html-block.spec.js
     ├── html-image.spec.js
@@ -223,6 +225,7 @@ test/
     ├── reload.spec.js
     ├── search.spec.js
     ├── select-all.spec.js
+    ├── session-save.spec.js
     ├── source-view-summary-edit.spec.js
     ├── strikethrough-button.spec.js
     ├── subscript-button.spec.js
@@ -231,6 +234,7 @@ test/
     ├── table.spec.js
     ├── toc-highlight.spec.js
     ├── toc-scroll.spec.js
+    ├── toolbar-active.spec.js
     ├── toolbar-tooltip.spec.js
     ├── underscore-emphasis.spec.js
     ├── view-mode-dropdown.spec.js
@@ -323,7 +327,7 @@ class Editor {
         this.parser = new DFAParser();
         this.syntaxTree = null;
         this.sourceRenderer = new SourceRenderer(this);
-        this.focusedRenderer = new FocusedRenderer(this);
+        this.writingRenderer = new WritingRenderer(this);
         this.undoManager = new UndoManager();
 
         // Task managers
@@ -552,7 +556,7 @@ test('should allow typing in the editor', async () => {
 2. Create sub-parser method in `DFAParser`
 3. Add `toMarkdown()` case in `SyntaxNode`
 4. Add render method in `SourceRenderer`
-5. Add render method in `FocusedRenderer`
+5. Add render method in `WritingRenderer`
 6. Add button config in `Toolbar.getButtonConfigs()` (if it should appear in the toolbar)
 7. Add a Lucide SVG icon entry in `toolbar/icons.js`
 8. Add a button color rule in `toolbar.css`

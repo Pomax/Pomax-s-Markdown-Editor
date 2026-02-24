@@ -329,7 +329,7 @@ export class SyntaxNode {
      * formatting syntax removed.  Images and other non-text elements
      * are omitted entirely; link text is kept but URLs are dropped.
      *
-     * Used by the search system for focused-view matching, where the
+     * Used by the search system for writing-view matching, where the
      * user sees rendered text rather than raw markdown.
      *
      * @returns {string}
@@ -791,11 +791,15 @@ export class SyntaxTree {
         }
 
         // ── Paired delimiters: bold / italic / strikethrough ────────
-        /** @type {Record<string, { open: string, close: string }>} */
+        /** @type {Record<string, { open: string, close: string, htmlTags?: string[] }>} */
         const typeMap = {
-            bold: { open: 'bold-open', close: 'bold-close' },
-            italic: { open: 'italic-open', close: 'italic-close' },
-            strikethrough: { open: 'strikethrough-open', close: 'strikethrough-close' },
+            bold: { open: 'bold-open', close: 'bold-close', htmlTags: ['strong', 'b'] },
+            italic: { open: 'italic-open', close: 'italic-close', htmlTags: ['em', 'i'] },
+            strikethrough: {
+                open: 'strikethrough-open',
+                close: 'strikethrough-close',
+                htmlTags: ['del', 's'],
+            },
         };
         const spec = typeMap[format];
 
@@ -861,6 +865,40 @@ export class SyntaxTree {
                         closeStart: tokenStart,
                         closeEnd: rawPos,
                     };
+                }
+            }
+        }
+
+        // ── Fall back to HTML-tag equivalents (e.g. <strong> for bold) ──
+        if (spec.htmlTags) {
+            for (const tagName of spec.htmlTags) {
+                let htmlPos = 0;
+                /** @type {{ rawStart: number, rawEnd: number }[]} */
+                const htmlOpens = [];
+
+                for (const token of tokens) {
+                    const tokenStart = htmlPos;
+                    htmlPos += token.raw.length;
+
+                    if (token.type === 'html-open' && token.tag === tagName) {
+                        htmlOpens.push({ rawStart: tokenStart, rawEnd: htmlPos });
+                    } else if (
+                        token.type === 'html-close' &&
+                        token.tag === tagName &&
+                        htmlOpens.length > 0
+                    ) {
+                        const open = /** @type {{ rawStart: number, rawEnd: number }} */ (
+                            htmlOpens.pop()
+                        );
+                        if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+                            return {
+                                openStart: open.rawStart,
+                                openEnd: open.rawEnd,
+                                closeStart: tokenStart,
+                                closeEnd: htmlPos,
+                            };
+                        }
+                    }
                 }
             }
         }
@@ -932,7 +970,7 @@ export class SyntaxTree {
     /**
      * Returns the plain visible text of the entire document with all
      * formatting and syntax stripped.  Used by the search system for
-     * focused-view matching.
+     * writing-view matching.
      *
      * @returns {string}
      */

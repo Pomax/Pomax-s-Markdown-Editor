@@ -1,8 +1,8 @@
 /**
- * @fileoverview Integration tests for link interactions in focused mode.
+ * @fileoverview Integration tests for link interactions in writing mode.
  *
  * Verifies that:
- * - Clicking a link in focused mode does NOT navigate away
+ * - Clicking a link in writing mode does NOT navigate away
  * - Clicking a link opens the link edit modal pre-filled
  * - Editing the link via the modal updates the parse tree
  * - Cancelling the modal preserves the original link
@@ -32,7 +32,7 @@ test.describe('Link click-to-edit', () => {
         await loadContent(page, LINK_MD);
     });
 
-    test('clicking a link in focused mode opens the edit modal', async () => {
+    test('clicking a link in writing mode opens the edit modal', async () => {
         // Click the paragraph to focus it (renders as WYSIWYG with <a>)
         const paragraph = page.locator('.md-line.md-paragraph');
         await clickInEditor(page, paragraph);

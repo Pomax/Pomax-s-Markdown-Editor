@@ -10,7 +10,7 @@
  * Default view mode for the editor on startup.
  * @type {import('../editor/editor.js').ViewMode}
  */
-const DEFAULT_VIEW_MODE = 'focused';
+const DEFAULT_VIEW_MODE = 'writing';
 
 /**
  * Default page-width values matching the CSS default (A4 = 210 mm fixed).
@@ -110,7 +110,7 @@ export class PreferencesModal {
                         <div class="default-view-row">
                             <label for="default-view-select">View mode on startup</label>
                             <select id="default-view-select" name="defaultView">
-                                <option value="focused">Focused</option>
+                                <option value="writing">Writing</option>
                                 <option value="source">Source</option>
                             </select>
                         </div>
@@ -233,7 +233,7 @@ export class PreferencesModal {
                                 <input type="checkbox" id="details-closed">
                                 <span>Load &lt;details&gt; closed</span>
                             </label>
-                            <p class="preferences-hint">When enabled, &lt;details&gt; blocks are initially collapsed in focused view. Click the disclosure triangle to expand or collapse them.</p>
+                            <p class="preferences-hint">When enabled, &lt;details&gt; blocks are initially collapsed in writing view. Click the disclosure triangle to expand or collapse them.</p>
                         </div>
                     </fieldset>
                     </div>
@@ -681,7 +681,7 @@ export class PreferencesModal {
         try {
             const result = await window.electronAPI.getSetting('defaultView');
             if (result.success && result.value) {
-                return result.value === 'source' ? 'source' : 'focused';
+                return result.value === 'source' ? 'source' : 'writing';
             }
         } catch {
             // Fall through to default
@@ -844,7 +844,7 @@ export class PreferencesModal {
         const viewSelect = /** @type {HTMLSelectElement} */ (
             this.dialog.querySelector('#default-view-select')
         );
-        const defaultView = viewSelect.value === 'source' ? 'source' : 'focused';
+        const defaultView = viewSelect.value === 'source' ? 'source' : 'writing';
 
         const fixedCb = /** @type {HTMLInputElement} */ (
             this.dialog.querySelector('#page-width-fixed')

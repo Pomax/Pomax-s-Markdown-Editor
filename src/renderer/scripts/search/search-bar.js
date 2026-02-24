@@ -3,7 +3,7 @@
  *
  * Supports plain text and regex matching, case-sensitive and
  * case-insensitive modes.  Searches against `syntaxTree.toMarkdown()`
- * in source view and `syntaxTree.toBareText()` in focused view, then
+ * in source view and `syntaxTree.toBareText()` in writing view, then
  * maps match offsets back to individual syntax-tree nodes for DOM
  * highlighting.
  */
@@ -179,7 +179,7 @@ export class SearchBar {
         // Listen for renders so we can re-apply highlights.
         // If the view mode changed since we last searched, rebuild
         // the offset map and re-run the search so highlights stay
-        // correct across source ↔ focused switches.
+        // correct across source ↔ writing switches.
         this._renderCompleteHandler = () => {
             if (this._visible && this.editor.viewMode !== this._searchViewMode) {
                 this._onSearchChanged();
@@ -400,7 +400,7 @@ export class SearchBar {
                         pos += text.length;
                         first = false;
                     } else {
-                        // Focused mode: only bare-text single-child containers
+                        // Writing mode: only bare-text single-child containers
                         // collapse into one entry; multi-child containers
                         // flatten their children.
                         if (
@@ -427,7 +427,7 @@ export class SearchBar {
                 }
 
                 const text = isSource ? node.toMarkdown() : node.toBareText();
-                // Skip nodes that produce no text (images, hr in focused)
+                // Skip nodes that produce no text (images, hr in writing)
                 if (text === '') continue;
 
                 if (!first) {
@@ -470,10 +470,10 @@ export class SearchBar {
         // avoid an overwhelming number of single-letter hits.
         if (!this._useRegex && query.length < 2) return;
 
-        // In focused view, plain-text (non-regex) searches are confined
+        // In writing view, plain-text (non-regex) searches are confined
         // to individual elements so matches don't span across block
         // boundaries — this feels more natural in WYSIWYG mode.
-        const perNode = !this._useRegex && this.editor.viewMode === 'focused';
+        const perNode = !this._useRegex && this.editor.viewMode === 'writing';
 
         if (perNode) {
             const flags = this._caseSensitive ? 'g' : 'gi';
@@ -586,7 +586,7 @@ export class SearchBar {
      * second — the accumulated offset therefore aligns with the
      * `toMarkdown()` output.
      *
-     * In **focused mode** the searchable text comes from `toBareText()`
+     * In **writing mode** the searchable text comes from `toBareText()`
      * which strips formatting delimiters.  The DOM contains text nodes
      * interleaved with inline formatting elements (`<strong>`, `<em>`,
      * etc.) and empty cursor-landing-pad text nodes.  We walk all text
@@ -607,7 +607,7 @@ export class SearchBar {
         const el = this.editor.container.querySelector(`[data-node-id="${seg.nodeId}"]`);
         if (!el) return;
 
-        const isFocused = this.editor.viewMode === 'focused';
+        const isFocused = this.editor.viewMode === 'writing';
 
         // Collect text nodes in document order via TreeWalker.
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -619,7 +619,7 @@ export class SearchBar {
         // biome-ignore lint/suspicious/noAssignInExpressions: standard TreeWalker loop
         while ((textNode = /** @type {Text|null} */ (walker.nextNode()))) {
             const len = textNode.textContent?.length ?? 0;
-            // In focused mode, skip empty landing-pad text nodes.
+            // In writing mode, skip empty landing-pad text nodes.
             if (isFocused && len === 0) continue;
             textRuns.push({ node: textNode, start: offset, end: offset + len });
             offset += len;

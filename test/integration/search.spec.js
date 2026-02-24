@@ -2,13 +2,13 @@
  * @fileoverview Integration tests for the search bar feature.
  *
  * Verifies that Ctrl+F opens the search bar, plain text and regex
- * search work in both source and focused view, match highlighting
+ * search work in both source and writing view, match highlighting
  * is applied, navigation between matches works, and the bar closes
  * cleanly on Escape.
  */
 
 import { expect, test } from '@playwright/test';
-import { MOD, launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
+import { MOD, launchApp, loadContent, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -253,16 +253,16 @@ test('next/prev buttons navigate matches', async () => {
     await page.keyboard.press('Escape');
 });
 
-// ─── Focused view ───────────────────────────────────────────────────
+// ─── Writing view ───────────────────────────────────────────────────
 
-test('search works in focused view (bare text)', async () => {
+test('search works in writing view (bare text)', async () => {
     await loadContent(page, FIXTURE);
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.keyboard.press(`${MOD}+f`);
     const input = page.locator('.search-input');
     await input.fill('cake');
 
-    // In focused view, **bold** delimiters are stripped, so searching
+    // In writing view, **bold** delimiters are stripped, so searching
     // for 'cake' should still find the heading and paragraph matches.
     const marks = page.locator('#editor mark.search-highlight');
     const count = await marks.count();
@@ -271,12 +271,12 @@ test('search works in focused view (bare text)', async () => {
     await page.keyboard.press('Escape');
 });
 
-test('focused view search does not match markdown syntax', async () => {
+test('writing view search does not match markdown syntax', async () => {
     await loadContent(page, FIXTURE);
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.keyboard.press(`${MOD}+f`);
     const input = page.locator('.search-input');
-    // Search for markdown heading prefix — should not match in focused view
+    // Search for markdown heading prefix — should not match in writing view
     // because toBareText strips it.
     await input.fill('##');
 

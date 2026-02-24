@@ -394,7 +394,7 @@ Sets the view mode
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| mode | string | Yes | The view mode: "source" or "focused" |
+| mode | string | Yes | The view mode: "source" or "writing" |
 
 **Returns:**
 ```json

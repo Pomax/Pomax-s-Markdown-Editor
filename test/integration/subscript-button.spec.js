@@ -21,8 +21,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
@@ -118,7 +118,7 @@ async function getSourceLineText(pg, index) {
 test.describe('Subscript first word, paragraph 1', () => {
     test('subscript first word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -135,7 +135,7 @@ test.describe('Subscript first word, paragraph 1', () => {
 test.describe('Subscript middle word, paragraph 1', () => {
     test('subscript middle word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -152,7 +152,7 @@ test.describe('Subscript middle word, paragraph 1', () => {
 test.describe('Subscript first word, paragraph 2', () => {
     test('subscript first word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'first');
@@ -171,7 +171,7 @@ test.describe('Subscript first word, paragraph 2', () => {
 test.describe('Subscript middle word, paragraph 2', () => {
     test('subscript middle word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'middle');
@@ -190,7 +190,7 @@ test.describe('Subscript middle word, paragraph 2', () => {
 test.describe('Cursor position after subscript', () => {
     test('cursor is at end of subscripted middle word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -279,7 +279,7 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
 test.describe('Collapsed cursor — subscript word under caret', () => {
     test('clicking subscript with cursor on a plain word applies subscript', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');

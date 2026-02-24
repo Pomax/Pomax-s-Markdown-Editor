@@ -1,5 +1,5 @@
 /**
- * @fileoverview Integration tests for click-to-edit image in focused mode.
+ * @fileoverview Integration tests for click-to-edit image in writing mode.
  *
  * Verifies that clicking an image in focused (WYSIWYG) mode opens the
  * image edit modal pre-filled with the image's current data, and that
@@ -30,7 +30,7 @@ test.describe('Image click-to-edit', () => {
         await loadContent(page, IMAGE_MD);
     });
 
-    test('clicking an image in focused mode opens the edit modal', async () => {
+    test('clicking an image in writing mode opens the edit modal', async () => {
         // Click the image element
         const image = page.locator('.md-line.md-image');
         await clickInEditor(page, image);

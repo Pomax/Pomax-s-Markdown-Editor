@@ -19,7 +19,7 @@ test('images in a loaded markdown file resolve and load successfully', async () 
     // Wait for the editor to finish rendering the loaded document.
     await page.waitForSelector('#editor .md-line');
 
-    // The app defaults to focused mode, so unfocused image nodes render
+    // The app defaults to writing mode, so unfocused image nodes render
     // as <img class="md-image-preview"> elements.  Wait for at least one
     // to appear (the document has many images).
     const images = page.locator('img.md-image-preview');

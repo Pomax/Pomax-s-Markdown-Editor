@@ -1,6 +1,6 @@
 /**
  * @fileoverview Integration test verifying that a single click on a link
- * in an unfocused paragraph (focused mode) both moves focus to that
+ * in an unfocused paragraph (writing mode) both moves focus to that
  * paragraph AND opens the link edit modal — no second click required.
  */
 

@@ -108,7 +108,7 @@ class App {
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
 
-        // Initialize page resize handles (focused mode only).
+        // Initialize page resize handles (writing mode only).
         // Store the retarget function so tab switches can update the handles.
         this._retargetResizeHandles = initPageResizeHandles(editorContainer) ?? null;
 
@@ -424,10 +424,14 @@ class App {
                 }
             }
 
-            // Place cursor and focus — DOM is already intact so no
-            // browser auto-scroll fight.
-            this.editor.placeCursor();
+            // Place cursor and focus.  The DOM and syntax tree are
+            // identical — nothing changed — so just set the browser
+            // selection.  Suppress selectionchange so the event handler
+            // doesn't trigger a spurious re-render.
+            this.editor._isRendering = true;
             this.editor.container.focus({ preventScroll: true });
+            this.editor.placeCursor();
+            this.editor._isRendering = false;
 
             if (this.toc) {
                 // Lock the ToC to the heading that was active when we
@@ -536,12 +540,13 @@ class App {
             }
 
             // Restore cursor position from the saved path.
-            // fullRenderAndPlaceCursor re-renders the focused node so
-            // the DOM matches the cursor position in focused mode.
+            // Focus the container first so the DOM selection set by
+            // placeCursor() is visible (selections on unfocused elements
+            // are silently discarded by the browser).
             if (activeEntry.cursorPath) {
                 this.editor.syntaxTree.setCursorPath(activeEntry.cursorPath);
-                this.editor.fullRenderAndPlaceCursor();
                 this.editor.container.focus({ preventScroll: true });
+                this.editor.fullRenderAndPlaceCursor();
             }
 
             // Scroll the document to the ToC heading
@@ -837,7 +842,7 @@ class App {
                 this.toolbar?.setViewMode(result.value);
             }
         } catch {
-            // Use hardcoded default (focused)
+            // Use hardcoded default (writing)
         }
 
         try {
@@ -1041,9 +1046,9 @@ class App {
                 this.editor.setViewMode('source');
                 this.toolbar?.setViewMode('source');
                 break;
-            case 'view:focused':
-                this.editor.setViewMode('focused');
-                this.toolbar?.setViewMode('focused');
+            case 'view:writing':
+                this.editor.setViewMode('writing');
+                this.toolbar?.setViewMode('writing');
                 break;
             case 'document:getContent':
                 // Response would be handled via IPC
