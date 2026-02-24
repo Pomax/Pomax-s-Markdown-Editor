@@ -55,15 +55,17 @@ export class EventHandler {
      */
     handleClick(event) {
         this.editor.rangeOperations.resetSelectAllLevel();
+        const prevCursor = this.editor.syntaxTree?.treeCursor;
         this.editor.syncCursorFromDOM();
 
         // Clicking on replaced/void elements like <img> or <hr> doesn't
         // create a text selection, so syncCursorFromDOM won't update the
         // cursor.  Fall back to walking up from the click target to find
         // the nearest element with a data-node-id attribute.
+        // We compare by reference: syncCursorFromDOM always assigns a new
+        // object, so if the reference is unchanged the sync was a no-op.
         if (
-            (!this.editor.syntaxTree?.treeCursor ||
-                this.editor.syntaxTree.treeCursor.nodeId === this.editor._lastRenderedNodeId) &&
+            this.editor.syntaxTree?.treeCursor === prevCursor &&
             event.target instanceof HTMLElement
         ) {
             let el = /** @type {HTMLElement|null} */ (event.target);

@@ -104,6 +104,143 @@ test('toolbar heading button activates after switching back to a tab with a head
     await expect(h1Btn).toHaveClass(/active/);
 });
 
+test('cursor position is preserved across tab switch in writing mode', async () => {
+    await loadContent(page, 'Hello world, this is a test paragraph.\n\nSecond paragraph here.');
+    await setWritingView(page);
+
+    // Click into the first line
+    const firstLine = page.locator('#editor .md-line').first();
+    await clickInEditor(page, firstLine);
+    await page.waitForTimeout(200);
+
+    // Place cursor at a specific offset (after "Hello world, ")
+    const cursorOffset = 13;
+    await page.evaluate((offset) => {
+        const editor = /** @type {any} */ (window).__editor;
+        if (editor?.syntaxTree) {
+            const blockNode = editor.getCurrentBlockNode();
+            if (blockNode) {
+                editor.syntaxTree.treeCursor = {
+                    nodeId: blockNode.id,
+                    blockNodeId: blockNode.id,
+                    offset,
+                };
+                editor.placeCursor();
+            }
+        }
+    }, cursorOffset);
+    await page.waitForTimeout(200);
+
+    // Verify cursor is at the expected offset
+    const offsetBefore = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetBefore).toBe(cursorOffset);
+
+    // Open a new tab
+    await page.evaluate(() => document.dispatchEvent(new CustomEvent('file:new')));
+    await page.waitForTimeout(300);
+
+    // Switch back to the first tab
+    const firstTab = page.locator('#tab-bar .tab-button').first();
+    await firstTab.click();
+    await page.waitForTimeout(300);
+
+    // Verify cursor offset is preserved
+    const offsetAfter = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetAfter).toBe(cursorOffset);
+});
+
+test('cursor position is preserved across tab switch with inline formatting', async () => {
+    await loadContent(page, 'Some **bold** and *italic* words here.\n\nSecond paragraph.');
+    await setWritingView(page);
+
+    // Click into the first line
+    const firstLine = page.locator('#editor .md-line').first();
+    await clickInEditor(page, firstLine);
+    await page.waitForTimeout(200);
+
+    // Place cursor at raw offset 20 (inside "and" after bold)
+    const cursorOffset = 20;
+    await page.evaluate((offset) => {
+        const editor = /** @type {any} */ (window).__editor;
+        if (editor?.syntaxTree) {
+            const blockNode = editor.getCurrentBlockNode();
+            if (blockNode) {
+                editor.syntaxTree.treeCursor = {
+                    nodeId: blockNode.id,
+                    blockNodeId: blockNode.id,
+                    offset,
+                };
+                editor.placeCursor();
+            }
+        }
+    }, cursorOffset);
+    await page.waitForTimeout(200);
+
+    const offsetBefore = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetBefore).toBe(cursorOffset);
+
+    // Open a new tab
+    await page.evaluate(() => document.dispatchEvent(new CustomEvent('file:new')));
+    await page.waitForTimeout(300);
+
+    // Switch back to the first tab
+    const firstTab = page.locator('#tab-bar .tab-button').first();
+    await firstTab.click();
+    await page.waitForTimeout(300);
+
+    // Verify cursor offset is preserved
+    const offsetAfter = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetAfter).toBe(cursorOffset);
+});
+
+test('cursor position from real click is preserved across tab switch', async () => {
+    await loadContent(
+        page,
+        'Hello world, this is a longer test paragraph for click testing.\n\nAnother paragraph.',
+    );
+    await setWritingView(page);
+
+    // Click into the first line using real mouse coordinates,
+    // slightly right of the left edge so we're definitely on text
+    const firstLine = page.locator('#editor .md-line').first();
+    const box = await firstLine.boundingBox();
+    if (!box) throw new Error('first line not visible');
+    await page.mouse.move(box.x + 80, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+
+    // Read the cursor offset set by the real click
+    const offsetBefore = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetBefore).toBeGreaterThan(0);
+
+    // Open a new tab
+    await page.evaluate(() => document.dispatchEvent(new CustomEvent('file:new')));
+    await page.waitForTimeout(300);
+
+    // Switch back to the first tab
+    const firstTab = page.locator('#tab-bar .tab-button').first();
+    await firstTab.click();
+    await page.waitForTimeout(300);
+
+    // Verify cursor offset is preserved
+    const offsetAfter = await page.evaluate(() => {
+        return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? -1;
+    });
+    expect(offsetAfter).toBe(offsetBefore);
+});
+
 test('toolbar bold+italic buttons activate after switching back to a tab with formatted text', async () => {
     // Tab 1: load bold and italic text in a paragraph
     await loadContent(page, 'Some **bold** and *italic* words');

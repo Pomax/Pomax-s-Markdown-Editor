@@ -221,6 +221,68 @@ test('focused line renders inline HTML as WYSIWYG elements', async () => {
     expect(await sub.textContent()).toBe('2');
 });
 
+test('clicking <strong> text does not destroy the content', async () => {
+    const markdown = 'HTML <strong>bold</strong> text\n\nSecond paragraph';
+    await loadContent(page, markdown);
+
+    await setWritingView(page);
+    await page.waitForTimeout(200);
+
+    // Defocus first: click the second paragraph.
+    const secondLine = page.locator('#editor .md-line').nth(1);
+    await clickInEditor(page, secondLine);
+    await page.waitForTimeout(200);
+
+    // Now click directly on the <strong> element in the first line,
+    // using discrete mouse steps so selectionchange can interleave.
+    const firstLine = page.locator('#editor .md-line').first();
+    const strong = firstLine.locator('strong');
+    await expect(strong).toBeVisible();
+    const box = await strong.boundingBox();
+    if (!box) throw new Error('strong element not visible');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+
+    // The first line must still contain the <strong> element and its text.
+    await expect(firstLine.locator('strong')).toBeVisible();
+    const text = await firstLine.innerText();
+    expect(text).toContain('bold');
+    expect(text).toContain('HTML');
+    expect(text).toContain('text');
+});
+
+test('clicking <em> text does not destroy the content', async () => {
+    const markdown = 'HTML <em>italic</em> text\n\nSecond paragraph';
+    await loadContent(page, markdown);
+
+    await setWritingView(page);
+    await page.waitForTimeout(200);
+
+    const secondLine = page.locator('#editor .md-line').nth(1);
+    await clickInEditor(page, secondLine);
+    await page.waitForTimeout(200);
+
+    const firstLine = page.locator('#editor .md-line').first();
+    const em = firstLine.locator('em');
+    await expect(em).toBeVisible();
+    const emBox = await em.boundingBox();
+    if (!emBox) throw new Error('em element not visible');
+    await page.mouse.move(emBox.x + emBox.width / 2, emBox.y + emBox.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+
+    await expect(firstLine.locator('em')).toBeVisible();
+    const text = await firstLine.innerText();
+    expect(text).toContain('italic');
+    expect(text).toContain('HTML');
+    expect(text).toContain('text');
+});
+
 test('mixed markdown and HTML inline tags render correctly', async () => {
     const markdown = 'Water is H<sub>2</sub>O and **bold** with `code`\n\nSecond paragraph';
     await loadAndDefocusFirstLine(markdown);

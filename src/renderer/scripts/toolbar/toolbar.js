@@ -640,6 +640,13 @@ export class Toolbar {
         sup: ['superscript'],
         'inline-code': ['code'],
         link: ['link'],
+        // HTML tag equivalents
+        strong: ['bold'],
+        b: ['bold'],
+        em: ['italic'],
+        i: ['italic'],
+        del: ['strikethrough'],
+        s: ['strikethrough'],
     };
 
     /**
