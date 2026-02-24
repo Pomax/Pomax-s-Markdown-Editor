@@ -20,8 +20,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'list-items.md');
@@ -43,7 +43,7 @@ test.afterAll(async () => {
 
 test('clicking bullet list button converts paragraph to unordered list item', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first paragraph to focus it
     const firstLine = page.locator('#editor .md-line', { hasText: 'First paragraph' }).first();
@@ -65,7 +65,7 @@ test('clicking bullet list button converts paragraph to unordered list item', as
 
 test('clicking numbered list button converts paragraph to ordered list item', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first paragraph to focus it
     const firstLine = page.locator('#editor .md-line', { hasText: 'First paragraph' }).first();
@@ -86,7 +86,7 @@ test('clicking numbered list button converts paragraph to ordered list item', as
 
 test('clicking bullet list button on bullet list item toggles back to paragraph', async () => {
     await loadContent(page, '- Existing bullet item\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const line = page.locator('#editor .md-line', { hasText: 'Existing bullet item' }).first();
     await line.click();
@@ -105,7 +105,7 @@ test('clicking bullet list button on bullet list item toggles back to paragraph'
 
 test('clicking numbered list button on bullet list item switches to ordered', async () => {
     await loadContent(page, '- Bullet item\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const line = page.locator('#editor .md-line', { hasText: 'Bullet item' }).first();
     await line.click();
@@ -124,7 +124,7 @@ test('clicking numbered list button on bullet list item switches to ordered', as
 
 test('Enter key in a list item creates a new list item', async () => {
     await loadContent(page, '- First item\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const line = page.locator('#editor .md-line', { hasText: 'First item' }).first();
     await line.click();
@@ -153,7 +153,7 @@ test('Enter key in a list item creates a new list item', async () => {
 
 test('Enter on empty list item exits the list to a paragraph', async () => {
     await loadContent(page, '- First item\n- \n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the empty list item (second line)
     const lines = page.locator('#editor .md-line');
@@ -175,7 +175,7 @@ test('Enter on empty list item exits the list to a paragraph', async () => {
 
 test('heading button on list item converts to heading', async () => {
     await loadContent(page, '- Item before\n- Target item\n- Item after\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const line = page.locator('#editor .md-line', { hasText: 'Target item' }).first();
     await line.click();
@@ -199,7 +199,7 @@ test('heading button on list item converts to heading', async () => {
 
 test('Enter in ordered list creates item with incremented number', async () => {
     await loadContent(page, '1. First\n2. Second\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first ordered item
     const line = page.locator('#editor .md-line', { hasText: 'First' }).first();
@@ -260,7 +260,7 @@ test('source view: Enter between marker and content splits into empty item and n
 
 test('toggling off a list item converts the entire contiguous list to paragraphs', async () => {
     await loadContent(page, '- Alpha\n- Beta\n- Gamma\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the middle item
     const line = page.locator('#editor .md-line', { hasText: 'Beta' }).first();
@@ -284,7 +284,7 @@ test('toggling off a list item converts the entire contiguous list to paragraphs
 
 test('switching list type converts the entire contiguous list', async () => {
     await loadContent(page, '- Alpha\n- Beta\n- Gamma\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first item
     const line = page.locator('#editor .md-line', { hasText: 'Alpha' }).first();
@@ -308,7 +308,7 @@ test('switching list type converts the entire contiguous list', async () => {
 
 test('Enter on empty middle ordered item renumbers remaining items', async () => {
     await loadContent(page, '1. Alpha\n2. Beta\n3. Gamma\n');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on Beta to focus it
     const line = page.locator('#editor .md-line', { hasText: 'Beta' }).first();

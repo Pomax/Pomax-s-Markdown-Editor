@@ -49,7 +49,7 @@ export class EventHandler {
 
     /**
      * Handles click events — syncs tree cursor from wherever the user clicked.
-     * In focused view, re-renders when the cursor moves to a different node
+     * In writing view, re-renders when the cursor moves to a different node
      * so the source-syntax decoration follows the cursor.
      * @param {MouseEvent} event
      */
@@ -82,8 +82,8 @@ export class EventHandler {
 
         this.editor.selectionManager.updateFromDOM();
 
-        // In focused view, clicking an image opens the edit modal directly.
-        if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
+        // In writing view, clicking an image opens the edit modal directly.
+        if (this.editor.viewMode === 'writing' && this.editor.syntaxTree?.treeCursor) {
             const clickedNode = this.editor.getCurrentBlockNode();
             if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
                 this.editor.imageHelper.openImageModalForNode(clickedNode);
@@ -91,12 +91,12 @@ export class EventHandler {
             }
         }
 
-        // In focused view, clicking a link prevents navigation and opens
+        // In writing view, clicking a link prevents navigation and opens
         // the edit modal so the user can change the text or URL.
         // The anchor may no longer be in the DOM (selectionchange can
         // re-render the node between mousedown and click), so fall back
         // to the reference captured in handleMouseDown.
-        if (this.editor.viewMode === 'focused') {
+        if (this.editor.viewMode === 'writing') {
             const anchor =
                 (event.target instanceof HTMLElement &&
                     event.target.tagName === 'A' &&
@@ -116,7 +116,7 @@ export class EventHandler {
             }
         }
 
-        // In focused view the active node shows raw markdown syntax, so we
+        // In writing view the active node shows raw markdown syntax, so we
         // must re-render whenever the cursor moves to a different block.
         // Compare block parents of the old and new node IDs — moving
         // between inline children inside the same block should not
@@ -124,7 +124,7 @@ export class EventHandler {
         const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
         const newBlockId = this.editor.resolveBlockId(newNodeId);
         const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
-        if (this.editor.viewMode === 'focused' && newBlockId && newBlockId !== oldBlockId) {
+        if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
             const nodesToUpdate = [newBlockId];
             if (oldBlockId) nodesToUpdate.push(oldBlockId);
             this.editor._lastRenderedNodeId = newNodeId;
@@ -298,12 +298,12 @@ export class EventHandler {
 
         this.editor.container.classList.remove('focused');
 
-        // In focused view the active node shows raw markdown syntax.
+        // In writing view the active node shows raw markdown syntax.
         // When the user clicks outside the editor we clear the tree
         // cursor and re-render the previously focused node so it shows
         // its "unfocused" presentation.  Clicking back into the editor
         // will restore the cursor via handleClick / handleSelectionChange.
-        if (this.editor.viewMode === 'focused' && this.editor.syntaxTree?.treeCursor) {
+        if (this.editor.viewMode === 'writing' && this.editor.syntaxTree?.treeCursor) {
             const previousBlockId = this.editor.getBlockNodeId();
             if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = null;
             if (previousBlockId) this.editor.renderNodes({ updated: [previousBlockId] });
@@ -318,12 +318,12 @@ export class EventHandler {
             this.editor.selectionManager.updateFromDOM();
 
             // When the user is extending a selection (non-collapsed), skip
-            // the focused-mode re-render — re-rendering would destroy the
+            // the writing-mode re-render — re-rendering would destroy the
             // in-progress DOM selection and place a collapsed cursor.
             const selection = window.getSelection();
             if (selection && !selection.isCollapsed) return;
 
-            // In focused view the active node shows raw markdown syntax, so we
+            // In writing view the active node shows raw markdown syntax, so we
             // must re-render whenever the cursor moves to a different block.
             // Compare block parents of the old and new node IDs — moving
             // between inline children inside the same block should not
@@ -331,7 +331,7 @@ export class EventHandler {
             const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
             const newBlockId = this.editor.resolveBlockId(newNodeId);
             const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
-            if (this.editor.viewMode === 'focused' && newBlockId && newBlockId !== oldBlockId) {
+            if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
                 const nodesToUpdate = [newBlockId];
                 if (oldBlockId) nodesToUpdate.push(oldBlockId);
                 this.editor._lastRenderedNodeId = newNodeId;

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Integration tests for inline HTML tag rendering.
  * Verifies that inline HTML tags (<sub>, <sup>, <mark>, <u>, <b>, <i>,
- * <s>, <strong>, <em>, <del>) are rendered correctly in focused mode:
+ * <s>, <strong>, <em>, <del>) are rendered correctly in writing mode:
  * formatting applied when unfocused, raw syntax shown when focused.
  */
 
@@ -11,8 +11,8 @@ import {
     clickInEditor,
     launchApp,
     loadContent,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
@@ -30,7 +30,7 @@ test.afterAll(async () => {
 });
 
 /**
- * Helper: load markdown, switch to focused mode, focus on the second
+ * Helper: load markdown, switch to writing mode, focus on the second
  * paragraph so the first line is unfocused (rendered with formatting).
  *
  * @param {string} markdown - The markdown content to load.
@@ -38,7 +38,7 @@ test.afterAll(async () => {
 async function loadAndDefocusFirstLine(markdown) {
     await loadContent(page, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // Click the second paragraph to defocus the first line.
@@ -207,7 +207,7 @@ test('focused line renders inline HTML as WYSIWYG elements', async () => {
     const markdown = 'H<sub>2</sub>O is water\n\nSecond paragraph';
     await loadContent(page, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
     await page.waitForTimeout(200);
 
     // Click the first line so it IS focused — should still render WYSIWYG.
@@ -246,7 +246,7 @@ test('cursor offset is correct after view-mode switch with inline HTML', async (
 
     await loadContent(page, markdown);
 
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the last paragraph
     const lastLine = page.locator('#editor .md-line').last();

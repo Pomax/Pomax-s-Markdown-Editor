@@ -86,8 +86,8 @@ export class MenuHandler {
             case 'view:source':
                 this.handleViewSource();
                 break;
-            case 'view:focused':
-                this.handleViewFocused();
+            case 'view:writing':
+                this.handleViewWriting();
                 break;
             case 'edit:preferences':
                 this.handlePreferences();
@@ -189,11 +189,11 @@ export class MenuHandler {
     }
 
     /**
-     * Handles switching to Focused Writing view.
+     * Handles switching to Writing view.
      */
-    handleViewFocused() {
-        this.editor.setViewMode('focused');
-        this.toolbar.setViewMode('focused');
+    handleViewWriting() {
+        this.editor.setViewMode('writing');
+        this.toolbar.setViewMode('writing');
     }
 
     /**

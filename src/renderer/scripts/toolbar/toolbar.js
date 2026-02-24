@@ -379,7 +379,7 @@ export class Toolbar {
      * @type {Record<string, string>}
      */
     static VIEW_MODE_LABELS = {
-        focused: 'Focused Writing',
+        writing: 'Writing View',
         source: 'Source View',
     };
 
@@ -452,7 +452,7 @@ export class Toolbar {
         button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
         button.addEventListener('click', () => {
-            const newMode = this.editor.getViewMode() === 'focused' ? 'source' : 'focused';
+            const newMode = this.editor.getViewMode() === 'writing' ? 'source' : 'writing';
             this.editor.setViewMode(
                 /** @type {import('../editor/editor.js').ViewMode} */ (newMode),
             );

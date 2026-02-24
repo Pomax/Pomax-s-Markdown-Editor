@@ -35,7 +35,7 @@ export class SourceRenderer {
         // Clear and rebuild content
         container.innerHTML = '';
         container.classList.add('source-view');
-        container.classList.remove('focused-view');
+        container.classList.remove('writing-view');
 
         const fragment = document.createDocumentFragment();
 

@@ -170,7 +170,7 @@ Inline children have helper methods:
 - `node.isInlineNode()` — returns `true` if this node is an inline child (i.e. `getBlockParent() !== this`).
 - `node.getBlockParent()` — walks `.parent` to find the nearest block-level ancestor.
 
-In **focused mode**, the renderer places `data-node-id` attributes on the inline formatting elements (`<strong>`, `<em>`, `<del>`, `<code>`, `<a>`, `<sub>`, `<sup>`, etc.) so the cursor manager can detect which inline node the cursor is inside.
+In **writing mode**, the renderer places `data-node-id` attributes on the inline formatting elements (`<strong>`, `<em>`, `<del>`, `<code>`, `<a>`, `<sub>`, `<sup>`, etc.) so the cursor manager can detect which inline node the cursor is inside.
 
 ### Toolbar active states
 
@@ -183,7 +183,7 @@ The `#toolbar-container` uses CSS grid with three named areas: `left`, `center`,
 ### `data-node-id` scoping
 
 Every rendered block element in the editor gets a `data-node-id` attribute
-matching its syntax-tree node ID. In focused mode, inline formatting elements
+matching its syntax-tree node ID. In writing mode, inline formatting elements
 (`<strong>`, `<em>`, etc.) also carry `data-node-id` for their inline child
 nodes. The ToC sidebar **also** sets `data-node-id` on its `<a>` link
 elements (same IDs). Any query like
@@ -206,7 +206,7 @@ syntaxTree.treeCursor = {
 }
 ```
 
-- `nodeId` — the id of the SyntaxNode that has focus. When the cursor is inside inline formatting (bold, italic, etc.) in focused mode, this points to the **inline child** node. Otherwise it points to the block-level node.
+- `nodeId` — the id of the SyntaxNode that has focus. When the cursor is inside inline formatting (bold, italic, etc.) in writing mode, this points to the **inline child** node. Otherwise it points to the block-level node.
 - `blockNodeId` — the id of the enclosing block-level node. Only set when `nodeId` is an inline child (set by `_mapDOMPositionToTree`). When absent, `nodeId` is itself the block node.
 - `offset` — character offset within the **block node's** raw `content` string (always relative to the block, never to the inline child).
 - `tagPart` — `'opening'` or `'closing'` when the cursor is on an
@@ -240,7 +240,7 @@ html-block (type: 'html-block', tagName: 'details')
   raw tag + text).
 - In **source view**, each line is rendered independently; the opening tag,
   child lines, and closing tag are separate `.md-line` elements.
-- In **focused view**, the `<details>` block is rendered as a **fake
+- In **writing view**, the `<details>` block is rendered as a **fake
   disclosure widget** using `<div>` elements (never a real `<details>`
   element — the native element caused too many quirks):
 
@@ -279,10 +279,10 @@ single line via `_reparseLine`, they must check whether the node had
 ### Backspace/delete at html-block boundaries
 
 - **Backspace at offset 0** when the previous sibling is an html-block
-  container: source view → no-op; focused view → merge into the last child
+  container: source view → no-op; writing view → merge into the last child
   of the html-block.
 - **Delete at end of node** when the next sibling is an html-block
-  container: source view → no-op; focused view → merge the first child of
+  container: source view → no-op; writing view → merge the first child of
   the html-block into the current node.
 
 ## Settings System
@@ -358,10 +358,10 @@ to find the block parent for `blockNodeId` and offset computation.
 
 ## Playwright Lessons
 
-### Cross-node selection in focused mode
+### Cross-node selection in writing mode
 
 Keyboard-based selection (Shift+ArrowDown) does not work reliably for
-cross-node selection in focused mode because the editor re-renders when the
+cross-node selection in writing mode because the editor re-renders when the
 cursor moves between nodes, destroying the selection. Use a programmatic
 helper that sets a DOM `Range` via `page.evaluate()`:
 

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Offset mapping between raw markdown and rendered (visible) text.
  *
- * Uses the same tokenizer as FocusedRenderer.renderInlineParts() so
+ * Uses the same tokenizer as WritingRenderer.renderInlineParts() so
  * that offset mapping is always in sync with the rendered DOM.
  */
 

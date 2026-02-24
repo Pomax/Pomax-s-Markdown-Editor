@@ -18,7 +18,7 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'toolbar-active.md');
@@ -49,7 +49,7 @@ test.afterAll(async () => {
 async function clickInlineElement(pg, lineIndex, selector) {
     const line = pg.locator('#editor .md-line').nth(lineIndex);
     // Click the line first to make it the focused node (ensures inline
-    // elements are rendered in focused view).
+    // elements are rendered in writing view).
     await clickInEditor(pg, line);
     await pg.waitForTimeout(200);
 
@@ -89,7 +89,7 @@ async function getFormatButtonStates(pg) {
 
 test('bold button is active when cursor is inside bold text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 0: "This is **bold text** here."
     // Click inside the <strong> element.
@@ -104,7 +104,7 @@ test('bold button is active when cursor is inside bold text', async () => {
 
 test('italic button is active when cursor is inside italic text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 1: "This is *italic text* here."
     await clickInlineElement(page, 1, 'em');
@@ -118,7 +118,7 @@ test('italic button is active when cursor is inside italic text', async () => {
 
 test('bold and italic buttons are active when cursor is inside bold-italic text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 2: "This is ***bold italic*** here."
     // bold-italic renders as <strong><em>...</em></strong>
@@ -133,7 +133,7 @@ test('bold and italic buttons are active when cursor is inside bold-italic text'
 
 test('strikethrough button is active when cursor is inside strikethrough text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 3: "This is ~~struck~~ here."
     await clickInlineElement(page, 3, 'del');
@@ -147,7 +147,7 @@ test('strikethrough button is active when cursor is inside strikethrough text', 
 
 test('code button is active when cursor is inside inline code', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 4: "This is `code` here."
     await clickInlineElement(page, 4, 'code');
@@ -161,7 +161,7 @@ test('code button is active when cursor is inside inline code', async () => {
 
 test('no format buttons are active when cursor is in plain text', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 5: "Plain paragraph."
     const line = page.locator('#editor .md-line').nth(5);
@@ -178,7 +178,7 @@ test('no format buttons are active when cursor is in plain text', async () => {
 
 test('paragraph button stays active when cursor is inside bold text in a paragraph', async () => {
     await loadContent(page, fixtureContent);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Line 0: paragraph with bold text
     await clickInlineElement(page, 0, 'strong');

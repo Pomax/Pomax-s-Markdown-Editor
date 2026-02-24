@@ -20,7 +20,7 @@ export class LinkHelper {
         this.editor = editor;
 
         /**
-         * Lazily-created link modal for click-to-edit in focused mode.
+         * Lazily-created link modal for click-to-edit in writing mode.
          * @type {LinkModal|null}
          */
         this._linkModal = null;

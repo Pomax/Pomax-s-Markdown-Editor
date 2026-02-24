@@ -2,13 +2,13 @@
  * @fileoverview Integration test for the trailing-paragraph invariant.
  *
  * When a document ends with a `</details>` html-block, the user has no way
- * to place the cursor after it in focused writing mode.  The editor must
+ * to place the cursor after it in writing mode.  The editor must
  * automatically append an empty paragraph so the user can "escape" the
  * details block.
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, setFocusedView } from './test-utils.js';
+import { clickInEditor, launchApp, loadContent, setWritingView } from './test-utils.js';
 
 const isMac = process.platform === 'darwin';
 const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
@@ -34,7 +34,7 @@ test.afterAll(async () => {
 
 test('loading a document that ends in </details> appends an empty paragraph', async () => {
     await loadContent(page, markdownEndingInDetails);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // The tree should have an extra empty paragraph after the details block.
     // We can't rely on getContent() because an empty paragraph serialises
@@ -54,7 +54,7 @@ test('deleting all content after </details> re-creates the trailing paragraph', 
     const markdown =
         '<details>\n\n<summary>Summary</summary>\n\nbody\n\n</details>\n\nTrailing text';
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the trailing paragraph and select all its text.
     const trailingLine = page.locator('#editor > .md-line:not(.md-html-block)').last();
@@ -82,9 +82,9 @@ test('deleting all content after </details> re-creates the trailing paragraph', 
 
 test('user can type in the auto-created trailing paragraph', async () => {
     // Set up: load a document ending in </details> so the editor creates
-    // a trailing empty paragraph, then switch to focused view.
+    // a trailing empty paragraph, then switch to writing view.
     await loadContent(page, markdownEndingInDetails);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click the trailing empty paragraph to place the cursor there.
     const trailingPara = page.locator('#editor > .md-line:not(.md-html-block)').last();

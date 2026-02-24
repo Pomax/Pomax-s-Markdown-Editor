@@ -105,7 +105,7 @@ export async function loadContent(page, fixtureContent) {
 
 /**
  * Move focus away from the editor so that no node is "focused" in the
- * focused-writing renderer.  Useful after switching view modes when
+ * writing renderer.  Useful after switching view modes when
  * you need to assert that heading syntax is hidden.
  *
  * Clicks a coordinate outside the editor (on the surrounding container
@@ -154,14 +154,14 @@ export async function setSourceView(page) {
 }
 
 /**
- * Switch the editor to focused view by clicking the toolbar toggle.
- * If already in focused view, this is a no-op.
+ * Switch the editor to writing view by clicking the toolbar toggle.
+ * If already in writing view, this is a no-op.
  *
  * @param {import('@playwright/test').Page} page
  */
-export async function setFocusedView(page) {
+export async function setWritingView(page) {
     const current = await page.locator('#editor').getAttribute('data-view-mode');
     if (current !== 'source') return;
     await page.locator('.toolbar-view-mode-toggle').click();
-    await page.locator('#editor[data-view-mode="focused"]').waitFor();
+    await page.locator('#editor[data-view-mode="writing"]').waitFor();
 }

@@ -7,7 +7,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, setFocusedView, setSourceView } from './test-utils.js';
+import { launchApp, loadContent, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -23,8 +23,8 @@ test.afterAll(async () => {
     await electronApp.close();
 });
 
-test('typing ![alt](src) in focused view renders an inline image', async () => {
-    await setFocusedView(page);
+test('typing ![alt](src) in writing view renders an inline image', async () => {
+    await setWritingView(page);
     await loadContent(page, 'hello');
 
     // Click on the paragraph to focus it
@@ -46,7 +46,7 @@ test('typing ![alt](src) in focused view renders an inline image', async () => {
 });
 
 test('typing standalone ![alt](src) suppresses block-level image conversion', async () => {
-    await setFocusedView(page);
+    await setWritingView(page);
     await loadContent(page, '');
 
     // Click in the editor to focus
@@ -66,10 +66,10 @@ test('typing standalone ![alt](src) suppresses block-level image conversion', as
 });
 
 test('image syntax round-trips through source view correctly', async () => {
-    await setFocusedView(page);
+    await setWritingView(page);
     await loadContent(page, 'before ![alt](img.png) after');
 
-    // In focused view, the paragraph should contain an inline image
+    // In writing view, the paragraph should contain an inline image
     const paragraph = page.locator('#editor .md-line.md-paragraph');
     await expect(paragraph).toBeVisible();
     const img = paragraph.locator('img.md-image-preview');
@@ -80,15 +80,15 @@ test('image syntax round-trips through source view correctly', async () => {
     const srcLine = page.locator('#editor .md-line', { hasText: '![alt](img.png)' });
     await expect(srcLine).toBeVisible();
 
-    // Switch back to focused view — image should still render
-    await setFocusedView(page);
+    // Switch back to writing view — image should still render
+    await setWritingView(page);
     const imgAfter = page.locator('#editor .md-line.md-paragraph img.md-image-preview');
     await expect(imgAfter).toBeVisible();
 });
 
 test('removing ! in source view converts inline image to link', async () => {
     // Type the image syntax so it stays a paragraph (block conversion suppressed)
-    await setFocusedView(page);
+    await setWritingView(page);
     await loadContent(page, '');
     const line = page.locator('#editor .md-line').first();
     await line.click();
@@ -112,8 +112,8 @@ test('removing ! in source view converts inline image to link', async () => {
     const updated = page.locator('#editor .md-line', { hasText: '[alt](url)' });
     await expect(updated).toBeVisible();
 
-    // Switch to focused view — should render as a link, not an image
-    await setFocusedView(page);
+    // Switch to writing view — should render as a link, not an image
+    await setWritingView(page);
     const link = page.locator('#editor .md-line.md-paragraph a');
     await expect(link).toBeVisible();
     const noImg = page.locator('#editor .md-line.md-paragraph img.md-image-preview');

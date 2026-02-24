@@ -1,7 +1,7 @@
 /**
  * @fileoverview Integration test for the fake details disclosure triangle.
  *
- * Loads test/fixtures/details.md in focused view and verifies that clicking
+ * Loads test/fixtures/details.md in writing view and verifies that clicking
  * the disclosure triangle collapses the body (reducing the editor's scroll
  * height) and clicking it again expands it back (restoring the original
  * height).
@@ -33,7 +33,7 @@ test.afterAll(async () => {
 });
 
 test('clicking the disclosure triangle collapses and expands the details body', async () => {
-    // The editor should be in focused view by default (details rendered as
+    // The editor should be in writing view by default (details rendered as
     // fake details with .md-details).
     const detailsBlock = page.locator('#editor .md-details');
     await detailsBlock.waitFor({ state: 'visible' });

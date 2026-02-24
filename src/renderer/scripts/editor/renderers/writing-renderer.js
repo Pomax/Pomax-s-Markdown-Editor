@@ -1,5 +1,5 @@
 /**
- * @fileoverview Focused Renderer for WYSIWYG-style editing.
+ * @fileoverview Writing Renderer for WYSIWYG-style editing.
  * Hides markdown syntax unless the cursor is on a specific element.
  */
 
@@ -11,9 +11,9 @@ import { buildInlineTree, tokenizeInline } from '../../parser/inline-tokenizer.j
 import { highlight } from '../syntax-highlighter.js';
 
 /**
- * Renders the syntax tree in focused writing mode.
+ * Renders the syntax tree in writing mode.
  */
-export class FocusedRenderer {
+export class WritingRenderer {
     /**
      * @param {import('../editor.js').Editor} editor - The editor instance
      */
@@ -60,7 +60,7 @@ export class FocusedRenderer {
 
         // Clear and rebuild content
         container.innerHTML = '';
-        container.classList.add('focused-view');
+        container.classList.add('writing-view');
         container.classList.remove('source-view');
 
         const fragment = document.createDocumentFragment();
@@ -102,7 +102,7 @@ export class FocusedRenderer {
         // If empty, add a placeholder paragraph
         if (syntaxTree.children.length === 0) {
             const placeholder = document.createElement('div');
-            placeholder.className = 'md-line md-paragraph focused-placeholder';
+            placeholder.className = 'md-line md-paragraph writing-placeholder';
             placeholder.appendChild(document.createElement('br'));
             fragment.appendChild(placeholder);
         }

@@ -132,7 +132,7 @@ export class InputHandler {
         }
 
         // ── Tab / Shift+Tab inside a table ──
-        if (event.key === 'Tab' && this.editor.viewMode === 'focused') {
+        if (event.key === 'Tab' && this.editor.viewMode === 'writing') {
             this.editor.syncCursorFromDOM();
             const node = this.editor.getCurrentBlockNode();
             if (

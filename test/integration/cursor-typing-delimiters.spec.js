@@ -1,6 +1,6 @@
 /**
  * @fileoverview Integration tests for cursor position while typing inline
- * delimiters in focused view.
+ * delimiters in writing view.
  *
  * Verifies the fix for GitHub issue #44: typing `*`, `_`, `~~`, or
  * `<sub>` should leave the cursor immediately after the typed character,
@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, setFocusedView } from './test-utils.js';
+import { launchApp, loadContent, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -36,7 +36,7 @@ test.afterAll(async () => {
  */
 async function typeAndGetCursor(pg, text) {
     await loadContent(pg, '');
-    await setFocusedView(pg);
+    await setWritingView(pg);
 
     // Click the editor to focus it.
     const editor = pg.locator('#editor');
@@ -140,7 +140,7 @@ test('cursor stays correct when completing bold+italic ***text***', async () => 
 
 test('typing ***word*** renders as bold inside italic in source view', async () => {
     await loadContent(page, '');
-    await setFocusedView(page);
+    await setWritingView(page);
     const editor = page.locator('#editor');
     await editor.click();
     await page.waitForTimeout(100);
@@ -168,7 +168,7 @@ test('typing after closing * produces plain text, not italic', async () => {
     // Type "this is a *test*" then type " hello"
     // The " hello" must NOT be inside the <em> — it should be plain text.
     await loadContent(page, '');
-    await setFocusedView(page);
+    await setWritingView(page);
     const editor = page.locator('#editor');
     await editor.click();
     await page.waitForTimeout(100);
@@ -198,7 +198,7 @@ test('typing after closing * produces plain text, not italic', async () => {
 
 test('typing after closing ** produces plain text, not bold', async () => {
     await loadContent(page, '');
-    await setFocusedView(page);
+    await setWritingView(page);
     const editor = page.locator('#editor');
     await editor.click();
     await page.waitForTimeout(100);
@@ -222,7 +222,7 @@ test('typing after closing ** produces plain text, not bold', async () => {
 
 test('typing after closing ~~ produces plain text, not strikethrough', async () => {
     await loadContent(page, '');
-    await setFocusedView(page);
+    await setWritingView(page);
     const editor = page.locator('#editor');
     await editor.click();
     await page.waitForTimeout(100);
@@ -246,7 +246,7 @@ test('typing after closing ~~ produces plain text, not strikethrough', async () 
 
 test('typing ***word*** produces bold-in-italic, not raw asterisks', async () => {
     const { cursorOffset, lineText } = await typeAndGetCursor(page, '***word***');
-    // In focused view the delimiters are invisible, so the rendered
+    // In writing view the delimiters are invisible, so the rendered
     // text should just be "word".
     expect(lineText).toBe('word');
     expect(cursorOffset).toBe(4);

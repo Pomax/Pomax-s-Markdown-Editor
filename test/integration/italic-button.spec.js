@@ -17,8 +17,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
@@ -114,7 +114,7 @@ async function getSourceLineText(pg, index) {
 test.describe('Italic first word, toggle off', () => {
     test('italicizing first word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -127,7 +127,7 @@ test.describe('Italic first word, toggle off', () => {
 
     test('toggling italic off restores plain text', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -148,7 +148,7 @@ test.describe('Italic first word, toggle off', () => {
 test.describe('Italic middle word, paragraph 1', () => {
     test('italicizing middle word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -161,7 +161,7 @@ test.describe('Italic middle word, paragraph 1', () => {
 
     test('toggling italic off middle word restores plain text', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -182,7 +182,7 @@ test.describe('Italic middle word, paragraph 1', () => {
 test.describe('Italic first word, paragraph 2', () => {
     test('italicizing first word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'first');
@@ -201,7 +201,7 @@ test.describe('Italic first word, paragraph 2', () => {
 test.describe('Italic middle word, paragraph 2', () => {
     test('italicizing middle word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'middle');
@@ -220,7 +220,7 @@ test.describe('Italic middle word, paragraph 2', () => {
 test.describe('Cursor position after italic', () => {
     test('cursor is at end of italicized middle word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -253,7 +253,7 @@ test.describe('Cursor position after italic', () => {
 
     test('cursor is at end of italicized first word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -341,7 +341,7 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
 test.describe('Collapsed cursor — italic word under caret', () => {
     test('clicking italic with cursor on a plain word italicizes that word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');
@@ -355,7 +355,7 @@ test.describe('Collapsed cursor — italic word under caret', () => {
     test('clicking italic with cursor inside italic text removes italic', async () => {
         const italicContent = 'text1 *text1* text1\n\ntext2 text2 text2\n';
         await loadContent(page, italicContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');

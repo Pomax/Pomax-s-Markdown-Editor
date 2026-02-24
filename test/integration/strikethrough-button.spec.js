@@ -17,8 +17,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
@@ -114,7 +114,7 @@ async function getSourceLineText(pg, index) {
 test.describe('Strikethrough first word, toggle off', () => {
     test('strikethrough first word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -127,7 +127,7 @@ test.describe('Strikethrough first word, toggle off', () => {
 
     test('toggling strikethrough off restores plain text', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -148,7 +148,7 @@ test.describe('Strikethrough first word, toggle off', () => {
 test.describe('Strikethrough middle word, paragraph 1', () => {
     test('strikethrough middle word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -161,7 +161,7 @@ test.describe('Strikethrough middle word, paragraph 1', () => {
 
     test('toggling strikethrough off middle word restores plain text', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -182,7 +182,7 @@ test.describe('Strikethrough middle word, paragraph 1', () => {
 test.describe('Strikethrough first word, paragraph 2', () => {
     test('strikethrough first word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'first');
@@ -201,7 +201,7 @@ test.describe('Strikethrough first word, paragraph 2', () => {
 test.describe('Strikethrough middle word, paragraph 2', () => {
     test('strikethrough middle word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'middle');
@@ -220,7 +220,7 @@ test.describe('Strikethrough middle word, paragraph 2', () => {
 test.describe('Cursor position after strikethrough', () => {
     test('cursor is at end of struck-through middle word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -252,7 +252,7 @@ test.describe('Cursor position after strikethrough', () => {
 
     test('cursor is at end of struck-through first word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -340,7 +340,7 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
 test.describe('Collapsed cursor — strikethrough word under caret', () => {
     test('clicking strikethrough with cursor on a plain word applies strikethrough', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');
@@ -354,7 +354,7 @@ test.describe('Collapsed cursor — strikethrough word under caret', () => {
     test('clicking strikethrough with cursor inside struck-through text removes it', async () => {
         const struckContent = 'text1 ~~text1~~ text1\n\ntext2 text2 text2\n';
         await loadContent(page, struckContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await clickInsideWord(page, firstLine, 'text1', 'middle');

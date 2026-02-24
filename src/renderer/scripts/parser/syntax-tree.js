@@ -329,7 +329,7 @@ export class SyntaxNode {
      * formatting syntax removed.  Images and other non-text elements
      * are omitted entirely; link text is kept but URLs are dropped.
      *
-     * Used by the search system for focused-view matching, where the
+     * Used by the search system for writing-view matching, where the
      * user sees rendered text rather than raw markdown.
      *
      * @returns {string}
@@ -932,7 +932,7 @@ export class SyntaxTree {
     /**
      * Returns the plain visible text of the entire document with all
      * formatting and syntax stripped.  Used by the search system for
-     * focused-view matching.
+     * writing-view matching.
      *
      * @returns {string}
      */

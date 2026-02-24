@@ -191,14 +191,14 @@ export class RangeOperations {
 
     /**
      * Selects the content of a single node (level 1).
-     * For table cells in focused mode, selects only the cell content.
+     * For table cells in writing mode, selects only the cell content.
      * @param {SyntaxNode} node
      */
     _selectNode(node) {
         // ── Table cell: select just the cell content ──
         if (
             node.type === 'table' &&
-            this.editor.viewMode === 'focused' &&
+            this.editor.viewMode === 'writing' &&
             this.editor.syntaxTree?.treeCursor?.cellRow !== undefined &&
             this.editor.syntaxTree?.treeCursor?.cellCol !== undefined
         ) {

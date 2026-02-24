@@ -264,17 +264,17 @@
     display: inline;
 }
 
-/* Focused view specific styles */
-.focused-view .md-syntax {
+/* Writing view specific styles */
+.writing-view .md-syntax {
     display: none;
 }
 
-.focused-view .md-focused .md-syntax {
+.writing-view .md-focused .md-syntax {
     display: inline;
     color: var(--color-syntax);
 }
 
-.focused-view .md-line.md-focused {
+.writing-view .md-line.md-focused {
     background-color: rgba(13, 110, 253, 0.05);
     border-radius: 4px;
     margin-left: -4px;
@@ -284,7 +284,7 @@
 }
 
 /* Placeholder for empty content */
-.focused-placeholder::before {
+.writing-placeholder::before {
     content: 'Start typing...';
     color: var(--color-text-secondary);
     font-style: italic;

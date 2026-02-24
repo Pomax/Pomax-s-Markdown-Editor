@@ -23,14 +23,14 @@ import { ImageHelper } from './image-helper.js';
 import { InputHandler } from './input-handler.js';
 import { LinkHelper } from './link-helper.js';
 import { RangeOperations } from './range-operations.js';
-import { FocusedRenderer } from './renderers/focused-renderer.js';
 import { SourceRenderer } from './renderers/source-renderer.js';
+import { WritingRenderer } from './renderers/writing-renderer.js';
 import { SelectionManager } from './selection-manager.js';
 import { TableManager } from './table-manager.js';
 import { UndoManager } from './undo-manager.js';
 
 /**
- * @typedef {'source' | 'focused'} ViewMode
+ * @typedef {'source' | 'writing'} ViewMode
  */
 
 /**
@@ -81,8 +81,8 @@ export class Editor {
         /** @type {SourceRenderer} */
         this.sourceRenderer = new SourceRenderer(this);
 
-        /** @type {FocusedRenderer} */
-        this.focusedRenderer = new FocusedRenderer(this);
+        /** @type {WritingRenderer} */
+        this.writingRenderer = new WritingRenderer(this);
 
         /** @type {UndoManager} */
         this.undoManager = new UndoManager();
@@ -122,8 +122,8 @@ export class Editor {
         // ── Editor state ──
 
         /** @type {ViewMode} */
-        this.viewMode = 'focused';
-        this.container.dataset.viewMode = 'focused';
+        this.viewMode = 'writing';
+        this.container.dataset.viewMode = 'writing';
 
         /** @type {boolean} */
         this._hasUnsavedChanges = false;
@@ -134,7 +134,7 @@ export class Editor {
         /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
         this.ensureLocalPaths = true;
 
-        /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in focused view. */
+        /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in writing view. */
         this.detailsClosed = false;
 
         /**
@@ -151,7 +151,7 @@ export class Editor {
         this.treeRange = null;
 
         /**
-         * The node ID that was last rendered as "active" in focused mode.
+         * The node ID that was last rendered as "active" in writing mode.
          * Used by handleSelectionChange / handleClick to detect node
          * transitions reliably — reading from treeCursor is unreliable
          * because syncCursorFromDOM mutates it before the re-render
@@ -393,7 +393,7 @@ export class Editor {
         this._isRendering = true;
         try {
             const renderer =
-                this.viewMode === 'source' ? this.sourceRenderer : this.focusedRenderer;
+                this.viewMode === 'source' ? this.sourceRenderer : this.writingRenderer;
             renderer.fullRender(this.syntaxTree, this.container);
         } finally {
             this._isRendering = false;
@@ -411,10 +411,10 @@ export class Editor {
     renderNodes(hints) {
         if (!this.syntaxTree) return;
 
-        if (this.viewMode === 'focused') {
+        if (this.viewMode === 'writing') {
             this._isRendering = true;
             try {
-                this.focusedRenderer.renderNodes(this.container, hints);
+                this.writingRenderer.renderNodes(this.container, hints);
             } finally {
                 this._isRendering = false;
             }
@@ -556,7 +556,7 @@ export class Editor {
 
     /**
      * Ensures that the document does not end with an html-block container.
-     * In focused view there is no way to place the cursor after a trailing
+     * In writing view there is no way to place the cursor after a trailing
      * `</details>` block, so we append an empty paragraph whenever the last
      * top-level node is a container html-block.
      */
@@ -595,7 +595,7 @@ export class Editor {
 
         // Ensure the document doesn't end with a container html-block
         // (the user would have no way to place the cursor after it in
-        // focused view).
+        // writing view).
         this._ensureTrailingParagraph();
 
         const first = this.syntaxTree.children[0];
@@ -644,7 +644,7 @@ export class Editor {
      * @param {ViewMode} mode
      */
     setViewMode(mode) {
-        if (mode !== 'source' && mode !== 'focused') {
+        if (mode !== 'source' && mode !== 'writing') {
             console.warn(`Invalid view mode: ${mode}`);
             return;
         }

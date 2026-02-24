@@ -1,7 +1,7 @@
 /**
  * @fileoverview Integration tests for table support.
  * Verifies the table toolbar button, table modal dialog, table parsing,
- * and table rendering in both source and focused modes.
+ * and table rendering in both source and writing modes.
  */
 
 import { expect, test } from '@playwright/test';
@@ -9,8 +9,8 @@ import {
     clickInEditor,
     launchApp,
     loadContent,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
@@ -84,11 +84,11 @@ test('inserting a table via the modal creates a table node', async () => {
     expect(content).toContain('---');
 });
 
-test('table renders as an HTML table in focused mode', async () => {
-    // Set up: load content with a table and switch to focused view.
+test('table renders as an HTML table in writing mode', async () => {
+    // Set up: load content with a table and switch to writing view.
     const tableMarkdown = '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |';
     await loadContent(page, tableMarkdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // In WYSIWYG mode the table is always rendered as an HTML <table>.
     const tableElement = page.locator('.md-line.md-table');
@@ -103,11 +103,11 @@ test('table renders as an HTML table in focused mode', async () => {
 });
 
 test('clicking table button on existing table opens edit modal with pre-filled dimensions', async () => {
-    // Set up: load a 2×2 table and switch to focused view.
+    // Set up: load a 2×2 table and switch to writing view.
     const tableMarkdown =
         '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |\n| Cell 3 | Cell 4 |';
     await loadContent(page, tableMarkdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the table node
     const tableNode = page.locator('.md-line.md-table');
@@ -149,7 +149,7 @@ test('table cells render inline markdown formatting', async () => {
     ].join('\n');
 
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const table = page.locator('.md-line.md-table table');
     await expect(table).toBeVisible();
@@ -184,7 +184,7 @@ test('table cells render inline HTML formatting', async () => {
     ].join('\n');
 
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const table = page.locator('.md-line.md-table table');
     await expect(table).toBeVisible();

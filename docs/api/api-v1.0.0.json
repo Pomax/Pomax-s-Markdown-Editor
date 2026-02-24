@@ -75,7 +75,7 @@
             "params": {
                 "mode": {
                     "type": "string",
-                    "description": "The view mode: \"source\" or \"focused\"",
+                    "description": "The view mode: \"source\" or \"writing\"",
                     "required": true
                 }
             }

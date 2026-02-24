@@ -65,7 +65,7 @@ export class CursorManager {
      * Maps a DOM position (node + offset) to tree coordinates by walking up
      * to the nearest element with a `data-node-id` attribute.
      *
-     * In focused mode, inline formatting elements (bold, italic, etc.)
+     * In writing mode, inline formatting elements (bold, italic, etc.)
      * also carry `data-node-id`.  When the cursor is inside one of those,
      * the returned cursor records the inline node id while computing the
      * offset relative to the enclosing block-level element.
@@ -96,7 +96,7 @@ export class CursorManager {
                     }
 
                     // Check if the cursor is inside a table cell
-                    if (node?.type === 'table' && this.editor.viewMode === 'focused') {
+                    if (node?.type === 'table' && this.editor.viewMode === 'writing') {
                         const pos = this.editor.tableManager.computeTableCellPosition(
                             htmlEl,
                             domNode,
@@ -226,7 +226,7 @@ export class CursorManager {
      * @returns {number}
      */
     _toRawOffset(nodeElement, renderedOffset, afterFormatting = false) {
-        if (this.editor.viewMode !== 'focused') return renderedOffset;
+        if (this.editor.viewMode !== 'writing') return renderedOffset;
         const nodeId = nodeElement.dataset?.nodeId;
         if (!nodeId) return renderedOffset;
         const syntaxNode = this.editor.syntaxTree?.findNodeById(nodeId);
@@ -306,7 +306,7 @@ export class CursorManager {
 
         // ── Table cell cursor placement ──
         if (
-            this.editor.viewMode === 'focused' &&
+            this.editor.viewMode === 'writing' &&
             this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
             this.editor.syntaxTree.treeCursor.cellCol !== undefined
         ) {
@@ -321,13 +321,13 @@ export class CursorManager {
 
         const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
 
-        // In focused mode the DOM shows rendered text (no markdown syntax),
+        // In writing mode the DOM shows rendered text (no markdown syntax),
         // so we must convert the raw tree offset to a rendered offset.
         // Only applies to node types that render inline formatting (paragraph,
         // heading, blockquote, list-item).  Other types (table, code-block,
         // image, horizontal-rule) don't use inline markup rendering.
         let cursorOffset = this.editor.syntaxTree.treeCursor.offset;
-        if (this.editor.viewMode === 'focused') {
+        if (this.editor.viewMode === 'writing') {
             const node = this.editor.getCurrentBlockNode();
             if (node && this._hasInlineFormatting(node.type)) {
                 cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);

@@ -39,7 +39,7 @@ If you think a fully featured markdown editor with a codebase that you can actua
 - **Fast Editing**: Documents are parsed into a syntactic tree structure, enabling efficient editing regardless of document size
 - **Dual View Modes**:
   - **Source View**: Shows literal markdown with syntax highlighting
-  - **Focused Writing**: WYSIWYG-style editing that hides syntax unless focused
+  - **Writing View**: WYSIWYG-style editing that hides syntax unless focused
 - **WYSIWYG Toolbar**: Context-aware formatting toolbar that adapts to the current element
 - **Table of Contents**: Resizable sidebar with live-updating headings navigation (left or right)
 - **Image Support**: Insert, edit, rename, and drag & drop images; gather images into the document folder

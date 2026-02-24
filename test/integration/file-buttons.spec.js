@@ -14,7 +14,7 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
+    setWritingView,
 } from './test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
@@ -84,7 +84,7 @@ test('file-button group is left-aligned, content toolbar is centred', async () =
 test('toolbar heading button activates after switching back to a tab with a heading', async () => {
     // Tab 1: load a heading, click into it, verify heading1 is active
     await loadContent(page, '# Hello\n\nWorld');
-    await setFocusedView(page);
+    await setWritingView(page);
     const headingLine = page.locator('#editor .md-heading1');
     await clickInEditor(page, headingLine);
 
@@ -107,7 +107,7 @@ test('toolbar heading button activates after switching back to a tab with a head
 test('toolbar bold+italic buttons activate after switching back to a tab with formatted text', async () => {
     // Tab 1: load bold and italic text in a paragraph
     await loadContent(page, 'Some **bold** and *italic* words');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const boldBtn = page.locator('.toolbar-button[data-button-id="bold"]');
     const italicBtn = page.locator('.toolbar-button[data-button-id="italic"]');

@@ -1,11 +1,11 @@
 /**
  * @fileoverview Integration tests for image support.
  * Verifies the image toolbar button, image modal dialog, image parsing,
- * and image rendering in both source and focused modes.
+ * and image rendering in both source and writing modes.
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, setFocusedView, setSourceView } from './test-utils.js';
+import { clickInEditor, launchApp, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -93,14 +93,14 @@ test('image node displays raw syntax in source mode', async () => {
 });
 
 test('clicking image button on existing image opens edit modal with pre-filled data', async () => {
-    // Set up: load content with a paragraph + image and switch to focused view.
+    // Set up: load content with a paragraph + image and switch to writing view.
     // The leading paragraph prevents clickInEditor from landing on the image
     // (which would trigger click-to-edit and open the modal prematurely).
     await page.evaluate((content) => {
         window.editorAPI?.setContent(content);
     }, 'some text\n\n![Test Image](test-image.png)');
     await page.waitForSelector('#editor .md-line');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first paragraph (safe), then arrow down to the image line.
     const firstLine = page.locator('#editor .md-line').first();

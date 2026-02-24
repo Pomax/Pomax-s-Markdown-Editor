@@ -11,7 +11,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, setFocusedView, setSourceView } from './test-utils.js';
+import { launchApp, setSourceView, setWritingView } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -63,8 +63,8 @@ async function simulateDrag(pg, side, dx) {
     await pg.waitForTimeout(200);
 }
 
-test('resize handles are visible in focused mode', async () => {
-    await setFocusedView(page);
+test('resize handles are visible in writing mode', async () => {
+    await setWritingView(page);
     const left = page.locator('.editor-resize-handle--left');
     const right = page.locator('.editor-resize-handle--right');
     await expect(left).toBeAttached();
@@ -77,11 +77,11 @@ test('resize handles are visible in source mode', async () => {
     const right = page.locator('.editor-resize-handle--right');
     await expect(left).toBeAttached();
     await expect(right).toBeAttached();
-    await setFocusedView(page);
+    await setWritingView(page);
 });
 
 test('dragging the right handle increases page width', async () => {
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Reset to a known narrow max-width so the drag has room to grow.
     await page.evaluate(() => {
@@ -105,7 +105,7 @@ test('dragging the right handle increases page width', async () => {
 });
 
 test('dragging the left handle increases page width', async () => {
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Reset to a known narrow max-width so the drag has room to grow.
     await page.evaluate(() => {
@@ -129,7 +129,7 @@ test('dragging the left handle increases page width', async () => {
 });
 
 test('page width is persisted to settings after drag', async () => {
-    await setFocusedView(page);
+    await setWritingView(page);
 
     await simulateDrag(page, 'right', 30);
 

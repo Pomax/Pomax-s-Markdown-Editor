@@ -34,7 +34,7 @@ src/renderer/scripts/editor/
 ├── selection-manager.js   # SelectionManager class
 ├── crc32.js               # CRC32 digest for content-change detection
 ├── cursor-persistence.js  # Cursor position ↔ absolute source offset conversion
-├── page-resize.js         # Page resize handles (both source and focused modes)
+├── page-resize.js         # Page resize handles (both source and writing modes)
 └── syntax-highlighter.js  # Inline syntax highlighting
 ```
 
@@ -138,7 +138,7 @@ src/
 │       │   ├── parse-tree.js          # Parse tree cursor helper
 │       │   └── renderers/
 │       │       ├── source-renderer.js
-│       │       └── focused-renderer.js
+│       │       └── writing-renderer.js
 │       ├── parser/          # Markdown parser
 │       │   ├── dfa-tokenizer.js
 │       │   ├── dfa-parser.js
@@ -327,7 +327,7 @@ class Editor {
         this.parser = new DFAParser();
         this.syntaxTree = null;
         this.sourceRenderer = new SourceRenderer(this);
-        this.focusedRenderer = new FocusedRenderer(this);
+        this.writingRenderer = new WritingRenderer(this);
         this.undoManager = new UndoManager();
 
         // Task managers
@@ -556,7 +556,7 @@ test('should allow typing in the editor', async () => {
 2. Create sub-parser method in `DFAParser`
 3. Add `toMarkdown()` case in `SyntaxNode`
 4. Add render method in `SourceRenderer`
-5. Add render method in `FocusedRenderer`
+5. Add render method in `WritingRenderer`
 6. Add button config in `Toolbar.getButtonConfigs()` (if it should appear in the toolbar)
 7. Add a Lucide SVG icon entry in `toolbar/icons.js`
 8. Add a button color rule in `toolbar.css`

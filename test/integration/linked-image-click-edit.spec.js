@@ -1,8 +1,8 @@
 /**
- * @fileoverview Integration tests for click-to-edit linked images in focused mode.
+ * @fileoverview Integration tests for click-to-edit linked images in writing mode.
  *
  * A linked image is `[![alt](src)](href)` — an image wrapped in a link.
- * Clicking it in focused mode should open the image edit modal (not navigate).
+ * Clicking it in writing mode should open the image edit modal (not navigate).
  */
 
 import { expect, test } from '@playwright/test';

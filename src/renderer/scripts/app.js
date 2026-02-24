@@ -108,7 +108,7 @@ class App {
         this.editor = new Editor(editorContainer);
         await this.editor.initialize();
 
-        // Initialize page resize handles (focused mode only).
+        // Initialize page resize handles (writing mode only).
         // Store the retarget function so tab switches can update the handles.
         this._retargetResizeHandles = initPageResizeHandles(editorContainer) ?? null;
 
@@ -842,7 +842,7 @@ class App {
                 this.toolbar?.setViewMode(result.value);
             }
         } catch {
-            // Use hardcoded default (focused)
+            // Use hardcoded default (writing)
         }
 
         try {
@@ -1046,9 +1046,9 @@ class App {
                 this.editor.setViewMode('source');
                 this.toolbar?.setViewMode('source');
                 break;
-            case 'view:focused':
-                this.editor.setViewMode('focused');
-                this.toolbar?.setViewMode('focused');
+            case 'view:writing':
+                this.editor.setViewMode('writing');
+                this.toolbar?.setViewMode('writing');
                 break;
             case 'document:getContent':
                 // Response would be handled via IPC

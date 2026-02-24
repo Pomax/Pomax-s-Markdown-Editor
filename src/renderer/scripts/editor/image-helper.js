@@ -20,7 +20,7 @@ export class ImageHelper {
         this.editor = editor;
 
         /**
-         * Lazily-created image modal for click-to-edit in focused mode.
+         * Lazily-created image modal for click-to-edit in writing mode.
          * @type {ImageModal|null}
          */
         this._imageModal = null;
@@ -155,7 +155,7 @@ export class ImageHelper {
     /**
      * Opens the image modal pre-filled with the given image node's data,
      * and applies any edits back to the parse tree.
-     * Used when clicking an image in focused mode.
+     * Used when clicking an image in writing mode.
      * @param {SyntaxNode} node - The image node to edit
      */
     async openImageModalForNode(node) {

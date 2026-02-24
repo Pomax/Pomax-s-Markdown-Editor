@@ -168,7 +168,7 @@ export class EditOperations {
             return;
         }
 
-        // html-block containers without tagPart are structural (focused view).
+        // html-block containers without tagPart are structural (writing view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
         const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
@@ -377,7 +377,7 @@ export class EditOperations {
             return;
         }
 
-        // html-block containers without tagPart are structural (focused view).
+        // html-block containers without tagPart are structural (writing view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
         // ── Table cell backspace ──
@@ -499,7 +499,7 @@ export class EditOperations {
                             // In source view the container boundary is
                             // structural — backspace is a no-op.
                         } else {
-                            // In focused view, merge into the last child
+                            // In writing view, merge into the last child
                             // of the html-block container.
                             const lastChild = prev.children[prev.children.length - 1];
                             const lastChildLen = lastChild.content.length;
@@ -571,7 +571,7 @@ export class EditOperations {
             return;
         }
 
-        // html-block containers without tagPart are structural (focused view).
+        // html-block containers without tagPart are structural (writing view).
         if (node.type === 'html-block' && node.children.length > 0) return;
 
         // ── Table cell delete ──
@@ -659,7 +659,7 @@ export class EditOperations {
                         // In source view the container boundary is
                         // structural — delete is a no-op.
                     } else {
-                        // In focused view, merge the first child of the
+                        // In writing view, merge the first child of the
                         // html-block container into this node.
                         const firstChild = next.children[0];
                         const curLen = node.content.length;

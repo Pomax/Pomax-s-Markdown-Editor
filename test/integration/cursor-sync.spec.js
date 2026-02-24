@@ -13,8 +13,8 @@ import {
     clickInEditor,
     launchApp,
     loadContent,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
@@ -176,9 +176,9 @@ test('cursors sync after clicking a different node', async () => {
     expect(cursorP, 'syntaxTree.treeCursor should be set after clicking paragraph').not.toBeNull();
 });
 
-test('cursors sync in focused view after clicking a node', async () => {
+test('cursors sync in writing view after clicking a node', async () => {
     await loadContent(page, '# Heading\n\nParagraph text here');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const paragraph = page.locator('#editor .md-paragraph');
     await clickInEditor(page, paragraph);
@@ -188,7 +188,7 @@ test('cursors sync in focused view after clicking a node', async () => {
     );
     expect(
         cursor,
-        'syntaxTree.treeCursor should be set after clicking paragraph in focused view',
+        'syntaxTree.treeCursor should be set after clicking paragraph in writing view',
     ).not.toBeNull();
 });
 
@@ -307,9 +307,9 @@ test('cursors sync after multi-line paste', async () => {
     expect(cursor, 'syntaxTree.treeCursor should be set after multi-line paste').not.toBeNull();
 });
 
-test('cursors are both null after blur in focused view', async () => {
+test('cursors are both null after blur in writing view', async () => {
     await loadContent(page, '# Heading\n\nParagraph');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click a node first
     const paragraph = page.locator('#editor .md-paragraph');

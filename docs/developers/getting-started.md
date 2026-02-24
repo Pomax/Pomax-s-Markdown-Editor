@@ -221,7 +221,7 @@ Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.ym
 1. Add block dispatch case in `DFAParser._parseBlock()` in `src/renderer/scripts/parser/dfa-parser.js`
 2. Add sub-parser method in `DFAParser`
 3. Add `toMarkdown()` case in `SyntaxNode` (`src/renderer/scripts/parser/syntax-tree.js`)
-4. Add rendering in both `SourceRenderer` and `FocusedRenderer`
+4. Add rendering in both `SourceRenderer` and `WritingRenderer`
 5. Add tests for parser and rendering
 6. Update documentation
 

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Integration test for clicking outside the editor to defocus.
  *
- * In focused writing mode all nodes render as WYSIWYG (formatted output, no
+ * In writing mode all nodes render as WYSIWYG (formatted output, no
  * raw markdown syntax).  When the user clicks outside the editor the editor
  * should blur (handleBlur fires) and clear its active node.
  */
@@ -12,8 +12,8 @@ import {
     defocusEditor,
     launchApp,
     loadContent,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const markdown = '# My Heading\n\nA paragraph of text.';
@@ -39,7 +39,7 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     // the first node *looks* focused but the editor never received real
     // DOM focus — so blurring would be a no-op.
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Verify the editor has actual DOM focus (not just a visual cursor).
     const hasFocus = await page.evaluate(() => {
@@ -62,10 +62,10 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     expect(defocusedText).toContain('My Heading');
 });
 
-test('clicking outside the editor hides active-node highlight in focused mode', async () => {
-    // Load content and switch to focused view.
+test('clicking outside the editor hides active-node highlight in writing mode', async () => {
+    // Load content and switch to writing view.
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the heading to make it the active node.
     const heading = page.locator('#editor .md-line').first();
@@ -95,9 +95,9 @@ test('clicking outside the editor hides active-node highlight in focused mode', 
 });
 
 test('clicking back into the editor after defocus restores cursor', async () => {
-    // Set up: load content, switch to focused view, and defocus.
+    // Set up: load content, switch to writing view, and defocus.
     await loadContent(page, markdown);
-    await setFocusedView(page);
+    await setWritingView(page);
     await defocusEditor(page);
 
     // Click on the paragraph (second line) to re-focus.

@@ -10,8 +10,8 @@ import {
     clickInEditor,
     launchApp,
     loadContent,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
@@ -31,9 +31,9 @@ test.afterAll(async () => {
     await electronApp.close();
 });
 
-test('HTML img tag is parsed as an image node in focused mode', async () => {
+test('HTML img tag is parsed as an image node in writing mode', async () => {
     await loadContent(page, HTML_IMG);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     const imageNode = page.locator('.md-line.md-image');
     await expect(imageNode).toBeVisible();
@@ -55,9 +55,9 @@ test('HTML img tag displays raw HTML syntax in source mode', async () => {
     expect(text).toContain('style="display: inline-block; zoom: 80%;"');
 });
 
-test('clicking HTML img in focused mode opens edit modal with style field', async () => {
+test('clicking HTML img in writing mode opens edit modal with style field', async () => {
     await loadContent(page, `some text\n\n${HTML_IMG}`);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click on the first paragraph, then arrow down to the image
     const firstLine = page.locator('#editor .md-line').first();
@@ -93,7 +93,7 @@ test('clicking HTML img in focused mode opens edit modal with style field', asyn
 
 test('editing style via modal updates the parse tree', async () => {
     await loadContent(page, HTML_IMG);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click the image to open the edit modal
     const image = page.locator('.md-line.md-image');
@@ -118,7 +118,7 @@ test('editing style via modal updates the parse tree', async () => {
 
 test('clearing style converts HTML img to markdown syntax', async () => {
     await loadContent(page, HTML_IMG);
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Click the image to open the edit modal
     const image = page.locator('.md-line.md-image');
@@ -143,7 +143,7 @@ test('clearing style converts HTML img to markdown syntax', async () => {
 
 test('markdown image without style does not show style in modal', async () => {
     await loadContent(page, 'some text\n\n![Photo](image.png)');
-    await setFocusedView(page);
+    await setWritingView(page);
 
     // Navigate to the image
     const firstLine = page.locator('#editor .md-line').first();

@@ -7,7 +7,7 @@
  *   3. Bold first word in second paragraph (should not affect first paragraph)
  *   4. Bold middle word in second paragraph (should apply to correct node)
  *
- * All tests use focused view, double-click a word, press the bold button,
+ * All tests use writing view, double-click a word, press the bold button,
  * then switch to source view to verify the raw markdown.
  */
 
@@ -18,8 +18,8 @@ import {
     launchApp,
     loadContent,
     projectRoot,
-    setFocusedView,
     setSourceView,
+    setWritingView,
 } from './test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
@@ -124,7 +124,7 @@ async function getSourceLineText(pg, index) {
 test.describe('Problem 1 — bold first word, toggle off', () => {
     test('bolding first word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -139,7 +139,7 @@ test.describe('Problem 1 — bold first word, toggle off', () => {
         // Content after previous test: first line is "**text1** text1 text1"
         // Reload and apply bold, then toggle off.
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         // Apply bold to first word.
         const firstLine = page.locator('#editor .md-line').first();
@@ -162,7 +162,7 @@ test.describe('Problem 1 — bold first word, toggle off', () => {
 test.describe('Problem 2 — bold middle word, paragraph 1', () => {
     test('bolding middle word produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
@@ -175,7 +175,7 @@ test.describe('Problem 2 — bold middle word, paragraph 1', () => {
 
     test('toggling bold off middle word restores plain text', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         // Apply bold.
         const firstLine = page.locator('#editor .md-line').first();
@@ -198,9 +198,9 @@ test.describe('Problem 2 — bold middle word, paragraph 1', () => {
 test.describe('Problem 3 — bold first word, paragraph 2', () => {
     test('bolding first word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
-        // The second paragraph is the second .md-line in focused view.
+        // The second paragraph is the second .md-line in writing view.
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'first');
         await clickBoldButton(page);
@@ -220,7 +220,7 @@ test.describe('Problem 3 — bold first word, paragraph 2', () => {
 test.describe('Problem 4 — bold middle word, paragraph 2', () => {
     test('bolding middle word of second paragraph produces correct markdown', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const secondLine = page.locator('#editor .md-line').nth(1);
         await dblclickWord(page, secondLine, 'text2', 'middle');
@@ -241,14 +241,14 @@ test.describe('Problem 4 — bold middle word, paragraph 2', () => {
 test.describe('Cursor position after bold', () => {
     test('cursor is at end of bolded word, not start of line', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         // Double-click middle word and bold it.
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'middle');
         await clickBoldButton(page);
 
-        // In focused view the cursor should be collapsed right after the
+        // In writing view the cursor should be collapsed right after the
         // bolded word.  Read the DOM selection offset inside the editor.
         const cursorInfo = await page.evaluate(() => {
             const sel = window.getSelection();
@@ -277,13 +277,13 @@ test.describe('Cursor position after bold', () => {
         expect(cursorInfo).not.toBeNull();
         expect(cursorInfo?.collapsed).toBe(true);
         // "text1 text1" = 11 chars — cursor should be right after the
-        // bolded word (rendered text has no ** markers in focused view).
+        // bolded word (rendered text has no ** markers in writing view).
         expect(cursorInfo?.offset).toBe(11);
     });
 
     test('cursor is at end of first bolded word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         const firstLine = page.locator('#editor .md-line').first();
         await dblclickWord(page, firstLine, 'text1', 'first');
@@ -377,7 +377,7 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
 test.describe('Collapsed cursor — bold word under caret', () => {
     test('clicking bold with cursor on a plain word bolds that word', async () => {
         await loadContent(page, fixtureContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
         // Place a collapsed cursor inside the middle "text1".
         const firstLine = page.locator('#editor .md-line').first();
@@ -394,9 +394,9 @@ test.describe('Collapsed cursor — bold word under caret', () => {
         // Start with the middle word already bold.
         const boldContent = 'text1 **text1** text1\n\ntext2 text2 text2\n';
         await loadContent(page, boldContent);
-        await setFocusedView(page);
+        await setWritingView(page);
 
-        // In focused view the bold word renders without ** markers.
+        // In writing view the bold word renders without ** markers.
         // The rendered line shows "text1 text1 text1" with the middle
         // word in a <strong> tag.  Click inside that bold word.
         const firstLine = page.locator('#editor .md-line').first();
