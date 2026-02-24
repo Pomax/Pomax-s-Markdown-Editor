@@ -25,6 +25,7 @@ const INLINE_CONTENT_TYPES = new Set([
 /**
  * @typedef {Object} NodeAttributes
  * @property {string} [language] - Language for code blocks
+ * @property {number} [fenceCount] - Number of backticks in the code fence (3 or more)
  * @property {number} [indent] - Indentation level for list items
  * @property {boolean} [ordered] - Whether a list is ordered
  * @property {number} [number] - Number for ordered list items
@@ -274,7 +275,8 @@ export class SyntaxNode {
                     .join('\n');
             case 'code-block': {
                 const lang = this.attributes.language || '';
-                return `\`\`\`${lang}\n${this.content}\n\`\`\``;
+                const fence = '`'.repeat(this.attributes.fenceCount || 3);
+                return `${fence}${lang}\n${this.content}\n${fence}`;
             }
             case 'list-item': {
                 const indent = '  '.repeat(this.attributes.indent || 0);
@@ -626,7 +628,12 @@ export class SyntaxTree {
                 break;
             case 'code-block':
                 if (!node.attributes.language) {
-                    node.attributes = { language: '' };
+                    node.attributes = {
+                        language: '',
+                        fenceCount: node.attributes.fenceCount || 3,
+                    };
+                } else {
+                    node.attributes.fenceCount = node.attributes.fenceCount || 3;
                 }
                 break;
             default:

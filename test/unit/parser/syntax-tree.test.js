@@ -99,8 +99,22 @@ describe('SyntaxNode', () => {
 
         it('should convert code-block to markdown', () => {
             const node = new SyntaxNode('code-block', 'const x = 1;');
-            node.attributes = { language: 'javascript' };
+            node.attributes = { language: 'javascript', fenceCount: 3 };
             const expected = '```javascript\nconst x = 1;\n```';
+            assert.strictEqual(node.toMarkdown(), expected);
+        });
+
+        it('should convert code-block with four-backtick fence to markdown', () => {
+            const node = new SyntaxNode('code-block', '``` nested');
+            node.attributes = { language: '', fenceCount: 4 };
+            const expected = '````\n``` nested\n````';
+            assert.strictEqual(node.toMarkdown(), expected);
+        });
+
+        it('should default fenceCount to 3 when missing', () => {
+            const node = new SyntaxNode('code-block', 'code');
+            node.attributes = { language: '' };
+            const expected = '```\ncode\n```';
             assert.strictEqual(node.toMarkdown(), expected);
         });
 

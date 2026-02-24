@@ -147,13 +147,16 @@ export class DFAParser {
             ctx.pos = saved;
         }
 
-        // Code fence: three BACKTICK tokens
+        // Code fence: three or more BACKTICK tokens
         if (
             tok.type === 'BACKTICK' &&
             this._lookType(ctx, 1) === 'BACKTICK' &&
             this._lookType(ctx, 2) === 'BACKTICK'
         ) {
-            return this._parseCodeBlock(ctx);
+            const saved = ctx.pos;
+            const node = this._parseCodeBlock(ctx);
+            if (node) return node;
+            ctx.pos = saved;
         }
 
         // Blockquote: GT at start
@@ -260,13 +263,20 @@ export class DFAParser {
 
     /**
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode}
+     * @returns {SyntaxNode|null}
      */
     _parseCodeBlock(ctx) {
         const startLine = ctx.line;
 
-        // Skip the three backticks
-        ctx.pos += 3;
+        // Count consecutive backticks (must be 3 or more)
+        let fenceCount = 0;
+        while (
+            ctx.pos + fenceCount < ctx.tokens.length &&
+            ctx.tokens[ctx.pos + fenceCount].type === 'BACKTICK'
+        ) {
+            fenceCount++;
+        }
+        ctx.pos += fenceCount;
 
         // Collect language identifier (until NEWLINE or EOF)
         let language = '';
@@ -280,39 +290,52 @@ export class DFAParser {
         }
         language = language.trim();
 
-        // Skip the newline after opening fence
-        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
-            ctx.line++;
-            ctx.pos++;
+        // The opening fence MUST be followed by a NEWLINE — EOF is not valid
+        if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'NEWLINE') {
+            return null;
         }
+        ctx.line++;
+        ctx.pos++;
 
-        // Collect body until closing fence (three backticks at start of line)
+        // Collect body until closing fence (exact same backtick count at start of line)
         let content = '';
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
-            // Check for closing fence: three backticks
-            if (
-                ctx.tokens[ctx.pos].type === 'BACKTICK' &&
-                this._lookType(ctx, 1) === 'BACKTICK' &&
-                this._lookType(ctx, 2) === 'BACKTICK'
+            // Check for closing fence: exactly fenceCount backticks
+            let closingCount = 0;
+            const closeStart = ctx.pos;
+            while (
+                ctx.pos + closingCount < ctx.tokens.length &&
+                ctx.tokens[ctx.pos + closingCount].type === 'BACKTICK'
             ) {
-                // Closing fence found — skip the backticks
-                ctx.pos += 3;
-                // Skip optional trailing content on the fence line
+                closingCount++;
+            }
+            if (closingCount === fenceCount) {
+                // Verify the rest of the line is only whitespace or newline/EOF
+                let afterFence = ctx.pos + closingCount;
+                let validClose = true;
                 while (
-                    ctx.pos < ctx.tokens.length &&
-                    ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-                    ctx.tokens[ctx.pos].type !== 'EOF'
+                    afterFence < ctx.tokens.length &&
+                    ctx.tokens[afterFence].type !== 'NEWLINE' &&
+                    ctx.tokens[afterFence].type !== 'EOF'
                 ) {
-                    ctx.pos++;
+                    if (ctx.tokens[afterFence].type !== 'SPACE') {
+                        validClose = false;
+                    }
+                    afterFence++;
                 }
-                // Skip the newline after closing fence
-                if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
-                    ctx.line++;
-                    ctx.pos++;
+                if (validClose) {
+                    // Closing fence found — skip the backticks and trailing content
+                    ctx.pos = afterFence;
+                    // Skip the newline after closing fence
+                    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                        ctx.line++;
+                        ctx.pos++;
+                    }
+                    break;
                 }
-                break;
             }
 
+            // Not a closing fence — consume as content
             if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
                 content += '\n';
                 ctx.line++;
@@ -328,7 +351,7 @@ export class DFAParser {
         }
 
         const node = new SyntaxNode('code-block', content);
-        node.attributes = { language };
+        node.attributes = { language, fenceCount };
         node.startLine = startLine;
         node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
         return node;
@@ -1312,7 +1335,7 @@ export class DFAParser {
         // Heading
         if (t === 'HASH') return true;
 
-        // Code fence
+        // Code fence (three or more backticks)
         if (
             t === 'BACKTICK' &&
             this._lookType(ctx, 1) === 'BACKTICK' &&

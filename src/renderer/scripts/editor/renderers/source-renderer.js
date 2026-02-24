@@ -181,10 +181,12 @@ export class SourceRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
+        const fence = '`'.repeat(attrs.fenceCount || 3);
+
         // Opening fence
         const openFence = document.createElement('div');
         openFence.className = 'md-code-fence';
-        openFence.textContent = `\`\`\`${language}`;
+        openFence.textContent = `${fence}${language}`;
         element.appendChild(openFence);
 
         // Code content
@@ -196,7 +198,7 @@ export class SourceRenderer {
         // Closing fence
         const closeFence = document.createElement('div');
         closeFence.className = 'md-code-fence';
-        closeFence.textContent = '```';
+        closeFence.textContent = fence;
         element.appendChild(closeFence);
 
         return element;
