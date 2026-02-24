@@ -192,7 +192,11 @@ export class SourceRenderer {
         // Code content
         const codeContent = document.createElement('div');
         codeContent.className = 'md-code-content md-content';
-        codeContent.textContent = node.content;
+        // Trailing newlines (and empty content) collapse in a div with
+        // pre-wrap.  Append an extra newline to the display text so the
+        // last line always has visual height.  This does not alter the
+        // node's content — the cursor offset stays within the text node.
+        codeContent.textContent = `${node.content}\n`;
         element.appendChild(codeContent);
 
         // Closing fence
