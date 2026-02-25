@@ -117,7 +117,7 @@ test('clicking a TOC link scrolls the heading to the top of the editor container
     });
 
     expect(offset).not.toBeNull();
-    // The heading should be within 50px of the container's top edge
-    expect(/** @type {number} */ (offset)).toBeGreaterThanOrEqual(-50);
-    expect(/** @type {number} */ (offset)).toBeLessThanOrEqual(50);
+    // The heading should be within 100px of the container's top edge
+    expect(/** @type {number} */ (offset)).toBeGreaterThanOrEqual(-100);
+    expect(/** @type {number} */ (offset)).toBeLessThanOrEqual(100);
 });

@@ -33,6 +33,17 @@ export class InputHandler {
             return;
         }
 
+        // If the cursor is inside the phantom paragraph, promote it
+        // to a real tree node before processing any input.
+        if (this.editor._promotePhantomParagraph()) {
+            // For paste we still need to continue; for other input types
+            // the keydown handler already drove the edit, so prevent.
+            if (event.inputType !== 'insertFromPaste') {
+                event.preventDefault();
+                return;
+            }
+        }
+
         // Handle paste
         if (event.inputType === 'insertFromPaste') {
             event.preventDefault();
@@ -69,6 +80,19 @@ export class InputHandler {
      * @param {KeyboardEvent} event
      */
     handleKeyDown(event) {
+        // If the cursor is inside the phantom paragraph (the view-only
+        // element after a trailing code block), promote it to a real
+        // tree node so that editing operations have a target.
+        if (
+            event.key.length === 1 &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            this.editor._promotePhantomParagraph()
+        ) {
+            // The phantom was promoted and cursor placed.  Now let the
+            // normal insertTextAtCursor path handle the character.
+        }
+
         // Reset select-all cycling for any key that is not Ctrl/Cmd+A
         // and not a bare modifier key (pressing Ctrl alone should not
         // reset the cycle so that repeated Ctrl+A works).
@@ -105,6 +129,9 @@ export class InputHandler {
         // ── Enter ──
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
+            // If the cursor is inside the phantom paragraph, promoting it
+            // is all we need — an empty real paragraph already exists.
+            if (this.editor._promotePhantomParagraph()) return;
             this.editor.editOperations.handleEnterKey();
             return;
         }

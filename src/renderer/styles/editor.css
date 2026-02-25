@@ -113,7 +113,7 @@
 
 /* ========== Paragraph ========== */
 .md-paragraph {
-    margin-bottom: var(--spacing-md);
+    margin: calc(var(--spacing-md) / 2) 0;
 }
 
 /* ========== Blockquote ========== */
@@ -133,8 +133,8 @@
 .md-code-block {
     background-color: var(--color-code-bg);
     border-radius: 4px;
-    padding: var(--spacing-md);
-    margin: var(--spacing-md) 0;
+    padding: 0;
+    margin: 0;
     overflow-x: auto;
 }
 
@@ -258,6 +258,8 @@
 /* Source view specific styles */
 .source-view .md-code-block {
     background-color: unset;
+    margin: 0.25em;
+    background: #3331;
 }
 
 .source-view .md-syntax {

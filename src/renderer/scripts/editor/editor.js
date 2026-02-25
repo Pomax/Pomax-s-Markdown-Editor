@@ -379,6 +379,59 @@ export class Editor {
     }
 
     // ──────────────────────────────────────────────
+    //  Phantom paragraph promotion
+    // ──────────────────────────────────────────────
+
+    /**
+     * Checks whether the DOM selection is inside the phantom paragraph
+     * (a view-only element appended after a trailing code block).  If so,
+     * promotes it to a real SyntaxNode in the tree, re-renders it as a
+     * normal paragraph, and places the cursor inside it.
+     *
+     * @returns {boolean} `true` if a phantom was promoted.
+     */
+    _promotePhantomParagraph() {
+        const phantom = this.container.querySelector('.md-phantom-paragraph');
+        if (!phantom) return false;
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return false;
+
+        // Is the selection anchor inside the phantom?
+        let node = /** @type {Node|null} */ (selection.anchorNode);
+        let inside = false;
+        while (node) {
+            if (node === phantom) {
+                inside = true;
+                break;
+            }
+            node = node.parentNode;
+        }
+        if (!inside) return false;
+
+        // Create a real paragraph node and append it to the tree.
+        const para = new SyntaxNode('paragraph', '');
+        this.syntaxTree?.appendChild(para);
+
+        // Replace the phantom DOM element with a properly rendered node.
+        const element =
+            this.viewMode === 'source'
+                ? this.sourceRenderer.renderNode(para)
+                : this.writingRenderer.renderNode(para, true);
+        if (element) {
+            phantom.replaceWith(element);
+        }
+
+        // Point the cursor at the new node.
+        if (this.syntaxTree) {
+            this.syntaxTree.treeCursor = { nodeId: para.id, offset: 0 };
+        }
+        this.placeCursor();
+
+        return true;
+    }
+
+    // ──────────────────────────────────────────────
     //  Rendering
     // ──────────────────────────────────────────────
 

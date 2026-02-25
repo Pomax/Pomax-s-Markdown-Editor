@@ -55,6 +55,12 @@ export class EventHandler {
      */
     handleClick(event) {
         this.editor.rangeOperations.resetSelectAllLevel();
+
+        // If the click landed on the phantom paragraph (the view-only
+        // element after a trailing code block), promote it to a real
+        // tree node so the cursor can be placed there.
+        this.editor._promotePhantomParagraph();
+
         const prevCursor = this.editor.syntaxTree?.treeCursor;
         this.editor.syncCursorFromDOM();
 
@@ -316,6 +322,21 @@ export class EventHandler {
     handleSelectionChange() {
         if (this.editor._isRendering) return;
         if (document.activeElement === this.editor.container) {
+            // If the selection is inside the phantom paragraph (no tree
+            // node), skip all cursor syncing — handleClick will promote
+            // it when the click event arrives.
+            const phantom = this.editor.container.querySelector('.md-phantom-paragraph');
+            if (phantom) {
+                const sel = window.getSelection();
+                if (sel?.anchorNode) {
+                    let n = /** @type {Node|null} */ (sel.anchorNode);
+                    while (n) {
+                        if (n === phantom) return;
+                        n = n.parentNode;
+                    }
+                }
+            }
+
             this.editor.syncCursorFromDOM();
             this.editor.selectionManager.updateFromDOM();
 
