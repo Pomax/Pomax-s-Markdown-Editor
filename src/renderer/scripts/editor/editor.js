@@ -414,7 +414,10 @@ export class Editor {
         this.syntaxTree?.appendChild(para);
 
         // Replace the phantom DOM element with a properly rendered node.
-        const element = this.writingRenderer.renderNode(para, true);
+        const element =
+            this.viewMode === 'source'
+                ? this.sourceRenderer.renderNode(para)
+                : this.writingRenderer.renderNode(para, true);
         if (element) {
             phantom.replaceWith(element);
         }

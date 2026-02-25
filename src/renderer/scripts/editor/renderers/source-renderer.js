@@ -56,6 +56,11 @@ export class SourceRenderer {
 
         container.appendChild(fragment);
 
+        // Append a phantom paragraph after a trailing code block so the
+        // user has somewhere to place the cursor.  This element is not
+        // backed by a tree node — it is promoted on first interaction.
+        this._ensurePhantomParagraph(container, syntaxTree);
+
         // Attempt to restore selection (simplified)
         if (savedRange) {
             try {
@@ -64,6 +69,33 @@ export class SourceRenderer {
             } catch (e) {
                 // Selection restoration failed, that's okay
             }
+        }
+    }
+
+    /**
+     * Appends (or removes) a phantom paragraph at the end of the container
+     * when the last tree node is a code block.  The phantom is a
+     * presentation-only DOM element — it is not backed by a tree node.
+     * When the user interacts with it (clicks, types), it is promoted to
+     * a real SyntaxNode by {@link Editor#_promotePhantomParagraph}.
+     *
+     * @param {HTMLElement} container
+     * @param {import('../../parser/syntax-tree.js').SyntaxTree} tree
+     */
+    _ensurePhantomParagraph(container, tree) {
+        const existing = container.querySelector('.md-phantom-paragraph');
+        const children = tree.children;
+        const last = children.length > 0 ? children[children.length - 1] : null;
+        const needsPhantom = last?.type === 'code-block';
+
+        if (needsPhantom && !existing) {
+            const phantom = document.createElement('div');
+            phantom.className = 'md-line md-paragraph md-phantom-paragraph';
+            phantom.setAttribute('contenteditable', 'true');
+            phantom.appendChild(document.createElement('br'));
+            container.appendChild(phantom);
+        } else if (!needsPhantom && existing) {
+            existing.remove();
         }
     }
 
