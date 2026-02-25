@@ -32,6 +32,37 @@ export class IPCHandler {
     }
 
     /**
+     * Persists the open-files list to the settings database so the
+     * state survives ungraceful exits.
+     * @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}[]} files
+     */
+    _persistOpenFiles(files) {
+        const entries = files
+            .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
+            .map(
+                /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}} f */ (
+                    f,
+                ) => ({
+                    filePath: f.filePath,
+                    active: f.active,
+                    cursorOffset: f.cursorOffset ?? 0,
+                    contentHash: f.contentHash ?? 0,
+                    scrollTop: f.scrollTop ?? 0,
+                    cursorPath: f.cursorPath ?? null,
+                    tocHeadingPath: f.tocHeadingPath ?? null,
+                }),
+            );
+
+        // Only persist when there are real (saved-to-disk) files.
+        // If the list is empty (e.g. only untitled docs), leave the DB
+        // untouched so a previous session's state isn't wiped before a
+        // restore can occur.  The graceful close handler still cleans up.
+        if (entries.length > 0) {
+            this.settingsManager.set('openFiles', entries);
+        }
+    }
+
+    /**
      * Registers all IPC handlers.
      * @param {import('./menu-builder.js').MenuBuilder} [menuBuilder] - The menu builder (for reload support)
      */
@@ -169,6 +200,9 @@ export class IPCHandler {
             if (activeFile) {
                 this.fileManager.currentFilePath = activeFile.filePath ?? null;
             }
+            // Eagerly persist the open-files list so the state survives
+            // ungraceful exits (SIGINT, SIGKILL, crashes).
+            this._persistOpenFiles(fileList);
             return { success: true };
         });
     }
