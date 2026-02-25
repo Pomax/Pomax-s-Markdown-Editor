@@ -258,6 +258,8 @@
 /* Source view specific styles */
 .source-view .md-code-block {
     background-color: unset;
+    margin: 0.25em;
+    background: #3331;
 }
 
 .source-view .md-syntax {
