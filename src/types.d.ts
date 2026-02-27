@@ -27,6 +27,7 @@ interface ElectronAPI {
     saveFileAs(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     loadFile(): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
     newFile(): Promise<{ success: boolean }>;
+    confirmDialog(options: { type?: string; title?: string; message: string; detail?: string; buttons?: string[]; defaultId?: number; cancelId?: number }): Promise<{ response: number }>;
     reload(): Promise<{ success: boolean }>;
     getRecentFiles(): Promise<{ success: boolean; files: string[] }>;
     getSettings(): Promise<{ success: boolean; settings: Record<string, any> }>;

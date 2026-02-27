@@ -283,3 +283,173 @@ test('writing view does not show bullet marker for checklist items', async () =>
     const style = await line.evaluate((el) => window.getComputedStyle(el).listStyleType);
     expect(style).toBe('none');
 });
+
+/**
+ * Programmatically sets a cross-node selection in the editor.
+ *
+ * Writing-mode re-renders destroy DOM selections during drag, so we can't
+ * use mouse-based dragging.  Instead we:
+ *   1. Click into the startText node so the editor is focused on it.
+ *   2. Use `page.evaluate` to build a DOM Range and set `treeRange`.
+ *
+ * @param {import('@playwright/test').Page} p
+ * @param {string} startText - Text content to search for (start node)
+ * @param {number} startOff  - Character offset within the start node
+ * @param {string} endText   - Text content to search for (end node)
+ * @param {number} endOff    - Character offset within the end node
+ */
+async function setCrossNodeSelection(p, startText, startOff, endText, endOff) {
+    // Click the start node to ensure the editor is focused and active on it.
+    const startLine = p.locator('#editor .md-line', { hasText: startText }).first();
+    await startLine.click();
+    await p.waitForTimeout(200);
+
+    // Now set the DOM Range and treeRange programmatically.
+    await p.evaluate(
+        ({ sText, sOff, eText, eOff }) => {
+            const editor = /** @type {any} */ (window).__editor;
+            if (!editor) throw new Error('editor not found');
+            const container = editor.container;
+
+            /**
+             * Find the .md-line whose text contains the target string and
+             * return its data-node-id together with a DOM text-node position.
+             * @param {string} text
+             * @param {number} offset
+             */
+            function resolve(text, offset) {
+                for (const el of container.querySelectorAll('.md-line[data-node-id]')) {
+                    if (el.textContent?.includes(text)) {
+                        const nodeId = el.getAttribute('data-node-id');
+                        const contentEl = el.querySelector('.md-content') ?? el;
+                        const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT);
+                        let remaining = offset;
+                        let tn = walker.nextNode();
+                        while (tn) {
+                            const len = tn.textContent?.length ?? 0;
+                            if (remaining <= len) return { nodeId, domNode: tn, domOff: remaining };
+                            remaining -= len;
+                            tn = walker.nextNode();
+                        }
+                        // Past end — clamp to last text node
+                        if (contentEl.lastChild?.nodeType === 3) {
+                            return {
+                                nodeId,
+                                domNode: contentEl.lastChild,
+                                domOff: contentEl.lastChild.textContent?.length ?? 0,
+                            };
+                        }
+                        return { nodeId, domNode: contentEl, domOff: 0 };
+                    }
+                }
+                throw new Error(`Could not find .md-line containing "${text}"`);
+            }
+
+            const start = resolve(sText, sOff);
+            const end = resolve(eText, eOff);
+
+            // Build DOM Range
+            const range = document.createRange();
+            range.setStart(start.domNode, start.domOff);
+            range.setEnd(end.domNode, end.domOff);
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+
+            // Set treeRange directly — the syntax tree is the source of truth.
+            editor.treeRange = {
+                startNodeId: start.nodeId,
+                startOffset: sOff,
+                endNodeId: end.nodeId,
+                endOffset: eOff,
+            };
+        },
+        { sText: startText, sOff: startOff, eText: endText, eOff: endOff },
+    );
+    await p.waitForTimeout(100);
+}
+
+test('multi-select across html-block converts all nodes to checklist after confirm', async () => {
+    // nested.md: heading, paragraph, <div>( paragraph, h2 )</div>, paragraph
+    // Selecting from "with some..." through "...doc again" should yield 5 items.
+    const md =
+        '# This is a title\n\nwith some text\n\n<div>\n\ninner paragraph\n\n## inner heading\n\n</div>\n\nAnd then the main doc again.\n';
+
+    await loadContent(page, md);
+    await setWritingView(page);
+
+    // Mock dialog.showMessageBox to auto-confirm (response 0 = "Convert")
+    await electronApp.evaluate((electron) => {
+        electron.dialog.showMessageBox = async () => ({ response: 0, checkboxChecked: false });
+    });
+
+    // Programmatically set cross-node selection (drag doesn't work reliably
+    // in writing mode — re-renders destroy the DOM selection mid-drag).
+    await setCrossNodeSelection(page, 'with some text', 0, 'main doc again', 28);
+
+    // Click checklist button
+    await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+    await page.waitForTimeout(300);
+
+    // Switch to source view to verify
+    await setSourceView(page);
+
+    const lines = page.locator('#editor .md-line');
+    const lineCount = await lines.count();
+
+    // Collect all lines that are checklist items
+    const checklistLines = [];
+    for (let i = 0; i < lineCount; i++) {
+        const text = (await lines.nth(i).textContent()) ?? '';
+        if (text.match(/^- \[[ x]\] /)) {
+            checklistLines.push(text);
+        }
+    }
+
+    // The selection covers 4 content blocks:
+    //   1. "with some text" (paragraph)
+    //   2. "inner paragraph" (paragraph inside div — lifted out)
+    //   3. "inner heading" (h2 inside div — lifted out)
+    //   4. "And then the main doc again." (paragraph)
+    expect(checklistLines.length).toBe(4);
+    expect(checklistLines[0]).toMatch(/with some text/);
+    expect(checklistLines[1]).toMatch(/inner paragraph/);
+    expect(checklistLines[2]).toMatch(/inner heading/);
+    expect(checklistLines[3]).toMatch(/main doc again/);
+});
+
+test('multi-select across html-block aborts on cancel', async () => {
+    const md = '# Title\n\nparagraph one\n\n<div>\n\ninner text\n\n</div>\n\nparagraph two\n';
+
+    await loadContent(page, md);
+    await setWritingView(page);
+
+    // Mock dialog.showMessageBox to cancel (response 1 = "Cancel")
+    await electronApp.evaluate((electron) => {
+        electron.dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false });
+    });
+
+    // Programmatically set cross-node selection.
+    await setCrossNodeSelection(page, 'paragraph one', 0, 'paragraph two', 13);
+
+    // Click checklist button
+    await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+    await page.waitForTimeout(300);
+
+    // Switch to source view — nothing should have changed
+    await setSourceView(page);
+
+    const lines = page.locator('#editor .md-line');
+    const allText = [];
+    const lineCount = await lines.count();
+    for (let i = 0; i < lineCount; i++) {
+        allText.push(await lines.nth(i).textContent());
+    }
+
+    // No checklist markers should be present
+    for (const text of allText) {
+        expect(text).not.toMatch(/^- \[[ x]\] /);
+    }
+});

@@ -26,9 +26,17 @@ export class CursorManager {
      * never content.
      *
      * When the selection is non-collapsed, also populates `editor.treeRange`
-     * with start/end tree coordinates.  When collapsed, clears `treeRange`.
+     * with start/end tree coordinates.  When collapsed, clears `treeRange`
+     * **only if `preserveRange` is false** (the default).
+     *
+     * Callers that know the collapse was NOT caused by an in-editor
+     * interaction (e.g. a toolbar button click collapsing the DOM
+     * selection) should pass `{ preserveRange: true }` so the tree's
+     * selection survives.
+     *
+     * @param {{ preserveRange?: boolean }} [options]
      */
-    syncCursorFromDOM() {
+    syncCursorFromDOM({ preserveRange = false } = {}) {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
 
@@ -42,14 +50,14 @@ export class CursorManager {
 
         // If the selection is collapsed there is no range.
         if (selection.isCollapsed) {
-            this.editor.treeRange = null;
+            if (!preserveRange) this.editor.treeRange = null;
             return;
         }
 
         // Map the end (focus) position to tree coordinates.
         const endInfo = this._mapDOMPositionToTree(range.endContainer, range.endOffset);
         if (!endInfo) {
-            this.editor.treeRange = null;
+            if (!preserveRange) this.editor.treeRange = null;
             return;
         }
 
@@ -373,6 +381,83 @@ export class CursorManager {
                 sel.addRange(range);
             }
         }
+    }
+
+    /**
+     * Rebuilds the DOM selection from `editor.treeRange`.
+     * Called after a view-mode switch or any operation that destroys and
+     * re-creates the DOM so the user's non-collapsed selection survives.
+     * Falls back to {@link placeCursor} when there is no `treeRange`.
+     */
+    placeSelection() {
+        if (!this.editor.treeRange) {
+            this.placeCursor();
+            return;
+        }
+
+        const { startNodeId, startOffset, endNodeId, endOffset } = this.editor.treeRange;
+
+        const startPos = this._resolveOffsetInDOM(startNodeId, startOffset);
+        const endPos = this._resolveOffsetInDOM(endNodeId, endOffset);
+
+        if (!startPos || !endPos) {
+            // If either endpoint can't be resolved, fall back to cursor.
+            this.placeCursor();
+            return;
+        }
+
+        const sel = window.getSelection();
+        if (!sel) return;
+
+        const range = document.createRange();
+        range.setStart(startPos.node, startPos.offset);
+        range.setEnd(endPos.node, endPos.offset);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    /**
+     * Resolves a tree-coordinate (nodeId + character offset) to a DOM
+     * position (text node + offset within that text node).
+     *
+     * @param {string} nodeId
+     * @param {number} offset
+     * @returns {{ node: Node, offset: number } | null}
+     */
+    _resolveOffsetInDOM(nodeId, offset) {
+        const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
+        if (!nodeElement) return null;
+
+        const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
+
+        // Convert raw tree offset to rendered offset in writing mode.
+        let cursorOffset = offset;
+        if (this.editor.viewMode === 'writing') {
+            const node = this.editor.syntaxTree?.findNodeById(nodeId);
+            if (node && this._hasInlineFormatting(node.type)) {
+                cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
+            }
+        }
+
+        const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
+        let remaining = cursorOffset;
+        let textNode = walker.nextNode();
+
+        while (textNode) {
+            const len = textNode.textContent?.length ?? 0;
+            if (remaining < len || (remaining === 0 && len === 0)) {
+                return { node: textNode, offset: remaining };
+            }
+            remaining -= len;
+            textNode = walker.nextNode();
+        }
+
+        // Offset is beyond available text — return end of content.
+        const lastChild = contentEl.lastChild;
+        if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
+            return { node: lastChild, offset: lastChild.textContent?.length ?? 0 };
+        }
+        return null;
     }
 
     // ── Formatting-affinity helpers ─────────────────────────────────

@@ -240,6 +240,8 @@ Checklist items are regular `list-item` nodes distinguished by `attributes.check
 - **Source renderer**: the checkbox prefix is included in the prefix `<span>`.
 - **Enter key**: pressing Enter inside a checklist item creates a new item with `checked: false` (not inherited from the parent item's state).
 - **`toggleList(kind)`**: converts between the three list kinds. When switching to `'checklist'`, sets `checked = false`; when switching away, deletes `checked`.
+- **Multi-select across html-block boundaries**: `toggleList` is `async`. When `treeRange` spans nodes that include html-block containers, a `dialog:confirm` prompt asks the user whether to lift the children out of the html-block. On cancel, the operation aborts and the selection is preserved. The `dialog:confirm` IPC channel is registered in `ipc-handler.js` → `registerDialogHandlers()` and exposed via `window.electronAPI.confirmDialog(message)` in `preload.cjs`.
+- **`_getNodesInRange()`**: recursively enters html-block children so that all leaf nodes within the range are collected, not just the html-block wrapper.
 
 ### HTML block model (details/summary)
 
@@ -347,6 +349,20 @@ TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
 - Used by `deleteSelectedRange()`, `_getSelectedMarkdown()`, and all input
   handlers that must respect an active selection.
 
+**Selection preservation (`_editorInteractionPending`)**:
+
+The syntax tree owns the selection — external UI interactions (toolbar clicks, dialog focus, tab-bar clicks) must **never** clear `treeRange`. This is enforced by an `_editorInteractionPending` flag on the `Editor` instance:
+
+1. `handleMouseDown` (on the editor container) and `handleKeyDown` set `_editorInteractionPending = true`.
+2. `handleSelectionChange` reads the flag, clears it, and passes `{ preserveRange: !fromEditor }` to `syncCursorFromDOM()`.
+3. When `preserveRange` is `true` and the DOM selection is collapsed, `syncCursorFromDOM` **does not** null `treeRange` — the existing range from step 1 is preserved intact.
+
+This means toolbar buttons with `mousedown preventDefault` (which prevent the editor from losing focus) will not accidentally clear the user's text selection in the tree.
+
+**`placeSelection()`**:
+
+Rebuilds the DOM selection from `editor.treeRange`. Called by `setViewMode()` after a full render so the user's selection survives a view-mode switch. Delegates to `cursorManager.placeSelection()`, which uses `_resolveOffsetInDOM(nodeId, offset)` to map tree coordinates back to DOM text-node positions.
+
 ### `deleteSelectedRange()`
 
 Returns `{ before, hints }` where `before` is the pre-edit tree snapshot and
@@ -387,18 +403,40 @@ to find the block parent for `blockNodeId` and offset computation.
 
 ### Cross-node selection in writing mode
 
-Keyboard-based selection (Shift+ArrowDown) does not work reliably for
-cross-node selection in writing mode because the editor re-renders when the
-cursor moves between nodes, destroying the selection. Use a programmatic
-helper that sets a DOM `Range` via `page.evaluate()`:
+Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably for cross-node selection in writing mode because the editor re-renders when the cursor moves between nodes, destroying the selection. Use a programmatic helper that sets both the DOM `Range` and `editor.treeRange` directly:
 
 ```js
 async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
-  await page.evaluate((args) => {
-    // Find nodes by textContent, walk to text nodes, set Range
-  }, [startText, startOff, endText, endOff]);
+  // 1. Click inside the editor to ensure focus
+  const startLine = page.locator('.md-line', { hasText: startText }).first();
+  await startLine.click();
+
+  // 2. Set DOM Range + treeRange programmatically
+  await page.evaluate(({ sText, sOff, eText, eOff }) => {
+    const editor = document.getElementById('editor');
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let startNode, endNode;
+    while (walker.nextNode()) {
+      if (!startNode && walker.currentNode.textContent.includes(sText))
+        startNode = walker.currentNode;
+      if (walker.currentNode.textContent.includes(eText))
+        endNode = walker.currentNode;
+    }
+    const range = document.createRange();
+    range.setStart(startNode, sOff);
+    range.setEnd(endNode, eOff);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    // Set treeRange directly since syncCursorFromDOM may not fire reliably
+    const api = window.__editor;
+    api.syncCursorFromDOM();
+  }, { sText: startText, sOff: startOff, eText: endText, eOff: endOff });
 }
 ```
+
+**Important**: the helper must also verify that `treeRange` was set (via `window.__editor`), because DOM selection events during re-renders are unreliable. The `page.evaluate` args must be passed as an object (not an array) to satisfy TSC's type inference.
 
 ### Test self-containment for fullyParallel
 

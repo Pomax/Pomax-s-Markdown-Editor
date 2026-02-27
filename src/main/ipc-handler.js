@@ -69,6 +69,7 @@ export class IPCHandler {
         this.registerDocumentHandlers();
         this.registerViewHandlers();
         this.registerElementHandlers();
+        this.registerDialogHandlers();
         this.registerAppHandlers();
         this.registerSettingsHandlers();
         this.registerImageHandlers();
@@ -222,6 +223,26 @@ export class IPCHandler {
                 window.webContents.send('menu:action', 'element:format', format);
             }
             return { success: true };
+        });
+    }
+
+    /**
+     * Registers dialog-related IPC handlers.
+     */
+    registerDialogHandlers() {
+        ipcMain.handle('dialog:confirm', async (event, options) => {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            if (!window) return { response: 1 };
+            const result = await dialog.showMessageBox(window, {
+                type: options.type ?? 'warning',
+                title: options.title ?? 'Confirm',
+                message: options.message ?? '',
+                detail: options.detail ?? undefined,
+                buttons: options.buttons ?? ['OK', 'Cancel'],
+                defaultId: options.defaultId ?? 0,
+                cancelId: options.cancelId ?? 1,
+            });
+            return { response: result.response };
         });
     }
 

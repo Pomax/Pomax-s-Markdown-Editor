@@ -41,6 +41,10 @@ export class EventHandler {
      * @param {MouseEvent} event
      */
     handleMouseDown(event) {
+        // Signal that the next selectionchange was caused by an
+        // in-editor interaction, so treeRange may be cleared.
+        this.editor._editorInteractionPending = true;
+
         this._mouseDownAnchor =
             event.target instanceof HTMLElement && event.target.tagName === 'A'
                 ? event.target
@@ -337,7 +341,15 @@ export class EventHandler {
                 }
             }
 
-            this.editor.syncCursorFromDOM();
+            // Only allow treeRange to be cleared when the selection
+            // change was caused by a direct in-editor interaction
+            // (mousedown or keydown on the editor container).  External
+            // events — toolbar clicks, ToC navigation, menu actions —
+            // must never invalidate the tree's selection.
+            const fromEditor = this.editor._editorInteractionPending;
+            this.editor._editorInteractionPending = false;
+
+            this.editor.syncCursorFromDOM({ preserveRange: !fromEditor });
             this.editor.selectionManager.updateFromDOM();
 
             // When the user is extending a selection (non-collapsed), skip

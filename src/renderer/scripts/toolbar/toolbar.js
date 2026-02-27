@@ -497,7 +497,7 @@ export class Toolbar {
      * Handles button clicks.
      * @param {ButtonConfig} config - The button configuration
      */
-    handleButtonClick(config) {
+    async handleButtonClick(config) {
         const [actionType, actionValue] = config.action.split(':');
 
         switch (actionType) {
@@ -508,7 +508,7 @@ export class Toolbar {
                 this.editor.applyFormat(actionValue);
                 break;
             case 'list':
-                this.editor.toggleList(
+                await this.editor.toggleList(
                     /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
                 );
                 break;

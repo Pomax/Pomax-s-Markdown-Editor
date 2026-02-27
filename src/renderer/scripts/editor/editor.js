@@ -144,6 +144,15 @@ export class Editor {
         this._isRendering = false;
 
         /**
+         * Set by mousedown / keydown on the editor container to signal that
+         * the next selectionchange was caused by an in-editor interaction.
+         * handleSelectionChange reads (and clears) this flag to decide
+         * whether a collapsed selection should clear treeRange.
+         * @type {boolean}
+         */
+        this._editorInteractionPending = false;
+
+        /**
          * Non-collapsed selection range mapped to tree coordinates.
          * null when the selection is collapsed (i.e. just a cursor).
          * @type {TreeRange|null}
@@ -368,14 +377,26 @@ export class Editor {
     //  Cursor delegation
     // ──────────────────────────────────────────────
 
-    /** Syncs the tree cursor/range from the current DOM selection. */
-    syncCursorFromDOM() {
-        this.cursorManager.syncCursorFromDOM();
+    /**
+     * Syncs the tree cursor/range from the current DOM selection.
+     * @param {{ preserveRange?: boolean }} [options]
+     */
+    syncCursorFromDOM({ preserveRange = false } = {}) {
+        this.cursorManager.syncCursorFromDOM({ preserveRange });
     }
 
     /** Places the DOM cursor at the position described by `this.syntaxTree.treeCursor`. */
     placeCursor() {
         this.cursorManager.placeCursor();
+    }
+
+    /**
+     * Rebuilds the DOM selection from the tree's treeRange (if set).
+     * Called after operations (e.g. view-mode switch) that destroy and
+     * re-create the DOM so the user's selection is visually restored.
+     */
+    placeSelection() {
+        this.cursorManager.placeSelection();
     }
 
     // ──────────────────────────────────────────────
@@ -758,6 +779,12 @@ export class Editor {
         this.container.dataset.viewMode = mode;
         this.fullRenderAndPlaceCursor();
 
+        // If the tree owns a non-collapsed selection, rebuild it in the
+        // new DOM so the user's selection survives the view-mode switch.
+        if (this.treeRange) {
+            this.placeSelection();
+        }
+
         // Restore scroll so the anchor node sits at the same viewport offset.
         if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
             const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
@@ -951,7 +978,7 @@ export class Editor {
      *
      * @param {'unordered' | 'ordered' | 'checklist'} kind
      */
-    toggleList(kind) {
+    async toggleList(kind) {
         const currentNode = this.getCurrentBlockNode();
         if (!currentNode || !this.syntaxTree) return;
 
@@ -1005,6 +1032,50 @@ export class Editor {
                 this.treeRange.startNodeId,
                 this.treeRange.endNodeId,
             );
+
+            // Detect nodes that live inside html-block containers.
+            // Converting them requires dissolving their parent wrapper.
+            const htmlBlockParents = new Set();
+            for (const n of nodes) {
+                if (n.parent && n.parent.type === 'html-block') {
+                    htmlBlockParents.add(n.parent);
+                }
+            }
+
+            if (htmlBlockParents.size > 0) {
+                const tagNames = [...htmlBlockParents]
+                    .map(
+                        (p) =>
+                            `<${/** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
+                    )
+                    .join(', ');
+                const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({
+                    type: 'warning',
+                    title: 'Destructive Conversion',
+                    message: `This selection includes content inside HTML block elements (${tagNames}) that will be removed by this conversion.`,
+                    detail: 'The HTML wrapper tags will be permanently lost. Do you want to proceed?',
+                    buttons: ['Convert', 'Cancel'],
+                    defaultId: 0,
+                    cancelId: 1,
+                });
+                if (!result || result.response !== 0) return;
+
+                for (const htmlBlock of htmlBlockParents) {
+                    const parent = /** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (
+                        htmlBlock
+                    );
+                    const treeChildren = this.syntaxTree.children;
+                    const idx = treeChildren.indexOf(parent);
+                    if (idx === -1) continue;
+                    const lifted = parent.children.slice();
+                    // Splice the children into the tree at the html-block's position
+                    treeChildren.splice(idx, 1, ...lifted);
+                    for (const child of lifted) {
+                        child.parent = null;
+                    }
+                }
+            }
+
             const updatedIds = [];
             let num = 1;
             for (const n of nodes) {
@@ -1128,14 +1199,35 @@ export class Editor {
      */
     _getNodesInRange(startId, endId) {
         if (!this.syntaxTree) return [];
-        const children = this.syntaxTree.children;
-        let collecting = false;
+
+        /**
+         * Walks children (recursing into html-block containers) and
+         * collects all leaf block nodes between startId and endId.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode[]} children
+         * @param {{collecting: boolean, done: boolean}} state
+         * @param {import('../parser/syntax-tree.js').SyntaxNode[]} result
+         */
+        const walk = (children, state, result) => {
+            for (const child of children) {
+                if (state.done) break;
+                // Recurse into html-block containers
+                if (child.type === 'html-block' && child.children.length > 0) {
+                    walk(child.children, state, result);
+                    continue;
+                }
+                if (child.id === startId) state.collecting = true;
+                if (state.collecting) result.push(child);
+                if (child.id === endId) {
+                    state.done = true;
+                    break;
+                }
+            }
+        };
+
+        const state = { collecting: false, done: false };
+        /** @type {import('../parser/syntax-tree.js').SyntaxNode[]} */
         const result = [];
-        for (const child of children) {
-            if (child.id === startId) collecting = true;
-            if (collecting) result.push(child);
-            if (child.id === endId) break;
-        }
+        walk(this.syntaxTree.children, state, result);
         return result;
     }
 
