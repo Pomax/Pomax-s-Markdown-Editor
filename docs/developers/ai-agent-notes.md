@@ -305,7 +305,9 @@ single line via `_reparseLine`, they must check whether the node had
 ## Settings System
 
 - **Main process**: `SettingsManager` persists settings in SQLite via
-  `better-sqlite3`.
+  `better-sqlite3`. A module-level singleton `settings` is exported from
+  `settings-manager.js` — import it directly anywhere in the main process
+  instead of passing instances through constructors.
 - **Renderer**: communicates via `window.electronAPI.getSetting(key)` /
   `setSetting(key, value)` (IPC bridge in `preload.cjs`).
 - **Preferences modal**: `PreferencesModal` class with sidebar nav sections.
@@ -313,6 +315,14 @@ single line via `_reparseLine`, they must check whether the node had
   are saved.
 - **App wiring**: `app.js` listens for settings events and applies them to
   the editor instance, then calls `render()`.
+
+### Reload
+
+`Help → Reload` (`Ctrl+Shift+R`) does **not** touch the database. It calls
+`webContents.reloadIgnoringCache()` to reload the front-end (HTML, CSS, JS),
+then runs the same startup sequence: reads settings from the DB, restores
+open files from disk based on the persisted `openFiles` list. Unsaved changes
+and untitled documents do not survive a reload.
 
 ## Playwright Workers
 

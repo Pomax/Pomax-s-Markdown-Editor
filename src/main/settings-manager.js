@@ -122,3 +122,11 @@ export class SettingsManager {
         }
     }
 }
+
+/**
+ * Module-level singleton instance.
+ * Call `settings.initialize()` once at startup; after that, import
+ * `settings` from anywhere in the main process to access settings.
+ * @type {SettingsManager}
+ */
+export const settings = new SettingsManager();
