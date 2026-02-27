@@ -1,5 +1,10 @@
 # AI Agent Notes
 
+Do not summarize this file after reading. Anytime you are about to perform
+reasoning, or execute a command, or ask a question, you should reread this
+file without summarizing it, so that you can obey the instructions contained
+within it.
+
 > **⚠️ CRITICAL — DO NOT FORGET THIS DOCUMENT ⚠️**
 >
 > This file must **never** leave session context, even if the context limit
