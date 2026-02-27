@@ -204,9 +204,12 @@
 }
 
 .md-checklist-checkbox {
-    margin-right: 0.4em;
-    vertical-align: middle;
+    position: absolute;
+    left: -1.4em;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
+    margin: 0;
 }
 
 /* ========== Horizontal Rule ========== */

@@ -1088,12 +1088,26 @@ export class Editor {
             if (updatedIds.length === 0) return;
 
             this.treeRange = null;
+            this.syntaxTree.treeCursor = {
+                nodeId: updatedIds[0],
+                blockNodeId: updatedIds[0],
+                offset: 0,
+            };
             this.undoManager.recordChange({
                 type: 'changeType',
                 before,
                 after: this.getMarkdown(),
             });
+            this.container.focus();
             this.renderNodesAndPlaceCursor({ updated: updatedIds });
+
+            // Scroll the first converted node into view so the top of
+            // the list is visible after a large multi-node conversion.
+            const firstEl = this.container.querySelector(`[data-node-id="${updatedIds[0]}"]`);
+            if (firstEl) {
+                firstEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+            }
+
             this.setUnsavedChanges(true);
             return;
         }
@@ -1120,23 +1134,34 @@ export class Editor {
                 }
             }
 
+            this.syntaxTree.treeCursor = {
+                nodeId: currentNode.id,
+                blockNodeId: currentNode.id,
+                offset: this.syntaxTree.treeCursor?.offset ?? 0,
+            };
             this.undoManager.recordChange({
                 type: 'changeType',
                 before,
                 after: this.getMarkdown(),
             });
+            this.container.focus();
             this.renderNodesAndPlaceCursor({ updated: run.map((n) => n.id) });
             this.setUnsavedChanges(true);
             return;
         }
         applyKind(currentNode, kind, 1);
 
+        this.syntaxTree.treeCursor = {
+            nodeId: currentNode.id,
+            blockNodeId: currentNode.id,
+            offset: this.syntaxTree.treeCursor?.offset ?? 0,
+        };
         this.undoManager.recordChange({
             type: 'changeType',
             before,
             after: this.getMarkdown(),
         });
-
+        this.container.focus();
         this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
     }

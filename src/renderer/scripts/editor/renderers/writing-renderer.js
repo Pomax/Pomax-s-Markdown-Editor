@@ -412,6 +412,9 @@ export class WritingRenderer {
         const isChecklist = typeof attrs.checked === 'boolean';
         const number = attrs.number || 1;
 
+        /** @type {HTMLInputElement|null} */
+        let checkbox = null;
+
         if (isChecklist) {
             // Checklist: no bullet/number, show a checkbox
             element.style.listStyleType = 'none';
@@ -419,7 +422,7 @@ export class WritingRenderer {
             element.style.marginLeft = `${(indent + 1) * 1.5}em`;
             element.classList.add('md-checklist-item');
 
-            const checkbox = document.createElement('input');
+            checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'md-checklist-checkbox';
             if (attrs.checked) {
@@ -446,7 +449,9 @@ export class WritingRenderer {
                 this.editor.setUnsavedChanges(true);
             });
 
-            element.appendChild(checkbox);
+            // Append checkbox AFTER content span (below) so the browser
+            // doesn't create a caret position before it. Absolute
+            // positioning keeps it visually to the left.
         } else {
             // Regular bullet or numbered list
             element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
@@ -461,6 +466,11 @@ export class WritingRenderer {
         contentSpan.className = 'md-content';
         this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
+
+        // Append checkbox after content so it's not a caret target.
+        if (checkbox) {
+            element.appendChild(checkbox);
+        }
 
         return element;
     }
