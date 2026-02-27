@@ -141,6 +141,22 @@ export async function clickInEditor(page, locator) {
 }
 
 /**
+ * Wait for an element matching the given CSS selector, then click it
+ * directly via page.evaluate (bypassing Playwright's coordinate-based
+ * click, which can be intercepted by overlapping elements).
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} qs  CSS selector
+ */
+export async function clickQuerySelector(page, qs) {
+    await page.waitForSelector(qs);
+    await page.evaluate(
+        (selector) => /** @type {HTMLElement} */ (document.querySelector(selector))?.click(),
+        qs,
+    );
+}
+
+/**
  * Switch the editor to source view by clicking the toolbar toggle.
  * If already in source view, this is a no-op.
  *
@@ -149,7 +165,7 @@ export async function clickInEditor(page, locator) {
 export async function setSourceView(page) {
     const current = await page.locator('#editor').getAttribute('data-view-mode');
     if (current === 'source') return;
-    await page.locator('.toolbar-view-mode-toggle').click();
+    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
     await page.locator('#editor[data-view-mode="source"]').waitFor();
 }
 
@@ -162,6 +178,6 @@ export async function setSourceView(page) {
 export async function setWritingView(page) {
     const current = await page.locator('#editor').getAttribute('data-view-mode');
     if (current !== 'source') return;
-    await page.locator('.toolbar-view-mode-toggle').click();
+    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
     await page.locator('#editor[data-view-mode="writing"]').waitFor();
 }

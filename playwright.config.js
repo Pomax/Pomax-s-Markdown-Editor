@@ -9,22 +9,27 @@ import os from "os"; // Import the OS module
 const platform = os.platform();
 
 const config = {
-  timeout: 60_000,
-  workersCount: 8,
+  retries: 0,
+  timeout: 15_000,
+  workers: 8,
 };
 
 if (platform === "darwin") {
-  config.workersCount = 2;
+  Object.assign(config, {
+    retries: 1,
+    timeout: 60_000,
+    workers: 2
+  });
 } else if (platform === "linux") {
-  config.workersCount = 4;
+  Object.assign(config, {
+    workers: 4,
+  });
 }
 
 export default defineConfig({
+  ...config,
   testDir: "./test/integration",
   testMatch: "**/*.spec.js",
-  timeout: config.timeout,
-  retries: 1,
-  workers: config.workersCount,
   fullyParallel: true,
   reporter: "list",
   projects: [
