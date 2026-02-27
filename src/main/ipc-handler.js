@@ -8,6 +8,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { APIRegistry } from './api-registry.js';
+import { settings } from './settings-manager.js';
 
 /**
  * Handles IPC communication for the application.
@@ -15,14 +16,10 @@ import { APIRegistry } from './api-registry.js';
 export class IPCHandler {
     /**
      * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
-     * @param {import('./settings-manager.js').SettingsManager} settingsManager - The settings manager instance
      */
-    constructor(fileManager, settingsManager) {
+    constructor(fileManager) {
         /** @type {import('./file-manager.js').FileManager} */
         this.fileManager = fileManager;
-
-        /** @type {import('./settings-manager.js').SettingsManager} */
-        this.settingsManager = settingsManager;
 
         /** @type {APIRegistry} */
         this.apiRegistry = new APIRegistry();
@@ -58,7 +55,7 @@ export class IPCHandler {
         // untouched so a previous session's state isn't wiped before a
         // restore can occur.  The graceful close handler still cleans up.
         if (entries.length > 0) {
-            this.settingsManager.set('openFiles', entries);
+            settings.set('openFiles', entries);
         }
     }
 
@@ -72,6 +69,7 @@ export class IPCHandler {
         this.registerDocumentHandlers();
         this.registerViewHandlers();
         this.registerElementHandlers();
+        this.registerDialogHandlers();
         this.registerAppHandlers();
         this.registerSettingsHandlers();
         this.registerImageHandlers();
@@ -229,6 +227,26 @@ export class IPCHandler {
     }
 
     /**
+     * Registers dialog-related IPC handlers.
+     */
+    registerDialogHandlers() {
+        ipcMain.handle('dialog:confirm', async (event, options) => {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            if (!window) return { response: 1 };
+            const result = await dialog.showMessageBox(window, {
+                type: options.type ?? 'warning',
+                title: options.title ?? 'Confirm',
+                message: options.message ?? '',
+                detail: options.detail ?? undefined,
+                buttons: options.buttons ?? ['OK', 'Cancel'],
+                defaultId: options.defaultId ?? 0,
+                cancelId: options.cancelId ?? 1,
+            });
+            return { response: result.response };
+        });
+    }
+
+    /**
      * Registers application-level IPC handlers (reload, etc.).
      */
     registerAppHandlers() {
@@ -245,15 +263,15 @@ export class IPCHandler {
      */
     registerSettingsHandlers() {
         ipcMain.handle('settings:getAll', async () => {
-            return { success: true, settings: this.settingsManager.getAll() };
+            return { success: true, settings: settings.getAll() };
         });
 
         ipcMain.handle('settings:get', async (_event, key) => {
-            return { success: true, value: this.settingsManager.get(key) };
+            return { success: true, value: settings.get(key) };
         });
 
         ipcMain.handle('settings:set', async (_event, key, value) => {
-            this.settingsManager.set(key, value);
+            settings.set(key, value);
             return { success: true };
         });
     }

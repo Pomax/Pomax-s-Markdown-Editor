@@ -144,6 +144,15 @@ export class Editor {
         this._isRendering = false;
 
         /**
+         * Set by mousedown / keydown on the editor container to signal that
+         * the next selectionchange was caused by an in-editor interaction.
+         * handleSelectionChange reads (and clears) this flag to decide
+         * whether a collapsed selection should clear treeRange.
+         * @type {boolean}
+         */
+        this._editorInteractionPending = false;
+
+        /**
          * Non-collapsed selection range mapped to tree coordinates.
          * null when the selection is collapsed (i.e. just a cursor).
          * @type {TreeRange|null}
@@ -368,14 +377,26 @@ export class Editor {
     //  Cursor delegation
     // ──────────────────────────────────────────────
 
-    /** Syncs the tree cursor/range from the current DOM selection. */
-    syncCursorFromDOM() {
-        this.cursorManager.syncCursorFromDOM();
+    /**
+     * Syncs the tree cursor/range from the current DOM selection.
+     * @param {{ preserveRange?: boolean }} [options]
+     */
+    syncCursorFromDOM({ preserveRange = false } = {}) {
+        this.cursorManager.syncCursorFromDOM({ preserveRange });
     }
 
     /** Places the DOM cursor at the position described by `this.syntaxTree.treeCursor`. */
     placeCursor() {
         this.cursorManager.placeCursor();
+    }
+
+    /**
+     * Rebuilds the DOM selection from the tree's treeRange (if set).
+     * Called after operations (e.g. view-mode switch) that destroy and
+     * re-create the DOM so the user's selection is visually restored.
+     */
+    placeSelection() {
+        this.cursorManager.placeSelection();
     }
 
     // ──────────────────────────────────────────────
@@ -528,7 +549,13 @@ export class Editor {
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
-                return `${indent}${marker}${content}`;
+                const checkbox =
+                    typeof attributes?.checked === 'boolean'
+                        ? attributes.checked
+                            ? '[x] '
+                            : '[ ] '
+                        : '';
+                return `${indent}${marker}${checkbox}${content}`;
             }
             case 'image': {
                 const imgAlt = attributes?.alt ?? content;
@@ -570,7 +597,8 @@ export class Editor {
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
-                return indent.length + marker.length;
+                const checkbox = typeof attributes?.checked === 'boolean' ? '[ ] ' : '';
+                return indent.length + marker.length + checkbox.length;
             }
             case 'image':
                 return 0;
@@ -750,6 +778,12 @@ export class Editor {
         this.viewMode = mode;
         this.container.dataset.viewMode = mode;
         this.fullRenderAndPlaceCursor();
+
+        // If the tree owns a non-collapsed selection, rebuild it in the
+        // new DOM so the user's selection survives the view-mode switch.
+        if (this.treeRange) {
+            this.placeSelection();
+        }
 
         // Restore scroll so the anchor node sits at the same viewport offset.
         if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
@@ -933,13 +967,18 @@ export class Editor {
     /**
      * Toggles list formatting on the current node.
      *
-     * - Non-list → list-item (ordered or unordered)
-     * - List-item of same type → paragraph (toggle off)
-     * - List-item of other type → switch ordered ↔ unordered
+     * - Non-list → list-item (of the requested kind)
+     * - List-item of same kind → paragraph (toggle off)
+     * - List-item of different kind → switch to new kind
      *
-     * @param {boolean} ordered - `true` for numbered, `false` for bullet
+     * The three list kinds are:
+     * - `'unordered'` — bullet list (`- text`)
+     * - `'ordered'`   — numbered list (`1. text`)
+     * - `'checklist'` — checklist (`- [ ] text` / `- [x] text`)
+     *
+     * @param {'unordered' | 'ordered' | 'checklist'} kind
      */
-    toggleList(ordered) {
+    async toggleList(kind) {
         const currentNode = this.getCurrentBlockNode();
         if (!currentNode || !this.syntaxTree) return;
 
@@ -948,33 +987,127 @@ export class Editor {
 
         const before = this.getMarkdown();
 
+        /**
+         * Returns the list kind for a list-item node.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+         * @returns {'unordered' | 'ordered' | 'checklist'}
+         */
+        const getListKind = (n) => {
+            if (typeof n.attributes.checked === 'boolean') return 'checklist';
+            return n.attributes.ordered ? 'ordered' : 'unordered';
+        };
+
+        /**
+         * Applies list-item attributes for a given kind.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+         * @param {'unordered' | 'ordered' | 'checklist'} k
+         * @param {number} [num]
+         */
+        const applyKind = (n, k, num) => {
+            n.type = 'list-item';
+            switch (k) {
+                case 'ordered':
+                    n.attributes = {
+                        ordered: true,
+                        indent: n.attributes.indent || 0,
+                        number: num || 1,
+                    };
+                    break;
+                case 'checklist':
+                    n.attributes = {
+                        ordered: false,
+                        indent: n.attributes.indent || 0,
+                        checked: false,
+                    };
+                    break;
+                default:
+                    n.attributes = { ordered: false, indent: n.attributes.indent || 0 };
+                    break;
+            }
+        };
+
         // Multi-node selection: convert each node in the range to a list item.
         if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
             const nodes = this._getNodesInRange(
                 this.treeRange.startNodeId,
                 this.treeRange.endNodeId,
             );
+
+            // Detect nodes that live inside html-block containers.
+            // Converting them requires dissolving their parent wrapper.
+            const htmlBlockParents = new Set();
+            for (const n of nodes) {
+                if (n.parent && n.parent.type === 'html-block') {
+                    htmlBlockParents.add(n.parent);
+                }
+            }
+
+            if (htmlBlockParents.size > 0) {
+                const tagNames = [...htmlBlockParents]
+                    .map(
+                        (p) =>
+                            `<${/** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
+                    )
+                    .join(', ');
+                const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({
+                    type: 'warning',
+                    title: 'Destructive Conversion',
+                    message: `This selection includes content inside HTML block elements (${tagNames}) that will be removed by this conversion.`,
+                    detail: 'The HTML wrapper tags will be permanently lost. Do you want to proceed?',
+                    buttons: ['Convert', 'Cancel'],
+                    defaultId: 0,
+                    cancelId: 1,
+                });
+                if (!result || result.response !== 0) return;
+
+                for (const htmlBlock of htmlBlockParents) {
+                    const parent = /** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (
+                        htmlBlock
+                    );
+                    const treeChildren = this.syntaxTree.children;
+                    const idx = treeChildren.indexOf(parent);
+                    if (idx === -1) continue;
+                    const lifted = parent.children.slice();
+                    // Splice the children into the tree at the html-block's position
+                    treeChildren.splice(idx, 1, ...lifted);
+                    for (const child of lifted) {
+                        child.parent = null;
+                    }
+                }
+            }
+
             const updatedIds = [];
             let num = 1;
             for (const n of nodes) {
                 if (n.type === 'html-block' && n.children.length > 0) continue;
                 if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
-                n.type = 'list-item';
-                n.attributes = { ordered, indent: 0 };
-                if (ordered) {
-                    n.attributes.number = num++;
-                }
+                applyKind(n, kind, num);
+                if (kind === 'ordered') num++;
                 updatedIds.push(n.id);
             }
             if (updatedIds.length === 0) return;
 
             this.treeRange = null;
+            this.syntaxTree.treeCursor = {
+                nodeId: updatedIds[0],
+                blockNodeId: updatedIds[0],
+                offset: 0,
+            };
             this.undoManager.recordChange({
                 type: 'changeType',
                 before,
                 after: this.getMarkdown(),
             });
+            this.container.focus();
             this.renderNodesAndPlaceCursor({ updated: updatedIds });
+
+            // Scroll the first converted node into view so the top of
+            // the list is visible after a large multi-node conversion.
+            const firstEl = this.container.querySelector(`[data-node-id="${updatedIds[0]}"]`);
+            if (firstEl) {
+                firstEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+            }
+
             this.setUnsavedChanges(true);
             return;
         }
@@ -984,47 +1117,51 @@ export class Editor {
         if (currentNode.type === 'list-item') {
             const siblings = this.getSiblings(currentNode);
             const run = this._getContiguousListRun(siblings, currentNode);
+            const currentKind = getListKind(currentNode);
 
-            if (!!currentNode.attributes.ordered === ordered) {
-                // Same list type → convert entire run back to paragraphs
+            if (currentKind === kind) {
+                // Same list kind → convert entire run back to paragraphs
                 for (const n of run) {
                     n.type = 'paragraph';
                     n.attributes = {};
                 }
             } else {
-                // Different list type → switch entire run
+                // Different list kind → switch entire run
                 let num = 1;
                 for (const n of run) {
-                    n.attributes.ordered = ordered;
-                    if (ordered) {
-                        n.attributes.number = num++;
-                    } else {
-                        n.attributes.number = undefined;
-                    }
+                    applyKind(n, kind, num);
+                    if (kind === 'ordered') num++;
                 }
             }
 
+            this.syntaxTree.treeCursor = {
+                nodeId: currentNode.id,
+                blockNodeId: currentNode.id,
+                offset: this.syntaxTree.treeCursor?.offset ?? 0,
+            };
             this.undoManager.recordChange({
                 type: 'changeType',
                 before,
                 after: this.getMarkdown(),
             });
+            this.container.focus();
             this.renderNodesAndPlaceCursor({ updated: run.map((n) => n.id) });
             this.setUnsavedChanges(true);
             return;
         }
-        currentNode.type = 'list-item';
-        currentNode.attributes = { ordered, indent: 0 };
-        if (ordered) {
-            currentNode.attributes.number = 1;
-        }
+        applyKind(currentNode, kind, 1);
 
+        this.syntaxTree.treeCursor = {
+            nodeId: currentNode.id,
+            blockNodeId: currentNode.id,
+            offset: this.syntaxTree.treeCursor?.offset ?? 0,
+        };
         this.undoManager.recordChange({
             type: 'changeType',
             before,
             after: this.getMarkdown(),
         });
-
+        this.container.focus();
         this.renderNodesAndPlaceCursor({ updated: [currentNode.id] });
         this.setUnsavedChanges(true);
     }
@@ -1087,14 +1224,35 @@ export class Editor {
      */
     _getNodesInRange(startId, endId) {
         if (!this.syntaxTree) return [];
-        const children = this.syntaxTree.children;
-        let collecting = false;
+
+        /**
+         * Walks children (recursing into html-block containers) and
+         * collects all leaf block nodes between startId and endId.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode[]} children
+         * @param {{collecting: boolean, done: boolean}} state
+         * @param {import('../parser/syntax-tree.js').SyntaxNode[]} result
+         */
+        const walk = (children, state, result) => {
+            for (const child of children) {
+                if (state.done) break;
+                // Recurse into html-block containers
+                if (child.type === 'html-block' && child.children.length > 0) {
+                    walk(child.children, state, result);
+                    continue;
+                }
+                if (child.id === startId) state.collecting = true;
+                if (state.collecting) result.push(child);
+                if (child.id === endId) {
+                    state.done = true;
+                    break;
+                }
+            }
+        };
+
+        const state = { collecting: false, done: false };
+        /** @type {import('../parser/syntax-tree.js').SyntaxNode[]} */
         const result = [];
-        for (const child of children) {
-            if (child.id === startId) collecting = true;
-            if (collecting) result.push(child);
-            if (child.id === endId) break;
-        }
+        walk(this.syntaxTree.children, state, result);
         return result;
     }
 

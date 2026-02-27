@@ -195,6 +195,7 @@ test/
     ├── backspace-heading.spec.js
     ├── backspace-heading-to-paragraph.spec.js
     ├── bold-button.spec.js
+    ├── checklist.spec.js
     ├── click-outside-defocus.spec.js
     ├── code-block-enter.spec.js
     ├── cursor-scroll.spec.js

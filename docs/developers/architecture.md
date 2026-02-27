@@ -333,7 +333,7 @@ WYSIWYG formatting toolbar using a CSS grid layout with three areas (`left`, `ce
 - Context-aware button visibility (buttons only shown when applicable to current element type)
 - Element type buttons (H1–H3, paragraph, blockquote, code block)
 - Format buttons (bold, italic, strikethrough, inline code, link, image, table)
-- List buttons (unordered, ordered)
+- List buttons (unordered, ordered, checklist)
 - View mode dropdown selector
 - Keyboard shortcut indicators in tooltips
 - Automatic scaling on narrow windows via ResizeObserver

@@ -99,10 +99,19 @@ const electronAPI = {
      */
     notifyOpenFiles: (files) => ipcRenderer.invoke('view:openFilesChanged', files),
 
+    // ========== Dialog Operations ==========
+
+    /**
+     * Shows a native confirmation dialog.
+     * @param {{type?: string, title?: string, message: string, detail?: string, buttons?: string[], defaultId?: number, cancelId?: number}} options
+     * @returns {Promise<{response: number}>}
+     */
+    confirmDialog: (options) => ipcRenderer.invoke('dialog:confirm', options),
+
     // ========== Application Operations ==========
 
     /**
-     * Reloads the application UI, preserving document content, cursor, and file path.
+     * Reloads the application UI.
      * @returns {Promise<{success: boolean}>}
      */
     reload: () => ipcRenderer.invoke('app:reload'),

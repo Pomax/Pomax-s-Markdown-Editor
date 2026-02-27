@@ -6,6 +6,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { dialog } from 'electron';
+import { settings } from './settings-manager.js';
 
 /**
  * Maximum number of recent files to remember.
@@ -17,10 +18,7 @@ const MAX_RECENT_FILES = 10;
  * Manages file operations for the markdown editor.
  */
 export class FileManager {
-    /**
-     * @param {import('./settings-manager.js').SettingsManager} settingsManager - The settings manager for persistence
-     */
-    constructor(settingsManager) {
+    constructor() {
         /**
          * The current file path, or null if no file is open.
          * @type {string|null}
@@ -38,9 +36,6 @@ export class FileManager {
          * @type {string[]}
          */
         this.recentFiles = [];
-
-        /** @type {import('./settings-manager.js').SettingsManager} */
-        this.settingsManager = settingsManager;
 
         this._loadRecentFiles();
     }
@@ -271,7 +266,7 @@ export class FileManager {
      */
     _loadRecentFiles() {
         try {
-            const stored = this.settingsManager.get('recentFiles', []);
+            const stored = settings.get('recentFiles', []);
             if (Array.isArray(stored)) {
                 this.recentFiles = stored;
             }
@@ -286,7 +281,7 @@ export class FileManager {
      */
     _saveRecentFiles() {
         try {
-            this.settingsManager.set('recentFiles', this.recentFiles);
+            settings.set('recentFiles', this.recentFiles);
         } catch {
             // Ignore write errors for recent files
         }

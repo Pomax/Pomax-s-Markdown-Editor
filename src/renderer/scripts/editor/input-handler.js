@@ -80,6 +80,10 @@ export class InputHandler {
      * @param {KeyboardEvent} event
      */
     handleKeyDown(event) {
+        // Signal that the next selectionchange was caused by an
+        // in-editor interaction, so treeRange may be cleared.
+        this.editor._editorInteractionPending = true;
+
         // If the cursor is inside the phantom paragraph (the view-only
         // element after a trailing code block), promote it to a real
         // tree node so that editing operations have a target.

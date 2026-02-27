@@ -8,7 +8,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { defocusEditor, launchApp, loadContent, projectRoot, setSourceView } from './test-utils.js';
+import {
+    clickQuerySelector,
+    defocusEditor,
+    launchApp,
+    loadContent,
+    projectRoot,
+    setSourceView,
+} from './test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
 const readmeContent = fs.readFileSync(readmePath, 'utf-8');
@@ -46,7 +53,7 @@ test('clicking toggle switches editor to source mode', async () => {
     const toggle = page.locator('.toolbar-view-mode-toggle');
 
     // Click to switch to source mode.
-    await toggle.click();
+    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
 
     await expect(toggle).toHaveText('Source View');
 
@@ -67,7 +74,7 @@ test('clicking toggle again switches editor back to writing mode', async () => {
     await setSourceView(page);
 
     // Click to switch back to writing mode.
-    await toggle.click();
+    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
 
     await expect(toggle).toHaveText('Writing View');
 

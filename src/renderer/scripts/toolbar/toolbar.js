@@ -180,6 +180,23 @@ export class Toolbar {
                 ],
             },
             {
+                id: 'checklist',
+                label: 'Checklist',
+                icon: '☑',
+                action: 'list:checklist',
+                applicableTo: [
+                    'paragraph',
+                    'heading1',
+                    'heading2',
+                    'heading3',
+                    'heading4',
+                    'heading5',
+                    'heading6',
+                    'blockquote',
+                    'list-item',
+                ],
+            },
+            {
                 id: 'separator1',
                 label: '',
                 icon: '',
@@ -480,7 +497,7 @@ export class Toolbar {
      * Handles button clicks.
      * @param {ButtonConfig} config - The button configuration
      */
-    handleButtonClick(config) {
+    async handleButtonClick(config) {
         const [actionType, actionValue] = config.action.split(':');
 
         switch (actionType) {
@@ -491,7 +508,9 @@ export class Toolbar {
                 this.editor.applyFormat(actionValue);
                 break;
             case 'list':
-                this.editor.toggleList(actionValue === 'ordered');
+                await this.editor.toggleList(
+                    /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
+                );
                 break;
             case 'image':
                 this.handleImageAction();
@@ -692,9 +711,18 @@ export class Toolbar {
                 const targetType = config.action.split(':')[1];
                 button.setActive(targetType === blockType);
             } else if (config.action === 'list:unordered') {
-                button.setActive(blockType === 'list-item' && !blockNode?.attributes?.ordered);
+                button.setActive(
+                    blockType === 'list-item' &&
+                        !blockNode?.attributes?.ordered &&
+                        typeof blockNode?.attributes?.checked !== 'boolean',
+                );
             } else if (config.action === 'list:ordered') {
                 button.setActive(blockType === 'list-item' && !!blockNode?.attributes?.ordered);
+            } else if (config.action === 'list:checklist') {
+                button.setActive(
+                    blockType === 'list-item' &&
+                        typeof blockNode?.attributes?.checked === 'boolean',
+                );
             }
 
             // Inline format active state.

@@ -10,7 +10,7 @@ import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
 import { FileManager } from './file-manager.js';
 import { IPCHandler } from './ipc-handler.js';
 import { MenuBuilder } from './menu-builder.js';
-import { SettingsManager } from './settings-manager.js';
+import { settings } from './settings-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,9 +26,6 @@ let ipcHandler;
 
 /** @type {MenuBuilder} */
 let menuBuilder;
-
-/** @type {SettingsManager} */
-let settingsManager;
 
 /**
  * Debounce timeout handle for saving window bounds.
@@ -48,7 +45,7 @@ function saveWindowBounds() {
     // non-maximized size/position for the next launch.
     const bounds = isMaximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
 
-    settingsManager.set('windowBounds', {
+    settings.set('windowBounds', {
         x: bounds.x,
         y: bounds.y,
         width: bounds.width,
@@ -72,7 +69,7 @@ function debounceSaveWindowBounds() {
  */
 function saveOpenFiles() {
     if (!menuBuilder) {
-        settingsManager.delete('openFiles');
+        settings.delete('openFiles');
         return;
     }
 
@@ -93,9 +90,9 @@ function saveOpenFiles() {
         );
 
     if (entries.length === 0) {
-        settingsManager.delete('openFiles');
+        settings.delete('openFiles');
     } else {
-        settingsManager.set('openFiles', entries);
+        settings.set('openFiles', entries);
     }
 }
 
@@ -109,7 +106,7 @@ function createWindow() {
     const defaultHeight = Math.round(defaultWidth * Math.SQRT2);
 
     // Load saved window bounds from settings
-    const saved = settingsManager.get('windowBounds');
+    const saved = settings.get('windowBounds');
 
     /** @type {Electron.BrowserWindowConstructorOptions} */
     const windowOptions = {
@@ -252,8 +249,8 @@ async function handleUnsavedChangesOnClose(window) {
  * @param {BrowserWindow} window - The main window
  */
 async function initialize(window) {
-    fileManager = new FileManager(settingsManager);
-    ipcHandler = new IPCHandler(fileManager, settingsManager);
+    fileManager = new FileManager();
+    ipcHandler = new IPCHandler(fileManager);
 
     // Set up the application menu
     menuBuilder = new MenuBuilder(window, fileManager);
@@ -398,14 +395,13 @@ async function restoreOpenFiles(window, entries) {
 // Electron app lifecycle events
 app.whenReady().then(async () => {
     // Initialize settings before creating the window so saved bounds are available
-    settingsManager = new SettingsManager();
-    settingsManager.initialize();
+    settings.initialize();
 
     // Expose internals for integration tests so they can trigger
     // saveOpenFiles / restoreOpenFiles without bypassing the normal flow.
     if (process.env.TESTING) {
         /** @type {any} */ (global).__saveOpenFiles = () => saveOpenFiles();
-        /** @type {any} */ (global).__settingsManager = settingsManager;
+        /** @type {any} */ (global).__settingsManager = settings;
         /** @type {any} */ (global).__restoreOpenFiles = (
             /** @type {any} */ win,
             /** @type {any} */ entries,
@@ -424,7 +420,7 @@ app.whenReady().then(async () => {
             loadFileFromPath(window, cliFilePath);
         });
     } else if (!process.env.TESTING) {
-        const openFiles = settingsManager.get('openFiles', null);
+        const openFiles = settings.get('openFiles', null);
         if (Array.isArray(openFiles) && openFiles.length > 0) {
             // Filter to files that still exist on disk
             const valid = openFiles.filter(
@@ -446,9 +442,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-    if (settingsManager) {
-        settingsManager.close();
-    }
+    settings.close();
     app.quit();
 });
 

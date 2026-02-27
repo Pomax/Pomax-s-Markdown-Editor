@@ -3,20 +3,16 @@
  * Creates the application menu with File, Edit, and View menus.
  */
 
+import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { BrowserWindow, Menu, dialog } from 'electron';
+import { settings } from './settings-manager.js';
 
 /**
  * Builds the application menu.
  */
 export class MenuBuilder {
-    /**
-     * Cached state for reload, stored outside the BrowserWindow instance.
-     * @type {Object|null}
-     */
-    static _reloadState = null;
-
     /**
      * @param {BrowserWindow} window - The main browser window
      * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
@@ -340,113 +336,103 @@ export class MenuBuilder {
 
     /**
      * Handles the Reload menu action.
-     * Caches editor state, reloads the page, and restores state afterwards.
+     * Reloads the front-end (HTML, CSS, JS) and then runs through the
+     * same startup sequence: binding settings, restoring open files, etc.
+     * Does NOT touch the database — it only reads what is already persisted.
      */
     async handleReload() {
         if (!this.window) return;
 
-        // Gather editor state from the renderer before reloading
-        const state = await this.window.webContents.executeJavaScript(`
-            (function() {
-                const editor = window.editorAPI;
-                if (!editor) return null;
+        this.window.webContents.reloadIgnoringCache();
 
-                // Determine cursor node index by matching the node ID
-                // against the tree children (IDs won't survive the reload).
-                var cursorNodeIndex = 0;
-                var cursorOffset = window.__editorCursorOffset ?? 0;
-                var cursorNodeId = window.__editorCursorNodeId;
-                var lines = document.querySelectorAll('#editor [data-node-id]');
-                if (cursorNodeId && lines.length) {
-                    for (var i = 0; i < lines.length; i++) {
-                        if (lines[i].getAttribute('data-node-id') === cursorNodeId) {
-                            cursorNodeIndex = i;
-                            break;
-                        }
-                    }
-                }
+        this.window.webContents.once('did-finish-load', () => {
+            this._restoreOpenFiles();
+        });
+    }
 
-                return {
-                    content: editor.getContent(),
-                    viewMode: editor.getViewMode(),
-                    hasUnsavedChanges: editor.hasUnsavedChanges(),
-                    filePath: window.__editorFilePath ?? null,
-                    cursorNodeIndex: cursorNodeIndex,
-                    cursorOffset: cursorOffset,
-                };
-            })()
-        `);
+    /**
+     * Reads the persisted open-files list from the database and restores
+     * them into the freshly reloaded renderer — the same flow that runs
+     * on a normal app launch.
+     */
+    async _restoreOpenFiles() {
+        if (!this.window) return;
 
-        if (state) {
-            // Store state on the class so it survives the reload
-            MenuBuilder._reloadState = state;
-            // Also preserve file path in the file manager
-            if (state.filePath) {
-                this.fileManager.currentFilePath = state.filePath;
+        const openFiles = settings.get('openFiles', null);
+        if (!Array.isArray(openFiles) || openFiles.length === 0) return;
+
+        const valid = openFiles.filter(
+            /** @param {{filePath: string}} f */ (f) => f.filePath && existsSync(f.filePath),
+        );
+        if (valid.length === 0) return;
+
+        // Read all files from disk
+        /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[]|null, tocHeadingPath: number[]|null}>} */
+        const loaded = [];
+        for (const entry of valid) {
+            const result = await this.fileManager.loadRecent(entry.filePath);
+            if (result.success && result.content !== undefined) {
+                loaded.push({
+                    filePath: result.filePath ?? entry.filePath,
+                    content: result.content,
+                    active: entry.active,
+                    cursorOffset: entry.cursorOffset ?? 0,
+                    contentHash: entry.contentHash ?? 0,
+                    scrollTop: entry.scrollTop ?? 0,
+                    cursorPath: entry.cursorPath ?? null,
+                    tocHeadingPath: entry.tocHeadingPath ?? null,
+                });
             }
         }
 
-        this.window.webContents.reloadIgnoringCache();
+        if (loaded.length === 0) return;
 
-        // After the page finishes loading, restore the cached state
-        this.window.webContents.once('did-finish-load', () => {
-            const cached = MenuBuilder._reloadState;
-            if (!cached || !this.window) return;
+        // Load the first file directly into the initial tab
+        const first = loaded[0];
+        const contentJSON = JSON.stringify(first.content);
+        const filePathJSON = JSON.stringify(first.filePath);
 
-            this.window.webContents.executeJavaScript(`
-                (function() {
-                    // Wait for the app to initialise before restoring state
-                    function tryRestore() {
-                        const api = window.editorAPI;
-                        if (!api) {
-                            setTimeout(tryRestore, 50);
-                            return;
-                        }
-                        const state = ${JSON.stringify(cached)};
+        await this.window.webContents.executeJavaScript(`
+            (function () {
+                function tryRestore() {
+                    var api = window.editorAPI;
+                    if (!api) { setTimeout(tryRestore, 50); return; }
+                    window.__editorFilePath = ${filePathJSON};
+                    api.setContent(${contentJSON});
+                }
+                tryRestore();
+            })()
+        `);
 
-                        // Restore document content
-                        if (state.content) {
-                            api.setContent(state.content);
-                        }
+        // Send remaining files as loaded events
+        for (let i = 1; i < loaded.length; i++) {
+            this.window.webContents.send('menu:action', 'file:loaded', {
+                success: true,
+                content: loaded[i].content,
+                filePath: loaded[i].filePath,
+            });
+        }
 
-                        // Restore file path (must happen after setContent
-                        // because loadMarkdown resets the path)
-                        if (state.filePath) {
-                            window.__editorFilePath = state.filePath;
-                        }
-
-                        // Restore unsaved-changes flag and title
-                        if (state.hasUnsavedChanges) {
-                            api.setUnsavedChanges(true);
-                        }
-
-                        // Restore cursor position by node index
-                        var lines = document.querySelectorAll('#editor [data-node-id]');
-                        var idx = Math.min(state.cursorNodeIndex || 0, lines.length - 1);
-                        if (idx >= 0 && lines[idx]) {
-                            var nodeId = lines[idx].getAttribute('data-node-id');
-                            if (nodeId) {
-                                window.dispatchEvent(
-                                    new CustomEvent('__restoreCursor', {
-                                        detail: { nodeId: nodeId, offset: state.cursorOffset || 0 }
-                                    })
-                                );
-                            }
-                        }
-
-                        // Restore view mode
-                        if (state.viewMode && state.viewMode !== 'source') {
-                            window.dispatchEvent(
-                                new CustomEvent('__restoreViewMode', { detail: state.viewMode })
-                            );
-                        }
-                    }
-                    tryRestore();
-                })()
-            `);
-
-            MenuBuilder._reloadState = null;
+        // Switch to the previously active file
+        const activeEntry = loaded.find((e) => e.active) || first;
+        this.window.webContents.send('menu:action', 'view:switchFile', {
+            filePath: activeEntry.filePath,
         });
+
+        // Send session-restore data for cursor and ToC heading
+        const restoreEntries = loaded
+            .filter((e) => e.cursorPath || e.tocHeadingPath)
+            .map((e) => ({
+                filePath: e.filePath,
+                active: e.active,
+                cursorPath: e.cursorPath,
+                tocHeadingPath: e.tocHeadingPath,
+            }));
+        if (restoreEntries.length > 0) {
+            this.window.webContents.send('menu:action', 'session:restore', restoreEntries);
+        }
+
+        this.refreshMenu();
     }
 
     /**

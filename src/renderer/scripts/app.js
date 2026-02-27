@@ -961,8 +961,8 @@ class App {
             return this._notifyOpenFiles();
         };
 
-        // Expose file path and cursor info as globals so the reload handler
-        // can read them via executeJavaScript before the page unloads.
+        // Expose file path and cursor info as globals so integration tests
+        // (and other tooling) can inspect editor state.
         Object.defineProperty(window, '__editorFilePath', {
             get: () => this.editor?.currentFilePath ?? null,
             set: (v) => {
@@ -970,34 +970,15 @@ class App {
             },
             configurable: true,
         });
+
         Object.defineProperty(window, '__editorCursorNodeId', {
             get: () => this.editor?.syntaxTree?.treeCursor?.nodeId ?? null,
             configurable: true,
         });
+
         Object.defineProperty(window, '__editorCursorOffset', {
             get: () => this.editor?.syntaxTree?.treeCursor?.offset ?? 0,
             configurable: true,
-        });
-
-        // Listen for view-mode restore after a reload
-        window.addEventListener('__restoreViewMode', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail) {
-                this.editor.setViewMode(detail);
-            }
-        });
-
-        // Listen for cursor-position restore after a reload
-        window.addEventListener('__restoreCursor', (e) => {
-            const detail = /** @type {CustomEvent} */ (e).detail;
-            if (this.editor && detail?.nodeId) {
-                if (this.editor.syntaxTree)
-                    this.editor.syntaxTree.treeCursor = {
-                        nodeId: detail.nodeId,
-                        offset: detail.offset ?? 0,
-                    };
-                this.editor.placeCursor();
-            }
         });
     }
 

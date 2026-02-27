@@ -409,20 +409,73 @@ export class WritingRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const indent = attrs.indent || 0;
         const isOrdered = attrs.ordered;
+        const isChecklist = typeof attrs.checked === 'boolean';
         const number = attrs.number || 1;
 
-        // Always show as a styled list item (WYSIWYG)
-        element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
-        element.style.display = 'list-item';
-        element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-        if (isOrdered && visualNumber != null) {
-            element.style.counterSet = `list-item ${visualNumber}`;
+        /** @type {HTMLInputElement|null} */
+        let checkbox = null;
+
+        if (isChecklist) {
+            // Checklist: no bullet/number, show a checkbox
+            element.style.listStyleType = 'none';
+            element.style.display = 'block';
+            element.style.marginLeft = `${(indent + 1) * 1.5}em`;
+            element.classList.add('md-checklist-item');
+
+            checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'md-checklist-checkbox';
+            if (attrs.checked) {
+                checkbox.setAttribute('checked', 'checked');
+            }
+
+            // mousedown guard: prevent caret movement and selectionchange re-render
+            checkbox.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            checkbox.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const before = this.editor.getMarkdown();
+                node.attributes.checked = !node.attributes.checked;
+                this.editor.undoManager.recordChange({
+                    type: 'checklistToggle',
+                    before,
+                    after: this.editor.getMarkdown(),
+                });
+                this.editor.renderNodesAndPlaceCursor({ updated: [node.id] });
+                this.editor.setUnsavedChanges(true);
+            });
+
+            // Append checkbox AFTER content span (below) so the browser
+            // doesn't create a caret position before it. Absolute
+            // positioning keeps it visually to the left.
+        } else {
+            // Regular bullet or numbered list
+            element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
+            element.style.display = 'list-item';
+            element.style.marginLeft = `${(indent + 1) * 1.5}em`;
+            if (isOrdered && visualNumber != null) {
+                element.style.counterSet = `list-item ${visualNumber}`;
+            }
         }
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';
         this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
+
+        // Append checkbox inside a non-editable wrapper so the browser
+        // never creates caret positions around it.
+        if (checkbox) {
+            const wrapper = document.createElement('span');
+            wrapper.contentEditable = 'false';
+            wrapper.className = 'md-checklist-checkbox-wrapper';
+            wrapper.appendChild(checkbox);
+            element.appendChild(wrapper);
+        }
 
         return element;
     }

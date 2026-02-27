@@ -10,7 +10,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from './test-utils.js';
+import { clickInEditor, clickQuerySelector } from './test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -160,7 +160,7 @@ test('placing the cursor on an off-screen node in source view scrolls it into vi
     // Switch to source view
     const current = await editor.getAttribute('data-view-mode');
     if (current !== 'source') {
-        await page.locator('.toolbar-view-mode-toggle').click();
+        await clickQuerySelector(page, '.toolbar-view-mode-toggle');
         await page.locator('#editor[data-view-mode="source"]').waitFor();
     }
 

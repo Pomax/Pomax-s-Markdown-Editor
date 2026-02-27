@@ -1,5 +1,10 @@
 # AI Agent Notes
 
+Do not summarize this file after reading. Anytime you are about to perform
+reasoning, or execute a command, or ask a question, you should reread this
+file without summarizing it, so that you can obey the instructions contained
+within it.
+
 > **⚠️ CRITICAL — DO NOT FORGET THIS DOCUMENT ⚠️**
 >
 > This file must **never** leave session context, even if the context limit
@@ -176,6 +181,8 @@ In **writing mode**, the renderer places `data-node-id` attributes on the inline
 
 The toolbar receives the current node (possibly inline) via the `editor:selectionchange` event. `updateButtonStates(node)` walks from the node up through its parents to collect active inline formats, and resolves to the block parent for block-type button states (heading, paragraph, list, etc.). The mapping from inline node types to button IDs is defined in `Toolbar.INLINE_TYPE_TO_BUTTONS`. This map includes both markdown types (`bold`, `italic`, `strikethrough`) and their HTML tag equivalents (`strong`/`b` → bold, `em`/`i` → italic, `del`/`s` → strikethrough). Clicking a toolbar button while the cursor is inside an HTML tag strips the tag via `_findFormatSpan`'s HTML fallback path.
 
+The three list toolbar buttons (unordered, ordered, checklist) are mutually exclusive. `toggleList(kind)` accepts `'unordered' | 'ordered' | 'checklist'` — clicking the same kind toggles back to paragraph; clicking a different kind converts the contiguous run of list items in place.
+
 ### Toolbar layout
 
 The `#toolbar-container` uses CSS grid with three named areas: `left`, `center`, `right`. The file-button group (New, Open, Save) sits in the `left` area. The content toolbar (view mode toggle + formatting buttons) sits in the `center` area and is centred via `margin: 0 auto`. The `right` area is currently empty. File buttons dispatch document-level custom events (`file:new`, `file:loaded`, `file:save`) that the `App` class listens for.
@@ -224,6 +231,18 @@ syntaxTree.treeCursor = {
 
 Node IDs are ephemeral (regenerated on every parse), so cursor and ToC heading positions are persisted as **index paths** — arrays of zero-based child indices that walk the tree from root to the target node. For cursors the final element is the character offset. Methods: `getPathToCursor()` / `setCursorPath()` for cursors, `getPathToNode()` / `getNodeAtPath()` for arbitrary nodes (e.g. the active ToC heading).
 
+### Checklist (checkmark list) model
+
+Checklist items are regular `list-item` nodes distinguished by `attributes.checked` (a boolean). When `checked` is `undefined`, the item is an ordinary bullet or ordered list item. When `checked` is `false` or `true`, the item is a checklist item and serializes with `- [ ] ` or `- [x] ` prefix.
+
+- **Parser**: `_parseUnorderedListItem` detects `[ ] ` / `[x] ` / `[X] ` after the list marker, strips it from content, and sets `attributes.checked`.
+- **Writing renderer**: checklist items render an `<input type="checkbox">` with the mousedown guard. The click handler toggles `node.attributes.checked`, records an undo snapshot, and calls `renderNodesAndPlaceCursor`.
+- **Source renderer**: the checkbox prefix is included in the prefix `<span>`.
+- **Enter key**: pressing Enter inside a checklist item creates a new item with `checked: false` (not inherited from the parent item's state).
+- **`toggleList(kind)`**: converts between the three list kinds. When switching to `'checklist'`, sets `checked = false`; when switching away, deletes `checked`.
+- **Multi-select across html-block boundaries**: `toggleList` is `async`. When `treeRange` spans nodes that include html-block containers, a `dialog:confirm` prompt asks the user whether to lift the children out of the html-block. On cancel, the operation aborts and the selection is preserved. The `dialog:confirm` IPC channel is registered in `ipc-handler.js` → `registerDialogHandlers()` and exposed via `window.electronAPI.confirmDialog(message)` in `preload.cjs`.
+- **`_getNodesInRange()`**: recursively enters html-block children so that all leaf nodes within the range are collected, not just the html-block wrapper.
+
 ### HTML block model (details/summary)
 
 ```
@@ -263,11 +282,11 @@ html-block (type: 'html-block', tagName: 'details')
 
 ### The `mousedown` guard
 
-Interactive elements inside the editor (like the disclosure triangle) must
-intercept **`mousedown`** with `preventDefault()` + `stopPropagation()`.
-Without this, `mousedown` moves the caret, which fires `selectionchange`,
-which triggers a full re-render that destroys the element before `click`
-arrives.
+Interactive elements inside the editor (like the disclosure triangle and
+checklist checkboxes) must intercept **`mousedown`** with
+`preventDefault()` + `stopPropagation()`. Without this, `mousedown` moves
+the caret, which fires `selectionchange`, which triggers a full re-render
+that destroys the element before `click` arrives.
 
 ### bareText preservation
 
@@ -288,7 +307,9 @@ single line via `_reparseLine`, they must check whether the node had
 ## Settings System
 
 - **Main process**: `SettingsManager` persists settings in SQLite via
-  `better-sqlite3`.
+  `better-sqlite3`. A module-level singleton `settings` is exported from
+  `settings-manager.js` — import it directly anywhere in the main process
+  instead of passing instances through constructors.
 - **Renderer**: communicates via `window.electronAPI.getSetting(key)` /
   `setSetting(key, value)` (IPC bridge in `preload.cjs`).
 - **Preferences modal**: `PreferencesModal` class with sidebar nav sections.
@@ -296,6 +317,14 @@ single line via `_reparseLine`, they must check whether the node had
   are saved.
 - **App wiring**: `app.js` listens for settings events and applies them to
   the editor instance, then calls `render()`.
+
+### Reload
+
+`Help → Reload` (`Ctrl+Shift+R`) does **not** touch the database. It calls
+`webContents.reloadIgnoringCache()` to reload the front-end (HTML, CSS, JS),
+then runs the same startup sequence: reads settings from the DB, restores
+open files from disk based on the persisted `openFiles` list. Unsaved changes
+and untitled documents do not survive a reload.
 
 ## Playwright Workers
 
@@ -319,6 +348,20 @@ TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
 - `null` when the selection is collapsed (i.e., just a caret).
 - Used by `deleteSelectedRange()`, `_getSelectedMarkdown()`, and all input
   handlers that must respect an active selection.
+
+**Selection preservation (`_editorInteractionPending`)**:
+
+The syntax tree owns the selection — external UI interactions (toolbar clicks, dialog focus, tab-bar clicks) must **never** clear `treeRange`. This is enforced by an `_editorInteractionPending` flag on the `Editor` instance:
+
+1. `handleMouseDown` (on the editor container) and `handleKeyDown` set `_editorInteractionPending = true`.
+2. `handleSelectionChange` reads the flag, clears it, and passes `{ preserveRange: !fromEditor }` to `syncCursorFromDOM()`.
+3. When `preserveRange` is `true` and the DOM selection is collapsed, `syncCursorFromDOM` **does not** null `treeRange` — the existing range from step 1 is preserved intact.
+
+This means toolbar buttons with `mousedown preventDefault` (which prevent the editor from losing focus) will not accidentally clear the user's text selection in the tree.
+
+**`placeSelection()`**:
+
+Rebuilds the DOM selection from `editor.treeRange`. Called by `setViewMode()` after a full render so the user's selection survives a view-mode switch. Delegates to `cursorManager.placeSelection()`, which uses `_resolveOffsetInDOM(nodeId, offset)` to map tree coordinates back to DOM text-node positions.
 
 ### `deleteSelectedRange()`
 
@@ -360,18 +403,40 @@ to find the block parent for `blockNodeId` and offset computation.
 
 ### Cross-node selection in writing mode
 
-Keyboard-based selection (Shift+ArrowDown) does not work reliably for
-cross-node selection in writing mode because the editor re-renders when the
-cursor moves between nodes, destroying the selection. Use a programmatic
-helper that sets a DOM `Range` via `page.evaluate()`:
+Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably for cross-node selection in writing mode because the editor re-renders when the cursor moves between nodes, destroying the selection. Use a programmatic helper that sets both the DOM `Range` and `editor.treeRange` directly:
 
 ```js
 async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
-  await page.evaluate((args) => {
-    // Find nodes by textContent, walk to text nodes, set Range
-  }, [startText, startOff, endText, endOff]);
+  // 1. Click inside the editor to ensure focus
+  const startLine = page.locator('.md-line', { hasText: startText }).first();
+  await startLine.click();
+
+  // 2. Set DOM Range + treeRange programmatically
+  await page.evaluate(({ sText, sOff, eText, eOff }) => {
+    const editor = document.getElementById('editor');
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let startNode, endNode;
+    while (walker.nextNode()) {
+      if (!startNode && walker.currentNode.textContent.includes(sText))
+        startNode = walker.currentNode;
+      if (walker.currentNode.textContent.includes(eText))
+        endNode = walker.currentNode;
+    }
+    const range = document.createRange();
+    range.setStart(startNode, sOff);
+    range.setEnd(endNode, eOff);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    // Set treeRange directly since syncCursorFromDOM may not fire reliably
+    const api = window.__editor;
+    api.syncCursorFromDOM();
+  }, { sText: startText, sOff: startOff, eText: endText, eOff: endOff });
 }
 ```
+
+**Important**: the helper must also verify that `treeRange` was set (via `window.__editor`), because DOM selection events during re-renders are unreliable. The `page.evaluate` args must be passed as an object (not an array) to satisfy TSC's type inference.
 
 ### Test self-containment for fullyParallel
 
@@ -387,3 +452,5 @@ content, set view mode) rather than depending on prior tests. Module-level
   `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`,
   `.md-details-body` classes.
 - Collapse is achieved via `.md-details:not(.md-details--open) .md-details-body { display: none; }`.
+- Checklist items use `.md-checklist-item` (on the line) and `.md-checklist-checkbox` (the `<input>` element). They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
+- `.writing-view .md-list-item.md-focused` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

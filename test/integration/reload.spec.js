@@ -1,11 +1,16 @@
 /**
  * @fileoverview Integration test for the reload functionality.
- * Verifies that Help → Reload preserves document content, cursor position,
- * and file association across a full page reload.
+ * Verifies that Help → Reload reloads the front-end and restores
+ * open files from the database (same as a normal app launch).
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp } from './test-utils.js';
+import { launchApp, projectRoot } from './test-utils.js';
+
+const readmePath = path.join(projectRoot, 'README.md');
+const readmeContent = fs.readFileSync(readmePath, 'utf-8');
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -21,19 +26,23 @@ test.afterAll(async () => {
     await electronApp.close();
 });
 
-test('reload preserves document content', async () => {
-    const editor = page.locator('#editor');
-    await clickInEditor(page, editor);
-
-    // Type some content
-    await page.keyboard.type('# Hello');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('This is a test document.');
-
-    // Grab the text before reload
-    const contentBefore = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-    expect(contentBefore).toContain('# Hello');
-    expect(contentBefore).toContain('This is a test document.');
+test('reload restores a saved file from disk', async () => {
+    // Persist the README as the open file in the settings DB so that
+    // reload has something to restore.
+    await electronApp.evaluate((electron, rPath) => {
+        const sm = /** @type {any} */ (globalThis).__settingsManager;
+        sm.set('openFiles', [
+            {
+                filePath: rPath,
+                active: true,
+                cursorOffset: 0,
+                contentHash: 0,
+                scrollTop: 0,
+                cursorPath: null,
+                tocHeadingPath: null,
+            },
+        ]);
+    }, readmePath);
 
     // Trigger reload via the IPC API
     await page.evaluate(() => window.electronAPI?.reload());
@@ -46,17 +55,16 @@ test('reload preserves document content', async () => {
         { timeout: 10000 },
     );
 
-    // Give the restore script time to run
+    // Wait for the content to be restored from disk
     await page.waitForFunction(
         () => {
             const content = window.editorAPI?.getContent() ?? '';
-            return content.includes('Hello');
+            return content.includes('Markdown Editor');
         },
         { timeout: 10000 },
     );
 
-    // Verify the content survived the reload
+    // Verify the content matches the on-disk file
     const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-    expect(contentAfter).toContain('# Hello');
-    expect(contentAfter).toContain('This is a test document.');
+    expect(contentAfter).toContain("# Pomax's Markdown Editor");
 });
