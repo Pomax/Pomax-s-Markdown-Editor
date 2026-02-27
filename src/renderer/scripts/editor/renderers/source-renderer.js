@@ -250,10 +250,12 @@ export class SourceRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const indent = '  '.repeat(attrs.indent || 0);
         const marker = attrs.ordered ? `${attrs.number}. ` : '- ';
+        const checkbox =
+            typeof attrs.checked === 'boolean' ? (attrs.checked ? '[x] ' : '[ ] ') : '';
 
         const prefixSpan = document.createElement('span');
         prefixSpan.className = 'md-syntax md-list-marker';
-        prefixSpan.textContent = indent + marker;
+        prefixSpan.textContent = indent + marker + checkbox;
 
         const contentSpan = document.createElement('span');
         contentSpan.className = 'md-content';

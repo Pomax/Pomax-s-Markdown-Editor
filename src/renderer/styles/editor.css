@@ -198,6 +198,17 @@
     font-family: var(--font-family-mono);
 }
 
+/* ========== Checklist ========== */
+.md-checklist-item {
+    position: relative;
+}
+
+.md-checklist-checkbox {
+    margin-right: 0.4em;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
 /* ========== Horizontal Rule ========== */
 .md-horizontal-rule {
     border: none;
@@ -283,6 +294,15 @@
     margin-right: -4px;
     padding-left: 4px;
     padding-right: 4px;
+}
+
+/* List items set their own margin-left via inline styles; the generic
+   focused-line offsets must not interfere. */
+.writing-view .md-list-item.md-focused {
+    margin-left: unset;
+    padding-left: unset;
+    margin-right: unset;
+    padding-right: unset;
 }
 
 /* Placeholder for empty content */

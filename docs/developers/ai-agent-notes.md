@@ -176,6 +176,8 @@ In **writing mode**, the renderer places `data-node-id` attributes on the inline
 
 The toolbar receives the current node (possibly inline) via the `editor:selectionchange` event. `updateButtonStates(node)` walks from the node up through its parents to collect active inline formats, and resolves to the block parent for block-type button states (heading, paragraph, list, etc.). The mapping from inline node types to button IDs is defined in `Toolbar.INLINE_TYPE_TO_BUTTONS`. This map includes both markdown types (`bold`, `italic`, `strikethrough`) and their HTML tag equivalents (`strong`/`b` → bold, `em`/`i` → italic, `del`/`s` → strikethrough). Clicking a toolbar button while the cursor is inside an HTML tag strips the tag via `_findFormatSpan`'s HTML fallback path.
 
+The three list toolbar buttons (unordered, ordered, checklist) are mutually exclusive. `toggleList(kind)` accepts `'unordered' | 'ordered' | 'checklist'` — clicking the same kind toggles back to paragraph; clicking a different kind converts the contiguous run of list items in place.
+
 ### Toolbar layout
 
 The `#toolbar-container` uses CSS grid with three named areas: `left`, `center`, `right`. The file-button group (New, Open, Save) sits in the `left` area. The content toolbar (view mode toggle + formatting buttons) sits in the `center` area and is centred via `margin: 0 auto`. The `right` area is currently empty. File buttons dispatch document-level custom events (`file:new`, `file:loaded`, `file:save`) that the `App` class listens for.
@@ -224,6 +226,16 @@ syntaxTree.treeCursor = {
 
 Node IDs are ephemeral (regenerated on every parse), so cursor and ToC heading positions are persisted as **index paths** — arrays of zero-based child indices that walk the tree from root to the target node. For cursors the final element is the character offset. Methods: `getPathToCursor()` / `setCursorPath()` for cursors, `getPathToNode()` / `getNodeAtPath()` for arbitrary nodes (e.g. the active ToC heading).
 
+### Checklist (checkmark list) model
+
+Checklist items are regular `list-item` nodes distinguished by `attributes.checked` (a boolean). When `checked` is `undefined`, the item is an ordinary bullet or ordered list item. When `checked` is `false` or `true`, the item is a checklist item and serializes with `- [ ] ` or `- [x] ` prefix.
+
+- **Parser**: `_parseUnorderedListItem` detects `[ ] ` / `[x] ` / `[X] ` after the list marker, strips it from content, and sets `attributes.checked`.
+- **Writing renderer**: checklist items render an `<input type="checkbox">` with the mousedown guard. The click handler toggles `node.attributes.checked`, records an undo snapshot, and calls `renderNodesAndPlaceCursor`.
+- **Source renderer**: the checkbox prefix is included in the prefix `<span>`.
+- **Enter key**: pressing Enter inside a checklist item creates a new item with `checked: false` (not inherited from the parent item's state).
+- **`toggleList(kind)`**: converts between the three list kinds. When switching to `'checklist'`, sets `checked = false`; when switching away, deletes `checked`.
+
 ### HTML block model (details/summary)
 
 ```
@@ -263,11 +275,11 @@ html-block (type: 'html-block', tagName: 'details')
 
 ### The `mousedown` guard
 
-Interactive elements inside the editor (like the disclosure triangle) must
-intercept **`mousedown`** with `preventDefault()` + `stopPropagation()`.
-Without this, `mousedown` moves the caret, which fires `selectionchange`,
-which triggers a full re-render that destroys the element before `click`
-arrives.
+Interactive elements inside the editor (like the disclosure triangle and
+checklist checkboxes) must intercept **`mousedown`** with
+`preventDefault()` + `stopPropagation()`. Without this, `mousedown` moves
+the caret, which fires `selectionchange`, which triggers a full re-render
+that destroys the element before `click` arrives.
 
 ### bareText preservation
 
@@ -387,3 +399,5 @@ content, set view mode) rather than depending on prior tests. Module-level
   `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`,
   `.md-details-body` classes.
 - Collapse is achieved via `.md-details:not(.md-details--open) .md-details-body { display: none; }`.
+- Checklist items use `.md-checklist-item` (on the line) and `.md-checklist-checkbox` (the `<input>` element). They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
+- `.writing-view .md-list-item.md-focused` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

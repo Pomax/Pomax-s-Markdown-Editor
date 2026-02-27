@@ -440,6 +440,16 @@ export class DFAParser {
 
         const node = new SyntaxNode('list-item', content);
         node.attributes = { ordered: false, indent };
+
+        // Detect checklist syntax: [ ] or [x]/[X] at the start of content
+        if (content.startsWith('[ ] ')) {
+            node.attributes.checked = false;
+            node.content = content.slice(4);
+        } else if (content.startsWith('[x] ') || content.startsWith('[X] ')) {
+            node.attributes.checked = true;
+            node.content = content.slice(4);
+        }
+
         node.startLine = startLine;
         node.endLine = startLine;
         return node;

@@ -528,7 +528,13 @@ export class Editor {
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
-                return `${indent}${marker}${content}`;
+                const checkbox =
+                    typeof attributes?.checked === 'boolean'
+                        ? attributes.checked
+                            ? '[x] '
+                            : '[ ] '
+                        : '';
+                return `${indent}${marker}${checkbox}${content}`;
             }
             case 'image': {
                 const imgAlt = attributes?.alt ?? content;
@@ -570,7 +576,8 @@ export class Editor {
             case 'list-item': {
                 const indent = '  '.repeat(attributes?.indent || 0);
                 const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
-                return indent.length + marker.length;
+                const checkbox = typeof attributes?.checked === 'boolean' ? '[ ] ' : '';
+                return indent.length + marker.length + checkbox.length;
             }
             case 'image':
                 return 0;
@@ -933,13 +940,18 @@ export class Editor {
     /**
      * Toggles list formatting on the current node.
      *
-     * - Non-list → list-item (ordered or unordered)
-     * - List-item of same type → paragraph (toggle off)
-     * - List-item of other type → switch ordered ↔ unordered
+     * - Non-list → list-item (of the requested kind)
+     * - List-item of same kind → paragraph (toggle off)
+     * - List-item of different kind → switch to new kind
      *
-     * @param {boolean} ordered - `true` for numbered, `false` for bullet
+     * The three list kinds are:
+     * - `'unordered'` — bullet list (`- text`)
+     * - `'ordered'`   — numbered list (`1. text`)
+     * - `'checklist'` — checklist (`- [ ] text` / `- [x] text`)
+     *
+     * @param {'unordered' | 'ordered' | 'checklist'} kind
      */
-    toggleList(ordered) {
+    toggleList(kind) {
         const currentNode = this.getCurrentBlockNode();
         if (!currentNode || !this.syntaxTree) return;
 
@@ -947,6 +959,45 @@ export class Editor {
         if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
 
         const before = this.getMarkdown();
+
+        /**
+         * Returns the list kind for a list-item node.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+         * @returns {'unordered' | 'ordered' | 'checklist'}
+         */
+        const getListKind = (n) => {
+            if (typeof n.attributes.checked === 'boolean') return 'checklist';
+            return n.attributes.ordered ? 'ordered' : 'unordered';
+        };
+
+        /**
+         * Applies list-item attributes for a given kind.
+         * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+         * @param {'unordered' | 'ordered' | 'checklist'} k
+         * @param {number} [num]
+         */
+        const applyKind = (n, k, num) => {
+            n.type = 'list-item';
+            switch (k) {
+                case 'ordered':
+                    n.attributes = {
+                        ordered: true,
+                        indent: n.attributes.indent || 0,
+                        number: num || 1,
+                    };
+                    break;
+                case 'checklist':
+                    n.attributes = {
+                        ordered: false,
+                        indent: n.attributes.indent || 0,
+                        checked: false,
+                    };
+                    break;
+                default:
+                    n.attributes = { ordered: false, indent: n.attributes.indent || 0 };
+                    break;
+            }
+        };
 
         // Multi-node selection: convert each node in the range to a list item.
         if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
@@ -959,11 +1010,8 @@ export class Editor {
             for (const n of nodes) {
                 if (n.type === 'html-block' && n.children.length > 0) continue;
                 if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
-                n.type = 'list-item';
-                n.attributes = { ordered, indent: 0 };
-                if (ordered) {
-                    n.attributes.number = num++;
-                }
+                applyKind(n, kind, num);
+                if (kind === 'ordered') num++;
                 updatedIds.push(n.id);
             }
             if (updatedIds.length === 0) return;
@@ -984,23 +1032,20 @@ export class Editor {
         if (currentNode.type === 'list-item') {
             const siblings = this.getSiblings(currentNode);
             const run = this._getContiguousListRun(siblings, currentNode);
+            const currentKind = getListKind(currentNode);
 
-            if (!!currentNode.attributes.ordered === ordered) {
-                // Same list type → convert entire run back to paragraphs
+            if (currentKind === kind) {
+                // Same list kind → convert entire run back to paragraphs
                 for (const n of run) {
                     n.type = 'paragraph';
                     n.attributes = {};
                 }
             } else {
-                // Different list type → switch entire run
+                // Different list kind → switch entire run
                 let num = 1;
                 for (const n of run) {
-                    n.attributes.ordered = ordered;
-                    if (ordered) {
-                        n.attributes.number = num++;
-                    } else {
-                        n.attributes.number = undefined;
-                    }
+                    applyKind(n, kind, num);
+                    if (kind === 'ordered') num++;
                 }
             }
 
@@ -1013,11 +1058,7 @@ export class Editor {
             this.setUnsavedChanges(true);
             return;
         }
-        currentNode.type = 'list-item';
-        currentNode.attributes = { ordered, indent: 0 };
-        if (ordered) {
-            currentNode.attributes.number = 1;
-        }
+        applyKind(currentNode, kind, 1);
 
         this.undoManager.recordChange({
             type: 'changeType',

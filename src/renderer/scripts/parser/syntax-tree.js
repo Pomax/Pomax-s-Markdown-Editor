@@ -39,6 +39,7 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
  */
@@ -281,7 +282,13 @@ export class SyntaxNode {
             case 'list-item': {
                 const indent = '  '.repeat(this.attributes.indent || 0);
                 const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : '- ';
-                return `${indent}${marker}${this.content}`;
+                const checkbox =
+                    typeof this.attributes.checked === 'boolean'
+                        ? this.attributes.checked
+                            ? '[x] '
+                            : '[ ] '
+                        : '';
+                return `${indent}${marker}${checkbox}${this.content}`;
             }
             case 'horizontal-rule':
                 return '---';
@@ -624,6 +631,9 @@ export class SyntaxTree {
                     ordered: !!node.attributes.ordered,
                     indent: node.attributes.indent || 0,
                     ...(node.attributes.ordered ? { number: node.attributes.number || 1 } : {}),
+                    ...(typeof node.attributes.checked === 'boolean'
+                        ? { checked: node.attributes.checked }
+                        : {}),
                 };
                 break;
             case 'code-block':

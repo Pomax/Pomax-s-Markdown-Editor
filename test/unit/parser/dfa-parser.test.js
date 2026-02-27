@@ -360,6 +360,54 @@ describe('DFAParser', () => {
                 assert.strictEqual(child.type, 'list-item');
             }
         });
+
+        it('should parse an unchecked checklist item', () => {
+            const tree = parser.parse('- [ ] Task');
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'list-item');
+            assert.strictEqual(tree.children[0].content, 'Task');
+            assert.strictEqual(tree.children[0].attributes.ordered, false);
+            assert.strictEqual(tree.children[0].attributes.checked, false);
+        });
+
+        it('should parse a checked checklist item with lowercase x', () => {
+            const tree = parser.parse('- [x] Done');
+            assert.strictEqual(tree.children[0].content, 'Done');
+            assert.strictEqual(tree.children[0].attributes.checked, true);
+        });
+
+        it('should parse a checked checklist item with uppercase X', () => {
+            const tree = parser.parse('- [X] Done');
+            assert.strictEqual(tree.children[0].content, 'Done');
+            assert.strictEqual(tree.children[0].attributes.checked, true);
+        });
+
+        it('should parse checklist items with star marker', () => {
+            const tree = parser.parse('* [ ] Star task');
+            assert.strictEqual(tree.children[0].type, 'list-item');
+            assert.strictEqual(tree.children[0].content, 'Star task');
+            assert.strictEqual(tree.children[0].attributes.checked, false);
+        });
+
+        it('should parse indented checklist items', () => {
+            const tree = parser.parse('- [ ] Top\n  - [x] Nested');
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(tree.children[0].attributes.indent, 0);
+            assert.strictEqual(tree.children[0].attributes.checked, false);
+            assert.strictEqual(tree.children[1].attributes.indent, 1);
+            assert.strictEqual(tree.children[1].attributes.checked, true);
+        });
+
+        it('should roundtrip checklist items through toMarkdown', () => {
+            const tree = parser.parse('- [ ] Unchecked\n- [x] Checked');
+            assert.strictEqual(tree.children[0].toMarkdown(), '- [ ] Unchecked');
+            assert.strictEqual(tree.children[1].toMarkdown(), '- [x] Checked');
+        });
+
+        it('should not treat regular list items as checklists', () => {
+            const tree = parser.parse('- Regular item');
+            assert.strictEqual(tree.children[0].attributes.checked, undefined);
+        });
     });
 
     // ── Horizontal rules ────────────────────────────────────────

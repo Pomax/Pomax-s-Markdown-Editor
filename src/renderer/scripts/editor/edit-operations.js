@@ -844,6 +844,9 @@ export class EditOperations {
             if (node.attributes.ordered) {
                 newAttrs.number = (node.attributes.number || 1) + 1;
             }
+            if (typeof node.attributes.checked === 'boolean') {
+                newAttrs.checked = false;
+            }
             const newItem = new SyntaxNode('list-item', contentAfter);
             newItem.attributes = newAttrs;
             const siblings = this.editor.getSiblings(node);
