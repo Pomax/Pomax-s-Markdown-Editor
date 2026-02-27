@@ -203,11 +203,15 @@
     position: relative;
 }
 
-.md-checklist-checkbox {
+.md-checklist-checkbox-wrapper {
     position: absolute;
     left: -1.4em;
     top: 50%;
     transform: translateY(-50%);
+    user-select: none;
+}
+
+.md-checklist-checkbox {
     cursor: pointer;
     margin: 0;
 }

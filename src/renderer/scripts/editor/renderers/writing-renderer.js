@@ -467,9 +467,14 @@ export class WritingRenderer {
         this.renderInlineContent(node, contentSpan);
         element.appendChild(contentSpan);
 
-        // Append checkbox after content so it's not a caret target.
+        // Append checkbox inside a non-editable wrapper so the browser
+        // never creates caret positions around it.
         if (checkbox) {
-            element.appendChild(checkbox);
+            const wrapper = document.createElement('span');
+            wrapper.contentEditable = 'false';
+            wrapper.className = 'md-checklist-checkbox-wrapper';
+            wrapper.appendChild(checkbox);
+            element.appendChild(wrapper);
         }
 
         return element;
