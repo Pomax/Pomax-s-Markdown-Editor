@@ -307,7 +307,7 @@ test('cursors sync after multi-line paste', async () => {
     expect(cursor, 'syntaxTree.treeCursor should be set after multi-line paste').not.toBeNull();
 });
 
-test('cursors are both null after blur in writing view', async () => {
+test('treeCursor persists after blur in writing view', async () => {
     await loadContent(page, '# Heading\n\nParagraph');
     await setWritingView(page);
 
@@ -327,5 +327,6 @@ test('cursors are both null after blur in writing view', async () => {
     const cursorAfter = await page.evaluate(
         () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
     );
-    expect(cursorAfter, 'syntaxTree.treeCursor should be null after blur').toBeNull();
+    expect(cursorAfter, 'syntaxTree.treeCursor should persist after blur').not.toBeNull();
+    expect(cursorAfter.offset).toBe(cursorBefore.offset);
 });

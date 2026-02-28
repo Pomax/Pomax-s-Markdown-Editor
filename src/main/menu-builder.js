@@ -24,17 +24,16 @@ export class MenuBuilder {
         /** @type {import('./file-manager.js').FileManager} */
         this.fileManager = fileManager;
 
-        /** @type {boolean} Whether the debug context-menu listener has been registered */
-        this._debugContextMenuRegistered = false;
-
-        /** @type {boolean} Whether DevTools is currently open */
-        this._devToolsOpen = false;
+        /** @type {boolean} Whether the context-menu listener has been registered */
+        this._contextMenuRegistered = false;
 
         /**
          * List of currently open files, sent from the renderer.
          * @type {Array<{id: string, filePath: string|null, label: string, active: boolean}>}
          */
         this.openFiles = [];
+
+        this._registerContextMenu();
     }
 
     /**
@@ -674,46 +673,35 @@ export class MenuBuilder {
     }
 
     /**
-     * Handles the Debug menu action.
-     * Opens DevTools and enables the right-click context menu.
-     * The context menu is automatically disabled when DevTools is closed.
+     * Registers the right-click context menu on the renderer's
+     * webContents.  Always active — not gated behind DevTools.
      */
-    handleDebug() {
-        if (!this.window) return;
+    _registerContextMenu() {
+        if (!this.window || this._contextMenuRegistered) return;
+        this._contextMenuRegistered = true;
 
         const wc = this.window.webContents;
 
-        // Only register listeners once
-        if (!this._debugContextMenuRegistered) {
-            this._debugContextMenuRegistered = true;
-            this._devToolsOpen = false;
+        wc.on('context-menu', (_event, params) => {
+            const menu = Menu.buildFromTemplate([
+                { role: 'copy' },
+                { role: 'cut' },
+                { type: 'separator' },
+                {
+                    label: 'Inspect Element',
+                    click: () => wc.inspectElement(params.x, params.y),
+                },
+            ]);
+            menu.popup({ window: this.window });
+        });
+    }
 
-            wc.on('context-menu', (_event, params) => {
-                if (!this._devToolsOpen) return;
-
-                const menu = Menu.buildFromTemplate([
-                    {
-                        label: 'Inspect Element',
-                        click: () => wc.inspectElement(params.x, params.y),
-                    },
-                    { type: 'separator' },
-                    { role: 'copy' },
-                    { role: 'paste' },
-                    { role: 'selectAll' },
-                ]);
-                menu.popup({ window: this.window });
-            });
-
-            wc.on('devtools-opened', () => {
-                this._devToolsOpen = true;
-            });
-
-            wc.on('devtools-closed', () => {
-                this._devToolsOpen = false;
-            });
-        }
-
-        wc.openDevTools();
+    /**
+     * Handles the Debug menu action.  Opens DevTools.
+     */
+    handleDebug() {
+        if (!this.window) return;
+        this.window.webContents.openDevTools();
     }
 
     /**

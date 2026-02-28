@@ -511,6 +511,172 @@ test.describe('Cut', () => {
 });
 
 // ──────────────────────────────────────────────
+//  Writing-view copy (block prefix + HTML repair)
+// ──────────────────────────────────────────────
+
+test.describe('Writing-view copy', () => {
+    test('cross-node copy produces markdown with block prefixes', async ({ page }) => {
+        await page.goto(baseURL);
+        await page.waitForSelector('#editor .md-line');
+
+        // Load multi-node content: heading + paragraph
+        await page.evaluate(() => {
+            /** @type {any} */ (window).editorAPI.setContent('# heading\n\nte*xt* _o_ne');
+        });
+        await page.waitForTimeout(300);
+
+        // Select from "a" in "heading" (offset 2 in rendered "heading") to
+        // after "o" in "one" (rendered "xt one" → we want through "o").
+        // In raw content: heading content = "heading", start at raw offset 2 ("a")
+        //                 paragraph content = "te*xt* _o_ne", we want through "_o_" = raw offset 10
+        // Set treeRange + DOM selection programmatically.
+        const clipboardText = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            const tree = editor.syntaxTree;
+            const nodes = tree.children;
+            const headingNode = nodes[0]; // heading1
+            const paraNode = nodes[1]; // paragraph
+
+            editor.treeRange = {
+                startNodeId: headingNode.id,
+                startOffset: 2, // after "he" → "ading"
+                endNodeId: paraNode.id,
+                endOffset: 10, // "te*xt* _o_" = 10 chars
+            };
+
+            return editor.clipboardHandler._getSelectedMarkdownWriting();
+        });
+
+        expect(clipboardText).toBe('# ading\n\nte*xt* _o_');
+    });
+
+    test('single-node copy in heading preserves # prefix', async ({ page }) => {
+        await page.goto(baseURL);
+        await page.waitForSelector('#editor .md-line');
+
+        await page.evaluate(() => {
+            /** @type {any} */ (window).editorAPI.setContent('# heading');
+        });
+        await page.waitForTimeout(300);
+
+        const clipboardText = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            const tree = editor.syntaxTree;
+            const headingNode = tree.children[0];
+
+            editor.treeRange = {
+                startNodeId: headingNode.id,
+                startOffset: 2,
+                endNodeId: headingNode.id,
+                endOffset: 7, // "ading"
+            };
+
+            return editor.clipboardHandler._getSelectedMarkdownWriting();
+        });
+
+        expect(clipboardText).toBe('# ading');
+    });
+
+    test('copy repairs sliced HTML inline tags', async ({ page }) => {
+        await page.goto(baseURL);
+        await page.waitForSelector('#editor .md-line');
+
+        await page.evaluate(() => {
+            /** @type {any} */ (window).editorAPI.setContent('and <strong>inline</strong> html');
+        });
+        await page.waitForTimeout(300);
+
+        const clipboardText = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            const tree = editor.syntaxTree;
+            const paraNode = tree.children[0];
+
+            // Select from between "a"/"n" in "and" (offset 1) to
+            // between "n"/"l" in "inline" (inside <strong>):
+            // raw content: "and <strong>inline</strong> html"
+            // offset 1 = after "a" → "nd <strong>in..."
+            // "and <strong>in" = 14 chars from start → offset 14
+            editor.treeRange = {
+                startNodeId: paraNode.id,
+                startOffset: 1, // after "a"
+                endNodeId: paraNode.id,
+                endOffset: 14, // "nd <strong>in"
+            };
+
+            return editor.clipboardHandler._getSelectedMarkdownWriting();
+        });
+
+        expect(clipboardText).toBe('nd <strong>in</strong>');
+    });
+});
+
+// ──────────────────────────────────────────────
+//  Writing-view cut (copy + delete)
+// ──────────────────────────────────────────────
+
+test.describe('Writing-view cut', () => {
+    test('cross-node cut copies markdown and removes content', async ({ page }) => {
+        await page.goto(baseURL);
+        await page.waitForSelector('#editor .md-line');
+
+        // Load: heading + paragraph + another paragraph
+        await page.evaluate(() => {
+            /** @type {any} */ (window).editorAPI.setContent(
+                '# heading\n\nte*xt* _o_ne\n\nand <strong>inline</strong> html',
+            );
+        });
+        await page.waitForTimeout(300);
+
+        // First verify what getSelectedMarkdown returns for the cut range.
+        const clipboardText = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            const tree = editor.syntaxTree;
+            const headingNode = tree.children[0];
+            const paraNode = tree.children[1];
+
+            editor.treeRange = {
+                startNodeId: headingNode.id,
+                startOffset: 2, // after "he"
+                endNodeId: paraNode.id,
+                endOffset: 7, // "te*xt* " (7 chars, note trailing space)
+            };
+
+            return editor.clipboardHandler._getSelectedMarkdownWriting();
+        });
+
+        expect(clipboardText).toBe('# ading\n\nte*xt* ');
+
+        // Now perform the actual cut via deleteSelectedRange and check
+        // the remaining document.
+        const remainingMarkdown = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            const tree = editor.syntaxTree;
+            const headingNode = tree.children[0];
+            const paraNode = tree.children[1];
+
+            // Re-set the range (getSelectedMarkdown may have synced).
+            editor.treeRange = {
+                startNodeId: headingNode.id,
+                startOffset: 2,
+                endNodeId: paraNode.id,
+                endOffset: 7,
+            };
+
+            const rangeResult = editor.rangeOperations.deleteSelectedRange();
+            if (rangeResult) {
+                editor.recordAndRender(rangeResult.before, rangeResult.hints);
+            }
+
+            return editor.syntaxTree.toMarkdown();
+        });
+
+        // "he" merged with "_o_ne" → "he_o_ne" as a heading,
+        // third paragraph untouched.
+        expect(remainingMarkdown).toBe('# he_o_ne\n\nand <strong>inline</strong> html');
+    });
+});
+
+// ──────────────────────────────────────────────
 //  Undo/redo after range operations
 // ──────────────────────────────────────────────
 

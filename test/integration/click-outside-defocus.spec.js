@@ -62,7 +62,7 @@ test('loading content gives the editor DOM focus so defocus works without a prio
     expect(defocusedText).toContain('My Heading');
 });
 
-test('clicking outside the editor hides active-node highlight in writing mode', async () => {
+test('clicking outside the editor preserves active-node highlight in writing mode', async () => {
     // Load content and switch to writing view.
     await loadContent(page, markdown);
     await setWritingView(page);
@@ -80,12 +80,14 @@ test('clicking outside the editor hides active-node highlight in writing mode', 
     // The heading should have the md-focused class.
     await expect(heading).toHaveClass(/md-focused/);
 
-    // Click outside the editor (the editor-container background).
+    // Blur the editor (simulates clicking the editor-container padding
+    // or switching to another app).
     await defocusEditor(page);
 
-    // After defocus no node should carry the md-focused class.
+    // The active node should retain its md-focused class — blur does
+    // not clear tree state or re-render.
     const focusedNodes = page.locator('#editor .md-focused');
-    expect(await focusedNodes.count()).toBe(0);
+    expect(await focusedNodes.count()).toBe(1);
 
     // The heading should still show its formatted text.
     const firstLine = page.locator('#editor .md-line').first();
