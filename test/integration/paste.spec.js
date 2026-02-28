@@ -118,8 +118,8 @@ test.describe('Paste in source view', () => {
         await page.keyboard.press(HOME);
         await page.keyboard.press(`${MOD}+Shift+${END}`);
         // Extend selection to last line
-        await page.keyboard.press(`Shift+ArrowDown`);
-        await page.keyboard.press(`Shift+ArrowDown`);
+        await page.keyboard.press('Shift+ArrowDown');
+        await page.keyboard.press('Shift+ArrowDown');
         await page.keyboard.press(`Shift+${END}`);
 
         await writeClipboard('only this');
@@ -167,6 +167,39 @@ test.describe('Paste in source view', () => {
         expect(md).toContain('first');
         expect(md).toContain('second');
         expect(md).toContain('third');
+    });
+
+    test('paste does not trigger a full render', async () => {
+        await loadContent(page, 'alpha\n\nbeta\n\ngamma');
+        await setSourceView(page);
+
+        const lines = page.locator('#editor .md-line');
+        await clickInEditor(page, lines.nth(1));
+        await page.keyboard.press(END);
+
+        // Instrument fullRender AFTER clicking so click-triggered renders
+        // don't produce false positives.
+        await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            editor._pasteTestFullRenderCount = 0;
+            const origFullRender = editor.fullRender.bind(editor);
+            editor.fullRender = (/** @type {any[]} */ ...args) => {
+                editor._pasteTestFullRenderCount++;
+                return origFullRender(...args);
+            };
+        });
+
+        await writeClipboard(' extra');
+        await page.keyboard.press(`${MOD}+v`);
+        await page.waitForTimeout(200);
+
+        const count = await page.evaluate(
+            () => /** @type {any} */ (window).__editor._pasteTestFullRenderCount,
+        );
+        expect(count).toBe(0);
+
+        const md = await getMarkdown();
+        expect(md).toContain('beta extra');
     });
 });
 

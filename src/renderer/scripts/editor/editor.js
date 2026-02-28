@@ -477,25 +477,22 @@ export class Editor {
 
     /**
      * Incremental render: updates only the DOM elements for the nodes
-     * listed in `hints`.  Falls back to a full render in source mode
-     * (the source renderer does not yet support incremental updates).
+     * listed in `hints`.
      *
      * @param {{ updated?: string[], added?: string[], removed?: string[] }} hints
      */
     renderNodes(hints) {
         if (!this.syntaxTree) return;
 
-        if (this.viewMode === 'writing') {
-            this._isRendering = true;
-            try {
-                this.writingRenderer.renderNodes(this.container, hints);
-            } finally {
-                this._isRendering = false;
-            }
-            document.dispatchEvent(new CustomEvent('editor:renderComplete'));
-        } else {
-            this.fullRender();
+        const renderer = this.viewMode === 'writing' ? this.writingRenderer : this.sourceRenderer;
+
+        this._isRendering = true;
+        try {
+            renderer.renderNodes(this.container, hints);
+        } finally {
+            this._isRendering = false;
         }
+        document.dispatchEvent(new CustomEvent('editor:renderComplete'));
     }
 
     /**
