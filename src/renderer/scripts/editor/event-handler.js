@@ -309,17 +309,6 @@ export class EventHandler {
         }
 
         this.editor.container.classList.remove('focused');
-
-        // In writing view the active node shows raw markdown syntax.
-        // When the user clicks outside the editor we clear the tree
-        // cursor and re-render the previously focused node so it shows
-        // its "unfocused" presentation.  Clicking back into the editor
-        // will restore the cursor via handleClick / handleSelectionChange.
-        if (this.editor.viewMode === 'writing' && this.editor.syntaxTree?.treeCursor) {
-            const previousBlockId = this.editor.getBlockNodeId();
-            if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = null;
-            if (previousBlockId) this.editor.renderNodes({ updated: [previousBlockId] });
-        }
     }
 
     /** Handles selection change events. */
