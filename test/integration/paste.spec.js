@@ -53,6 +53,9 @@ async function getMarkdown() {
     return page.evaluate(() => window.editorAPI?.getContent() ?? '');
 }
 
+// Force these tests to run one by one.
+test.describe().config({ mode: 'serial' });
+
 // ──────────────────────────────────────────────
 //  Source view paste
 // ──────────────────────────────────────────────
