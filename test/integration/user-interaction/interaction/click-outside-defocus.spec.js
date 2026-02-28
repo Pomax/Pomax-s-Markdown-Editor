@@ -9,6 +9,7 @@
 import { expect, test } from '@playwright/test';
 import {
     clickInEditor,
+    closeApp,
     defocusEditor,
     launchApp,
     loadContent,
@@ -29,7 +30,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('loading content gives the editor DOM focus so defocus works without a prior click', async () => {

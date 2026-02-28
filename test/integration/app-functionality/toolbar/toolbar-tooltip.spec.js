@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp } from '../../test-utils.js';
+import { closeApp, launchApp } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -18,7 +18,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('toolbar tooltip appears below the button, not above', async () => {

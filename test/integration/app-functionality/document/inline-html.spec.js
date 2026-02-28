@@ -9,6 +9,7 @@ import { expect, test } from '@playwright/test';
 import {
     END,
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     setSourceView,
@@ -26,7 +27,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 /**

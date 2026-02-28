@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
+    closeApp,
     defocusEditor,
     launchApp,
     loadContent,
@@ -31,7 +32,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('switching to writing mode hides heading syntax on unfocused headings', async () => {

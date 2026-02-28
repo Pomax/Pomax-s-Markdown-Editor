@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent } from '../../test-utils.js';
+import { clickInEditor, closeApp, launchApp, loadContent } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -23,7 +23,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('single click on a link in an unfocused paragraph opens the edit modal', async () => {

@@ -17,6 +17,7 @@ import { expect, test } from '@playwright/test';
 import {
     HOME,
     MOD,
+    closeApp,
     launchApp,
     loadContent,
     projectRoot,
@@ -38,7 +39,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('clicking bullet list button converts paragraph to unordered list item', async () => {

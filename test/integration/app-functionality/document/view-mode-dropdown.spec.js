@@ -10,6 +10,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
     clickQuerySelector,
+    closeApp,
     defocusEditor,
     launchApp,
     loadContent,
@@ -31,7 +32,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('view mode toggle has a visible label', async () => {

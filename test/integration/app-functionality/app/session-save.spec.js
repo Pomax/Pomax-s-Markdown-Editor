@@ -11,7 +11,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp } from '../../test-utils.js';
+import { clickInEditor, closeApp, launchApp } from '../../test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,7 +29,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('flushing open files saves the current cursorPath', async () => {
@@ -212,7 +212,7 @@ test('reopening the app restores cursor position and ToC heading', async () => {
         return /** @type {any} */ (global).__settingsManager.get('openFiles', null);
     });
 
-    await app1.electronApp.close();
+    await closeApp(app1.electronApp);
 
     expect(persisted).not.toBeNull();
     expect(persisted.length).toBe(1);
@@ -273,5 +273,5 @@ test('reopening the app restores cursor position and ToC heading', async () => {
     const tocAfter = await page2.locator('#toc-sidebar .toc-link.toc-active').textContent();
     expect(tocAfter).toBe('Section 15');
 
-    await app2.electronApp.close();
+    await closeApp(app2.electronApp);
 });

@@ -7,7 +7,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, setSourceView, setWritingView } from '../../test-utils.js';
+import {
+    closeApp,
+    launchApp,
+    loadContent,
+    setSourceView,
+    setWritingView,
+} from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -20,7 +26,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('typing ![alt](src) in writing view renders an inline image', async () => {

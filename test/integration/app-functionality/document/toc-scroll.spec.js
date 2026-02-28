@@ -9,7 +9,6 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from '../../test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,26 +69,15 @@ test('clicking a TOC link scrolls the heading to the top of the editor container
     await page.goto(baseURL);
     await page.waitForSelector('#editor .md-line');
 
-    const editor = page.locator('#editor');
-    await clickInEditor(page, editor);
-
     // Build a document with enough content to force scrolling:
     // An h1, many paragraphs, then an h2 that will be off-screen.
-    await page.keyboard.type('# First Heading');
-    await page.keyboard.press('Enter');
+    const lines = ['# First Heading'];
+    for (let i = 0; i < 60; i++) lines.push(`Paragraph line ${i + 1}`);
+    lines.push('## Second Heading');
+    for (let i = 0; i < 60; i++) lines.push(`More content ${i + 1}`);
 
-    for (let i = 0; i < 60; i++) {
-        await page.keyboard.type(`Paragraph line ${i + 1}`);
-        await page.keyboard.press('Enter');
-    }
-
-    await page.keyboard.type('## Second Heading');
-    await page.keyboard.press('Enter');
-
-    for (let i = 0; i < 10; i++) {
-        await page.keyboard.type(`More content ${i + 1}`);
-        await page.keyboard.press('Enter');
-    }
+    await page.evaluate((md) => window.editorAPI?.setContent(md), lines.join('\n'));
+    await page.waitForSelector('#editor .md-line');
 
     // Wait for the TOC to pick up the headings
     await page.waitForSelector('#toc-sidebar .toc-link');

@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent } from '../../test-utils.js';
+import { closeApp, launchApp, loadContent } from '../../test-utils.js';
 
 const iframeMarkdown = [
     '# Iframe Test',
@@ -22,5 +22,5 @@ test('iframe elements render in the editor', async () => {
     await expect(iframe).toBeAttached();
     expect(await iframe.getAttribute('src')).toBe('https://example.com');
 
-    await electronApp.close();
+    await closeApp(electronApp);
 });

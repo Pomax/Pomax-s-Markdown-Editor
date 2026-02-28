@@ -8,6 +8,7 @@
 import { expect, test } from '@playwright/test';
 import {
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     setSourceView,
@@ -28,7 +29,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('HTML img tag is parsed as an image node in writing mode', async () => {

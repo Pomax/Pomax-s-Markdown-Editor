@@ -8,7 +8,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { END, clickInEditor, launchApp, loadContent, projectRoot } from '../../test-utils.js';
+import {
+    END,
+    clickInEditor,
+    closeApp,
+    launchApp,
+    loadContent,
+    projectRoot,
+} from '../../test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -27,7 +34,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('pressing Enter after summary text and typing " a a" preserves leading space', async () => {

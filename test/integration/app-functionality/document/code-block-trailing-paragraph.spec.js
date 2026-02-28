@@ -11,6 +11,7 @@
 import { expect, test } from '@playwright/test';
 import {
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     setSourceView,
@@ -31,7 +32,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('loading a document that ends in a code block appends a phantom paragraph in the DOM', async () => {

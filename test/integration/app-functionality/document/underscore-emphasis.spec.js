@@ -6,7 +6,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, setSourceView, setWritingView } from '../../test-utils.js';
+import {
+    clickInEditor,
+    closeApp,
+    launchApp,
+    setSourceView,
+    setWritingView,
+} from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -19,7 +25,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('underscore emphasis _text_ renders as <em> when unfocused', async () => {

@@ -6,7 +6,7 @@
 
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, projectRoot } from '../../test-utils.js';
+import { closeApp, launchApp, projectRoot } from '../../test-utils.js';
 
 const testFile = path.join(projectRoot, 'test', 'fixtures', 'images.md');
 
@@ -52,5 +52,5 @@ test('images in a loaded markdown file resolve and load successfully', async () 
         expect(naturalWidth, `image "${src}" should have loaded`).toBeGreaterThan(0);
     }
 
-    await electronApp.close();
+    await closeApp(electronApp);
 });

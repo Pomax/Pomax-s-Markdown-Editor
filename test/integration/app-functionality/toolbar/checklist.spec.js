@@ -12,7 +12,15 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { HOME, MOD, launchApp, loadContent, setSourceView, setWritingView } from '../../test-utils.js';
+import {
+    HOME,
+    MOD,
+    closeApp,
+    launchApp,
+    loadContent,
+    setSourceView,
+    setWritingView,
+} from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -25,7 +33,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('source view renders checklist prefix for unchecked item', async () => {

@@ -8,7 +8,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor, launchApp, loadContent, setWritingView } from '../../test-utils.js';
+import {
+    clickInEditor,
+    closeApp,
+    launchApp,
+    loadContent,
+    setWritingView,
+} from '../../test-utils.js';
 
 const isMac = process.platform === 'darwin';
 const Home = isMac ? 'Meta+ArrowLeft' : 'Home';
@@ -29,7 +35,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('loading a document that ends in </details> appends an empty paragraph', async () => {

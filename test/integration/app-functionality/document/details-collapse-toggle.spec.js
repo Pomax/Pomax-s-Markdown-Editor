@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, projectRoot } from '../../test-utils.js';
+import { closeApp, launchApp, loadContent, projectRoot } from '../../test-utils.js';
 
 const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'details.md');
 const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
@@ -29,7 +29,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('clicking the disclosure triangle collapses and expands the details body', async () => {

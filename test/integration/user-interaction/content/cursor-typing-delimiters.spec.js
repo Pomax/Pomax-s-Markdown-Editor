@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { launchApp, loadContent, setWritingView } from '../../test-utils.js';
+import { closeApp, launchApp, loadContent, setWritingView } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -21,7 +21,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 /**

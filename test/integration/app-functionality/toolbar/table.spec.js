@@ -7,6 +7,7 @@
 import { expect, test } from '@playwright/test';
 import {
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     setSourceView,
@@ -24,7 +25,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('table button is visible in the toolbar', async () => {

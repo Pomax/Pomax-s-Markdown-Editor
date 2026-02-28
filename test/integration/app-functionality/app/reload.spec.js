@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launchApp, projectRoot } from '../../test-utils.js';
+import { closeApp, launchApp, projectRoot } from '../../test-utils.js';
 
 const readmePath = path.join(projectRoot, 'README.md');
 const readmeContent = fs.readFileSync(readmePath, 'utf-8');
@@ -23,7 +23,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('reload restores a saved file from disk', async () => {

@@ -12,6 +12,7 @@ import { expect, test } from '@playwright/test';
 import {
     END,
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     projectRoot,
@@ -35,7 +36,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('typing a character on the summary line in source view inserts it without rewriting the line', async () => {

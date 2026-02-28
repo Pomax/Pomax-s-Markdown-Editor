@@ -19,6 +19,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
     clickInEditor,
+    closeApp,
     launchApp,
     loadContent,
     projectRoot,
@@ -43,7 +44,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 test('source view: backspace at start of paragraph after </details> does not delete the line', async () => {

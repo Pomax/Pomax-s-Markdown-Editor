@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
+    closeApp,
     launchApp,
     loadContent,
     projectRoot,
@@ -39,7 +40,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    await closeApp(electronApp);
 });
 
 /**
