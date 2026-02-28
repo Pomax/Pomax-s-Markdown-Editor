@@ -52,9 +52,9 @@ async function writeClipboard(text) {
 async function getMarkdown() {
     return page.evaluate(() => window.editorAPI?.getContent() ?? '');
 }
-
-// Force these tests to run one by one.
-test.describe().config({ mode: 'serial' });
+// Force every test in this file into one serial worker so that concurrent
+// clipboard writes from other workers cannot race with ours.
+test.describe.configure({ mode: 'serial' });
 
 // ──────────────────────────────────────────────
 //  Source view paste
