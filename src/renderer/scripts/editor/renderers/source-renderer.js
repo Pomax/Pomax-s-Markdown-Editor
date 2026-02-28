@@ -100,6 +100,108 @@ export class SourceRenderer {
     }
 
     /**
+     * Incremental render: updates only the DOM elements for the nodes
+     * listed in `hints` instead of rebuilding the entire document.
+     *
+     * @param {HTMLElement} container - The editor container
+     * @param {{ updated?: string[], added?: string[], removed?: string[] }} hints
+     *     - updated: node IDs whose content changed (re-render in place)
+     *     - added:   node IDs that were just inserted into the tree (create & insert DOM element)
+     *     - removed: node IDs that were just removed from the tree (delete DOM element)
+     */
+    renderNodes(container, { updated = [], added = [], removed = [] }) {
+        const tree = this.editor.syntaxTree;
+        if (!tree) return;
+
+        // 1. Remove DOM elements for deleted nodes.
+        for (const nodeId of removed) {
+            const el = container.querySelector(`[data-node-id="${nodeId}"]`);
+            if (el) el.remove();
+        }
+
+        // 2. Re-render existing nodes in-place.
+        for (const nodeId of updated) {
+            this._replaceNodeElement(container, tree, nodeId);
+        }
+
+        // 3. Insert DOM elements for newly added nodes.
+        for (const nodeId of added) {
+            const node = tree.findNodeById(nodeId);
+            if (!node) continue;
+
+            const siblings = node.parent ? node.parent.children : tree.children;
+            const idx = siblings.indexOf(node);
+            const element = this.renderNode(node);
+            if (!element) continue;
+
+            // Insert after the previous sibling's DOM element.
+            if (idx > 0) {
+                const prevSibling = siblings[idx - 1];
+                const prevEl = container.querySelector(`[data-node-id="${prevSibling.id}"]`);
+                if (prevEl) {
+                    prevEl.after(element);
+                    continue;
+                }
+            }
+
+            // No previous sibling — if inside an html-block, re-render
+            // the parent instead; otherwise prepend to the container.
+            if (node.parent && node.parent.type === 'html-block') {
+                this._replaceNodeElement(container, tree, node.parent.id);
+            } else {
+                container.prepend(element);
+            }
+        }
+
+        // Refresh the phantom paragraph after incremental updates.
+        this._ensurePhantomParagraph(container, tree);
+    }
+
+    /**
+     * Finds a node by id in the syntax tree, renders it, and replaces
+     * the corresponding DOM element in the container.
+     *
+     * For children of bare-text html-blocks (e.g. `<summary>text</summary>`)
+     * the parent html-block owns the DOM element, so the parent is
+     * re-rendered instead.
+     *
+     * @param {HTMLElement} container
+     * @param {import('../../parser/syntax-tree.js').SyntaxTree} tree
+     * @param {string} nodeId
+     */
+    _replaceNodeElement(container, tree, nodeId) {
+        const node = tree.findNodeById(nodeId);
+        if (!node) return;
+
+        // Bare-text html-block children are rendered as part of the
+        // parent html-block element — re-render the parent instead.
+        const parent = node.parent;
+        if (
+            parent?.type === 'html-block' &&
+            parent.children.length === 1 &&
+            node.attributes.bareText
+        ) {
+            const parentEl = container.querySelector(`[data-node-id="${nodeId}"]`);
+            if (!parentEl) return;
+            const updated = this.renderNode(parent);
+            if (updated) {
+                // renderHtmlBlock for bare-text returns a wrapper whose
+                // data-node-id is the child's id, so replaceWith works.
+                parentEl.replaceWith(updated);
+            }
+            return;
+        }
+
+        const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
+        if (!existing) return;
+
+        const updated = this.renderNode(node);
+        if (updated) {
+            existing.replaceWith(updated);
+        }
+    }
+
+    /**
      * Renders a syntax tree node to an HTML element.
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node - The node to render
      * @returns {HTMLElement|null}
