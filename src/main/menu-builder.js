@@ -686,6 +686,7 @@ export class MenuBuilder {
             const menu = Menu.buildFromTemplate([
                 { role: 'copy' },
                 { role: 'cut' },
+                { role: 'paste' },
                 { type: 'separator' },
                 {
                     label: 'Inspect Element',
