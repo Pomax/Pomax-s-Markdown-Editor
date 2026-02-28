@@ -170,6 +170,31 @@ export async function setSourceView(page) {
 }
 
 /**
+ * Close an Electron app with a timeout fallback.
+ *
+ * `electronApp.close()` can hang on CI when the Electron process is
+ * slow to shut down (e.g. 8 workers closing simultaneously). This helper
+ * races the close against a 5-second timeout and force-kills the process
+ * if it doesn't exit in time.
+ *
+ * @param {import('@playwright/test').ElectronApplication} electronApp
+ */
+export async function closeApp(electronApp) {
+    try {
+        await Promise.race([
+            electronApp.close(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('close timeout')), 5000)),
+        ]);
+    } catch {
+        try {
+            electronApp.process().kill();
+        } catch {
+            /* already dead */
+        }
+    }
+}
+
+/**
  * Switch the editor to writing view by clicking the toolbar toggle.
  * If already in writing view, this is a no-op.
  *
