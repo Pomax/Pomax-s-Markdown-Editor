@@ -107,8 +107,9 @@ Constructs the application menu:
 - **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
 - **View**: Source View (`Ctrl+1`), Writing View (`Ctrl+2`), open file list with checkmarks
 - **Help**: Reload, Debug, About
+- **Right-click context menu**: Copy, Cut, Paste, Inspect Element
 
-Menu actions are sent to the renderer via the `menu:action` IPC channel.
+Menu actions are sent to the renderer via the `menu:action` IPC channel. Cut, Copy, and Paste use Electron's built-in `role` mechanism, which fires native DOM clipboard events that the editor's `ClipboardHandler` intercepts.
 
 ### IPCHandler
 
@@ -164,7 +165,7 @@ The renderer entry point. Wires together all renderer components:
 - Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
 - Handles `session:restore` events to restore cursor position, ToC heading highlight, and scroll position for all tabs after a close-and-reopen. Active tab is restored live; background tabs are patched in `_documentStates`.
-- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` sets `_isRendering = true` around `focus()` + `placeCursor()` to suppress the `selectionchange` handler. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`.
+- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` restores `treeRange` (text selection) and sets `_isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler. If a `treeRange` exists, `placeSelection()` restores the full selection; otherwise `placeCursor()` places a collapsed caret. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`.
 
 ### Editor
 
@@ -262,6 +263,8 @@ Displays markdown with syntax highlighting:
 - Shows literal markdown syntax
 - Color-codes different element types (headings, code, emphasis, etc.)
 - Uses `SyntaxHighlighter` for inline syntax coloring
+- Supports incremental rendering via `renderNodes()` (same interface as WritingRenderer)
+- Handles bare-text html-block children (e.g. `<summary>text</summary>`) by re-rendering the parent html-block
 - Maintains editability
 
 #### WritingRenderer

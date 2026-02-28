@@ -158,11 +158,12 @@ pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
   - `renderNodes()` / `renderNodesAndPlaceCursor()` — **incremental**:
     only the specific nodes listed in the `hints` object are replaced,
     added, or removed. Event handlers on untouched elements survive.
+    Both the source renderer and writing renderer support this path.
 - Most editing operations use the incremental path.
 
 ### Tab switching vs. session restore
 
-When the user **switches tabs**, the DOM container and syntax tree are preserved in `_documentStates` — nothing changes. The only action needed is placing the browser selection caret. **Do NOT re-render or re-parse anything on tab switch.** The `_restoreState` method sets `editor._isRendering = true` around `focus()` + `placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render.
+When the user **switches tabs**, the DOM container and syntax tree are preserved in `_documentStates` — nothing changes. The only action needed is placing the browser selection. **Do NOT re-render or re-parse anything on tab switch.** The `_restoreState` method restores `treeRange` (text selection) from the saved state, sets `editor._isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render. If a `treeRange` exists, `placeSelection()` is called to restore the full selection; otherwise `placeCursor()` places a collapsed caret.
 
 When the app **relaunches** (session restore), the DOM is rebuilt from scratch, so `fullRenderAndPlaceCursor()` is correct there.
 
