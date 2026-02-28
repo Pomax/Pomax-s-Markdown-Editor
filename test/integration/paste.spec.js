@@ -109,6 +109,49 @@ test.describe('Paste in source view', () => {
         expect(md).not.toContain('replace me');
     });
 
+    test('paste over multi-node selection removes intermediate nodes', async () => {
+        await loadContent(page, 'alpha\n\nbeta\n\ngamma');
+        await setSourceView(page);
+
+        const lines = page.locator('#editor .md-line');
+        await clickInEditor(page, lines.first());
+        await page.keyboard.press(HOME);
+        await page.keyboard.press(`${MOD}+Shift+${END}`);
+        // Extend selection to last line
+        await page.keyboard.press(`Shift+ArrowDown`);
+        await page.keyboard.press(`Shift+ArrowDown`);
+        await page.keyboard.press(`Shift+${END}`);
+
+        await writeClipboard('only this');
+        await page.keyboard.press(`${MOD}+v`);
+        await page.waitForTimeout(300);
+
+        const md = await getMarkdown();
+        expect(md).toContain('only this');
+        expect(md).not.toContain('alpha');
+        expect(md).not.toContain('beta');
+        expect(md).not.toContain('gamma');
+    });
+
+    test('pasting markdown heading creates a heading node', async () => {
+        await loadContent(page, '\n');
+        await setSourceView(page);
+
+        const line = page.locator('#editor .md-line').first();
+        await clickInEditor(page, line);
+
+        await writeClipboard('# Source heading');
+        await page.keyboard.press(`${MOD}+v`);
+        await page.waitForTimeout(200);
+
+        const nodeType = await page.evaluate(() => {
+            const tree = /** @type {any} */ (window).__editor?.syntaxTree;
+            if (!tree) return null;
+            return tree.children[0]?.type;
+        });
+        expect(nodeType).toBe('heading1');
+    });
+
     test('multi-line paste with CRLF line endings works correctly', async () => {
         await loadContent(page, '\n');
         await setSourceView(page);
