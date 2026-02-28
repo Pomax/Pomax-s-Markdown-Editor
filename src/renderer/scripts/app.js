@@ -26,6 +26,7 @@ import { Toolbar } from './toolbar/toolbar.js';
  * @property {number} cursorOffset - Absolute character offset in markdown source
  * @property {number} contentHash - CRC32 hash of the markdown content
  * @property {import('./parser/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
+ * @property {import('./editor/editor.js').TreeRange|null} treeRange - Active text selection range
  * @property {number} scrollTop - Scroll position of the scroll container
  * @property {string|null} tocActiveHeadingId - The active ToC heading node ID
  * @property {any[]} undoStack - Undo history
@@ -358,6 +359,7 @@ class App {
             cursorOffset: absOffset,
             contentHash: hash,
             syntaxTree: this.editor.syntaxTree,
+            treeRange: this.editor.treeRange ? { ...this.editor.treeRange } : null,
             scrollTop: this._scrollContainer ? this._scrollContainer.scrollTop : 0,
             tocActiveHeadingId: tocHeadingId,
             undoStack: [...this.editor.undoManager.undoStack],
@@ -424,13 +426,18 @@ class App {
                 }
             }
 
-            // Place cursor and focus.  The DOM and syntax tree are
-            // identical — nothing changed — so just set the browser
-            // selection.  Suppress selectionchange so the event handler
-            // doesn't trigger a spurious re-render.
+            // Place cursor/selection and focus.  The DOM and syntax
+            // tree are identical — nothing changed — so just set the
+            // browser selection.  Suppress selectionchange so the event
+            // handler doesn't trigger a spurious re-render.
+            this.editor.treeRange = state?.treeRange ? { ...state.treeRange } : null;
             this.editor._isRendering = true;
             this.editor.container.focus({ preventScroll: true });
-            this.editor.placeCursor();
+            if (this.editor.treeRange) {
+                this.editor.placeSelection();
+            } else {
+                this.editor.placeCursor();
+            }
             this.editor._isRendering = false;
 
             if (this.toc) {
