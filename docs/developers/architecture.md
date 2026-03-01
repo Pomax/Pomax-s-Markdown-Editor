@@ -266,6 +266,7 @@ Displays markdown with syntax highlighting:
 - Supports incremental rendering via `renderNodes()` (same interface as WritingRenderer)
 - Handles bare-text html-block children (e.g. `<summary>text</summary>`) by re-rendering the parent html-block
 - Maintains editability
+- **Code-block source edit mode**: when a code block receives focus, the renderer calls `node.enterSourceEditMode()` to store the full markdown (fences + language + content) in `_sourceEditText` and renders it as a single editable `<div>`. On defocus, `editor.finalizeCodeBlockSourceEdit(node)` re-parses the text and exits source edit mode. This allows editing fences and the language tag directly in source view.
 
 #### WritingRenderer
 WYSIWYG-style display:
@@ -273,6 +274,7 @@ WYSIWYG-style display:
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
 - Reveals raw markdown syntax on element focus (click to edit)
 - Supports click-to-focus on non-text elements like images and horizontal rules
+- **Code-block language tags**: renders two `<span class="md-code-language-tag">` elements (top-right and bottom-right) showing the language (or a dim "lang" placeholder when empty). Bottom tag only visible when the block has >= 20 lines (`.tall` class). Mousedown guard prevents caret movement; click opens the `CodeLanguageModal` via `EventHandler._openCodeLanguageModal()`.
 
 ### UndoManager
 
@@ -318,7 +320,15 @@ Tokenizes inline markdown formatting within a line of text:
 
 Abstract base class for modal dialogs (`modal/base-modal.js`):
 - Shared open/close lifecycle and backdrop handling
-- Extended by `ImageModal`, `TableModal`, `LinkModal`, `PreferencesModal`, `WordCountModal`
+- Extended by `ImageModal`, `TableModal`, `LinkModal`, `CodeLanguageModal`, `PreferencesModal`, `WordCountModal`
+
+### CodeLanguageModal
+
+Modal for editing a code block's language tag (`code-language/code-language-modal.js`):
+- Single text input pre-filled with the current language (or empty for bare code blocks)
+- Opened by `EventHandler._openCodeLanguageModal()` when the user clicks a `.md-code-language-tag` span in writing view
+- Styled in `code-language.css`
+- The caller saves and restores both `treeCursor` and `treeRange` around the dialog open/close to prevent the focus-steal selectionchange from corrupting editor state
 
 ### LinkModal
 
