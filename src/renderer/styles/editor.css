@@ -136,6 +136,28 @@
     padding: 0;
     margin: 0;
     overflow-x: auto;
+    position: relative;
+}
+
+.writing-view .md-code-block[data-language]::before,
+.writing-view .md-code-block[data-language]::after {
+    content: attr(data-language);
+    position: absolute;
+    right: 0.5em;
+    font-family: var(--font-family-mono);
+    font-size: 0.75em;
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+}
+
+.writing-view .md-code-block[data-language]::before {
+    top: 0.25em;
+}
+
+.writing-view .md-code-block[data-language]::after {
+    bottom: 0.25em;
 }
 
 .md-code-fence {

@@ -379,6 +379,10 @@ export class WritingRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
+        if (language) {
+            element.dataset.language = language;
+        }
+
         const codeContent = document.createElement('pre');
         codeContent.className = 'md-code-content md-content';
 
