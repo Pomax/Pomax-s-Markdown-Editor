@@ -288,11 +288,28 @@ html-block (type: 'html-block', tagName: 'details')
 
 ### The `mousedown` guard
 
-Interactive elements inside the editor (like the disclosure triangle and
-checklist checkboxes) must intercept **`mousedown`** with
-`preventDefault()` + `stopPropagation()`. Without this, `mousedown` moves
-the caret, which fires `selectionchange`, which triggers a full re-render
-that destroys the element before `click` arrives.
+Interactive elements inside the editor (like the disclosure triangle,
+checklist checkboxes, and code-block language tag spans) must intercept
+**`mousedown`** with `preventDefault()` + `stopPropagation()`. Without
+this, `mousedown` moves the caret, which fires `selectionchange`, which
+triggers a full re-render that destroys the element before `click` arrives.
+
+### Dialog state save/restore
+
+When a dialog steals focus from the editor (e.g. the code-language modal
+opened by clicking a language tag), the focus loss triggers
+`selectionchange` which corrupts `treeCursor` and nulls `treeRange`. Any
+code that opens a modal from within the editor must:
+
+1. **Save** both `treeCursor` (shallow copy) and `treeRange` (shallow copy
+   or null) **before** calling `modal.open()`.
+2. **Restore** both after the dialog closes (whether accepted or cancelled)
+   and after any `recordAndRender` call.
+3. Call `placeSelection()` (if there was a range) or `placeCursor()` (if
+   collapsed) to rebuild the DOM selection from the restored tree state.
+4. Set `_isRendering = true` around the placement call and clear it via
+   `queueMicrotask` to suppress the async `selectionchange` that the
+   placement itself triggers.
 
 ### bareText preservation
 
