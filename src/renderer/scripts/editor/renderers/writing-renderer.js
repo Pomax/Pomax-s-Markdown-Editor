@@ -379,8 +379,32 @@ export class WritingRenderer {
         const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const language = attrs.language || '';
 
+        // Language tag spans — always rendered so the user can click
+        // to set or change the language even when none is set yet.
+        // The mousedown guard (preventDefault + stopPropagation) prevents
+        // the browser from moving the caret, which would fire
+        // selectionchange → re-render → destroy the span before click
+        // arrives, and would overwrite the user's cursor offset.
+        const tagTop = document.createElement('span');
+        tagTop.className = 'md-code-language-tag md-code-language-tag--top';
+        tagTop.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        const tagBottom = document.createElement('span');
+        tagBottom.className = 'md-code-language-tag md-code-language-tag--bottom';
+        tagBottom.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
         if (language) {
-            element.dataset.language = language;
+            tagTop.textContent = language;
+            tagBottom.textContent = language;
+        } else {
+            tagTop.textContent = 'lang';
+            tagBottom.textContent = 'lang';
+            tagTop.classList.add('md-code-language-tag--empty');
+            tagBottom.classList.add('md-code-language-tag--empty');
         }
 
         const codeContent = document.createElement('pre');
@@ -396,7 +420,16 @@ export class WritingRenderer {
             code.appendChild(highlight(node.content, language));
         }
         codeContent.appendChild(code);
+
+        // Only show the bottom tag when the code block is tall (>= 20 lines).
+        const lineCount = (node.content.match(/\n/g) || []).length + 1;
+        if (lineCount >= 20) {
+            element.classList.add('tall');
+        }
+
+        element.appendChild(tagTop);
         element.appendChild(codeContent);
+        element.appendChild(tagBottom);
 
         return element;
     }

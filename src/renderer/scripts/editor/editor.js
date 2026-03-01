@@ -561,7 +561,9 @@ export class Editor {
     fullRenderAndPlaceCursor() {
         this.fullRender();
         this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
+        this._isRendering = true;
         this.placeCursor();
+        this._isRendering = false;
     }
 
     /**
@@ -570,7 +572,9 @@ export class Editor {
      */
     renderNodesAndPlaceCursor(hints) {
         this.renderNodes(hints);
+        this._isRendering = true;
         this.placeCursor();
+        this._isRendering = false;
     }
 
     // ──────────────────────────────────────────────
@@ -793,10 +797,45 @@ export class Editor {
         // Finalize any code-block that is still in source-edit mode
         // before switching views, so the tree is clean for the new renderer.
         if (this.syntaxTree) {
+            const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
             for (const child of this.syntaxTree.children) {
                 if (child.type === 'code-block' && child._sourceEditText !== null) {
+                    // Source → writing: convert the offset from
+                    // _sourceEditText-relative to content-relative by
+                    // subtracting the opening-fence preamble length.
+                    if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
+                        const attrs =
+                            /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+                                child.attributes
+                            );
+                        const preamble =
+                            (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
+                        this.syntaxTree.treeCursor = {
+                            nodeId: child.id,
+                            offset: this.syntaxTree.treeCursor.offset - preamble,
+                        };
+                    }
                     this.finalizeCodeBlockSourceEdit(child);
                 }
+            }
+        }
+
+        // Writing → source: if the cursor is on a code-block, convert
+        // the content-relative offset to _sourceEditText-relative by
+        // adding the opening-fence preamble length.
+        if (mode === 'source' && this.syntaxTree?.treeCursor) {
+            const cursorBlockId =
+                this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
+            const node = this.syntaxTree.findNodeById(cursorBlockId);
+            if (node?.type === 'code-block') {
+                const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+                    node.attributes
+                );
+                const preamble = (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
+                this.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: this.syntaxTree.treeCursor.offset + preamble,
+                };
             }
         }
 

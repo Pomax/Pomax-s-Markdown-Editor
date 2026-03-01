@@ -5,6 +5,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { CodeLanguageModal } from '../code-language/code-language-modal.js';
 import { SyntaxNode } from '../parser/syntax-tree.js';
 
 /**
@@ -24,6 +25,19 @@ export class EventHandler {
          * @type {HTMLElement|null}
          */
         this._mouseDownAnchor = null;
+
+        /**
+         * Stashed language-tag span from mousedown, in case selectionchange
+         * re-renders the code block before the click event fires.
+         * @type {HTMLElement|null}
+         */
+        this._mouseDownLanguageTag = null;
+
+        /**
+         * Lazily-created modal for editing code-block language tags.
+         * @type {CodeLanguageModal|null}
+         */
+        this._codeLanguageModal = null;
 
         /**
          * Set to true when the editor loses focus to a modal dialog,
@@ -49,6 +63,12 @@ export class EventHandler {
             event.target instanceof HTMLElement && event.target.tagName === 'A'
                 ? event.target
                 : null;
+
+        this._mouseDownLanguageTag =
+            event.target instanceof HTMLElement &&
+            event.target.classList.contains('md-code-language-tag')
+                ? event.target
+                : null;
     }
 
     /**
@@ -64,6 +84,39 @@ export class EventHandler {
         // element after a trailing code block), promote it to a real
         // tree node so the cursor can be placed there.
         this.editor._promotePhantomParagraph();
+
+        // In writing view, clicking a language tag span opens the language
+        // editing modal so the user can set or change the code fence language.
+        // This check must happen *before* syncCursorFromDOM — the tag span
+        // is not a text node, so syncing would fall through to the
+        // data-node-id fallback and overwrite treeCursor.offset with 0,
+        // losing the user's cursor position inside the code content.
+        // The tag may no longer be in the DOM (selectionchange can re-render
+        // the code block between mousedown and click), so fall back to the
+        // reference captured in handleMouseDown.
+        if (this.editor.viewMode === 'writing') {
+            const langTag =
+                (event.target instanceof HTMLElement &&
+                    event.target.classList.contains('md-code-language-tag') &&
+                    event.target) ||
+                this._mouseDownLanguageTag;
+            this._mouseDownLanguageTag = null;
+            if (langTag) {
+                event.preventDefault();
+                // Resolve the code-block node from the tag's ancestor
+                // (we haven't synced the cursor yet, so getCurrentBlockNode
+                // would return the previously focused node).
+                const codeBlockEl = /** @type {HTMLElement|null} */ (
+                    langTag.closest?.('.md-code-block') ?? null
+                );
+                const nodeId = codeBlockEl?.dataset?.nodeId;
+                const node = nodeId ? this.editor.syntaxTree?.findNodeById(nodeId) : null;
+                if (node?.type === 'code-block') {
+                    this._openCodeLanguageModal(node);
+                }
+                return;
+            }
+        }
 
         const prevCursor = this.editor.syntaxTree?.treeCursor;
         this.editor.syncCursorFromDOM();
@@ -292,10 +345,15 @@ export class EventHandler {
         // When returning from a modal dialog (link/image/table), the
         // tree cursor was intentionally preserved (see handleBlur).
         // Restore the browser caret so the user sees their cursor again.
+        // Suppress selectionchange during placement — the DOM→tree
+        // round-trip in syncCursorFromDOM is lossy and would overwrite
+        // the preserved offset with a slightly different value.
         if (this._blurredByModal) {
             this._blurredByModal = false;
             if (this.editor.syntaxTree?.treeCursor) {
+                this.editor._isRendering = true;
                 this.editor.placeCursor();
+                this.editor._isRendering = false;
             }
         }
     }
@@ -401,9 +459,72 @@ export class EventHandler {
                         this.editor.linkHelper.openLinkModalForNode(node, anchor);
                     }
                 }
+
+                // Same pattern for language-tag spans: the re-render
+                // destroyed the span so the browser won't fire click.
+                if (this._mouseDownLanguageTag) {
+                    this._mouseDownLanguageTag = null;
+                    const node = this.editor.getCurrentBlockNode();
+                    if (node?.type === 'code-block') {
+                        this._openCodeLanguageModal(node);
+                    }
+                }
             } else {
                 this.editor._lastRenderedNodeId = newNodeId;
             }
         }
+    }
+
+    /**
+     * Opens the code-language modal for a code-block node and applies
+     * the result when the user submits.
+     *
+     * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+     */
+    async _openCodeLanguageModal(node) {
+        if (!this._codeLanguageModal) {
+            this._codeLanguageModal = new CodeLanguageModal();
+        }
+
+        const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
+            node.attributes
+        );
+        const currentLanguage = attrs.language || '';
+
+        // Save the cursor *before* the dialog opens.  The dialog steals
+        // focus, which eventually triggers a selectionchange whose
+        // syncCursorFromDOM round-trip is lossy for code blocks.  We
+        // need the pre-dialog offset so we can restore it afterward.
+        const savedCursor = this.editor.syntaxTree?.treeCursor
+            ? { ...this.editor.syntaxTree.treeCursor }
+            : null;
+
+        const result = await this._codeLanguageModal.open({
+            language: currentLanguage,
+        });
+        if (!result) {
+            // Restore cursor even on cancel — focus restoration may
+            // have fired a selectionchange that corrupted the offset.
+            if (savedCursor && this.editor.syntaxTree) {
+                this.editor.syntaxTree.treeCursor = savedCursor;
+            }
+            return;
+        }
+
+        if (!this.editor.syntaxTree) return;
+        const before = this.editor.syntaxTree.toMarkdown();
+
+        attrs.language = result.language || '';
+        this.editor.recordAndRender(before, { updated: [node.id] });
+
+        // Restore the cursor and suppress the pending async selectionchange
+        // that placeCursor() will have queued.
+        if (savedCursor) {
+            this.editor.syntaxTree.treeCursor = savedCursor;
+        }
+        this.editor._isRendering = true;
+        queueMicrotask(() => {
+            this.editor._isRendering = false;
+        });
     }
 }
