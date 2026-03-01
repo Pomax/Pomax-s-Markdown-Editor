@@ -494,9 +494,24 @@ export class EditOperations {
             // In writing view with empty content, convert to paragraph.
             if (node.type === 'code-block') {
                 if (this.editor.viewMode === 'source') {
-                    // No-op in source view — the full text starts here.
-                    this.editor.recordAndRender(before, renderHints);
-                    return;
+                    // If the first line of the source edit text no longer
+                    // contains any backticks, the user has fully removed
+                    // the opening fence.  Finalize to reparse the text as
+                    // normal content and fall through to the standard
+                    // backspace-at-offset-0 logic (merge with previous).
+                    const firstLine = (node._sourceEditText ?? '').split('\n')[0];
+                    if (firstLine.includes('`')) {
+                        // Still has backticks — no-op.
+                        this.editor.recordAndRender(before, renderHints);
+                        return;
+                    }
+                    // Finalize: reparse into non-code-block nodes.
+                    const finalizeHints = this.editor.finalizeCodeBlockSourceEdit(node);
+                    if (finalizeHints) {
+                        renderHints = finalizeHints;
+                    }
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
+                    // Fall through to the offset-0 logic below.
                 }
                 if (node.content === '') {
                     node.type = 'paragraph';

@@ -214,6 +214,38 @@ test.describe('Editing the code fences', () => {
     });
 });
 
+// ── Backspace removes fence entirely ────────────────────────
+
+test.describe('Backspace after removing opening fence', () => {
+    test('backspace at offset 0 with no backticks on first line finalizes and merges', async () => {
+        await loadContent(page, 'previous\n\n```js\ncode\n```');
+        await setSourceView(page);
+
+        const codeBlock = page.locator('#editor .md-line.md-code-block');
+        await clickInEditor(page, codeBlock);
+
+        // Place cursor at offset 0 and delete "```js" (5 chars)
+        await setCursorInCodeBlock(page, 0);
+        for (let i = 0; i < 5; i++) {
+            await page.keyboard.press('Delete');
+        }
+        await page.waitForTimeout(200);
+
+        // Now the first line has no backticks — cursor is at offset 0.
+        // Pressing backspace should finalize the code block and merge
+        // with the previous node.
+        await page.keyboard.press('Backspace');
+        await page.waitForTimeout(200);
+
+        const md = await getMarkdown();
+        // The code block should have been finalized and the first line
+        // merged with the previous paragraph.  The closing fence (```)
+        // may survive as a separate paragraph since it was part of the
+        // original source edit text, but the content has merged.
+        expect(md).toContain('previouscode');
+    });
+});
+
 // ── View mode switch finalization ───────────────────────────
 
 test.describe('View mode switch finalization', () => {
