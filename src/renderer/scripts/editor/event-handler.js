@@ -491,23 +491,27 @@ export class EventHandler {
         );
         const currentLanguage = attrs.language || '';
 
-        // Save the cursor *before* the dialog opens.  The dialog steals
-        // focus, which eventually triggers a selectionchange whose
-        // syncCursorFromDOM round-trip is lossy for code blocks.  We
-        // need the pre-dialog offset so we can restore it afterward.
+        // Save both the cursor and any active selection *before* the
+        // dialog opens.  The dialog steals focus, which eventually
+        // triggers a selectionchange whose syncCursorFromDOM round-trip
+        // is lossy for code blocks.  We need the pre-dialog state so
+        // we can restore it afterward.
         const savedCursor = this.editor.syntaxTree?.treeCursor
             ? { ...this.editor.syntaxTree.treeCursor }
             : null;
+        const savedRange = this.editor.treeRange ? { ...this.editor.treeRange } : null;
 
         const result = await this._codeLanguageModal.open({
             language: currentLanguage,
         });
         if (!result) {
-            // Restore cursor even on cancel — focus restoration may
-            // have fired a selectionchange that corrupted the offset.
+            // Restore cursor/selection even on cancel — focus
+            // restoration may have fired a selectionchange that
+            // corrupted the state.
             if (savedCursor && this.editor.syntaxTree) {
                 this.editor.syntaxTree.treeCursor = savedCursor;
             }
+            this.editor.treeRange = savedRange;
             return;
         }
 
@@ -517,12 +521,20 @@ export class EventHandler {
         attrs.language = result.language || '';
         this.editor.recordAndRender(before, { updated: [node.id] });
 
-        // Restore the cursor and suppress the pending async selectionchange
-        // that placeCursor() will have queued.
+        // Restore cursor + selection and suppress the pending async
+        // selectionchange that placeCursor() will have queued.
         if (savedCursor) {
             this.editor.syntaxTree.treeCursor = savedCursor;
         }
+        this.editor.treeRange = savedRange;
+
+        // Rebuild the DOM selection from the restored tree state.
         this.editor._isRendering = true;
+        if (savedRange) {
+            this.editor.placeSelection();
+        } else if (savedCursor) {
+            this.editor.placeCursor();
+        }
         queueMicrotask(() => {
             this.editor._isRendering = false;
         });

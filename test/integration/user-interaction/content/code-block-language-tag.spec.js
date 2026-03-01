@@ -251,6 +251,45 @@ test.describe('Code-block language tag dialog', () => {
         expect(offsetAfter).toBe(offsetBefore);
     });
 
+    test('text selection is preserved after changing language via dialog', async () => {
+        await loadContent(page, '```js\nhello world\n```');
+        await setWritingView(page);
+
+        // Click inside the code content to place the cursor first.
+        const codeContent = page.locator('#editor .md-code-block .md-code-content');
+        const box =
+            /** @type {NonNullable<Awaited<ReturnType<typeof codeContent.boundingBox>>>} */ (
+                await codeContent.boundingBox()
+            );
+        await page.mouse.click(box.x + 5, box.y + box.height / 2);
+
+        // Select "hello" by double-clicking it.
+        await page.mouse.dblclick(box.x + 15, box.y + box.height / 2);
+
+        // Read treeRange before opening the dialog.
+        const rangeBefore = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            if (!editor?.treeRange) return null;
+            return { ...editor.treeRange };
+        });
+        expect(rangeBefore).not.toBeNull();
+        expect(rangeBefore.startOffset).not.toBe(rangeBefore.endOffset);
+
+        // Open the language dialog and change the language.
+        await page.locator('#editor .md-code-language-tag--top').click();
+        const input = page.locator('#code-language-input');
+        await input.fill('python');
+        await page.locator('.code-language-btn--insert').click();
+
+        // Read treeRange after the dialog closes.
+        const rangeAfter = await page.evaluate(() => {
+            const editor = /** @type {any} */ (window).__editor;
+            if (!editor?.treeRange) return null;
+            return { ...editor.treeRange };
+        });
+        expect(rangeAfter).toEqual(rangeBefore);
+    });
+
     test('clicking placeholder lang tag on a bare code block opens the dialog empty', async () => {
         await loadContent(page, '```\ncode\n```');
         await setWritingView(page);
