@@ -442,7 +442,6 @@ export class SourceRenderer {
             node.children[0].attributes.bareText &&
             node.children[0].type === 'paragraph'
         ) {
-            const tag = attrs.tagName || 'div';
             const child = node.children[0];
             // Render as a single line whose data-node-id points to the
             // child paragraph so that editing targets the right node.
@@ -451,7 +450,7 @@ export class SourceRenderer {
 
             const openSyntax = document.createElement('span');
             openSyntax.className = 'md-syntax md-html-tag';
-            openSyntax.textContent = `<${tag}>`;
+            openSyntax.textContent = attrs.openingTag || '';
             element.appendChild(openSyntax);
 
             const contentSpan = document.createElement('span');
@@ -461,7 +460,7 @@ export class SourceRenderer {
 
             const closeSyntax = document.createElement('span');
             closeSyntax.className = 'md-syntax md-html-tag';
-            closeSyntax.textContent = `</${tag}>`;
+            closeSyntax.textContent = attrs.closingTag || '';
             element.appendChild(closeSyntax);
 
             return element;
@@ -478,11 +477,27 @@ export class SourceRenderer {
         openLine.appendChild(openContent);
         element.appendChild(openLine);
 
-        // Render children as normal nodes
-        for (const child of node.children) {
-            const childElement = this.renderNode(child);
-            if (childElement) {
-                element.appendChild(childElement);
+        // Raw content tags: render body lines verbatim (not as markdown)
+        if (attrs.rawContent !== undefined) {
+            if (attrs.rawContent) {
+                for (const line of attrs.rawContent.split('\n')) {
+                    const rawLine = document.createElement('div');
+                    rawLine.className = 'md-line md-html-raw';
+                    rawLine.dataset.nodeId = node.id;
+                    const rawContent = document.createElement('span');
+                    rawContent.className = 'md-content';
+                    rawContent.textContent = line;
+                    rawLine.appendChild(rawContent);
+                    element.appendChild(rawLine);
+                }
+            }
+        } else {
+            // Render children as normal nodes
+            for (const child of node.children) {
+                const childElement = this.renderNode(child);
+                if (childElement) {
+                    element.appendChild(childElement);
+                }
             }
         }
 
