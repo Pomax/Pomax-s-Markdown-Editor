@@ -136,6 +136,18 @@ export class EventHandler {
         const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
         const newBlockId = this.editor.resolveBlockId(newNodeId);
         const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+
+        // Finalize source-edit mode for code-blocks on click away.
+        if (oldBlockId && oldBlockId !== newBlockId) {
+            const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
+            if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+                const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+                if (hints) {
+                    this.editor.renderNodes(hints);
+                }
+            }
+        }
+
         if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
             const nodesToUpdate = [newBlockId];
             if (oldBlockId) nodesToUpdate.push(oldBlockId);
@@ -355,6 +367,21 @@ export class EventHandler {
             const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
             const newBlockId = this.editor.resolveBlockId(newNodeId);
             const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+
+            // ── Finalize source-edit mode for code-blocks ──
+            // When the cursor moves to a different block and the previous
+            // block was a code-block in source-edit mode, reparse its text
+            // back into tree properties (fenceCount, language, content).
+            if (oldBlockId && oldBlockId !== newBlockId) {
+                const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
+                if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+                    const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+                    if (hints) {
+                        this.editor.renderNodes(hints);
+                    }
+                }
+            }
+
             if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
                 const nodesToUpdate = [newBlockId];
                 if (oldBlockId) nodesToUpdate.push(oldBlockId);

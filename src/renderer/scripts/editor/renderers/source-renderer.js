@@ -307,37 +307,33 @@ export class SourceRenderer {
 
     /**
      * Renders a code block node.
+     *
+     * In source view the entire markdown representation — opening fence,
+     * language tag, inner code lines, and closing fence — is rendered as
+     * a single editable region so the user can freely edit every part,
+     * including the fences and language indicator.
+     *
+     * The node enters "source edit mode" (see
+     * {@link SyntaxNode#enterSourceEditMode}) which stores the full
+     * markdown text in `_sourceEditText`.  All subsequent keystrokes
+     * operate on that string.  When the cursor leaves the node (or the
+     * view mode switches), the text is reparsed back into tree properties.
+     *
      * @param {import('../../parser/syntax-tree.js').SyntaxNode} node
      * @param {HTMLElement} element
      * @returns {HTMLElement}
      */
     renderCodeBlock(node, element) {
-        const attrs = /** @type {NodeAttributes} */ (node.attributes);
-        const language = attrs.language || '';
+        // Enter source-edit mode so the full markdown is available as a
+        // single editable string.
+        node.enterSourceEditMode();
 
-        const fence = '`'.repeat(attrs.fenceCount || 3);
-
-        // Opening fence
-        const openFence = document.createElement('div');
-        openFence.className = 'md-code-fence';
-        openFence.textContent = `${fence}${language}`;
-        element.appendChild(openFence);
-
-        // Code content
         const codeContent = document.createElement('div');
         codeContent.className = 'md-code-content md-content';
-        // Trailing newlines (and empty content) collapse in a div with
-        // pre-wrap.  Append an extra newline to the display text so the
-        // last line always has visual height.  This does not alter the
-        // node's content — the cursor offset stays within the text node.
-        codeContent.textContent = `${node.content}\n`;
+        // Append an extra newline so trailing empty lines have visual
+        // height (same reason as the old per-section render).
+        codeContent.textContent = `${node._sourceEditText}\n`;
         element.appendChild(codeContent);
-
-        // Closing fence
-        const closeFence = document.createElement('div');
-        closeFence.className = 'md-code-fence';
-        closeFence.textContent = fence;
-        element.appendChild(closeFence);
 
         return element;
     }

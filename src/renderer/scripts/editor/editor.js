@@ -201,6 +201,66 @@ export class Editor {
         return [...this.parser.parse(combined).children];
     }
 
+    /**
+     * Finalizes source-edit mode for a code-block node.  The raw text
+     * stored in `_sourceEditText` is reparsed through the DFA parser.
+     *
+     * - If the result is still a single code-block, the node's `content`
+     *   and `attributes` are updated in place.
+     * - If the text no longer parses as a code-block (e.g. the user
+     *   deleted the fences), the node is replaced with whatever the
+     *   parser produces (possibly multiple nodes).
+     *
+     * @param {SyntaxNode} node - The code-block node to finalize.
+     * @returns {{ updated: string[], added?: string[], removed?: string[] } | null}
+     *   Render hints, or null if the node was not in source-edit mode.
+     */
+    finalizeCodeBlockSourceEdit(node) {
+        const text = node.exitSourceEditMode();
+        if (text === null) return null;
+
+        const parsed = this._parseMultiLine(text);
+
+        if (parsed.length === 1 && parsed[0].type === 'code-block') {
+            // Still a valid code block — update attributes in place.
+            node.content = parsed[0].content;
+            node.attributes = parsed[0].attributes;
+            return { updated: [node.id] };
+        }
+
+        // The text is no longer a single code block.  Replace this node
+        // with whatever the parser produced.
+        const siblings = this.getSiblings(node);
+        const idx = siblings.indexOf(node);
+        if (idx === -1) {
+            // Shouldn't happen, but fall back gracefully.
+            node.content = text;
+            node.type = 'paragraph';
+            node.attributes = {};
+            return { updated: [node.id] };
+        }
+
+        // First parsed node replaces the current node in-place.
+        const first = parsed[0];
+        node.type = first.type;
+        node.content = first.content;
+        node.attributes = first.attributes;
+        node._sourceEditText = null;
+
+        const addedIds = [];
+        for (let j = 1; j < parsed.length; j++) {
+            const newNode = parsed[j];
+            if (node.parent) newNode.parent = node.parent;
+            siblings.splice(idx + j, 0, newNode);
+            addedIds.push(newNode.id);
+        }
+
+        /** @type {{ updated: string[], added?: string[] }} */
+        const hints = { updated: [node.id] };
+        if (addedIds.length > 0) hints.added = addedIds;
+        return hints;
+    }
+
     // ──────────────────────────────────────────────
     //  Initialization
     // ──────────────────────────────────────────────
@@ -729,6 +789,16 @@ export class Editor {
 
         // Nothing to do if already in the requested mode.
         if (mode === this.viewMode) return;
+
+        // Finalize any code-block that is still in source-edit mode
+        // before switching views, so the tree is clean for the new renderer.
+        if (this.syntaxTree) {
+            for (const child of this.syntaxTree.children) {
+                if (child.type === 'code-block' && child._sourceEditText !== null) {
+                    this.finalizeCodeBlockSourceEdit(child);
+                }
+            }
+        }
 
         // Anchor on the cursor's node if one exists, since that is what
         // the user is focused on.  Fall back to the node closest to the

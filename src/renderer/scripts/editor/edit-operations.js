@@ -204,11 +204,28 @@ export class EditOperations {
         // Code-block content is raw code, not markdown — skip re-parsing
         // to avoid misidentifying code lines as headings, lists, etc.
         if (node.type === 'code-block') {
-            node.content = newContent;
-            this.editor.syntaxTree.treeCursor = {
-                nodeId: node.id,
-                offset: left.length + text.length,
-            };
+            // In source view, edits target the full markdown text
+            // (fences + language + content) stored in _sourceEditText.
+            if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
+                const srcLeft = node._sourceEditText.substring(
+                    0,
+                    this.editor.syntaxTree.treeCursor.offset,
+                );
+                const srcRight = node._sourceEditText.substring(
+                    this.editor.syntaxTree.treeCursor.offset,
+                );
+                node._sourceEditText = srcLeft + text + srcRight;
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: srcLeft.length + text.length,
+                };
+            } else {
+                node.content = newContent;
+                this.editor.syntaxTree.treeCursor = {
+                    nodeId: node.id,
+                    offset: left.length + text.length,
+                };
+            }
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
@@ -418,8 +435,21 @@ export class EditOperations {
 
             // Code-block content is raw code — skip re-parsing.
             if (node.type === 'code-block') {
-                node.content = newContent;
-                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
+                // In source view, backspace targets _sourceEditText.
+                if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
+                    const srcLeft = node._sourceEditText.substring(
+                        0,
+                        this.editor.syntaxTree.treeCursor.offset - 1,
+                    );
+                    const srcRight = node._sourceEditText.substring(
+                        this.editor.syntaxTree.treeCursor.offset,
+                    );
+                    node._sourceEditText = srcLeft + srcRight;
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
+                } else {
+                    node.content = newContent;
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
+                }
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
             }
@@ -456,31 +486,27 @@ export class EditOperations {
         } else {
             // Cursor is at the start of the node.
 
-            // Code-block with empty content: in source view, revert to
-            // a paragraph containing the fence + language text so the
-            // user can continue editing normally.  In writing view, the
-            // fences are not visible, so backspace simply converts to
-            // an empty paragraph.
-            if (node.type === 'code-block' && node.content === '') {
+            // Code-block at offset 0: in source view the full text is in
+            // _sourceEditText so offset 0 means the very start of the
+            // opening fence — there is nothing before it to merge into
+            // while still preserving the code-block structure, so this
+            // is a no-op (consistent with html-block boundary behaviour).
+            // In writing view with empty content, convert to paragraph.
+            if (node.type === 'code-block') {
                 if (this.editor.viewMode === 'source') {
-                    const fence = '`'.repeat(node.attributes.fenceCount || 3);
-                    const language = node.attributes.language || '';
-                    const text = `${fence}${language}`;
-                    node.type = 'paragraph';
-                    node.content = text;
-                    node.attributes = {};
-                    this.editor.syntaxTree.treeCursor = {
-                        nodeId: node.id,
-                        offset: text.length,
-                    };
-                } else {
+                    // No-op in source view — the full text starts here.
+                    this.editor.recordAndRender(before, renderHints);
+                    return;
+                }
+                if (node.content === '') {
                     node.type = 'paragraph';
                     node.content = '';
                     node.attributes = {};
+                    node._sourceEditText = null;
                     this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
+                    this.editor.recordAndRender(before, { updated: [node.id] });
+                    return;
                 }
-                this.editor.recordAndRender(before, { updated: [node.id] });
-                return;
             }
 
             // If this is a heading (or blockquote, list-item, etc.) with an
@@ -631,7 +657,14 @@ export class EditOperations {
         /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
         let renderHints = { updated: [node.id] };
 
-        if (this.editor.syntaxTree.treeCursor.offset < node.content.length) {
+        // For code-blocks in source-edit mode, the effective length is
+        // the full source text, not just node.content.
+        const effectiveLength =
+            node.type === 'code-block' && node._sourceEditText !== null
+                ? node._sourceEditText.length
+                : node.content.length;
+
+        if (this.editor.syntaxTree.treeCursor.offset < effectiveLength) {
             // Delete one character after the cursor
             const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
             const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset + 1);
@@ -640,8 +673,20 @@ export class EditOperations {
 
             // Code-block content is raw code — skip re-parsing.
             if (node.type === 'code-block') {
-                node.content = newContent;
-                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
+                if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
+                    const srcLeft = node._sourceEditText.substring(
+                        0,
+                        this.editor.syntaxTree.treeCursor.offset,
+                    );
+                    const srcRight = node._sourceEditText.substring(
+                        this.editor.syntaxTree.treeCursor.offset + 1,
+                    );
+                    node._sourceEditText = srcLeft + srcRight;
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
+                } else {
+                    node.content = newContent;
+                    this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
+                }
                 this.editor.recordAndRender(before, { updated: [node.id] });
                 return;
             }
@@ -675,7 +720,13 @@ export class EditOperations {
 
             this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
         } else {
-            // Cursor is at the end — merge with the next node
+            // Cursor is at the end — merge with the next node.
+            // If this is a code-block in source-edit mode, finalize it
+            // first so the tree is consistent before merging.
+            if (node.type === 'code-block' && node._sourceEditText !== null) {
+                this.editor.finalizeCodeBlockSourceEdit(node);
+            }
+
             const siblings = this.editor.getSiblings(node);
             const idx = siblings.indexOf(node);
             if (idx < siblings.length - 1) {
@@ -804,10 +855,22 @@ export class EditOperations {
 
         // ── Enter inside a code block → insert newline ──
         if (node.type === 'code-block') {
-            const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
-            const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
-            node.content = `${left}\n${right}`;
-            this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
+            if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
+                const srcLeft = node._sourceEditText.substring(
+                    0,
+                    this.editor.syntaxTree.treeCursor.offset,
+                );
+                const srcRight = node._sourceEditText.substring(
+                    this.editor.syntaxTree.treeCursor.offset,
+                );
+                node._sourceEditText = `${srcLeft}\n${srcRight}`;
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length + 1 };
+            } else {
+                const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);
+                const right = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
+                node.content = `${left}\n${right}`;
+                this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
+            }
             this.editor.recordAndRender(before, { updated: [node.id] });
             return;
         }
