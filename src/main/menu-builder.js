@@ -211,6 +211,12 @@ export class MenuBuilder {
                 accelerator: 'CmdOrCtrl+2',
                 click: () => this.sendMenuAction('view:writing'),
             },
+            { type: 'separator' },
+            {
+                label: 'Preview',
+                accelerator: 'CmdOrCtrl+3',
+                click: () => this.sendMenuAction('view:preview'),
+            },
         ];
 
         // Add an entry for each open file

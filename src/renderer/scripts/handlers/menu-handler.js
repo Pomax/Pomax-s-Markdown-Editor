@@ -89,6 +89,9 @@ export class MenuHandler {
             case 'view:writing':
                 this.handleViewWriting();
                 break;
+            case 'view:preview':
+                this.handlePreview();
+                break;
             case 'edit:preferences':
                 this.handlePreferences();
                 break;
@@ -194,6 +197,15 @@ export class MenuHandler {
     handleViewWriting() {
         this.editor.setViewMode('writing');
         this.toolbar.setViewMode('writing');
+    }
+
+    /**
+     * Handles opening the preview window.
+     */
+    handlePreview() {
+        const { head, body } = this.editor.syntaxTree?.toHTML() ?? { head: '', body: '' };
+        const filePath = this.editor.currentFilePath ?? null;
+        window.electronAPI?.openPreview(head, body, filePath);
     }
 
     /**

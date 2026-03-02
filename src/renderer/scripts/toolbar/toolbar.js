@@ -4,6 +4,7 @@
  */
 
 import { TableModal } from '../table/table-modal.js';
+import { icons } from './icons.js';
 import { ToolbarButton } from './toolbar-button.js';
 
 /**
@@ -327,6 +328,10 @@ export class Toolbar {
         const viewModeGroup = this._createViewModeToggle();
         this.toolbarElement.appendChild(viewModeGroup);
 
+        // Preview button
+        const previewBtn = this._createPreviewButton();
+        this.toolbarElement.appendChild(previewBtn);
+
         // Separator after toggle
         const sep = document.createElement('div');
         sep.className = 'toolbar-separator';
@@ -480,6 +485,32 @@ export class Toolbar {
         this.viewModeToggle = button;
 
         return wrapper;
+    }
+
+    /**
+     * Creates the preview button that opens the document as a web page.
+     * @returns {HTMLButtonElement}
+     */
+    _createPreviewButton() {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'toolbar-button';
+        button.title = 'Preview as web page';
+        button.setAttribute('aria-label', 'Preview as web page');
+
+        const content = document.createElement('span');
+        content.className = 'toolbar-button-content';
+        content.innerHTML = icons.preview;
+        button.appendChild(content);
+
+        button.addEventListener('mousedown', (e) => e.preventDefault());
+        button.addEventListener('click', () => {
+            const { head, body } = this.editor.syntaxTree?.toHTML() ?? { head: '', body: '' };
+            const filePath = this.editor.currentFilePath ?? null;
+            window.electronAPI?.openPreview(head, body, filePath);
+        });
+
+        return button;
     }
 
     /**

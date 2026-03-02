@@ -28,6 +28,20 @@ let ipcHandler;
 let menuBuilder;
 
 /**
+ * Pixels per millimeter on the primary display, measured at startup.
+ * @type {number}
+ */
+let pxPerMm = 0;
+
+/**
+ * Returns the measured pixels-per-millimeter ratio.
+ * @returns {number}
+ */
+function getPixelsPerMillimeter() {
+    return pxPerMm;
+}
+
+/**
  * Debounce timeout handle for saving window bounds.
  * @type {ReturnType<typeof setTimeout>|null}
  */
@@ -411,6 +425,13 @@ app.whenReady().then(async () => {
     const window = createWindow();
     await initialize(window);
 
+    // Measure mm → px once the renderer is ready
+    window.webContents.once('did-finish-load', async () => {
+        pxPerMm = await window.webContents.executeJavaScript(
+            '(() => { const d = document.createElement("div"); d.style.width = "10mm"; d.style.position = "absolute"; d.style.visibility = "hidden"; document.body.appendChild(d); const px = d.offsetWidth / 10; d.remove(); return px; })()',
+        );
+    });
+
     // If a file path was passed on the command line, load it once the
     // renderer has finished initialising.  Otherwise, reopen the file
     // that was open when the app was last closed.
@@ -448,5 +469,6 @@ app.on('window-all-closed', () => {
 
 // Run with unlimited memory
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=0');
+app.commandLine.appendSwitch('unsafely-disable-devtools-self-xss-warnings');
 
-export { mainWindow, fileManager };
+export { mainWindow, fileManager, getPixelsPerMillimeter };

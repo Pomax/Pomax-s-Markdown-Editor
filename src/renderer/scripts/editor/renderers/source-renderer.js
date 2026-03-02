@@ -466,6 +466,17 @@ export class SourceRenderer {
             return element;
         }
 
+        // Raw content tags (script, style, textarea): render as a single
+        // editable region in source-edit mode, just like code blocks.
+        if (attrs.rawContent !== undefined) {
+            node.enterSourceEditMode();
+            const editContent = document.createElement('div');
+            editContent.className = 'md-html-raw-content md-content';
+            editContent.textContent = `${node._sourceEditText}\n`;
+            element.appendChild(editContent);
+            return element;
+        }
+
         // Opening tag line — editable via data-tag-part="opening"
         const openLine = document.createElement('div');
         openLine.className = 'md-line md-html-tag';
@@ -477,27 +488,11 @@ export class SourceRenderer {
         openLine.appendChild(openContent);
         element.appendChild(openLine);
 
-        // Raw content tags: render body lines verbatim (not as markdown)
-        if (attrs.rawContent !== undefined) {
-            if (attrs.rawContent) {
-                for (const line of attrs.rawContent.split('\n')) {
-                    const rawLine = document.createElement('div');
-                    rawLine.className = 'md-line md-html-raw';
-                    rawLine.dataset.nodeId = node.id;
-                    const rawContent = document.createElement('span');
-                    rawContent.className = 'md-content';
-                    rawContent.textContent = line;
-                    rawLine.appendChild(rawContent);
-                    element.appendChild(rawLine);
-                }
-            }
-        } else {
-            // Render children as normal nodes
-            for (const child of node.children) {
-                const childElement = this.renderNode(child);
-                if (childElement) {
-                    element.appendChild(childElement);
-                }
+        // Render children as normal nodes
+        for (const child of node.children) {
+            const childElement = this.renderNode(child);
+            if (childElement) {
+                element.appendChild(childElement);
             }
         }
 
