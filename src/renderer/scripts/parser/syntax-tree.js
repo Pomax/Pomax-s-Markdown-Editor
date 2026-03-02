@@ -540,6 +540,243 @@ export class SyntaxNode {
         return result;
     }
 
+    // ── HTML export ────────────────────────────────────────
+
+    /**
+     * Escapes characters that have special meaning in HTML.
+     * @param {string} text
+     * @returns {string}
+     */
+    static _escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Recursively converts inline SyntaxNode children to an HTML string.
+     * @param {SyntaxNode[]} children
+     * @returns {string}
+     */
+    static _inlineChildrenToHTML(children) {
+        let result = '';
+        for (const child of children) {
+            switch (child.type) {
+                case 'text':
+                    result += SyntaxNode._escapeHtml(child._content);
+                    break;
+                case 'inline-code':
+                    result += `<code>${SyntaxNode._escapeHtml(child._content)}</code>`;
+                    break;
+                case 'inline-image': {
+                    const alt = SyntaxNode._escapeHtml(child.attributes.alt ?? '');
+                    const src = SyntaxNode._escapeHtml(child.attributes.src ?? '');
+                    result += `<img src="${src}" alt="${alt}">`;
+                    break;
+                }
+                case 'bold':
+                    result += `<strong>${SyntaxNode._inlineChildrenToHTML(child.children)}</strong>`;
+                    break;
+                case 'italic':
+                    result += `<em>${SyntaxNode._inlineChildrenToHTML(child.children)}</em>`;
+                    break;
+                case 'bold-italic':
+                    result += `<strong><em>${SyntaxNode._inlineChildrenToHTML(child.children)}</em></strong>`;
+                    break;
+                case 'strikethrough':
+                    result += `<del>${SyntaxNode._inlineChildrenToHTML(child.children)}</del>`;
+                    break;
+                case 'link': {
+                    const href = SyntaxNode._escapeHtml(child.attributes.href ?? '');
+                    result += `<a href="${href}">${SyntaxNode._inlineChildrenToHTML(child.children)}</a>`;
+                    break;
+                }
+                default: {
+                    // HTML inline tags (sub, sup, mark, u, b, i, strong, em, del, s)
+                    const tag = child.attributes.tag || child.type;
+                    result += `<${tag}>${SyntaxNode._inlineChildrenToHTML(child.children)}</${tag}>`;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Converts this node to an HTML string.  For inline-containing
+     * block types, inline children are recursively rendered.
+     * @returns {string}
+     */
+    toHTML() {
+        switch (this.type) {
+            case 'heading1':
+                return `<h1>${SyntaxNode._inlineChildrenToHTML(this.children)}</h1>`;
+            case 'heading2':
+                return `<h2>${SyntaxNode._inlineChildrenToHTML(this.children)}</h2>`;
+            case 'heading3':
+                return `<h3>${SyntaxNode._inlineChildrenToHTML(this.children)}</h3>`;
+            case 'heading4':
+                return `<h4>${SyntaxNode._inlineChildrenToHTML(this.children)}</h4>`;
+            case 'heading5':
+                return `<h5>${SyntaxNode._inlineChildrenToHTML(this.children)}</h5>`;
+            case 'heading6':
+                return `<h6>${SyntaxNode._inlineChildrenToHTML(this.children)}</h6>`;
+            case 'paragraph':
+                return `<p>${SyntaxNode._inlineChildrenToHTML(this.children)}</p>`;
+            case 'blockquote': {
+                // Blockquote content is a single inline-containing block;
+                // wrap each newline-delimited line as a <p>.
+                const bqLines = this.content.split('\n');
+                const bqParts = bqLines.map((line) => {
+                    const escaped = SyntaxNode._escapeHtml(line);
+                    return `<p>${escaped}</p>`;
+                });
+                return `<blockquote>${bqParts.join('\n')}</blockquote>`;
+            }
+            case 'code-block': {
+                const lang = this.attributes.language || '';
+                const escaped = SyntaxNode._escapeHtml(this.content);
+                if (lang) {
+                    return `<pre><code class="language-${SyntaxNode._escapeHtml(lang)}">${escaped}</code></pre>`;
+                }
+                return `<pre><code>${escaped}</code></pre>`;
+            }
+            case 'list-item': {
+                // The list wrapper (<ul>/<ol>) is added by SyntaxTree.toHTML().
+                const inner = SyntaxNode._inlineChildrenToHTML(this.children);
+                if (typeof this.attributes.checked === 'boolean') {
+                    const checked = this.attributes.checked ? ' checked' : '';
+                    return `<li><input type="checkbox" disabled${checked}> ${inner}</li>`;
+                }
+                return `<li>${inner}</li>`;
+            }
+            case 'horizontal-rule':
+                return '<hr>';
+            case 'image': {
+                const alt = SyntaxNode._escapeHtml(this.attributes.alt ?? this.content);
+                const src = SyntaxNode._escapeHtml(this.attributes.url ?? '');
+                const style = this.attributes.style
+                    ? ` style="${SyntaxNode._escapeHtml(this.attributes.style)}"`
+                    : '';
+                const img = `<img src="${src}" alt="${alt}"${style}>`;
+                if (this.attributes.href) {
+                    return `<a href="${SyntaxNode._escapeHtml(this.attributes.href)}">${img}</a>`;
+                }
+                return img;
+            }
+            case 'table':
+                return SyntaxNode._tableContentToHTML(this.content);
+            case 'html-block': {
+                // Raw content tags (script, style, textarea): pass through verbatim
+                if (this.attributes.rawContent !== undefined) {
+                    if (this.attributes.rawContent === '') {
+                        return (
+                            (this.attributes.openingTag || '') + (this.attributes.closingTag || '')
+                        );
+                    }
+                    const parts = [this.attributes.openingTag || ''];
+                    parts.push(this.attributes.rawContent);
+                    if (this.attributes.closingTag) parts.push(this.attributes.closingTag);
+                    return parts.join('\n');
+                }
+
+                // Void elements (link, meta, etc.): passthrough
+                if (this.attributes.closingTag === '' && this.children.length === 0) {
+                    return this.attributes.openingTag || '';
+                }
+
+                // HTML comments: passthrough
+                if (this.attributes.tagName === '!--') {
+                    return this.attributes.openingTag || '';
+                }
+
+                // Container html-block: opening tag, children as HTML, closing tag
+                const parts = [this.attributes.openingTag || ''];
+                for (const child of this.children) {
+                    if (child.attributes.bareText && child.type === 'paragraph') {
+                        parts.push(SyntaxNode._inlineChildrenToHTML(child.children));
+                    } else {
+                        parts.push(child.toHTML());
+                    }
+                }
+                if (this.attributes.closingTag) parts.push(this.attributes.closingTag);
+                return parts.join('\n');
+            }
+            default:
+                return `<p>${SyntaxNode._escapeHtml(this.content)}</p>`;
+        }
+    }
+
+    /**
+     * Converts pipe-delimited table content to an HTML `<table>`.
+     * @param {string} content - The raw table content with pipe-delimited rows
+     * @returns {string}
+     */
+    static _tableContentToHTML(content) {
+        const lines = content.split('\n');
+        if (lines.length === 0) return '';
+
+        /**
+         * Splits a pipe-delimited row into cell strings.
+         * @param {string} line
+         * @returns {string[]}
+         */
+        const parseCells = (line) =>
+            line
+                .replace(/^\||\|$/g, '')
+                .split('|')
+                .map((c) => c.trim());
+
+        /**
+         * Determines column alignments from the separator row.
+         * @param {string} line
+         * @returns {(''|'left'|'center'|'right')[]}
+         */
+        const parseAlignments = (line) =>
+            parseCells(line).map((cell) => {
+                const left = cell.startsWith(':');
+                const right = cell.endsWith(':');
+                if (left && right) return 'center';
+                if (right) return 'right';
+                if (left) return 'left';
+                return '';
+            });
+
+        // First line is header, second is separator, rest are body rows
+        const headerCells = parseCells(lines[0]);
+        const alignments = lines.length > 1 ? parseAlignments(lines[1]) : [];
+        const bodyLines = lines.slice(2);
+
+        const alignAttr = (/** @type {number} */ i) => {
+            const a = alignments[i];
+            return a ? ` style="text-align: ${a}"` : '';
+        };
+
+        let html = '<table>\n<thead>\n<tr>';
+        for (let i = 0; i < headerCells.length; i++) {
+            html += `<th${alignAttr(i)}>${SyntaxNode._escapeHtml(headerCells[i])}</th>`;
+        }
+        html += '</tr>\n</thead>';
+
+        if (bodyLines.length > 0) {
+            html += '\n<tbody>';
+            for (const line of bodyLines) {
+                const cells = parseCells(line);
+                html += '\n<tr>';
+                for (let i = 0; i < cells.length; i++) {
+                    html += `<td${alignAttr(i)}>${SyntaxNode._escapeHtml(cells[i])}</td>`;
+                }
+                html += '</tr>';
+            }
+            html += '\n</tbody>';
+        }
+
+        html += '\n</table>';
+        return html;
+    }
+
     /**
      * Creates a deep clone of this node.
      * @returns {SyntaxNode}
@@ -1074,6 +1311,110 @@ export class SyntaxTree {
         }
 
         return parts.join('\n\n');
+    }
+
+    /**
+     * Set of html-block tag names that belong in `<head>` rather than `<body>`.
+     * @type {Set<string>}
+     */
+    static HEAD_TAGS = new Set(['style', 'script', 'link', 'meta', 'base']);
+
+    /**
+     * Converts the tree to a full HTML document string, split into
+     * head-level and body-level parts.
+     *
+     * Consecutive list-item nodes are automatically grouped into
+     * `<ul>` or `<ol>` wrappers.  All other node types are rendered
+     * individually via `SyntaxNode.toHTML()`.
+     *
+     * Head-level html-block elements (style, script, link, meta, base)
+     * are placed in `head`; everything else goes in `body`.
+     *
+     * @returns {{ head: string, body: string }}
+     */
+    toHTML() {
+        const headParts = [];
+        const bodyParts = [];
+        let i = 0;
+
+        while (i < this.children.length) {
+            const node = this.children[i];
+
+            if (node.type === 'list-item') {
+                // Collect the contiguous run of list items
+                const items = [];
+                const isOrdered = !!node.attributes.ordered;
+                while (i < this.children.length && this.children[i].type === 'list-item') {
+                    items.push(this.children[i]);
+                    i++;
+                }
+
+                // Group items by indent level into nested lists
+                bodyParts.push(SyntaxTree._buildListHTML(items, isOrdered));
+            } else if (
+                node.type === 'html-block' &&
+                node.attributes.tagName &&
+                SyntaxTree.HEAD_TAGS.has(node.attributes.tagName)
+            ) {
+                headParts.push(node.toHTML());
+                i++;
+            } else {
+                bodyParts.push(node.toHTML());
+                i++;
+            }
+        }
+
+        return { head: headParts.join('\n'), body: bodyParts.join('\n') };
+    }
+
+    /**
+     * Builds a (possibly nested) HTML list from a contiguous run of
+     * list-item nodes.  Items with `indent > 0` are nested inside the
+     * preceding item's `<li>`.
+     *
+     * @param {SyntaxNode[]} items
+     * @param {boolean} ordered
+     * @returns {string}
+     */
+    static _buildListHTML(items, ordered) {
+        const tag = ordered ? 'ol' : 'ul';
+        let html = `<${tag}>\n`;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const indent = item.attributes.indent || 0;
+
+            if (indent === 0) {
+                html += item.toHTML();
+
+                // Check if next items are nested (indent > 0)
+                const nested = [];
+                while (i + 1 < items.length && (items[i + 1].attributes.indent || 0) > 0) {
+                    nested.push(items[i + 1]);
+                    i++;
+                }
+                if (nested.length > 0) {
+                    // Re-open the <li> to append the nested list
+                    html = html.replace(/<\/li>$/, '');
+                    const nestedOrdered = !!nested[0].attributes.ordered;
+                    // Shift indent levels down by 1 for the recursive call
+                    const shifted = nested.map((n) => {
+                        const clone = n.clone();
+                        clone.attributes.indent = (clone.attributes.indent || 1) - 1;
+                        return clone;
+                    });
+                    html += `\n${SyntaxTree._buildListHTML(shifted, nestedOrdered)}`;
+                    html += '</li>';
+                }
+                html += '\n';
+            } else {
+                // Standalone indented item without a parent — render it flat
+                html += `${item.toHTML()}\n`;
+            }
+        }
+
+        html += `</${tag}>`;
+        return html;
     }
 
     /**

@@ -198,6 +198,17 @@ const electronAPI = {
      */
     applyFormat: (format) => ipcRenderer.invoke('element:format', format),
 
+    // ========== Preview Operations ==========
+
+    /**
+     * Opens a preview window showing the rendered HTML.
+     * @param {string} head - The HTML head content (style, script, link, meta tags)
+     * @param {string} body - The HTML body content
+     * @param {string|null} filePath - The document's file path (for resolving relative URLs)
+     * @returns {Promise<{success: boolean}>}
+     */
+    openPreview: (head, body, filePath) => ipcRenderer.invoke('preview:open', head, body, filePath),
+
     // ========== IPC Event Listeners ==========
 
     /**

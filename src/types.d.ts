@@ -45,6 +45,7 @@ interface ElectronAPI {
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
     notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
+    openPreview(head: string, body: string, filePath: string | null): Promise<{ success: boolean }>;
 }
 
 /**

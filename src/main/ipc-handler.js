@@ -4,7 +4,9 @@
  * as well as external scripting API calls.
  */
 
+import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import path from 'node:path';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { APIRegistry } from './api-registry.js';
@@ -75,6 +77,7 @@ export class IPCHandler {
         this.registerImageHandlers();
         this.registerPathHandlers();
         this.registerAPIHandlers();
+        this.registerPreviewHandlers();
     }
 
     /**
@@ -201,6 +204,121 @@ export class IPCHandler {
             // Eagerly persist the open-files list so the state survives
             // ungraceful exits (SIGINT, SIGKILL, crashes).
             this._persistOpenFiles(fileList);
+            return { success: true };
+        });
+    }
+
+    /**
+     * Common MIME types for static file serving in the preview server.
+     * @type {Record<string, string>}
+     */
+    static MIME_TYPES = {
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'application/javascript',
+        '.mjs': 'application/javascript',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp',
+        '.ico': 'image/x-icon',
+        '.woff': 'font/woff',
+        '.woff2': 'font/woff2',
+        '.ttf': 'font/ttf',
+        '.otf': 'font/otf',
+        '.mp3': 'audio/mpeg',
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+        '.ogg': 'audio/ogg',
+        '.wav': 'audio/wav',
+        '.pdf': 'application/pdf',
+        '.xml': 'application/xml',
+        '.txt': 'text/plain',
+        '.wasm': 'application/wasm',
+    };
+
+    /**
+     * Registers preview-related IPC handlers.
+     */
+    registerPreviewHandlers() {
+        ipcMain.handle('preview:open', async (_event, head, body, filePath) => {
+            const parentWindow = BrowserWindow.getFocusedWindow();
+            const docDir = filePath ? path.dirname(filePath) : null;
+
+            const fullHTML = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n${head}\n</head>\n<body>\n${body}\n</body>\n</html>`;
+
+            // Spin up a local HTTP server to serve the preview
+            const server = http.createServer(async (req, res) => {
+                const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
+                const requestPath = decodeURIComponent(url.pathname);
+
+                // Root path serves the generated HTML document
+                if (requestPath === '/') {
+                    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                    res.end(fullHTML);
+                    return;
+                }
+
+                // All other paths serve static files from the document's directory
+                if (!docDir) {
+                    res.writeHead(404);
+                    res.end('Not found');
+                    return;
+                }
+
+                const safePath = path.normalize(requestPath).replace(/^\.\.[/\\]/, '');
+                const absPath = path.join(docDir, safePath);
+
+                // Prevent directory traversal above the document's folder
+                if (!absPath.startsWith(docDir)) {
+                    res.writeHead(403);
+                    res.end('Forbidden');
+                    return;
+                }
+
+                try {
+                    const stat = await fs.stat(absPath);
+                    if (!stat.isFile()) {
+                        res.writeHead(404);
+                        res.end('Not found');
+                        return;
+                    }
+                    const ext = path.extname(absPath).toLowerCase();
+                    const mime = IPCHandler.MIME_TYPES[ext] ?? 'application/octet-stream';
+                    res.writeHead(200, { 'Content-Type': mime });
+                    createReadStream(absPath).pipe(res);
+                } catch {
+                    res.writeHead(404);
+                    res.end('Not found');
+                }
+            });
+
+            // Listen on a random available port
+            await new Promise((resolve) =>
+                server.listen({ port: 0, host: '127.0.0.1' }, () => resolve(undefined)),
+            );
+            const port = /** @type {import('node:net').AddressInfo} */ (server.address()).port;
+
+            const previewWindow = new BrowserWindow({
+                width: 800,
+                height: Math.round(800 * Math.SQRT2),
+                parent: parentWindow ?? undefined,
+                webPreferences: {
+                    contextIsolation: true,
+                    nodeIntegration: false,
+                    sandbox: true,
+                },
+                title: 'Preview',
+            });
+
+            // Shut down the server when the preview window closes
+            previewWindow.on('closed', () => server.close());
+
+            await previewWindow.loadURL(`http://127.0.0.1:${port}/`);
+
             return { success: true };
         });
     }
