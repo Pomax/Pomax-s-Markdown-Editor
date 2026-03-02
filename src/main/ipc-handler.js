@@ -264,8 +264,6 @@ body {
   margin: 0 auto;
   padding: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
   box-sizing: border-box;
-}
-.markdown-body {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }</style>`;
 
