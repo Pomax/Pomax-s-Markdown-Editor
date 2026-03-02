@@ -261,6 +261,63 @@ export class Editor {
         return hints;
     }
 
+    /**
+     * Finalizes source-edit mode for an html-block node with rawContent
+     * (script, style, textarea).  The raw text stored in
+     * `_sourceEditText` is split back into openingTag / rawContent /
+     * closingTag attributes.
+     *
+     * @param {SyntaxNode} node - The html-block node to finalize.
+     * @returns {{ updated: string[] } | null}
+     *   Render hints, or null if the node was not in source-edit mode.
+     */
+    finalizeRawContentSourceEdit(node) {
+        const text = node.exitSourceEditMode();
+        if (text === null) return null;
+
+        const tagName = node.attributes.tagName || '';
+        const closingPattern = `</${tagName}>`;
+        const closingIndex = text.lastIndexOf(closingPattern);
+
+        if (closingIndex !== -1) {
+            // Find the end of the first line (the opening tag)
+            const firstNewline = text.indexOf('\n');
+            if (firstNewline !== -1 && firstNewline < closingIndex) {
+                node.attributes.openingTag = text.substring(0, firstNewline);
+                // rawContent is between opening and closing tag lines
+                const rawStart = firstNewline + 1;
+                // The closing tag might be on its own line preceded by \n
+                const closingLineStart = text.lastIndexOf('\n', closingIndex);
+                if (closingLineStart >= rawStart) {
+                    node.attributes.rawContent = text.substring(rawStart, closingLineStart);
+                    node.attributes.closingTag = text.substring(closingLineStart + 1);
+                } else {
+                    // Closing tag immediately follows opening — no raw content
+                    node.attributes.rawContent = '';
+                    node.attributes.closingTag = text.substring(closingIndex);
+                }
+            } else {
+                // No newline before closing — everything is on one line
+                node.attributes.openingTag = text.substring(0, closingIndex);
+                node.attributes.rawContent = '';
+                node.attributes.closingTag = text.substring(closingIndex);
+            }
+        } else {
+            // No closing tag found — treat everything as opening + rawContent
+            const firstNewline = text.indexOf('\n');
+            if (firstNewline !== -1) {
+                node.attributes.openingTag = text.substring(0, firstNewline);
+                node.attributes.rawContent = text.substring(firstNewline + 1);
+            } else {
+                node.attributes.openingTag = text;
+                node.attributes.rawContent = '';
+            }
+            node.attributes.closingTag = '';
+        }
+
+        return { updated: [node.id] };
+    }
+
     // ──────────────────────────────────────────────
     //  Initialization
     // ──────────────────────────────────────────────
@@ -794,8 +851,8 @@ export class Editor {
         // Nothing to do if already in the requested mode.
         if (mode === this.viewMode) return;
 
-        // Finalize any code-block that is still in source-edit mode
-        // before switching views, so the tree is clean for the new renderer.
+        // Finalize any node that is still in source-edit mode before
+        // switching views, so the tree is clean for the new renderer.
         if (this.syntaxTree) {
             const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
             for (const child of this.syntaxTree.children) {
@@ -816,6 +873,13 @@ export class Editor {
                         };
                     }
                     this.finalizeCodeBlockSourceEdit(child);
+                }
+                if (
+                    child.type === 'html-block' &&
+                    child.attributes.rawContent !== undefined &&
+                    child._sourceEditText !== null
+                ) {
+                    this.finalizeRawContentSourceEdit(child);
                 }
             }
         }

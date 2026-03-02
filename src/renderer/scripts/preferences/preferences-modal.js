@@ -55,6 +55,12 @@ const DEFAULT_ENSURE_LOCAL_PATHS = true;
 const DEFAULT_DETAILS_CLOSED = false;
 
 /**
+ * Default allow list for the preview domain filter.
+ * @type {string[]}
+ */
+const DEFAULT_ALLOW_LIST = [];
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -73,6 +79,9 @@ export class PreferencesModal {
 
         /** @type {boolean} */
         this._linkAll = false;
+
+        /** @type {string[]} */
+        this._allowList = [];
     }
 
     /**
@@ -102,6 +111,7 @@ export class PreferencesModal {
                             <li><a href="#" class="preferences-nav-link" data-section="pref-toc">Table of Contents</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-images">Image Handling</a></li>
                             <li><a href="#" class="preferences-nav-link" data-section="pref-content">Content</a></li>
+                            <li><a href="#" class="preferences-nav-link" data-section="pref-allow-list">Allow List</a></li>
                         </ul>
                     </nav>
                     <div class="preferences-body">
@@ -236,6 +246,15 @@ export class PreferencesModal {
                             <p class="preferences-hint">When enabled, &lt;details&gt; blocks are initially collapsed in writing view. Click the disclosure triangle to expand or collapse them.</p>
                         </div>
                     </fieldset>
+                    <fieldset class="preferences-fieldset" id="pref-allow-list">
+                        <legend>Allow List</legend>
+                        <p class="preferences-hint">The preview blocks all external requests by default. URLs explicitly in the document are always allowed. Add domains here to permit additional requests (e.g. allowing <code>example.com</code> also allows <code>cdn.example.com</code>).</p>
+                        <div class="allow-list-add-row">
+                            <input type="text" id="allow-list-input" class="allow-list-input" placeholder="e.g. example.com">
+                            <button type="button" id="allow-list-add" class="allow-list-add-btn">Add</button>
+                        </div>
+                        <ul id="allow-list-entries" class="allow-list-entries"></ul>
+                    </fieldset>
                     </div>
                 </div>
                 <footer class="preferences-footer">
@@ -290,6 +309,9 @@ export class PreferencesModal {
 
         // Wire up sidebar navigation links
         this._setupNavLinks(dialog);
+
+        // Wire up allow list add/remove
+        this._setupAllowList(dialog);
 
         document.body.appendChild(dialog);
         this.dialog = dialog;
@@ -659,6 +681,10 @@ export class PreferencesModal {
         );
         detailsClosedCb.checked = detailsClosed;
 
+        // Load allow list
+        this._allowList = await this._loadAllowList();
+        this._renderAllowList();
+
         this.dialog.showModal();
     }
 
@@ -836,6 +862,95 @@ export class PreferencesModal {
     }
 
     /**
+     * Loads the allow list setting from the settings database.
+     * @returns {Promise<string[]>}
+     */
+    async _loadAllowList() {
+        if (!window.electronAPI) return [...DEFAULT_ALLOW_LIST];
+
+        try {
+            const result = await window.electronAPI.getSetting('allowList');
+            if (result.success && Array.isArray(result.value)) {
+                return result.value;
+            }
+        } catch {
+            // Fall through to default
+        }
+
+        return [...DEFAULT_ALLOW_LIST];
+    }
+
+    /**
+     * Wires up the allow list add button and input field.
+     * @param {HTMLDialogElement} dialog
+     */
+    _setupAllowList(dialog) {
+        const input = /** @type {HTMLInputElement} */ (dialog.querySelector('#allow-list-input'));
+        const addBtn = dialog.querySelector('#allow-list-add');
+
+        const addDomain = () => {
+            const domain = input.value
+                .trim()
+                .toLowerCase()
+                .replace(/^https?:\/\//, '');
+            if (!domain) return;
+            if (!this._allowList) this._allowList = [];
+            if (!this._allowList.includes(domain)) {
+                this._allowList.push(domain);
+                this._renderAllowList();
+            }
+            input.value = '';
+        };
+
+        if (addBtn) {
+            addBtn.addEventListener('click', addDomain);
+        }
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addDomain();
+                }
+            });
+        }
+    }
+
+    /**
+     * Renders the current allow list entries into the DOM.
+     */
+    _renderAllowList() {
+        if (!this.dialog) return;
+        const list = this.dialog.querySelector('#allow-list-entries');
+        if (!list) return;
+
+        list.innerHTML = '';
+        const domains = this._allowList ?? [];
+        for (const domain of domains) {
+            const li = document.createElement('li');
+            li.className = 'allow-list-entry';
+            const span = document.createElement('span');
+            span.className = 'allow-list-domain';
+            span.textContent = domain;
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'allow-list-remove-btn';
+            removeBtn.textContent = '\u00d7';
+            removeBtn.setAttribute('aria-label', `Remove ${domain}`);
+            removeBtn.addEventListener('click', () => {
+                if (this._allowList) {
+                    this._allowList = this._allowList.filter(
+                        (/** @type {string} */ d) => d !== domain,
+                    );
+                    this._renderAllowList();
+                }
+            });
+            li.appendChild(span);
+            li.appendChild(removeBtn);
+            list.appendChild(li);
+        }
+    }
+
+    /**
      * Saves the current form values to the settings store and applies them.
      */
     async _save() {
@@ -897,6 +1012,8 @@ export class PreferencesModal {
         );
         const detailsClosed = detailsClosedCb.checked;
 
+        const allowList = this._allowList ?? [];
+
         // Persist to database
         if (window.electronAPI) {
             await window.electronAPI.setSetting('defaultView', defaultView);
@@ -907,6 +1024,7 @@ export class PreferencesModal {
             await window.electronAPI.setSetting('tocPosition', tocPosition);
             await window.electronAPI.setSetting('ensureLocalPaths', ensureLocalPaths);
             await window.electronAPI.setSetting('detailsClosed', detailsClosed);
+            await window.electronAPI.setSetting('allowList', allowList);
         }
 
         // Apply to CSS immediately

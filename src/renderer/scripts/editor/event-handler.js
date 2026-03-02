@@ -190,11 +190,22 @@ export class EventHandler {
         const newBlockId = this.editor.resolveBlockId(newNodeId);
         const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
 
-        // Finalize source-edit mode for code-blocks on click away.
+        // Finalize source-edit mode for code-blocks and rawContent
+        // html-blocks on click away.
         if (oldBlockId && oldBlockId !== newBlockId) {
             const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
             if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
                 const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+                if (hints) {
+                    this.editor.renderNodes(hints);
+                }
+            }
+            if (
+                oldNode?.type === 'html-block' &&
+                oldNode.attributes.rawContent !== undefined &&
+                oldNode._sourceEditText !== null
+            ) {
+                const hints = this.editor.finalizeRawContentSourceEdit(oldNode);
                 if (hints) {
                     this.editor.renderNodes(hints);
                 }
@@ -426,14 +437,24 @@ export class EventHandler {
             const newBlockId = this.editor.resolveBlockId(newNodeId);
             const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
 
-            // ── Finalize source-edit mode for code-blocks ──
+            // ── Finalize source-edit mode for code-blocks and rawContent html-blocks ──
             // When the cursor moves to a different block and the previous
-            // block was a code-block in source-edit mode, reparse its text
-            // back into tree properties (fenceCount, language, content).
+            // block was in source-edit mode, reparse its text back into
+            // tree properties.
             if (oldBlockId && oldBlockId !== newBlockId) {
                 const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
                 if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
                     const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+                    if (hints) {
+                        this.editor.renderNodes(hints);
+                    }
+                }
+                if (
+                    oldNode?.type === 'html-block' &&
+                    oldNode.attributes.rawContent !== undefined &&
+                    oldNode._sourceEditText !== null
+                ) {
+                    const hints = this.editor.finalizeRawContentSourceEdit(oldNode);
                     if (hints) {
                         this.editor.renderNodes(hints);
                     }

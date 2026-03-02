@@ -108,11 +108,14 @@ export class SyntaxNode {
         this.attributes = {};
 
         /**
-         * When non-null, holds the full markdown text of this
-         * code-block while it is being edited in source view.  All
-         * keystrokes operate on this string; the normal `content` /
-         * `attributes` fields are updated only when editing ends
-         * (cursor leaves or view mode switches).
+         * When non-null, holds the full markdown text of this node
+         * while it is being edited in source view.  All keystrokes
+         * operate on this string; the normal `content` / `attributes`
+         * fields are updated only when editing ends (cursor leaves or
+         * view mode switches).
+         *
+         * Used by `code-block` nodes and `html-block` nodes with
+         * `rawContent` (script, style, textarea).
          * @type {string|null}
          */
         this._sourceEditText = null;
@@ -260,24 +263,40 @@ export class SyntaxNode {
         return false;
     }
 
-    // ── Source-view code-block editing ──────────────────
+    // ── Source-view source-edit mode ──────────────────
 
     /**
-     * Enters source edit mode for a code-block node.  The full markdown
-     * representation (fences + language + content) is stored in
-     * `_sourceEditText` so the user can edit any part — including the
-     * fences and language tag — as plain text.
+     * Enters source edit mode.  The full markdown representation is
+     * stored in `_sourceEditText` so the user can edit every part as
+     * plain text.
      *
-     * Only valid for `code-block` nodes; no-ops for other types or when
-     * already in source edit mode.
+     * Supported node types:
+     * - `code-block` — fences + language + content
+     * - `html-block` with `rawContent` — opening tag + body + closing tag
+     *
+     * No-ops for other types or when already in source edit mode.
      */
     enterSourceEditMode() {
-        if (this.type !== 'code-block') return;
         if (this._sourceEditText !== null) return;
 
-        const lang = this.attributes.language || '';
-        const fence = '`'.repeat(this.attributes.fenceCount || 3);
-        this._sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
+        if (this.type === 'code-block') {
+            const lang = this.attributes.language || '';
+            const fence = '`'.repeat(this.attributes.fenceCount || 3);
+            this._sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
+            return;
+        }
+
+        if (this.type === 'html-block' && this.attributes.rawContent !== undefined) {
+            const parts = [this.attributes.openingTag || ''];
+            if (this.attributes.rawContent !== '') {
+                parts.push(this.attributes.rawContent);
+            }
+            if (this.attributes.closingTag) {
+                parts.push(this.attributes.closingTag);
+            }
+            this._sourceEditText = parts.join('\n');
+            return;
+        }
     }
 
     /**
@@ -363,6 +382,9 @@ export class SyntaxNode {
             case 'table':
                 return this.content;
             case 'html-block': {
+                // If in source-edit mode, return the raw edit text
+                if (this._sourceEditText !== null) return this._sourceEditText;
+
                 // Raw content tags (script, style, textarea): body stored verbatim
                 if (this.attributes.rawContent !== undefined) {
                     if (this.attributes.rawContent === '') {
