@@ -39,6 +39,7 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
@@ -362,15 +363,34 @@ export class SyntaxNode {
             case 'table':
                 return this.content;
             case 'html-block': {
+                // Raw content tags (script, style, textarea): body stored verbatim
+                if (this.attributes.rawContent !== undefined) {
+                    if (this.attributes.rawContent === '') {
+                        return (
+                            (this.attributes.openingTag || '') + (this.attributes.closingTag || '')
+                        );
+                    }
+                    const parts = [this.attributes.openingTag || ''];
+                    parts.push(this.attributes.rawContent);
+                    if (this.attributes.closingTag) {
+                        parts.push(this.attributes.closingTag);
+                    }
+                    return parts.join('\n');
+                }
+
+                // Void elements: opening tag only, no children, no closing tag
+                if (this.attributes.closingTag === '' && this.children.length === 0) {
+                    return this.attributes.openingTag || '';
+                }
+
                 // If the container has exactly one bare-text child, collapse
-                // to a single line: <tag>content</tag>
+                // to a single line: <tag ...>content</tag>
                 if (
                     this.children.length === 1 &&
                     this.children[0].attributes.bareText &&
                     this.children[0].type === 'paragraph'
                 ) {
-                    const tag = this.attributes.tagName || 'div';
-                    return `<${tag}>${this.children[0].content}</${tag}>`;
+                    return `${this.attributes.openingTag}${this.children[0].content}${this.attributes.closingTag}`;
                 }
 
                 const parts = [this.attributes.openingTag || ''];
