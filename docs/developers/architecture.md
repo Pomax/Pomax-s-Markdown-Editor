@@ -165,7 +165,7 @@ The renderer entry point. Wires together all renderer components:
 - Sends the open-files list to the main process so the View menu stays in sync
 - Exposes `editorAPI` to the main process for querying editor state
 - Handles `session:restore` events to restore cursor position, ToC heading highlight, and scroll position for all tabs after a close-and-reopen. Active tab is restored live; background tabs are patched in `_documentStates`.
-- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` restores `treeRange` (text selection) and sets `_isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler. If a `treeRange` exists, `placeSelection()` restores the full selection; otherwise `placeCursor()` places a collapsed caret. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`.
+- **Tab switching** preserves the DOM container and syntax tree — nothing is re-rendered. `_restoreState` restores `treeRange` (text selection) and sets `_isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler. If a `treeRange` exists, `placeSelection()` restores the full selection; otherwise `placeCursor()` places a collapsed caret. **Session restore** (app relaunch) rebuilds the DOM from scratch and uses `fullRenderAndPlaceCursor()`. The cursor position is the single source of positional truth on restore — the view scrolls to the cursor's node, and the persisted ToC heading highlight is applied via `_lockedHeadingId` with `_programmaticScroll` suppressing scroll-based recalculation.
 
 ### Editor
 
@@ -231,6 +231,19 @@ Converts markdown text to a syntax tree using a token-driven DFA (no regular exp
 - Token-based recognition with ordered priority
 - Position tracking (start/end line) for each node
 - Multi-line block handling (code blocks, tables)
+
+#### HTML block handling
+
+The parser recognises several categories of HTML blocks, each with specialised handling:
+
+- **Known block tags** (`HTML_BLOCK_TAGS`): `div`, `section`, `details`, `summary`, `style`, etc. Parsed as multi-line `html-block` nodes with child nodes for their content.
+- **Void elements** (`VOID_HTML_ELEMENTS`): `br`, `hr`, `img`, `input`, `link`, `meta`, `source`, `wbr`, etc. These have no closing tag — the parser stores the full opening tag in `attributes.openingTag` and sets `attributes.closingTag` to `''`.
+- **Raw content tags** (`RAW_CONTENT_TAGS`): `script`, `style`, `textarea`. Content between opening and closing tags is stored verbatim in `attributes.rawContent` (array of lines) without being parsed as markdown.
+- **Inline-only tags** (`INLINE_ONLY_TAGS`): `strong`, `em`, `sub`, `sup`, `mark`, `u`, `b`, `i`, `del`, `s`. These are never promoted to block-level; they remain inline formatting within their parent node.
+- **Unknown tags**: Any tag not in the above sets is detected via `_isUnknownHtmlTag()` (token-based, no regex look-ahead) and parsed as a block-level `html-block`.
+- **HTML comments** (`<!-- ... -->`): Detected by `_isHtmlCommentStart()` (checks `LT BANG DASH DASH` tokens) and consumed through `-->` by `_parseHtmlComment()`. Stored as `html-block` with `tagName: '!--'` and the full comment text in `attributes.openingTag`.
+
+In writing mode, HTML comments, void elements, and raw content tags are hidden (`element.hidden = true`) since they have no visual representation. In source mode they are displayed normally.
 
 ### SyntaxTree / SyntaxNode
 
