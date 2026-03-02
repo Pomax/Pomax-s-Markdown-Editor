@@ -820,6 +820,62 @@ describe('DFAParser', () => {
         });
     });
 
+    // ── HTML comments ───────────────────────────────────────────
+
+    describe('HTML comments', () => {
+        it('should parse a single-line HTML comment as html-block', () => {
+            const md = '<!-- a comment -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, '!--');
+            assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- a comment -->');
+            assert.strictEqual(tree.children[0].attributes.closingTag, '');
+        });
+
+        it('should round-trip a single-line HTML comment', () => {
+            const md = '<!-- a comment -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a multi-line HTML comment', () => {
+            const md = '<!--\nline one\nline two\n-->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, '!--');
+            assert.strictEqual(
+                tree.children[0].attributes.openingTag,
+                '<!--\nline one\nline two\n-->',
+            );
+        });
+
+        it('should round-trip a multi-line HTML comment', () => {
+            const md = '<!--\nline one\nline two\n-->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a comment between paragraphs', () => {
+            const md = 'Before\n\n<!-- comment -->\n\nAfter';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+            assert.strictEqual(tree.children[1].type, 'html-block');
+            assert.strictEqual(tree.children[1].attributes.tagName, '!--');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+        });
+
+        it('should parse adjacent comments as separate blocks', () => {
+            const md = '<!-- first -->\n<!-- second -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- first -->');
+            assert.strictEqual(tree.children[1].attributes.openingTag, '<!-- second -->');
+        });
+    });
+
     // ── Complex documents ───────────────────────────────────────
 
     describe('complex documents', () => {

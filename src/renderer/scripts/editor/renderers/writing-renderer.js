@@ -647,6 +647,16 @@ export class WritingRenderer {
             return this.renderFakeDetails(node, element, isFocused);
         }
 
+        // HTML comments, void elements, and raw content tags have no
+        // visual representation in writing mode — hide them entirely.
+        const isComment = tagName === '!--';
+        const isVoid = attrs.closingTag === '' && node.children.length === 0;
+        const isRawContent = attrs.rawContent !== undefined;
+        if (isComment || isVoid || isRawContent) {
+            element.hidden = true;
+            return element;
+        }
+
         // Create the actual HTML container element
         const container = document.createElement(tagName);
         container.className = 'md-html-container';

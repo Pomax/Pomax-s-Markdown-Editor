@@ -872,6 +872,8 @@ export class DFAParser {
      * @returns {boolean}
      */
     _isHtmlBlockStart(ctx) {
+        // HTML comments: <!-- ... -->
+        if (this._isHtmlCommentStart(ctx)) return true;
         const tagName = this._peekTextAfterLT(ctx);
         if (!tagName) return false;
         const lower = tagName.toLowerCase();
@@ -895,6 +897,8 @@ export class DFAParser {
         }
         if (i >= ctx.tokens.length || i === ctx.pos) return false;
         if (ctx.tokens[i].type !== 'LT') return false;
+        // HTML comments: <!-- ... -->
+        if (this._isHtmlCommentStart({ tokens: ctx.tokens, pos: i })) return true;
         const result = this._peekTagName(ctx.tokens, i + 1);
         if (!result) return false;
         const lower = result.name.toLowerCase();
@@ -1012,6 +1016,74 @@ export class DFAParser {
     }
 
     /**
+     * Checks whether `ctx.pos` points at a `LT BANG DASH DASH`
+     * sequence, the token equivalent of `<!--`.
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+     * @returns {boolean}
+     */
+    _isHtmlCommentStart(ctx) {
+        const t = ctx.tokens;
+        const p = ctx.pos;
+        return (
+            p + 3 < t.length &&
+            t[p].type === 'LT' &&
+            t[p + 1].type === 'BANG' &&
+            t[p + 2].type === 'DASH' &&
+            t[p + 3].type === 'DASH'
+        );
+    }
+
+    /**
+     * Consumes an HTML comment from `<!--` through `-->` (inclusive)
+     * and returns an `html-block` node whose `openingTag` holds the
+     * full verbatim comment text.
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+     * @param {number} startLine
+     * @returns {SyntaxNode}
+     */
+    _parseHtmlComment(ctx, startLine) {
+        let text = '';
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+            // Look for closing sequence: DASH DASH GT
+            if (
+                ctx.tokens[ctx.pos].type === 'DASH' &&
+                ctx.pos + 2 < ctx.tokens.length &&
+                ctx.tokens[ctx.pos + 1].type === 'DASH' &&
+                ctx.tokens[ctx.pos + 2].type === 'GT'
+            ) {
+                text += '-->';
+                ctx.pos += 3;
+                break;
+            }
+            if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                text += '\n';
+                ctx.line++;
+            } else {
+                text += ctx.tokens[ctx.pos].value;
+            }
+            ctx.pos++;
+        }
+
+        const endLine = ctx.line;
+
+        // Skip trailing newline
+        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+            ctx.line++;
+            ctx.pos++;
+        }
+
+        const node = new SyntaxNode('html-block', '');
+        node.attributes = {
+            tagName: '!--',
+            openingTag: text,
+            closingTag: '',
+        };
+        node.startLine = startLine;
+        node.endLine = endLine;
+        return node;
+    }
+
+    /**
      * Peeks at the text token(s) immediately after a LT token to get
      * the tag name, including hyphenated custom element names.
      * Returns null if structure doesn't match.
@@ -1034,6 +1106,11 @@ export class DFAParser {
      */
     _parseHtmlBlock(ctx) {
         const startLine = ctx.line;
+
+        // ── HTML comments: <!-- ... --> ──────────────────────────
+        if (this._isHtmlCommentStart(ctx)) {
+            return this._parseHtmlComment(ctx, startLine);
+        }
 
         // Consume the opening tag line (everything up to and including the first >)
         let openingTag = '';
