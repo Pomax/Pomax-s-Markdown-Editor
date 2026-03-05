@@ -68,23 +68,23 @@ Not just the 4 files in `test/unit/parser/` — all files that exercise markdown
 9. Define the spec file format:
    ```
    # title
-   
+
    description
-   
+
    # markdown
-   
+
    ```
    raw markdown
    ```
-   
+
    # syntax tree
-   
+
    ```
    indented tree description (parse-markdown.js format, no line numbers)
    ```
-   
+
    # html
-   
+
    ```
    expected semantic HTML
    ```
@@ -106,3 +106,8 @@ Not just the 4 files in `test/unit/parser/` — all files that exercise markdown
 15. Run full existing test suite to confirm nothing is broken
 16. Ask for manual testing
 17. Update docs if needed, final commit + PR comment (closes #30)
+
+### Phase 6 — Refactor parser src files
+
+18. Break the large source files into smaller logical units that import each other (e.g. separate block-level parsing helpers from the main DFA parser class, split SyntaxNode and SyntaxTree into their own files, extract inline segment-to-node conversion, etc.)
+19. Remove all underscore prefixes from variables, properties, and methods — underscores do nothing in JS, they are just a bad naming convention
