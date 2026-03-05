@@ -65,7 +65,7 @@ Not just the 4 files in `test/unit/parser/` — all files that exercise markdown
 
 ### Phase 3 — Spec file infrastructure
 
-9. Define the spec file format:
+9. Define the spec file format — one file per topic, multiple test cases per file separated by `---`:
    ```
    # title
 
@@ -88,6 +88,12 @@ Not just the 4 files in `test/unit/parser/` — all files that exercise markdown
    ```
    expected semantic HTML
    ```
+
+   ---
+
+   # markdown
+   ...
+   (repeated for each test case)
    ```
 10. Create `verify-spec-files.js` — ESM Node.js script, validates format, `node verify-spec-files.js ./tests/spec-files`
 11. Create spec-file test runner — reads each spec, verifies:

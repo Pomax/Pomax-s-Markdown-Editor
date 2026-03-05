@@ -7,9 +7,9 @@
  * Usage:
  *
  *   import { Parser } from '@tooling/parser';
- *   const tree = Parser.parse('# Hello\n\nWorld');
+ *   const tree = await Parser.parse('# Hello\n\nWorld');
  *   console.log(tree.toMarkdown());
- *   console.log(tree.toHTML(document));
+ *   console.log(tree.toHTML());
  */
 
 import { DFAParser } from './src/dfa-parser.js';
@@ -25,10 +25,16 @@ export const Parser = {
      * Parse a markdown string into a syntax tree.
      *
      * @param {string} markdown - The markdown source text.
-     * @returns {SyntaxTree}
+     * @returns {Promise<SyntaxTree>}
      */
-    parse(markdown) {
-        return parser.parse(markdown);
+    async parse(markdown) {
+        let doc = globalThis.document;
+        if (!doc) {
+            const { JSDOM } = await import('jsdom');
+            const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+            doc = dom.window.document;
+        }
+        return parser.parse(markdown, doc);
     },
 };
 

@@ -103,11 +103,13 @@ export class DFAParser {
     /**
      * Parses a full markdown document.
      * @param {string} markdown
+     * @param {Document} [doc]
      * @returns {SyntaxTree}
      */
-    parse(markdown) {
+    parse(markdown, doc) {
         const tokens = tokenize(markdown);
         const tree = new SyntaxTree();
+        if (doc) tree.doc = doc;
         const ctx = { tokens, pos: 0, line: 0 };
 
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {

@@ -1483,22 +1483,23 @@ export class SyntaxTree {
      * Every element gets an `__st_node` property referencing the
      * originating SyntaxNode.
      *
-     * @param {Document} doc - The Document to create elements with.
+     * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
      * @returns {Element}
      */
     toDOM(doc) {
-        const container = doc.createElement('div');
-        renderBlockChildrenToDOM(doc, this.children, container);
+        const d = doc || this.doc;
+        const container = d.createElement('div');
+        renderBlockChildrenToDOM(d, this.children, container);
         return container;
     }
 
     /**
      * Converts the tree to an HTML string.
-     * @param {Document} doc - The Document to create elements with.
+     * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
      * @returns {string}
      */
     toHTML(doc) {
-        return this.toDOM(doc).outerHTML;
+        return this.toDOM(doc || this.doc).outerHTML;
     }
 
     /**
