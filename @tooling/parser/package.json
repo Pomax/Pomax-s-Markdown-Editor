@@ -1,0 +1,13 @@
+{
+  "name": "@tooling/parser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js",
+    "test:spec": "node tests/run-spec-tests.js",
+    "verify-specs": "node verify-spec-files.js ./tests/spec-files"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}

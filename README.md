@@ -22,38 +22,21 @@ Previous versions can be found over on the [Releases](https://github.com/Pomax/P
 
 Sorry, did you not have 8+GB if RAM and 1TB+ of disk space? Stop pretending you care about Electron, you care about whether the tools are useful or not. Yes, it's dumb that 2 MB of resources needs 100MB of UI runner, but on the other hand, it's literally a browser, and have you looked at what browsers need to support these days? Can you even _count_ the number of web APIs? =P
 
-## Fine... so what is this?
+# Fine... so what is this?
 
-This is part experiment, part necessary tooling: I needed a markdown editor that can actually work with huge documents without either being "split view", or needing installers that require admin rights while secretly owned by a Chinese company. I also wanted to see if Opus 4.5/4.6 was up to the task of doing normal software development. So this is a public domain licensed (i.e. no license claims whatsoever) piece of open source software that was product managed by me, and written by Opus. 
+This is part experiment, part "solving a problem I have that no one else will solve for me": I need a wysiwyg GitHub flavoured markdown editor with full "html in markdown" support, and the ability to load 50,000+ word documents backed by a document tree, so that edits aren't based on "updating a single, giant, string". Which rules out literally every markdown editor out there. Think of you favourite markdown editor: it fails at least one of those criteria.
 
-Also note that this project was not "vibe coded": the dev work uses branches, unit tests, integration tests, as well as up to date docs and requirements with acceptance criteria. All of this is standard dev practice, and no work that fails testing gets through. Also, plans get shot down plenty because they make assumptions that don't hold up, or would make it harder to work on the code. The point here is to have a codebase that is accessible to both AI agents as well as real human beings if they want to help fix something, or land a new feature.
+That's the tooling part, the experimental part is where I am not writing this code, I am instead directing code generation tools to write the code for me, in order to understand where and how those tools break down. Primarily, this codebase is developed by Opus 4.6, and it gets it wrong. A lot. Which in turn means I learn something about which seemingly simple problem descriptions are orders of magnitude too complex, and which order of operations are guaranteed to yield nonsense, or at best hours instead of minutes of work.
 
-If you intend to use an agent, every prompt should be preceded by `(re)read the ai-agent-notes first, and then ...` because agents can't pin instructions. They _will_ just remove that information from their context for no reason, at any time.
+## So this is a vibe coded project?
 
-## So it's AI slop, got it.
+Not really, no. This is literally an experiment into how _not_ to vibe code, and instead use these tools in a way that actually makes the same amount of sense as any other IDE automation. Because there is _so much_ these tools can't do, without telling you, and if you just let them "do their thing" instead of making them perform very specific targetted tasks based on you tracking the task list and acceptance criteria, that's on you.
 
-If you think a fully featured markdown editor with a codebase that you can actually read, with design and architecture docs that accurately reflect that codebase, and over 500 tests is slop, then it might be time to start forming your own opinions again instead of just parroting others. These tools need a lot of work to make sure they do the right thing, and plenty of dev work went into making an editor that _I_ would use, and my requirements are much more demanding than most because code that can't be maintained and explained is code that shouldn't exist.
+## Well I don't want to use something made by AI
 
-## Features
+That's fine. There's a reason I gave this project the name that it has: this is a tool that ***I*** need. I'm putting it up on GitHub with a public domain license because that's what I do with almost everything I make, and if you don't like it, no one's forcing you to use it, or even keep reading.
 
-- **Fast Editing**: Documents are parsed into a syntactic tree structure, enabling efficient editing regardless of document size
-- **Dual View Modes**:
-  - **Source View**: Shows literal markdown with syntax highlighting
-  - **Writing View**: WYSIWYG-style editing that hides syntax unless focused
-- **WYSIWYG Toolbar**: Context-aware formatting toolbar that adapts to the current element
-- **Table of Contents**: Resizable sidebar with live-updating headings navigation (left or right)
-- **Image Support**: Insert, edit, rename, and drag & drop images; gather images into the document folder
-- **Table Support**: Insert and edit tables via a modal dialog
-- **Search**: Find text in the editor with plain text or regex, case-sensitive toggle, and match navigation (`Ctrl+F`)
-- **Preferences**: Configurable page margins, page width, page colors, default view mode, and TOC settings
-- **Word Count**: Total word count and word count excluding code (File → Word Count)
-- **Multi-file Editing**: Open multiple documents in tabs; tab bar at bottom, switchable via View menu
-- **Unlimited Undo/Redo**: Complete edit history with no limit
-- **Scripting API**: Full IPC-based API for external automation
-- **A4 Page Layout**: Document-centric design with configurable page dimensions
-- **Debug Mode**: Help → Debug opens DevTools and enables context menus
-
-## Running from source
+# Running from source
 
 You can obviously just run this project from source if you want. It's just a web stack project wrapped by Electron.
 
@@ -118,7 +101,7 @@ npm start
 └── scripts/            # Build utilities
 ```
 
-## Testing
+# Testing
 
 You run the full test suite using `npm test`. Nice and obvious. This will run linting, formatting, consistency testing, unit testing, and integration testing.
 
@@ -185,4 +168,4 @@ const result = await ipcRenderer.invoke('api:execute', 'document.setContent', {
 
 ## License
 
-I didn't write this code, and AI can't be trusted, so this project is Public Domain. Literally do with it what you want, I'm only losing money on this, not making any.
+I didn't write this code, and AI can't be trusted, so this project is Public Domain. Literally do with it what you want, I'm only losing money on this while I figure out a way in which these tools make sense.
