@@ -17,7 +17,7 @@ export function serializeTree(tree) {
     for (const child of tree.children) {
         serializeNode(child, '', lines);
     }
-    return lines.join('\n');
+    return lines.join('\n') + '\n';
 }
 
 /**
@@ -32,11 +32,13 @@ function serializeNode(node, indent, lines) {
     const hasInlineChildren =
         node.children.length > 0 &&
         node.children.some((c) => c.type !== 'html-block');
-    const content =
-        node.content && !hasInlineChildren
+    // Use tagName as the quoted value for html-block and html-inline nodes
+    const quotedValue = node.tagName
+        ? ` "${node.tagName}"`
+        : node.content && !hasInlineChildren
             ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
             : '';
-    lines.push(`${indent}${node.type}${content}${attrs}`);
+    lines.push(`${indent}${node.type}${quotedValue}${attrs}`);
     for (const child of node.children) {
         serializeNode(child, `${indent}  `, lines);
     }

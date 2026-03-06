@@ -50,6 +50,7 @@ const HTML_BLOCK_TAGS = new Set([
     'hr',
     'html',
     'iframe',
+    'img',
     'legend',
     'li',
     'link',
@@ -78,6 +79,23 @@ const HTML_BLOCK_TAGS = new Set([
     'tr',
     'track',
     'ul',
+]);
+
+const HTML_VOID_TAGS = new Set([
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
 ]);
 
 // ── Helper: count newlines in a string ──────────────────────────────
@@ -179,15 +197,6 @@ export class DFAParser {
         // Horizontal rule: three or more DASH/STAR/UNDERSCORE
         if (this._isHorizontalRule(ctx)) {
             return this._parseHorizontalRule(ctx);
-        }
-
-        // HTML img tag: <img ...> (possibly indented)
-        if (tok.type === 'LT' && this._isHtmlImgTag(ctx)) {
-            return this._parseHtmlImage(ctx);
-        }
-        if ((tok.type === 'SPACE' || tok.type === 'TAB') && this._isIndentedHtmlImgTag(ctx)) {
-            this._skipWhitespace(ctx);
-            return this._parseHtmlImage(ctx);
         }
 
         // HTML block: <tagname...> (possibly indented)
@@ -352,8 +361,9 @@ export class DFAParser {
             content = content.slice(0, -1);
         }
 
-        const node = new SyntaxNode('code-block', content);
+        const node = new SyntaxNode('code-block', '');
         node.attributes = { language, fenceCount };
+        node.appendChild(new SyntaxNode('text', content));
         node.startLine = startLine;
         node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
         return node;
@@ -561,11 +571,20 @@ export class DFAParser {
      */
     _parseHorizontalRule(ctx) {
         const startLine = ctx.line;
+        const tokenType = ctx.tokens[ctx.pos].type;
+        const marker = tokenType === 'DASH' ? '-' : tokenType === 'STAR' ? '*' : '_';
+        let count = 0;
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === tokenType) {
+            count++;
+            ctx.pos++;
+        }
 
-        // Consume all the markers and trailing spaces
+        // Consume trailing spaces and newline
         this._consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('horizontal-rule', '');
+        node.attributes.marker = marker;
+        node.attributes.count = count;
         node.startLine = startLine;
         node.endLine = startLine;
         return node;
@@ -633,7 +652,7 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        const node = new SyntaxNode('image', alt);
+        const node = new SyntaxNode('image');
         node.attributes = { alt, url: src };
         node.startLine = startLine;
         node.endLine = startLine;
@@ -721,65 +740,8 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        const node = new SyntaxNode('image', alt);
+        const node = new SyntaxNode('image');
         node.attributes = { alt, url: src, href };
-        node.startLine = startLine;
-        node.endLine = startLine;
-        return node;
-    }
-
-    // ── HTML image ──────────────────────────────────────────────
-
-    /**
-     * Checks if current position is an <img ...> tag.
-     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
-     * @returns {boolean}
-     */
-    _isHtmlImgTag(ctx) {
-        // LT then "img" (case-insensitive)
-        const after = this._peekTextAfterLT(ctx);
-        if (!after) return false;
-        return after.toLowerCase() === 'img';
-    }
-
-    /**
-     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode}
-     */
-    _parseHtmlImage(ctx) {
-        const startLine = ctx.line;
-
-        // Consume everything until GT (the closing >)
-        let raw = '';
-        while (
-            ctx.pos < ctx.tokens.length &&
-            ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-            ctx.tokens[ctx.pos].type !== 'EOF'
-        ) {
-            raw += ctx.tokens[ctx.pos].value;
-            if (ctx.tokens[ctx.pos].type === 'GT' && raw.length > 1) {
-                ctx.pos++;
-                break;
-            }
-            ctx.pos++;
-        }
-
-        // Skip newline
-        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
-            ctx.line++;
-            ctx.pos++;
-        }
-
-        // Extract attributes by scanning the raw string character by character
-        const src = this._extractAttr(raw, 'src');
-        const alt = this._extractAttr(raw, 'alt');
-        const style = this._extractAttr(raw, 'style');
-
-        const node = new SyntaxNode('image', alt);
-        node.attributes = { alt, url: src };
-        if (style) {
-            node.attributes.style = style;
-        }
         node.startLine = startLine;
         node.endLine = startLine;
         return node;
@@ -833,6 +795,53 @@ export class DFAParser {
         return '';
     }
 
+    /**
+     * Extracts all attribute key-value pairs from an HTML tag string.
+     * @param {string} raw - The full opening tag, e.g. `<img src="pic.jpg" alt="test" />`
+     * @returns {Object<string, string>}
+     */
+    _extractAllAttrs(raw) {
+        const attrs = {};
+        // Strip the tag name and angle brackets: skip past the first whitespace
+        let i = 0;
+        // Skip <tagname
+        while (i < raw.length && raw[i] !== ' ' && raw[i] !== '\t' && raw[i] !== '>' && raw[i] !== '/') {
+            i++;
+        }
+        while (i < raw.length) {
+            // Skip whitespace and / and >
+            while (i < raw.length && (raw[i] === ' ' || raw[i] === '\t' || raw[i] === '/' || raw[i] === '>')) {
+                i++;
+            }
+            if (i >= raw.length) break;
+            // Read attribute name
+            let name = '';
+            while (i < raw.length && raw[i] !== '=' && raw[i] !== ' ' && raw[i] !== '\t' && raw[i] !== '>' && raw[i] !== '/') {
+                name += raw[i];
+                i++;
+            }
+            if (!name) break;
+            // Skip whitespace around =
+            while (i < raw.length && (raw[i] === ' ' || raw[i] === '\t')) i++;
+            if (i >= raw.length || raw[i] !== '=') continue;
+            i++; // skip =
+            while (i < raw.length && (raw[i] === ' ' || raw[i] === '\t')) i++;
+            if (i >= raw.length) break;
+            // Read value
+            const quote = raw[i];
+            if (quote !== '"' && quote !== "'") continue;
+            i++; // skip opening quote
+            let value = '';
+            while (i < raw.length && raw[i] !== quote) {
+                value += raw[i];
+                i++;
+            }
+            if (i < raw.length) i++; // skip closing quote
+            attrs[name.toLowerCase()] = value;
+        }
+        return attrs;
+    }
+
     // ── HTML block ──────────────────────────────────────────────
 
     /**
@@ -867,27 +876,6 @@ export class DFAParser {
         if (!result) return false;
         const lower = result.name.toLowerCase();
         return HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower);
-    }
-
-    /**
-     * Checks if current position has leading whitespace followed by
-     * an HTML img tag.
-     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
-     * @returns {boolean}
-     */
-    _isIndentedHtmlImgTag(ctx) {
-        let i = ctx.pos;
-        while (
-            i < ctx.tokens.length &&
-            (ctx.tokens[i].type === 'SPACE' || ctx.tokens[i].type === 'TAB')
-        ) {
-            i++;
-        }
-        if (i >= ctx.tokens.length || i === ctx.pos) return false;
-        if (ctx.tokens[i].type !== 'LT') return false;
-        const next = i + 1;
-        if (next >= ctx.tokens.length || ctx.tokens[next].type !== 'TEXT') return false;
-        return ctx.tokens[next].value.toLowerCase() === 'img';
     }
 
     /**
@@ -994,6 +982,26 @@ export class DFAParser {
             ctx.pos++;
         }
 
+        // Void elements (e.g. <img>, <br>, <hr>) have no closing tag
+        if (HTML_VOID_TAGS.has(lowerTagName)) {
+            // Skip newline after tag
+            if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+            }
+            const node = new SyntaxNode('html-block', '');
+            node.tagName = lowerTagName;
+            node.attributes = { _openingTag: openingTag };
+            // Extract HTML attributes from the raw opening tag
+            const htmlAttrs = this._extractAllAttrs(openingTag);
+            for (const [key, value] of Object.entries(htmlAttrs)) {
+                node.attributes[key] = value;
+            }
+            node.startLine = startLine;
+            node.endLine = startLine;
+            return node;
+        }
+
         // Check if this is a self-closed tag on one line: <tag>content</tag>
         // Look ahead to see if there's content then a closing tag on same line
         const selfClosedResult = this._trySelfClosedHtmlBlock(
@@ -1032,9 +1040,11 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        // Remove leading/trailing newlines from body
-        while (bodyMarkdown.startsWith('\n')) bodyMarkdown = bodyMarkdown.slice(1);
-        while (bodyMarkdown.endsWith('\n')) bodyMarkdown = bodyMarkdown.slice(0, -1);
+        // Remove leading/trailing whitespace-only lines from body
+        const lines = bodyMarkdown.split('\n');
+        while (lines.length && lines[0].trim() === '') lines.shift();
+        while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+        bodyMarkdown = lines.join('\n');
 
         const endLine = ctx.line;
 
@@ -1046,10 +1056,10 @@ export class DFAParser {
 
         // Create the container node
         const node = new SyntaxNode('html-block', '');
+        node.tagName = lowerTagName;
         node.attributes = {
-            tagName: lowerTagName,
-            openingTag,
-            closingTag,
+            _openingTag: openingTag,
+            _closingTag: closingTag,
         };
         node.startLine = startLine;
         node.endLine = endLine;
@@ -1120,10 +1130,10 @@ export class DFAParser {
 
         // Build the node structure matching the existing parser's output
         const node = new SyntaxNode('html-block', '');
+        node.tagName = tagName;
         node.attributes = {
-            tagName,
-            openingTag,
-            closingTag: `</${tagName}>`,
+            _openingTag: openingTag,
+            _closingTag: `</${tagName}>`,
         };
         node.startLine = startLine;
         node.endLine = startLine;
@@ -1366,7 +1376,7 @@ export class DFAParser {
         if (this._isHorizontalRule(ctx)) return true;
 
         // HTML block
-        if (t === 'LT' && (this._isHtmlBlockStart(ctx) || this._isHtmlImgTag(ctx))) return true;
+        if (t === 'LT' && this._isHtmlBlockStart(ctx)) return true;
 
         // Table
         if (t === 'PIPE') return true;

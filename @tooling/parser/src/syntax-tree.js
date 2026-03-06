@@ -37,8 +37,8 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-block nodes
- * @property {string} [openingTag] - Full opening tag line for html-block nodes
- * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {string} [_openingTag] - Full opening tag line for html-block nodes (runtime-only, not serialised)
+ * @property {string} [_closingTag] - Full closing tag line for html-block nodes (runtime-only, not serialised)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
@@ -99,6 +99,12 @@ export class SyntaxNode {
          * @type {SyntaxNode|null}
          */
         this.parent = null;
+
+        /**
+         * HTML tag name for html-block and html-inline nodes.
+         * @type {string}
+         */
+        this.tagName = '';
 
         /**
          * Additional attributes for the node.
@@ -172,9 +178,10 @@ export class SyntaxNode {
             default: {
                 // Containers: bold, italic, bold-italic, strikethrough,
                 // link, and HTML inline tags (sub, sup, etc.)
-                const node = new SyntaxNode(segment.type, '');
+                const isHtmlInline = !!segment.tag;
+                const node = new SyntaxNode(isHtmlInline ? 'html-inline' : segment.type, '');
+                if (isHtmlInline) node.tagName = segment.tag;
                 if (segment.href) node.attributes.href = segment.href;
-                if (segment.tag) node.attributes.tag = segment.tag;
                 if (segment.children) {
                     for (const child of segment.children) {
                         node.appendChild(SyntaxNode._segmentToNode(child));
@@ -251,9 +258,10 @@ export class SyntaxNode {
 
     /**
      * Converts this node to markdown.
+     * @param {number} [depth=0] - HTML nesting depth for indentation
      * @returns {string}
      */
-    toMarkdown() {
+    toMarkdown(depth = 0) {
         switch (this.type) {
             case 'heading1':
                 return `# ${this.content}`;
@@ -277,7 +285,8 @@ export class SyntaxNode {
             case 'code-block': {
                 const lang = this.attributes.language || '';
                 const fence = '`'.repeat(this.attributes.fenceCount || 3);
-                return `${fence}${lang}\n${this.content}\n${fence}`;
+                const code = this.children.length > 0 ? this.children[0]._content : this.content;
+                return `${fence}${lang}\n${code}\n${fence}`;
             }
             case 'list-item': {
                 const indent = '  '.repeat(this.attributes.indent || 0);
@@ -290,8 +299,11 @@ export class SyntaxNode {
                         : '';
                 return `${indent}${marker}${checkbox}${this.content}`;
             }
-            case 'horizontal-rule':
-                return '---';
+            case 'horizontal-rule': {
+                const hrMarker = this.attributes.marker || '-';
+                const hrCount = this.attributes.count || 3;
+                return hrMarker.repeat(hrCount);
+            }
             case 'image': {
                 const imgAlt = this.attributes.alt ?? this.content;
                 const imgSrc = this.attributes.url ?? '';
@@ -308,6 +320,7 @@ export class SyntaxNode {
             case 'table':
                 return this.content;
             case 'html-block': {
+                const indent = '  '.repeat(depth);
                 // If the container has exactly one bare-text child, collapse
                 // to a single line: <tag>content</tag>
                 if (
@@ -315,18 +328,26 @@ export class SyntaxNode {
                     this.children[0].attributes.bareText &&
                     this.children[0].type === 'paragraph'
                 ) {
-                    const tag = this.attributes.tagName || 'div';
-                    return `<${tag}>${this.children[0].content}</${tag}>`;
+                    const tag = this.tagName || 'div';
+                    return `${indent}<${tag}>${this.children[0].content}</${tag}>`;
                 }
 
-                const parts = [this.attributes.openingTag || ''];
+                const lines = [`${indent}${this.attributes._openingTag || ''}`];
                 for (const child of this.children) {
-                    parts.push(child.toMarkdown());
+                    if (child.type === 'html-block') {
+                        lines.push(child.toMarkdown(depth + 1));
+                    } else {
+                        lines.push('');
+                        lines.push(child.toMarkdown());
+                        lines.push('');
+                    }
                 }
-                if (this.attributes.closingTag) {
-                    parts.push(this.attributes.closingTag);
+                if (this.attributes._closingTag) {
+                    lines.push(`${indent}${this.attributes._closingTag}`);
                 }
-                return parts.join('\n\n');
+                // Collapse multiple consecutive blank lines
+                const result = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+                return result;
             }
             default:
                 return this.content;
@@ -357,7 +378,7 @@ export class SyntaxNode {
                 return SyntaxNode._inlineChildrenToText(this.children);
 
             case 'code-block':
-                return this.content;
+                return this.children.length > 0 ? this.children[0]._content : this.content;
 
             case 'table': {
                 // Extract visible cell text from the pipe-delimited table.
@@ -476,6 +497,7 @@ export class SyntaxNode {
         // content; clear them so we clone the original's children
         // instead (they carry the same structure but the right IDs).
         cloned.children = [];
+        cloned.tagName = this.tagName;
         cloned.attributes = { ...this.attributes };
         cloned.startLine = this.startLine;
         cloned.endLine = this.endLine;
@@ -563,10 +585,15 @@ export class SyntaxNode {
                 return a;
             }
 
+            case 'html-inline': {
+                const el = doc.createElement(child.tagName);
+                el.__st_node = child;
+                SyntaxNode.appendInlineChildrenToDOM(doc, child.children, el);
+                return el;
+            }
+
             default: {
-                // HTML inline tags (sub, sup, mark, u, b, i, strong, em, del, s)
-                const tag = child.attributes.tag || child.type;
-                const el = doc.createElement(tag);
+                const el = doc.createElement(child.type);
                 el.__st_node = child;
                 SyntaxNode.appendInlineChildrenToDOM(doc, child.children, el);
                 return el;
@@ -726,7 +753,7 @@ export class SyntaxNode {
                 if (this.attributes.language) {
                     code.setAttribute('class', `language-${this.attributes.language}`);
                 }
-                code.textContent = this.content;
+                code.textContent = this.children.length > 0 ? this.children[0]._content : this.content;
                 pre.appendChild(code);
                 return pre;
             }
@@ -762,9 +789,11 @@ export class SyntaxNode {
                 const figure = doc.createElement('figure');
                 figure.__st_node = this;
 
-                const figcaption = doc.createElement('figcaption');
-                figcaption.textContent = alt;
-                figure.appendChild(figcaption);
+                if (alt) {
+                    const figcaption = doc.createElement('figcaption');
+                    figcaption.textContent = alt;
+                    figure.appendChild(figcaption);
+                }
 
                 const img = doc.createElement('img');
                 img.setAttribute('src', src);
@@ -821,13 +850,13 @@ export class SyntaxNode {
             }
 
             case 'html-block': {
-                const tagName = this.attributes.tagName || 'div';
+                const tagName = this.tagName || 'div';
                 const el = doc.createElement(tagName);
                 el.__st_node = this;
 
-                if (this.attributes.openingTag) {
+                if (this.attributes._openingTag) {
                     const temp = doc.createElement('div');
-                    temp.innerHTML = this.attributes.openingTag;
+                    temp.innerHTML = this.attributes._openingTag;
                     const sourceEl = temp.firstElementChild;
                     if (sourceEl) {
                         for (const attr of sourceEl.attributes) {
@@ -1456,7 +1485,7 @@ export class SyntaxTree {
             lines.push(child.toMarkdown());
         }
 
-        return lines.join('\n\n');
+        return lines.join('\n\n') + '\n';
     }
 
     /**

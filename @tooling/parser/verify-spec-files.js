@@ -65,25 +65,45 @@ function validateSpecFile(content) {
     }
     input = input.substring(pos + 1);
 
-    // Extract and validate test cases separated by ---.
+    // Consume test cases: each is three heading+codeblock sections,
+    // then optionally a --- separator before the next case.
+    const blockPattern = /^(# [^\n]+)\n\n(`{3,})\n([\s\S]*?)\n\2[ \t]*(?:\n|$)/;
     const errors = [];
     let caseNum = 1;
 
     while (input.length > 0) {
-        let testCase;
-        const sepPos = input.indexOf('\n---\n');
-        if (sepPos === -1) {
-            testCase = input.trim();
-            input = '';
-        } else {
-            testCase = input.substring(0, sepPos).trim();
-            input = input.substring(sepPos + 5);
+        input = input.trim();
+        if (input.length === 0) break;
+
+        const headings = [];
+        for (let i = 0; i < 3; i++) {
+            input = input.trim();
+            const match = input.match(blockPattern);
+            if (!match) break;
+            headings.push(match[1]);
+            input = input.substring(match[0].length);
         }
 
-        if (testCase.length > 0) {
-            errors.push(...validateTestCase(testCase, caseNum));
-            caseNum++;
+        if (headings.length !== 3) {
+            errors.push(`Test case ${caseNum}: expected 3 sections but found ${headings.length}.`);
+            return errors;
         }
+
+        const expected = ['# markdown', '# syntax tree', '# html'];
+        for (let i = 0; i < 3; i++) {
+            if (headings[i] !== expected[i]) {
+                errors.push(`Test case ${caseNum}: section ${i + 1} heading is "${headings[i]}", expected "${expected[i]}".`);
+            }
+        }
+
+        // Look for --- separator for next test case.
+        input = input.trim();
+        if (input.startsWith('---')) {
+            const nlPos = input.indexOf('\n');
+            input = nlPos === -1 ? '' : input.substring(nlPos + 1);
+        }
+
+        caseNum++;
     }
 
     return errors;
@@ -99,37 +119,4 @@ function validateSpecFile(content) {
  * @param {number} caseNum
  * @returns {string[]}
  */
-function validateTestCase(testCase, caseNum) {
-    // Matches: heading, blank line, opening fence (3+ backticks),
-    // arbitrary content, closing fence (same backtick count).
-    const blockPattern = /^(# [^\n]+)\n\n(`{3,})\n([\s\S]*?)\n\2[ \t]*(?:\n|$)/;
 
-    const headings = [];
-    let remaining = testCase;
-
-    while (remaining.length > 0) {
-        remaining = remaining.trim();
-        if (remaining.length === 0) break;
-
-        const match = remaining.match(blockPattern);
-        if (!match) break;
-
-        headings.push(match[1]);
-        remaining = remaining.substring(match[0].length);
-    }
-
-    if (headings.length !== 3) {
-        return [`Test case ${caseNum}: expected 3 sections but found ${headings.length}.`];
-    }
-
-    const expected = ['# markdown', '# syntax tree', '# html'];
-    const errors = [];
-
-    for (let i = 0; i < 3; i++) {
-        if (headings[i] !== expected[i]) {
-            errors.push(`Test case ${caseNum}: section ${i + 1} heading is "${headings[i]}", expected "${expected[i]}".`);
-        }
-    }
-
-    return errors;
-}
