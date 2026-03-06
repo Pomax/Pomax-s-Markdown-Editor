@@ -94,6 +94,13 @@ export class SyntaxNode {
         this.attributes = {};
 
         /**
+         * The DOM element produced by toDOM() / renderNodeToDOM().
+         * Set by the renderer; null until the node has been rendered.
+         * @type {Element|null}
+         */
+        this.domNode = null;
+
+        /**
          * Runtime-only data (not serialised).
          * @type {Object}
          */

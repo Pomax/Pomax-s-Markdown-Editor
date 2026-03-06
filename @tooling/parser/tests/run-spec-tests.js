@@ -6,6 +6,7 @@
  *   1. parse(markdown) produces the expected syntax tree
  *   2. tree.toMarkdown() yields the original markdown
  *   3. tree.toHTML() yields the expected HTML
+ *   4. toDOM() produces correct bidirectional SyntaxNode ↔ DOM links
  *
  * Uses the Node.js native test runner (node:test). The test runner
  * has no knowledge of markdown, syntax trees, or HTML — it simply
@@ -62,6 +63,53 @@ function stripWhitespaceNodes(node) {
 const here = dirname(fileURLToPath(import.meta.url));
 const specDir = join(here, "spec-files");
 
+// ── Bidirectional-link verification ─────────────────────────────────
+
+/**
+ * Walks a SyntaxTree / SyntaxNode hierarchy and asserts that every
+ * node whose `domNode` was set by the renderer points back correctly,
+ * and vice-versa.
+ *
+ * @param {object} tree  - A SyntaxTree (has .children)
+ * @param {Element} dom  - The root DOM element returned by toDOM()
+ */
+function verifyBidirectionalLinks(tree, dom) {
+  // 1. Walk every SyntaxNode: if domNode is set, the DOM element
+  //    must point back to the same node.
+  const visitedNodes = new Set();
+  function walkNode(node) {
+    if (visitedNodes.has(node)) return;
+    visitedNodes.add(node);
+    if (node.domNode != null) {
+      assert.strictEqual(
+        node.domNode.__st_node,
+        node,
+        `node (${node.type}) .domNode.__st_node doesn't point back to the node`
+      );
+    }
+    if (node.children) {
+      for (const child of node.children) walkNode(child);
+    }
+  }
+  for (const child of tree.children) walkNode(child);
+
+  // 2. Walk every DOM element: if __st_node is set, the SyntaxNode
+  //    must point back to the same DOM element.
+  function walkDOM(el) {
+    if (el.__st_node != null) {
+      assert.strictEqual(
+        el.__st_node.domNode,
+        el,
+        `DOM <${el.tagName?.toLowerCase()}> .__st_node.domNode doesn't point back to the element`
+      );
+    }
+    if (el.children) {
+      for (const child of el.children) walkDOM(child);
+    }
+  }
+  walkDOM(dom);
+}
+
 const filterFile = process.argv[2] || null;
 const filterCase = process.argv[3] ? Number(process.argv[3]) : null;
 
@@ -92,8 +140,11 @@ for (const file of specFiles) {
         const roundTrip = tree.toMarkdown();
         assert.equal(roundTrip, markdown, "toMarkdown() round-trip mismatch");
 
-        const doc = tree.toHTML().trim();
-        assert.equal(doc, `<div>${normalizeHTML(html)}</div>`, "toHTML() mismatch");
+        const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`);
+        const domDoc = dom.window.document;
+        const domTree = tree.toDOM(domDoc);
+        assert.equal(domTree.outerHTML.trim(), `<div>${normalizeHTML(html)}</div>`, "toHTML() mismatch");
+        verifyBidirectionalLinks(tree, domTree);
       });
     });
   });
