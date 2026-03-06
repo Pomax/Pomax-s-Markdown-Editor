@@ -156,7 +156,7 @@ H<sub>2</sub>O
 ```
 paragraph
   text "H"
-  html-inline "sub"
+  html-element "sub"
     text "2"
   text "O"
 ```
@@ -180,10 +180,10 @@ x<sup>2</sup> + y<sup>3</sup>
 ```
 paragraph
   text "x"
-  html-inline "sup"
+  html-element "sup"
     text "2"
   text " + y"
-  html-inline "sup"
+  html-element "sup"
     text "3"
 ```
 
@@ -206,7 +206,7 @@ This is <strong>strong text</strong> here.
 ```
 paragraph
   text "This is "
-  html-inline "strong"
+  html-element "strong"
     text "strong text"
   text " here."
 ```
@@ -230,7 +230,7 @@ This is <em>emphasis text</em> here.
 ```
 paragraph
   text "This is "
-  html-inline "em"
+  html-element "em"
     text "emphasis text"
   text " here."
 ```

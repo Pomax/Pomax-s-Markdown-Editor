@@ -163,3 +163,57 @@ paragraph
 </table>
 <p>Some text</p>
 ```
+
+---
+
+# markdown
+
+```
+| Style | Format | Media |
+|---|---|---|
+| *italic* | **bold** | <div><img src="x.png" alt="pic"></div> |
+```
+
+# syntax tree
+
+```
+table
+  header
+    cell
+      text "Style"
+    cell
+      text "Format"
+    cell
+      text "Media"
+  row
+    cell
+      italic
+        text "italic"
+    cell
+      bold
+        text "bold"
+    cell
+      html-element "div"
+        html-element "img" {"src":"x.png","alt":"pic"}
+```
+
+# html
+
+```
+<table>
+  <thead>
+    <tr>
+      <th>Style</th>
+      <th>Format</th>
+      <th>Media</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>italic</em></td>
+      <td><strong>bold</strong></td>
+      <td><div><img src="x.png" alt="pic"></div></td>
+    </tr>
+  </tbody>
+</table>
+```

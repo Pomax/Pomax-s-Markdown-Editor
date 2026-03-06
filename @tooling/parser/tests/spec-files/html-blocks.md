@@ -11,7 +11,7 @@ Tests for HTML blocks including details/summary, div, and custom elements.
 # syntax tree
 
 ```
-html-block "summary"
+html-element "summary"
   paragraph {"bareText":true}
     text "Some text"
 ```
@@ -40,8 +40,8 @@ better
 # syntax tree
 
 ```
-html-block "details"
-  html-block "summary"
+html-element "details"
+  html-element "summary"
     paragraph {"bareText":true}
       text "This is a paragraph"
   heading2
@@ -77,7 +77,7 @@ Paragraph
 # syntax tree
 
 ```
-html-block "div"
+html-element "div"
   heading1
     text "Title"
   paragraph
@@ -108,7 +108,7 @@ Hello
 # syntax tree
 
 ```
-html-block "my-component"
+html-element "my-component"
   paragraph
     text "Hello"
 ```
@@ -132,7 +132,7 @@ html-block "my-component"
 # syntax tree
 
 ```
-html-block "app-header"
+html-element "app-header"
   paragraph {"bareText":true}
     text "Title text"
 ```
@@ -158,7 +158,7 @@ Body
 # syntax tree
 
 ```
-html-block "my-element"
+html-element "my-element"
   paragraph
     text "Body"
 ```
@@ -192,15 +192,15 @@ Test text
 ```
 paragraph
   text "Test text"
-html-block "section"
-  html-block "div"
-    html-block "p"
+html-element "section"
+  html-element "div"
+    html-element "p"
       paragraph {"bareText":true}
         text "some "
-        html-inline "i"
+        html-element "i"
           text "italic"
         text " and "
-        html-inline "b"
+        html-element "b"
           text "bold"
         text " text"
 paragraph
@@ -244,8 +244,8 @@ Test text
 ```
 paragraph
   text "Test text"
-html-block "section"
-  html-block "div"
+html-element "section"
+  html-element "div"
     paragraph
       text "    # this is not a heading text"
     heading1

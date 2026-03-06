@@ -137,7 +137,7 @@ paragraph
 # syntax tree
 
 ```
-html-block "img" {"src":"photo.png","alt":"A photo","style":"zoom: 80%;"}
+html-element "img" {"src":"photo.png","alt":"A photo","style":"zoom: 80%;"}
 ```
 
 # html
@@ -157,7 +157,7 @@ html-block "img" {"src":"photo.png","alt":"A photo","style":"zoom: 80%;"}
 # syntax tree
 
 ```
-html-block "img" {"src":"pic.jpg","alt":"test"}
+html-element "img" {"src":"pic.jpg","alt":"test"}
 ```
 
 # html

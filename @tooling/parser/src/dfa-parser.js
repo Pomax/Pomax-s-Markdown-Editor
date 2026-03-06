@@ -9,6 +9,18 @@
 
 import { tokenize } from './dfa-tokenizer.js';
 import { SyntaxNode, SyntaxTree } from '../../syntax-tree/src/syntax-tree.js';
+import { parseInlineContent } from './parse-inline-content.js';
+
+/**
+ * Populates a node's inline children by parsing its content.
+ * @param {SyntaxNode} node
+ */
+function populateInlineChildren(node) {
+    if (!node.content) return;
+    for (const child of parseInlineContent(node.content)) {
+        node.appendChild(child);
+    }
+}
 
 // ── Block-level HTML tag set (GFM type 6) ───────────────────────────
 
@@ -256,6 +268,7 @@ export class DFAParser {
         const content = this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode(`heading${level}`, content);
+        populateInlineChildren(node);
         node.startLine = startLine;
         node.endLine = startLine;
         return node;
@@ -382,6 +395,7 @@ export class DFAParser {
         }
 
         const node = new SyntaxNode('blockquote', contentLines.join('\n'));
+        populateInlineChildren(node);
         node.startLine = startLine;
         node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
         return node;
@@ -455,6 +469,7 @@ export class DFAParser {
         }
 
         const node = new SyntaxNode('list-item', itemContent);
+        populateInlineChildren(node);
         node.attributes = { ordered: false, indent };
         node.runtime.marker = marker;
         if (typeof checkedAttr === 'boolean') {
@@ -530,6 +545,7 @@ export class DFAParser {
         const content = this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('list-item', content);
+        populateInlineChildren(node);
         node.attributes = { ordered: true, number, indent };
         node.startLine = startLine;
         node.endLine = startLine;
@@ -1036,7 +1052,7 @@ export class DFAParser {
                 ctx.line++;
                 ctx.pos++;
             }
-            const node = new SyntaxNode('html-block', '');
+            const node = new SyntaxNode('html-element', '');
             node.tagName = lowerTagName;
             node.attributes = {};
             node.runtime.openingTag = openingTag;
@@ -1103,7 +1119,7 @@ export class DFAParser {
         }
 
         // Create the container node
-        const node = new SyntaxNode('html-block', '');
+        const node = new SyntaxNode('html-element', '');
         node.tagName = lowerTagName;
         node.attributes = {};
         node.runtime.openingTag = openingTag;
@@ -1176,7 +1192,7 @@ export class DFAParser {
         }
 
         // Build the node structure matching the existing parser's output
-        const node = new SyntaxNode('html-block', '');
+        const node = new SyntaxNode('html-element', '');
         node.tagName = tagName;
         node.attributes = {};
         node.runtime.openingTag = openingTag;
@@ -1185,6 +1201,7 @@ export class DFAParser {
         node.endLine = startLine;
 
         const child = new SyntaxNode('paragraph', content.trim());
+        populateInlineChildren(child);
         child.attributes = { bareText: true };
         child.startLine = startLine;
         child.endLine = startLine;
@@ -1304,8 +1321,8 @@ export class DFAParser {
             const headerCells = this.parseTableRow(lines[0]);
             const header = new SyntaxNode('header', '');
             for (const cellText of headerCells) {
-                const cell = new SyntaxNode('cell', '');
-                cell.appendChild(new SyntaxNode('text', cellText));
+                const cell = new SyntaxNode('cell', cellText);
+                populateInlineChildren(cell);
                 header.appendChild(cell);
             }
             node.appendChild(header);
@@ -1317,8 +1334,8 @@ export class DFAParser {
             const rowCells = this.parseTableRow(lines[r]);
             const row = new SyntaxNode('row', '');
             for (const cellText of rowCells) {
-                const cell = new SyntaxNode('cell', '');
-                cell.appendChild(new SyntaxNode('text', cellText));
+                const cell = new SyntaxNode('cell', cellText);
+                populateInlineChildren(cell);
                 row.appendChild(cell);
             }
             node.appendChild(row);
@@ -1382,6 +1399,7 @@ export class DFAParser {
         }
 
         const node = new SyntaxNode('paragraph', content);
+        populateInlineChildren(node);
         node.startLine = startLine;
         node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
         return node;
