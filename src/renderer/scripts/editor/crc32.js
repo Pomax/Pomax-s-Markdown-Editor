@@ -14,16 +14,16 @@ let TABLE = null;
  * @returns {Uint32Array}
  */
 function getTable() {
-    if (TABLE) return TABLE;
-    TABLE = new Uint32Array(256);
-    for (let i = 0; i < 256; i++) {
-        let c = i;
-        for (let j = 0; j < 8; j++) {
-            c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-        }
-        TABLE[i] = c;
+  if (TABLE) return TABLE;
+  TABLE = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
-    return TABLE;
+    TABLE[i] = c;
+  }
+  return TABLE;
 }
 
 /**
@@ -33,10 +33,10 @@ function getTable() {
  * @returns {number} Unsigned 32-bit CRC value
  */
 export function crc32(str) {
-    const table = getTable();
-    let crc = 0xffffffff;
-    for (let i = 0; i < str.length; i++) {
-        crc = table[(crc ^ str.charCodeAt(i)) & 0xff] ^ (crc >>> 8);
-    }
-    return (crc ^ 0xffffffff) >>> 0;
+  const table = getTable();
+  let crc = 0xffffffff;
+  for (let i = 0; i < str.length; i++) {
+    crc = table[(crc ^ str.charCodeAt(i)) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }

@@ -58,35 +58,35 @@ const DEFAULT_DETAILS_CLOSED = false;
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
-    constructor() {
-        /** @type {HTMLDialogElement|null} */
-        this.dialog = null;
+  constructor() {
+    /** @type {HTMLDialogElement|null} */
+    this.dialog = null;
 
-        /** @type {boolean} */
-        this._built = false;
+    /** @type {boolean} */
+    this._built = false;
 
-        /** @type {boolean} */
-        this._linkTopBottom = false;
+    /** @type {boolean} */
+    this._linkTopBottom = false;
 
-        /** @type {boolean} */
-        this._linkLeftRight = false;
+    /** @type {boolean} */
+    this._linkLeftRight = false;
 
-        /** @type {boolean} */
-        this._linkAll = false;
-    }
+    /** @type {boolean} */
+    this._linkAll = false;
+  }
 
-    /**
-     * Lazily builds the dialog DOM the first time it is needed.
-     */
-    _build() {
-        if (this._built) return;
-        this._built = true;
+  /**
+   * Lazily builds the dialog DOM the first time it is needed.
+   */
+  _build() {
+    if (this._built) return;
+    this._built = true;
 
-        const dialog = document.createElement('dialog');
-        dialog.className = 'preferences-dialog';
-        dialog.setAttribute('aria-label', 'Preferences');
+    const dialog = document.createElement('dialog');
+    dialog.className = 'preferences-dialog';
+    dialog.setAttribute('aria-label', 'Preferences');
 
-        dialog.innerHTML = `
+    dialog.innerHTML = `
             <form method="dialog" class="preferences-form">
                 <header class="preferences-header">
                     <h2>Preferences</h2>
@@ -245,698 +245,693 @@ export class PreferencesModal {
             </form>
         `;
 
-        // Close on × or Cancel
-        const closeBtn = dialog.querySelector('.preferences-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-        const cancelBtn = dialog.querySelector('.preferences-btn--cancel');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this.close());
-        }
-
-        // Save handler
-        const form = dialog.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this._save();
-            });
-        }
-
-        // Close on backdrop click
-        dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                this.close();
-            }
-        });
-
-        // Close on Escape key
-        dialog.addEventListener('cancel', () => {
-            this.close();
-        });
-
-        // Wire up link toggles
-        this._setupLinkToggles(dialog);
-
-        // Wire up margin input syncing
-        this._setupMarginInputs(dialog);
-
-        // Wire up color input syncing
-        this._setupColorInputs(dialog);
-
-        // Wire up page-width toggle
-        this._setupPageWidth(dialog);
-
-        // Wire up sidebar navigation links
-        this._setupNavLinks(dialog);
-
-        document.body.appendChild(dialog);
-        this.dialog = dialog;
+    // Close on × or Cancel
+    const closeBtn = dialog.querySelector('.preferences-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.close());
+    }
+    const cancelBtn = dialog.querySelector('.preferences-btn--cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.close());
     }
 
-    /**
-     * Sets up the link-toggle checkboxes so they interact correctly.
-     * @param {HTMLDialogElement} dialog
-     */
-    _setupLinkToggles(dialog) {
-        const linkTB = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-top-bottom'));
-        const linkLR = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-left-right'));
-        const linkAll = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-all'));
-
-        linkTB.addEventListener('change', () => {
-            this._linkTopBottom = linkTB.checked;
-            if (linkTB.checked) {
-                this._syncValue(dialog, 'margin-top', 'margin-bottom');
-            }
-            // If both TB and LR are on, turn on All
-            if (linkTB.checked && linkLR.checked) {
-                linkAll.checked = true;
-                this._linkAll = true;
-                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
-            }
-            if (!linkTB.checked && linkAll.checked) {
-                linkAll.checked = false;
-                this._linkAll = false;
-            }
-            this._updateDisabledState(dialog);
-        });
-
-        linkLR.addEventListener('change', () => {
-            this._linkLeftRight = linkLR.checked;
-            if (linkLR.checked) {
-                this._syncValue(dialog, 'margin-left', 'margin-right');
-            }
-            if (linkTB.checked && linkLR.checked) {
-                linkAll.checked = true;
-                this._linkAll = true;
-                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
-            }
-            if (!linkLR.checked && linkAll.checked) {
-                linkAll.checked = false;
-                this._linkAll = false;
-            }
-            this._updateDisabledState(dialog);
-        });
-
-        linkAll.addEventListener('change', () => {
-            this._linkAll = linkAll.checked;
-            if (linkAll.checked) {
-                linkTB.checked = true;
-                linkLR.checked = true;
-                this._linkTopBottom = true;
-                this._linkLeftRight = true;
-                this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
-            } else {
-                linkTB.checked = false;
-                linkLR.checked = false;
-                this._linkTopBottom = false;
-                this._linkLeftRight = false;
-            }
-            this._updateDisabledState(dialog);
-        });
+    // Save handler
+    const form = dialog.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this._save();
+      });
     }
 
-    /**
-     * Sets up input event listeners on margin fields for linked syncing.
-     * @param {HTMLDialogElement} dialog
-     */
-    _setupMarginInputs(dialog) {
-        const ids = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'];
-        for (const id of ids) {
-            this._getInput(dialog, id).addEventListener('input', () => {
-                this._handleMarginInput(dialog, id);
-            });
-        }
-    }
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        this.close();
+      }
+    });
 
-    /**
-     * Sets up color picker ↔ hex text input syncing.
-     * @param {HTMLDialogElement} dialog
-     */
-    _setupColorInputs(dialog) {
-        const pairs = [
-            { picker: 'color-page-bg', hex: 'color-page-bg-hex' },
-            { picker: 'color-page-text', hex: 'color-page-text-hex' },
-        ];
+    // Close on Escape key
+    dialog.addEventListener('cancel', () => {
+      this.close();
+    });
 
-        for (const { picker, hex } of pairs) {
-            const pickerEl = this._getInput(dialog, picker);
-            const hexEl = this._getInput(dialog, hex);
+    // Wire up link toggles
+    this._setupLinkToggles(dialog);
 
-            pickerEl.addEventListener('input', () => {
-                hexEl.value = pickerEl.value;
-            });
+    // Wire up margin input syncing
+    this._setupMarginInputs(dialog);
 
-            hexEl.addEventListener('input', () => {
-                const expanded = this._expandHex(hexEl.value);
-                if (expanded) {
-                    pickerEl.value = expanded;
-                }
-            });
-        }
-    }
+    // Wire up color input syncing
+    this._setupColorInputs(dialog);
 
-    /**
-     * Sets up the page-width fixed-toggle so the custom row shows/hides.
-     * @param {HTMLDialogElement} dialog
-     */
-    _setupPageWidth(dialog) {
-        const fixedCb = /** @type {HTMLInputElement} */ (dialog.querySelector('#page-width-fixed'));
-        const customRow = dialog.querySelector('#page-width-custom');
+    // Wire up page-width toggle
+    this._setupPageWidth(dialog);
 
-        fixedCb.addEventListener('change', () => {
-            if (customRow) {
-                customRow.classList.toggle('hidden', fixedCb.checked);
-            }
-        });
-    }
+    // Wire up sidebar navigation links
+    this._setupNavLinks(dialog);
 
-    /**
-     * Sets up the sidebar navigation links so clicking a link scrolls the
-     * corresponding fieldset into view and highlights the active link.
-     * Also observes scroll position to update the active link automatically.
-     * @param {HTMLDialogElement} dialog
-     */
-    _setupNavLinks(dialog) {
-        const links = dialog.querySelectorAll('.preferences-nav-link');
-        const body = dialog.querySelector('.preferences-body');
-        if (!body) return;
+    document.body.appendChild(dialog);
+    this.dialog = dialog;
+  }
 
-        // Click handler — scroll the target section to the top of the body
-        for (const link of links) {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
-                if (!sectionId) return;
-                const section = dialog.querySelector(`#${sectionId}`);
-                if (!section) return;
+  /**
+   * Sets up the link-toggle checkboxes so they interact correctly.
+   * @param {HTMLDialogElement} dialog
+   */
+  _setupLinkToggles(dialog) {
+    const linkTB = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-top-bottom'));
+    const linkLR = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-left-right'));
+    const linkAll = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-all'));
 
-                section.scrollIntoView({ behavior: 'instant', block: 'start' });
-
-                // Update active state
-                for (const l of links) l.classList.remove('active');
-                link.classList.add('active');
-            });
-        }
-
-        // Observe scroll to highlight whichever section is currently visible
-        body.addEventListener('scroll', () => {
-            this._updateActiveNavLink(dialog);
-        });
-    }
-
-    /**
-     * Updates the active nav link based on which fieldset is closest to the
-     * top of the scrollable body.
-     * @param {HTMLDialogElement} dialog
-     */
-    _updateActiveNavLink(dialog) {
-        const body = dialog.querySelector('.preferences-body');
-        if (!body) return;
-
-        const bodyRect = body.getBoundingClientRect();
-        const links = dialog.querySelectorAll('.preferences-nav-link');
-        /** @type {Element|null} */
-        let closest = null;
-        let closestDist = Number.POSITIVE_INFINITY;
-
-        for (const link of links) {
-            const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
-            if (!sectionId) continue;
-            const section = dialog.querySelector(`#${sectionId}`);
-            if (!section) continue;
-
-            const dist = Math.abs(section.getBoundingClientRect().top - bodyRect.top);
-            if (dist < closestDist) {
-                closestDist = dist;
-                closest = link;
-            }
-        }
-
-        if (closest) {
-            for (const l of links) l.classList.remove('active');
-            closest.classList.add('active');
-        }
-    }
-
-    /**
-     * Enables or disables margin inputs based on the current link state.
-     * When linked, the secondary input is disabled (bottom follows top,
-     * right follows left). When "link all" is on, only top is editable.
-     * @param {HTMLDialogElement} dialog
-     */
-    _updateDisabledState(dialog) {
-        const bottomInput = this._getInput(dialog, 'margin-bottom');
-        const rightInput = this._getInput(dialog, 'margin-right');
-        const leftInput = this._getInput(dialog, 'margin-left');
-
-        bottomInput.disabled = this._linkTopBottom || this._linkAll;
-        rightInput.disabled = this._linkLeftRight || this._linkAll;
-        leftInput.disabled = this._linkAll;
-    }
-
-    /**
-     * Called when a margin input value changes.
-     * @param {HTMLDialogElement} dialog
-     * @param {string} changedId
-     */
-    _handleMarginInput(dialog, changedId) {
-        const value = this._getInput(dialog, changedId).value;
-
-        if (this._linkAll) {
-            this._syncAllToValue(dialog, value);
-            return;
-        }
-
-        if (this._linkTopBottom && (changedId === 'margin-top' || changedId === 'margin-bottom')) {
-            const other = changedId === 'margin-top' ? 'margin-bottom' : 'margin-top';
-            this._getInput(dialog, other).value = value;
-        }
-
-        if (this._linkLeftRight && (changedId === 'margin-left' || changedId === 'margin-right')) {
-            const other = changedId === 'margin-left' ? 'margin-right' : 'margin-left';
-            this._getInput(dialog, other).value = value;
-        }
-    }
-
-    /**
-     * Copies the value from one input to another.
-     * @param {HTMLDialogElement} dialog
-     * @param {string} sourceId
-     * @param {string} targetId
-     */
-    _syncValue(dialog, sourceId, targetId) {
-        this._getInput(dialog, targetId).value = this._getInput(dialog, sourceId).value;
-    }
-
-    /**
-     * Sets all four margin inputs to the same value.
-     * @param {HTMLDialogElement} dialog
-     * @param {string} value
-     */
-    _syncAllToValue(dialog, value) {
-        for (const id of ['margin-top', 'margin-right', 'margin-bottom', 'margin-left']) {
-            this._getInput(dialog, id).value = value;
-        }
-    }
-
-    /**
-     * Gets a margin input element by id.
-     * @param {HTMLDialogElement} dialog
-     * @param {string} id
-     * @returns {HTMLInputElement}
-     */
-    _getInput(dialog, id) {
-        return /** @type {HTMLInputElement} */ (dialog.querySelector(`#${id}`));
-    }
-
-    /**
-     * Expands a hex color string to its full 7-character form.
-     * Accepts `#rgb` (3-digit shorthand) and `#rrggbb` (full form).
-     * Returns the expanded string or `null` if the input is not a valid hex color.
-     * @param {string} value
-     * @returns {string|null}
-     */
-    _expandHex(value) {
-        if (/^#[0-9a-f]{6}$/i.test(value)) {
-            return value.toLowerCase();
-        }
-        if (/^#[0-9a-f]{3}$/i.test(value)) {
-            const [, r, g, b] = value;
-            return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
-        }
-        return null;
-    }
-
-    /**
-     * Opens the preferences modal, loading current values from the database.
-     */
-    async open() {
-        this._build();
-        if (!this.dialog || this.dialog.open) return;
-
-        // Load saved default view setting
-        const defaultView = await this._loadDefaultView();
-        const viewSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#default-view-select')
-        );
-        viewSelect.value = defaultView;
-
-        // Load saved page-width setting
-        const pageWidth = await this._loadPageWidth();
-        const fixedCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#page-width-fixed')
-        );
-        fixedCb.checked = pageWidth.useFixed;
-        this._getInput(this.dialog, 'page-width-value').value = String(pageWidth.width);
-        const unitSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#page-width-unit')
-        );
-        unitSelect.value = pageWidth.unit;
-        const customRow = this.dialog.querySelector('#page-width-custom');
-        if (customRow) {
-            customRow.classList.toggle('hidden', pageWidth.useFixed);
-        }
-
-        // Load saved margins (fall back to CSS defaults)
-        const margins = await this._loadMargins();
-
-        this._getInput(this.dialog, 'margin-top').value = String(margins.top);
-        this._getInput(this.dialog, 'margin-right').value = String(margins.right);
-        this._getInput(this.dialog, 'margin-bottom').value = String(margins.bottom);
-        this._getInput(this.dialog, 'margin-left').value = String(margins.left);
-
-        // Reset link toggles
-        this._linkTopBottom = false;
-        this._linkLeftRight = false;
+    linkTB.addEventListener('change', () => {
+      this._linkTopBottom = linkTB.checked;
+      if (linkTB.checked) {
+        this._syncValue(dialog, 'margin-top', 'margin-bottom');
+      }
+      // If both TB and LR are on, turn on All
+      if (linkTB.checked && linkLR.checked) {
+        linkAll.checked = true;
+        this._linkAll = true;
+        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+      }
+      if (!linkTB.checked && linkAll.checked) {
+        linkAll.checked = false;
         this._linkAll = false;
-        const linkTB = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#link-top-bottom')
-        );
-        const linkLR = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#link-left-right')
-        );
-        const linkAllEl = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-all'));
+      }
+      this._updateDisabledState(dialog);
+    });
+
+    linkLR.addEventListener('change', () => {
+      this._linkLeftRight = linkLR.checked;
+      if (linkLR.checked) {
+        this._syncValue(dialog, 'margin-left', 'margin-right');
+      }
+      if (linkTB.checked && linkLR.checked) {
+        linkAll.checked = true;
+        this._linkAll = true;
+        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+      }
+      if (!linkLR.checked && linkAll.checked) {
+        linkAll.checked = false;
+        this._linkAll = false;
+      }
+      this._updateDisabledState(dialog);
+    });
+
+    linkAll.addEventListener('change', () => {
+      this._linkAll = linkAll.checked;
+      if (linkAll.checked) {
+        linkTB.checked = true;
+        linkLR.checked = true;
+        this._linkTopBottom = true;
+        this._linkLeftRight = true;
+        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+      } else {
         linkTB.checked = false;
         linkLR.checked = false;
-        linkAllEl.checked = false;
+        this._linkTopBottom = false;
+        this._linkLeftRight = false;
+      }
+      this._updateDisabledState(dialog);
+    });
+  }
 
-        // Reset disabled state on all inputs
-        this._updateDisabledState(this.dialog);
-
-        // Load saved colors
-        const colors = await this._loadColors();
-        this._getInput(this.dialog, 'color-page-bg').value = colors.pageBg;
-        this._getInput(this.dialog, 'color-page-bg-hex').value = colors.pageBg;
-        this._getInput(this.dialog, 'color-page-text').value = colors.pageText;
-        this._getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
-
-        // Load TOC settings
-        const tocVisible = await this._loadTocVisible();
-        const tocVisibleCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#toc-visible')
-        );
-        tocVisibleCb.checked = tocVisible;
-
-        const tocPosition = await this._loadTocPosition();
-        const tocPositionSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#toc-position-select')
-        );
-        tocPositionSelect.value = tocPosition;
-
-        // Load image handling settings
-        const ensureLocalPaths = await this._loadEnsureLocalPaths();
-        const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#ensure-local-paths')
-        );
-        ensureLocalPathsCb.checked = ensureLocalPaths;
-
-        // Load content settings
-        const detailsClosed = await this._loadDetailsClosed();
-        const detailsClosedCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#details-closed')
-        );
-        detailsClosedCb.checked = detailsClosed;
-
-        this.dialog.showModal();
+  /**
+   * Sets up input event listeners on margin fields for linked syncing.
+   * @param {HTMLDialogElement} dialog
+   */
+  _setupMarginInputs(dialog) {
+    const ids = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'];
+    for (const id of ids) {
+      this._getInput(dialog, id).addEventListener('input', () => {
+        this._handleMarginInput(dialog, id);
+      });
     }
+  }
 
-    /**
-     * Closes the preferences modal.
-     */
-    close() {
-        if (this.dialog?.open) {
-            this.dialog.close();
+  /**
+   * Sets up color picker ↔ hex text input syncing.
+   * @param {HTMLDialogElement} dialog
+   */
+  _setupColorInputs(dialog) {
+    const pairs = [
+      { picker: 'color-page-bg', hex: 'color-page-bg-hex' },
+      { picker: 'color-page-text', hex: 'color-page-text-hex' },
+    ];
+
+    for (const { picker, hex } of pairs) {
+      const pickerEl = this._getInput(dialog, picker);
+      const hexEl = this._getInput(dialog, hex);
+
+      pickerEl.addEventListener('input', () => {
+        hexEl.value = pickerEl.value;
+      });
+
+      hexEl.addEventListener('input', () => {
+        const expanded = this._expandHex(hexEl.value);
+        if (expanded) {
+          pickerEl.value = expanded;
         }
+      });
+    }
+  }
+
+  /**
+   * Sets up the page-width fixed-toggle so the custom row shows/hides.
+   * @param {HTMLDialogElement} dialog
+   */
+  _setupPageWidth(dialog) {
+    const fixedCb = /** @type {HTMLInputElement} */ (dialog.querySelector('#page-width-fixed'));
+    const customRow = dialog.querySelector('#page-width-custom');
+
+    fixedCb.addEventListener('change', () => {
+      if (customRow) {
+        customRow.classList.toggle('hidden', fixedCb.checked);
+      }
+    });
+  }
+
+  /**
+   * Sets up the sidebar navigation links so clicking a link scrolls the
+   * corresponding fieldset into view and highlights the active link.
+   * Also observes scroll position to update the active link automatically.
+   * @param {HTMLDialogElement} dialog
+   */
+  _setupNavLinks(dialog) {
+    const links = dialog.querySelectorAll('.preferences-nav-link');
+    const body = dialog.querySelector('.preferences-body');
+    if (!body) return;
+
+    // Click handler — scroll the target section to the top of the body
+    for (const link of links) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
+        if (!sectionId) return;
+        const section = dialog.querySelector(`#${sectionId}`);
+        if (!section) return;
+
+        section.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+        // Update active state
+        for (const l of links) l.classList.remove('active');
+        link.classList.add('active');
+      });
     }
 
-    /**
-     * Loads the default view mode from the settings database.
-     * @returns {Promise<import('../editor/editor.js').ViewMode>}
-     */
-    async _loadDefaultView() {
-        if (!window.electronAPI) return DEFAULT_VIEW_MODE;
+    // Observe scroll to highlight whichever section is currently visible
+    body.addEventListener('scroll', () => {
+      this._updateActiveNavLink(dialog);
+    });
+  }
 
-        try {
-            const result = await window.electronAPI.getSetting('defaultView');
-            if (result.success && result.value) {
-                return result.value === 'source' ? 'source' : 'writing';
-            }
-        } catch {
-            // Fall through to default
-        }
+  /**
+   * Updates the active nav link based on which fieldset is closest to the
+   * top of the scrollable body.
+   * @param {HTMLDialogElement} dialog
+   */
+  _updateActiveNavLink(dialog) {
+    const body = dialog.querySelector('.preferences-body');
+    if (!body) return;
 
-        return DEFAULT_VIEW_MODE;
+    const bodyRect = body.getBoundingClientRect();
+    const links = dialog.querySelectorAll('.preferences-nav-link');
+    /** @type {Element|null} */
+    let closest = null;
+    let closestDist = Number.POSITIVE_INFINITY;
+
+    for (const link of links) {
+      const sectionId = /** @type {HTMLElement} */ (link).dataset.section;
+      if (!sectionId) continue;
+      const section = dialog.querySelector(`#${sectionId}`);
+      if (!section) continue;
+
+      const dist = Math.abs(section.getBoundingClientRect().top - bodyRect.top);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = link;
+      }
     }
 
-    /**
-     * Loads the current page-width setting from the settings database.
-     * @returns {Promise<{ useFixed: boolean, width: number, unit: 'px' | 'mm' }>}
-     */
-    async _loadPageWidth() {
-        if (!window.electronAPI) return { ...DEFAULT_PAGE_WIDTH };
+    if (closest) {
+      for (const l of links) l.classList.remove('active');
+      closest.classList.add('active');
+    }
+  }
 
-        try {
-            const result = await window.electronAPI.getSetting('pageWidth');
-            if (result.success && result.value) {
-                return {
-                    useFixed: result.value.useFixed ?? DEFAULT_PAGE_WIDTH.useFixed,
-                    width: result.value.width ?? DEFAULT_PAGE_WIDTH.width,
-                    unit: result.value.unit ?? DEFAULT_PAGE_WIDTH.unit,
-                };
-            }
-        } catch {
-            // Fall through to defaults
-        }
+  /**
+   * Enables or disables margin inputs based on the current link state.
+   * When linked, the secondary input is disabled (bottom follows top,
+   * right follows left). When "link all" is on, only top is editable.
+   * @param {HTMLDialogElement} dialog
+   */
+  _updateDisabledState(dialog) {
+    const bottomInput = this._getInput(dialog, 'margin-bottom');
+    const rightInput = this._getInput(dialog, 'margin-right');
+    const leftInput = this._getInput(dialog, 'margin-left');
 
-        return { ...DEFAULT_PAGE_WIDTH };
+    bottomInput.disabled = this._linkTopBottom || this._linkAll;
+    rightInput.disabled = this._linkLeftRight || this._linkAll;
+    leftInput.disabled = this._linkAll;
+  }
+
+  /**
+   * Called when a margin input value changes.
+   * @param {HTMLDialogElement} dialog
+   * @param {string} changedId
+   */
+  _handleMarginInput(dialog, changedId) {
+    const value = this._getInput(dialog, changedId).value;
+
+    if (this._linkAll) {
+      this._syncAllToValue(dialog, value);
+      return;
     }
 
-    /**
-     * Loads the current margin values from the settings database.
-     * @returns {Promise<{ top: number, right: number, bottom: number, left: number }>}
-     */
-    async _loadMargins() {
-        if (!window.electronAPI) return { ...DEFAULT_MARGINS };
-
-        try {
-            const result = await window.electronAPI.getSetting('margins');
-            if (result.success && result.value) {
-                return {
-                    top: result.value.top ?? DEFAULT_MARGINS.top,
-                    right: result.value.right ?? DEFAULT_MARGINS.right,
-                    bottom: result.value.bottom ?? DEFAULT_MARGINS.bottom,
-                    left: result.value.left ?? DEFAULT_MARGINS.left,
-                };
-            }
-        } catch {
-            // Fall through to defaults
-        }
-
-        return { ...DEFAULT_MARGINS };
+    if (this._linkTopBottom && (changedId === 'margin-top' || changedId === 'margin-bottom')) {
+      const other = changedId === 'margin-top' ? 'margin-bottom' : 'margin-top';
+      this._getInput(dialog, other).value = value;
     }
 
-    /**
-     * Loads the current color values from the settings database.
-     * @returns {Promise<{ pageBg: string, pageText: string }>}
-     */
-    async _loadColors() {
-        if (!window.electronAPI) return { ...DEFAULT_COLORS };
+    if (this._linkLeftRight && (changedId === 'margin-left' || changedId === 'margin-right')) {
+      const other = changedId === 'margin-left' ? 'margin-right' : 'margin-left';
+      this._getInput(dialog, other).value = value;
+    }
+  }
 
-        try {
-            const result = await window.electronAPI.getSetting('colors');
-            if (result.success && result.value) {
-                return {
-                    pageBg: result.value.pageBg ?? DEFAULT_COLORS.pageBg,
-                    pageText: result.value.pageText ?? DEFAULT_COLORS.pageText,
-                };
-            }
-        } catch {
-            // Fall through to defaults
-        }
+  /**
+   * Copies the value from one input to another.
+   * @param {HTMLDialogElement} dialog
+   * @param {string} sourceId
+   * @param {string} targetId
+   */
+  _syncValue(dialog, sourceId, targetId) {
+    this._getInput(dialog, targetId).value = this._getInput(dialog, sourceId).value;
+  }
 
-        return { ...DEFAULT_COLORS };
+  /**
+   * Sets all four margin inputs to the same value.
+   * @param {HTMLDialogElement} dialog
+   * @param {string} value
+   */
+  _syncAllToValue(dialog, value) {
+    for (const id of ['margin-top', 'margin-right', 'margin-bottom', 'margin-left']) {
+      this._getInput(dialog, id).value = value;
+    }
+  }
+
+  /**
+   * Gets a margin input element by id.
+   * @param {HTMLDialogElement} dialog
+   * @param {string} id
+   * @returns {HTMLInputElement}
+   */
+  _getInput(dialog, id) {
+    return /** @type {HTMLInputElement} */ (dialog.querySelector(`#${id}`));
+  }
+
+  /**
+   * Expands a hex color string to its full 7-character form.
+   * Accepts `#rgb` (3-digit shorthand) and `#rrggbb` (full form).
+   * Returns the expanded string or `null` if the input is not a valid hex color.
+   * @param {string} value
+   * @returns {string|null}
+   */
+  _expandHex(value) {
+    if (/^#[0-9a-f]{6}$/i.test(value)) {
+      return value.toLowerCase();
+    }
+    if (/^#[0-9a-f]{3}$/i.test(value)) {
+      const [, r, g, b] = value;
+      return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+    }
+    return null;
+  }
+
+  /**
+   * Opens the preferences modal, loading current values from the database.
+   */
+  async open() {
+    this._build();
+    if (!this.dialog || this.dialog.open) return;
+
+    // Load saved default view setting
+    const defaultView = await this._loadDefaultView();
+    const viewSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#default-view-select')
+    );
+    viewSelect.value = defaultView;
+
+    // Load saved page-width setting
+    const pageWidth = await this._loadPageWidth();
+    const fixedCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#page-width-fixed')
+    );
+    fixedCb.checked = pageWidth.useFixed;
+    this._getInput(this.dialog, 'page-width-value').value = String(pageWidth.width);
+    const unitSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#page-width-unit')
+    );
+    unitSelect.value = pageWidth.unit;
+    const customRow = this.dialog.querySelector('#page-width-custom');
+    if (customRow) {
+      customRow.classList.toggle('hidden', pageWidth.useFixed);
     }
 
-    /**
-     * Loads the TOC visibility setting from the settings database.
-     * @returns {Promise<boolean>}
-     */
-    async _loadTocVisible() {
-        if (!window.electronAPI) return DEFAULT_TOC_VISIBLE;
+    // Load saved margins (fall back to CSS defaults)
+    const margins = await this._loadMargins();
 
-        try {
-            const result = await window.electronAPI.getSetting('tocVisible');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                return !!result.value;
-            }
-        } catch {
-            // Fall through to default
-        }
+    this._getInput(this.dialog, 'margin-top').value = String(margins.top);
+    this._getInput(this.dialog, 'margin-right').value = String(margins.right);
+    this._getInput(this.dialog, 'margin-bottom').value = String(margins.bottom);
+    this._getInput(this.dialog, 'margin-left').value = String(margins.left);
 
-        return DEFAULT_TOC_VISIBLE;
+    // Reset link toggles
+    this._linkTopBottom = false;
+    this._linkLeftRight = false;
+    this._linkAll = false;
+    const linkTB = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-top-bottom'));
+    const linkLR = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-left-right'));
+    const linkAllEl = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-all'));
+    linkTB.checked = false;
+    linkLR.checked = false;
+    linkAllEl.checked = false;
+
+    // Reset disabled state on all inputs
+    this._updateDisabledState(this.dialog);
+
+    // Load saved colors
+    const colors = await this._loadColors();
+    this._getInput(this.dialog, 'color-page-bg').value = colors.pageBg;
+    this._getInput(this.dialog, 'color-page-bg-hex').value = colors.pageBg;
+    this._getInput(this.dialog, 'color-page-text').value = colors.pageText;
+    this._getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
+
+    // Load TOC settings
+    const tocVisible = await this._loadTocVisible();
+    const tocVisibleCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#toc-visible')
+    );
+    tocVisibleCb.checked = tocVisible;
+
+    const tocPosition = await this._loadTocPosition();
+    const tocPositionSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#toc-position-select')
+    );
+    tocPositionSelect.value = tocPosition;
+
+    // Load image handling settings
+    const ensureLocalPaths = await this._loadEnsureLocalPaths();
+    const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#ensure-local-paths')
+    );
+    ensureLocalPathsCb.checked = ensureLocalPaths;
+
+    // Load content settings
+    const detailsClosed = await this._loadDetailsClosed();
+    const detailsClosedCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#details-closed')
+    );
+    detailsClosedCb.checked = detailsClosed;
+
+    this.dialog.showModal();
+  }
+
+  /**
+   * Closes the preferences modal.
+   */
+  close() {
+    if (this.dialog?.open) {
+      this.dialog.close();
+    }
+  }
+
+  /**
+   * Loads the default view mode from the settings database.
+   * @returns {Promise<import('../editor/editor.js').ViewMode>}
+   */
+  async _loadDefaultView() {
+    if (!window.electronAPI) return DEFAULT_VIEW_MODE;
+
+    try {
+      const result = await window.electronAPI.getSetting('defaultView');
+      if (result.success && result.value) {
+        return result.value === 'source' ? 'source' : 'writing';
+      }
+    } catch {
+      // Fall through to default
     }
 
-    /**
-     * Loads the TOC position setting from the settings database.
-     * @returns {Promise<import('../toc/toc.js').TocPosition>}
-     */
-    async _loadTocPosition() {
-        if (!window.electronAPI) return DEFAULT_TOC_POSITION;
+    return DEFAULT_VIEW_MODE;
+  }
 
-        try {
-            const result = await window.electronAPI.getSetting('tocPosition');
-            if (result.success && result.value) {
-                return result.value === 'right' ? 'right' : 'left';
-            }
-        } catch {
-            // Fall through to default
-        }
+  /**
+   * Loads the current page-width setting from the settings database.
+   * @returns {Promise<{ useFixed: boolean, width: number, unit: 'px' | 'mm' }>}
+   */
+  async _loadPageWidth() {
+    if (!window.electronAPI) return { ...DEFAULT_PAGE_WIDTH };
 
-        return DEFAULT_TOC_POSITION;
-    }
-
-    /**
-     * Loads the "ensure local paths" setting from the settings database.
-     * @returns {Promise<boolean>}
-     */
-    async _loadEnsureLocalPaths() {
-        if (!window.electronAPI) return DEFAULT_ENSURE_LOCAL_PATHS;
-
-        try {
-            const result = await window.electronAPI.getSetting('ensureLocalPaths');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                return !!result.value;
-            }
-        } catch {
-            // Fall through to default
-        }
-
-        return DEFAULT_ENSURE_LOCAL_PATHS;
-    }
-
-    /**
-     * Loads the details-closed setting from the settings database.
-     * @returns {Promise<boolean>}
-     */
-    async _loadDetailsClosed() {
-        if (!window.electronAPI) return DEFAULT_DETAILS_CLOSED;
-
-        try {
-            const result = await window.electronAPI.getSetting('detailsClosed');
-            if (result.success && result.value !== undefined && result.value !== null) {
-                return !!result.value;
-            }
-        } catch {
-            // Fall through to default
-        }
-
-        return DEFAULT_DETAILS_CLOSED;
-    }
-
-    /**
-     * Saves the current form values to the settings store and applies them.
-     */
-    async _save() {
-        if (!this.dialog) return;
-
-        const viewSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#default-view-select')
-        );
-        const defaultView = viewSelect.value === 'source' ? 'source' : 'writing';
-
-        const fixedCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#page-width-fixed')
-        );
-        const unitSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#page-width-unit')
-        );
-        const rawWidth = Number(this._getInput(this.dialog, 'page-width-value').value);
-        const pageWidth = {
-            useFixed: fixedCb.checked,
-            width: Number.isNaN(rawWidth) ? DEFAULT_PAGE_WIDTH.width : rawWidth,
-            unit: /** @type {'px' | 'mm'} */ (unitSelect.value),
+    try {
+      const result = await window.electronAPI.getSetting('pageWidth');
+      if (result.success && result.value) {
+        return {
+          useFixed: result.value.useFixed ?? DEFAULT_PAGE_WIDTH.useFixed,
+          width: result.value.width ?? DEFAULT_PAGE_WIDTH.width,
+          unit: result.value.unit ?? DEFAULT_PAGE_WIDTH.unit,
         };
-
-        const rawTop = Number(this._getInput(this.dialog, 'margin-top').value);
-        const rawRight = Number(this._getInput(this.dialog, 'margin-right').value);
-        const rawBottom = Number(this._getInput(this.dialog, 'margin-bottom').value);
-        const rawLeft = Number(this._getInput(this.dialog, 'margin-left').value);
-
-        const margins = {
-            top: Number.isNaN(rawTop) ? DEFAULT_MARGINS.top : rawTop,
-            right: Number.isNaN(rawRight) ? DEFAULT_MARGINS.right : rawRight,
-            bottom: Number.isNaN(rawBottom) ? DEFAULT_MARGINS.bottom : rawBottom,
-            left: Number.isNaN(rawLeft) ? DEFAULT_MARGINS.left : rawLeft,
-        };
-
-        const colors = {
-            pageBg: this._getInput(this.dialog, 'color-page-bg').value || DEFAULT_COLORS.pageBg,
-            pageText:
-                this._getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
-        };
-
-        const tocVisibleCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#toc-visible')
-        );
-        const tocVisible = tocVisibleCb.checked;
-
-        const tocPositionSelect = /** @type {HTMLSelectElement} */ (
-            this.dialog.querySelector('#toc-position-select')
-        );
-        const tocPosition = tocPositionSelect.value === 'right' ? 'right' : 'left';
-
-        const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#ensure-local-paths')
-        );
-        const ensureLocalPaths = ensureLocalPathsCb.checked;
-
-        const detailsClosedCb = /** @type {HTMLInputElement} */ (
-            this.dialog.querySelector('#details-closed')
-        );
-        const detailsClosed = detailsClosedCb.checked;
-
-        // Persist to database
-        if (window.electronAPI) {
-            await window.electronAPI.setSetting('defaultView', defaultView);
-            await window.electronAPI.setSetting('pageWidth', pageWidth);
-            await window.electronAPI.setSetting('margins', margins);
-            await window.electronAPI.setSetting('colors', colors);
-            await window.electronAPI.setSetting('tocVisible', tocVisible);
-            await window.electronAPI.setSetting('tocPosition', tocPosition);
-            await window.electronAPI.setSetting('ensureLocalPaths', ensureLocalPaths);
-            await window.electronAPI.setSetting('detailsClosed', detailsClosed);
-        }
-
-        // Apply to CSS immediately
-        applyPageWidth(pageWidth);
-        applyMargins(margins);
-        applyColors(colors);
-
-        // Apply TOC settings via custom event so the App class can handle it
-        document.dispatchEvent(
-            new CustomEvent('toc:settingsChanged', {
-                detail: { visible: tocVisible, position: tocPosition },
-            }),
-        );
-
-        // Notify listeners about image handling settings
-        document.dispatchEvent(
-            new CustomEvent('imageHandling:settingsChanged', {
-                detail: { ensureLocalPaths },
-            }),
-        );
-
-        // Notify listeners about content settings
-        document.dispatchEvent(
-            new CustomEvent('content:settingsChanged', {
-                detail: { detailsClosed },
-            }),
-        );
-
-        this.close();
+      }
+    } catch {
+      // Fall through to defaults
     }
+
+    return { ...DEFAULT_PAGE_WIDTH };
+  }
+
+  /**
+   * Loads the current margin values from the settings database.
+   * @returns {Promise<{ top: number, right: number, bottom: number, left: number }>}
+   */
+  async _loadMargins() {
+    if (!window.electronAPI) return { ...DEFAULT_MARGINS };
+
+    try {
+      const result = await window.electronAPI.getSetting('margins');
+      if (result.success && result.value) {
+        return {
+          top: result.value.top ?? DEFAULT_MARGINS.top,
+          right: result.value.right ?? DEFAULT_MARGINS.right,
+          bottom: result.value.bottom ?? DEFAULT_MARGINS.bottom,
+          left: result.value.left ?? DEFAULT_MARGINS.left,
+        };
+      }
+    } catch {
+      // Fall through to defaults
+    }
+
+    return { ...DEFAULT_MARGINS };
+  }
+
+  /**
+   * Loads the current color values from the settings database.
+   * @returns {Promise<{ pageBg: string, pageText: string }>}
+   */
+  async _loadColors() {
+    if (!window.electronAPI) return { ...DEFAULT_COLORS };
+
+    try {
+      const result = await window.electronAPI.getSetting('colors');
+      if (result.success && result.value) {
+        return {
+          pageBg: result.value.pageBg ?? DEFAULT_COLORS.pageBg,
+          pageText: result.value.pageText ?? DEFAULT_COLORS.pageText,
+        };
+      }
+    } catch {
+      // Fall through to defaults
+    }
+
+    return { ...DEFAULT_COLORS };
+  }
+
+  /**
+   * Loads the TOC visibility setting from the settings database.
+   * @returns {Promise<boolean>}
+   */
+  async _loadTocVisible() {
+    if (!window.electronAPI) return DEFAULT_TOC_VISIBLE;
+
+    try {
+      const result = await window.electronAPI.getSetting('tocVisible');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        return !!result.value;
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    return DEFAULT_TOC_VISIBLE;
+  }
+
+  /**
+   * Loads the TOC position setting from the settings database.
+   * @returns {Promise<import('../toc/toc.js').TocPosition>}
+   */
+  async _loadTocPosition() {
+    if (!window.electronAPI) return DEFAULT_TOC_POSITION;
+
+    try {
+      const result = await window.electronAPI.getSetting('tocPosition');
+      if (result.success && result.value) {
+        return result.value === 'right' ? 'right' : 'left';
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    return DEFAULT_TOC_POSITION;
+  }
+
+  /**
+   * Loads the "ensure local paths" setting from the settings database.
+   * @returns {Promise<boolean>}
+   */
+  async _loadEnsureLocalPaths() {
+    if (!window.electronAPI) return DEFAULT_ENSURE_LOCAL_PATHS;
+
+    try {
+      const result = await window.electronAPI.getSetting('ensureLocalPaths');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        return !!result.value;
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    return DEFAULT_ENSURE_LOCAL_PATHS;
+  }
+
+  /**
+   * Loads the details-closed setting from the settings database.
+   * @returns {Promise<boolean>}
+   */
+  async _loadDetailsClosed() {
+    if (!window.electronAPI) return DEFAULT_DETAILS_CLOSED;
+
+    try {
+      const result = await window.electronAPI.getSetting('detailsClosed');
+      if (result.success && result.value !== undefined && result.value !== null) {
+        return !!result.value;
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    return DEFAULT_DETAILS_CLOSED;
+  }
+
+  /**
+   * Saves the current form values to the settings store and applies them.
+   */
+  async _save() {
+    if (!this.dialog) return;
+
+    const viewSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#default-view-select')
+    );
+    const defaultView = viewSelect.value === 'source' ? 'source' : 'writing';
+
+    const fixedCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#page-width-fixed')
+    );
+    const unitSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#page-width-unit')
+    );
+    const rawWidth = Number(this._getInput(this.dialog, 'page-width-value').value);
+    const pageWidth = {
+      useFixed: fixedCb.checked,
+      width: Number.isNaN(rawWidth) ? DEFAULT_PAGE_WIDTH.width : rawWidth,
+      unit: /** @type {'px' | 'mm'} */ (unitSelect.value),
+    };
+
+    const rawTop = Number(this._getInput(this.dialog, 'margin-top').value);
+    const rawRight = Number(this._getInput(this.dialog, 'margin-right').value);
+    const rawBottom = Number(this._getInput(this.dialog, 'margin-bottom').value);
+    const rawLeft = Number(this._getInput(this.dialog, 'margin-left').value);
+
+    const margins = {
+      top: Number.isNaN(rawTop) ? DEFAULT_MARGINS.top : rawTop,
+      right: Number.isNaN(rawRight) ? DEFAULT_MARGINS.right : rawRight,
+      bottom: Number.isNaN(rawBottom) ? DEFAULT_MARGINS.bottom : rawBottom,
+      left: Number.isNaN(rawLeft) ? DEFAULT_MARGINS.left : rawLeft,
+    };
+
+    const colors = {
+      pageBg: this._getInput(this.dialog, 'color-page-bg').value || DEFAULT_COLORS.pageBg,
+      pageText: this._getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
+    };
+
+    const tocVisibleCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#toc-visible')
+    );
+    const tocVisible = tocVisibleCb.checked;
+
+    const tocPositionSelect = /** @type {HTMLSelectElement} */ (
+      this.dialog.querySelector('#toc-position-select')
+    );
+    const tocPosition = tocPositionSelect.value === 'right' ? 'right' : 'left';
+
+    const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#ensure-local-paths')
+    );
+    const ensureLocalPaths = ensureLocalPathsCb.checked;
+
+    const detailsClosedCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector('#details-closed')
+    );
+    const detailsClosed = detailsClosedCb.checked;
+
+    // Persist to database
+    if (window.electronAPI) {
+      await window.electronAPI.setSetting('defaultView', defaultView);
+      await window.electronAPI.setSetting('pageWidth', pageWidth);
+      await window.electronAPI.setSetting('margins', margins);
+      await window.electronAPI.setSetting('colors', colors);
+      await window.electronAPI.setSetting('tocVisible', tocVisible);
+      await window.electronAPI.setSetting('tocPosition', tocPosition);
+      await window.electronAPI.setSetting('ensureLocalPaths', ensureLocalPaths);
+      await window.electronAPI.setSetting('detailsClosed', detailsClosed);
+    }
+
+    // Apply to CSS immediately
+    applyPageWidth(pageWidth);
+    applyMargins(margins);
+    applyColors(colors);
+
+    // Apply TOC settings via custom event so the App class can handle it
+    document.dispatchEvent(
+      new CustomEvent('toc:settingsChanged', {
+        detail: { visible: tocVisible, position: tocPosition },
+      }),
+    );
+
+    // Notify listeners about image handling settings
+    document.dispatchEvent(
+      new CustomEvent('imageHandling:settingsChanged', {
+        detail: { ensureLocalPaths },
+      }),
+    );
+
+    // Notify listeners about content settings
+    document.dispatchEvent(
+      new CustomEvent('content:settingsChanged', {
+        detail: { detailsClosed },
+      }),
+    );
+
+    this.close();
+  }
 }
 
 /**
@@ -945,12 +940,12 @@ export class PreferencesModal {
  * @param {{ useFixed: boolean, width: number, unit: 'px' | 'mm' }} pageWidth
  */
 export function applyPageWidth(pageWidth) {
-    const root = document.documentElement;
-    if (pageWidth.useFixed) {
-        root.style.setProperty('--page-max-width', '210mm');
-    } else {
-        root.style.setProperty('--page-max-width', `${pageWidth.width}${pageWidth.unit}`);
-    }
+  const root = document.documentElement;
+  if (pageWidth.useFixed) {
+    root.style.setProperty('--page-max-width', '210mm');
+  } else {
+    root.style.setProperty('--page-max-width', `${pageWidth.width}${pageWidth.unit}`);
+  }
 }
 
 /**
@@ -958,11 +953,11 @@ export function applyPageWidth(pageWidth) {
  * @param {{ top: number, right: number, bottom: number, left: number }} margins
  */
 export function applyMargins(margins) {
-    const root = document.documentElement;
-    root.style.setProperty('--page-padding-top', `${margins.top}mm`);
-    root.style.setProperty('--page-padding-right', `${margins.right}mm`);
-    root.style.setProperty('--page-padding-bottom', `${margins.bottom}mm`);
-    root.style.setProperty('--page-padding-left', `${margins.left}mm`);
+  const root = document.documentElement;
+  root.style.setProperty('--page-padding-top', `${margins.top}mm`);
+  root.style.setProperty('--page-padding-right', `${margins.right}mm`);
+  root.style.setProperty('--page-padding-bottom', `${margins.bottom}mm`);
+  root.style.setProperty('--page-padding-left', `${margins.left}mm`);
 }
 
 /**
@@ -970,7 +965,7 @@ export function applyMargins(margins) {
  * @param {{ pageBg: string, pageText: string }} colors
  */
 export function applyColors(colors) {
-    const root = document.documentElement;
-    root.style.setProperty('--page-bg', colors.pageBg);
-    root.style.setProperty('--page-text', colors.pageText);
+  const root = document.documentElement;
+  root.style.setProperty('--page-bg', colors.pageBg);
+  root.style.setProperty('--page-text', colors.pageText);
 }

@@ -19,52 +19,52 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await closeApp(electronApp);
+  await closeApp(electronApp);
 });
 
 test('reload restores a saved file from disk', async () => {
-    // Persist the README as the open file in the settings DB so that
-    // reload has something to restore.
-    await electronApp.evaluate((electron, rPath) => {
-        const sm = /** @type {any} */ (globalThis).__settingsManager;
-        sm.set('openFiles', [
-            {
-                filePath: rPath,
-                active: true,
-                cursorOffset: 0,
-                contentHash: 0,
-                scrollTop: 0,
-                cursorPath: null,
-                tocHeadingPath: null,
-            },
-        ]);
-    }, readmePath);
+  // Persist the README as the open file in the settings DB so that
+  // reload has something to restore.
+  await electronApp.evaluate((electron, rPath) => {
+    const sm = /** @type {any} */ (globalThis).__settingsManager;
+    sm.set('openFiles', [
+      {
+        filePath: rPath,
+        active: true,
+        cursorOffset: 0,
+        contentHash: 0,
+        scrollTop: 0,
+        cursorPath: null,
+        tocHeadingPath: null,
+      },
+    ]);
+  }, readmePath);
 
-    // Trigger reload via the IPC API
-    await page.evaluate(() => window.electronAPI?.reload());
+  // Trigger reload via the IPC API
+  await page.evaluate(() => window.electronAPI?.reload());
 
-    // Wait for the page to fully reload and the editor to re-initialise
-    await page.waitForFunction(
-        () => {
-            return document.readyState === 'complete' && !!window.editorAPI;
-        },
-        { timeout: 10000 },
-    );
+  // Wait for the page to fully reload and the editor to re-initialise
+  await page.waitForFunction(
+    () => {
+      return document.readyState === 'complete' && !!window.editorAPI;
+    },
+    { timeout: 10000 },
+  );
 
-    // Wait for the content to be restored from disk
-    await page.waitForFunction(
-        () => {
-            const content = window.editorAPI?.getContent() ?? '';
-            return content.includes('Markdown Editor');
-        },
-        { timeout: 10000 },
-    );
+  // Wait for the content to be restored from disk
+  await page.waitForFunction(
+    () => {
+      const content = window.editorAPI?.getContent() ?? '';
+      return content.includes('Markdown Editor');
+    },
+    { timeout: 10000 },
+  );
 
-    // Verify the content matches the on-disk file
-    const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-    expect(contentAfter).toContain("# Pomax's Markdown Editor");
+  // Verify the content matches the on-disk file
+  const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+  expect(contentAfter).toContain("# Pomax's Markdown Editor");
 });

@@ -23,16 +23,16 @@ import { BaseModal } from '../modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class ImageModal extends BaseModal {
-    get _prefix() {
-        return 'image';
-    }
+  get _prefix() {
+    return 'image';
+  }
 
-    get _ariaLabel() {
-        return 'Insert Image';
-    }
+  get _ariaLabel() {
+    return 'Insert Image';
+  }
 
-    _getTemplate() {
-        return `
+  _getTemplate() {
+    return `
             <form method="dialog" class="image-form">
                 <header class="image-dialog-header">
                     <h2>Insert Image</h2>
@@ -72,146 +72,146 @@ export class ImageModal extends BaseModal {
                 </footer>
             </form>
         `;
+  }
+
+  _afterBuild() {
+    if (!this.dialog) return;
+
+    // Browse button
+    const browseBtn = this.dialog.querySelector('.image-browse-btn');
+    if (browseBtn) {
+      browseBtn.addEventListener('click', () => this._browse());
     }
 
-    _afterBuild() {
-        if (!this.dialog) return;
-
-        // Browse button
-        const browseBtn = this.dialog.querySelector('.image-browse-btn');
-        if (browseBtn) {
-            browseBtn.addEventListener('click', () => this._browse());
-        }
-
-        // Image preview on src change
-        const srcInput = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#image-src'));
-        if (srcInput) {
-            srcInput.addEventListener('input', () => {
-                this._updatePreview();
-                this._updateRename();
-            });
-        }
-    }
-
-    /**
-     * @param {Partial<ImageData>} [existing]
-     */
-    _populateFields(existing) {
-        const srcInput = this._getInput('image-src');
-        const renameInput = this._getInput('image-rename');
-        const altInput = this._getInput('image-alt');
-        const hrefInput = this._getInput('image-href');
-        const styleInput = this._getInput('image-style');
-        const insertBtn = this._getInsertBtn();
-        const heading = this._getHeading();
-
-        if (existing?.src || existing?.alt || existing?.href) {
-            srcInput.value = existing.src ?? '';
-            renameInput.value = this._extractFilename(existing.src ?? '');
-            altInput.value = existing.alt ?? '';
-            hrefInput.value = existing.href ?? '';
-            styleInput.value = existing.style ?? '';
-            if (insertBtn) insertBtn.textContent = 'Update';
-            if (heading) heading.textContent = 'Edit Image';
-        } else {
-            srcInput.value = '';
-            renameInput.value = '';
-            altInput.value = '';
-            hrefInput.value = '';
-            styleInput.value = '';
-            if (insertBtn) insertBtn.textContent = 'Insert';
-            if (heading) heading.textContent = 'Insert Image';
-        }
-
+    // Image preview on src change
+    const srcInput = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#image-src'));
+    if (srcInput) {
+      srcInput.addEventListener('input', () => {
         this._updatePreview();
+        this._updateRename();
+      });
+    }
+  }
+
+  /**
+   * @param {Partial<ImageData>} [existing]
+   */
+  _populateFields(existing) {
+    const srcInput = this._getInput('image-src');
+    const renameInput = this._getInput('image-rename');
+    const altInput = this._getInput('image-alt');
+    const hrefInput = this._getInput('image-href');
+    const styleInput = this._getInput('image-style');
+    const insertBtn = this._getInsertBtn();
+    const heading = this._getHeading();
+
+    if (existing?.src || existing?.alt || existing?.href) {
+      srcInput.value = existing.src ?? '';
+      renameInput.value = this._extractFilename(existing.src ?? '');
+      altInput.value = existing.alt ?? '';
+      hrefInput.value = existing.href ?? '';
+      styleInput.value = existing.style ?? '';
+      if (insertBtn) insertBtn.textContent = 'Update';
+      if (heading) heading.textContent = 'Edit Image';
+    } else {
+      srcInput.value = '';
+      renameInput.value = '';
+      altInput.value = '';
+      hrefInput.value = '';
+      styleInput.value = '';
+      if (insertBtn) insertBtn.textContent = 'Insert';
+      if (heading) heading.textContent = 'Insert Image';
     }
 
-    /**
-     * @returns {HTMLElement}
-     */
-    _getFocusTarget() {
-        return this._getInput('image-src');
+    this._updatePreview();
+  }
+
+  /**
+   * @returns {HTMLElement}
+   */
+  _getFocusTarget() {
+    return this._getInput('image-src');
+  }
+
+  _submit() {
+    const src = this._getInput('image-src').value.trim();
+    const rename = this._getInput('image-rename').value.trim();
+    const alt = this._getInput('image-alt').value.trim();
+    const href = this._getInput('image-href').value.trim();
+    const style = this._getInput('image-style').value.trim();
+
+    if (!src) {
+      this._getInput('image-src').focus();
+      return;
     }
 
-    _submit() {
-        const src = this._getInput('image-src').value.trim();
-        const rename = this._getInput('image-rename').value.trim();
-        const alt = this._getInput('image-alt').value.trim();
-        const href = this._getInput('image-href').value.trim();
-        const style = this._getInput('image-style').value.trim();
+    this._closeWithResult({ alt, src, href, style, rename });
+  }
 
-        if (!src) {
-            this._getInput('image-src').focus();
-            return;
-        }
+  /**
+   * Opens a file dialog to browse for an image.
+   */
+  async _browse() {
+    if (!window.electronAPI) return;
 
-        this._closeWithResult({ alt, src, href, style, rename });
+    const result = await window.electronAPI.browseForImage();
+    if (result.success && result.filePath) {
+      this._getInput('image-src').value = result.filePath;
+      this._updateRename();
+      this._updatePreview();
     }
+  }
 
-    /**
-     * Opens a file dialog to browse for an image.
-     */
-    async _browse() {
-        if (!window.electronAPI) return;
+  /**
+   * Updates the image preview.
+   */
+  _updatePreview() {
+    if (!this.dialog) return;
 
-        const result = await window.electronAPI.browseForImage();
-        if (result.success && result.filePath) {
-            this._getInput('image-src').value = result.filePath;
-            this._updateRename();
-            this._updatePreview();
-        }
+    const src = this._getInput('image-src').value.trim();
+    const previewContainer = this.dialog.querySelector('#image-preview-container');
+    const previewImg = /** @type {HTMLImageElement} */ (
+      this.dialog.querySelector('#image-preview')
+    );
+
+    if (!previewContainer || !previewImg) return;
+
+    if (src) {
+      previewImg.src = src;
+      previewImg.alt = this._getInput('image-alt').value.trim() || 'Preview';
+      previewContainer.classList.add('visible');
+
+      previewImg.onerror = () => {
+        previewContainer.classList.remove('visible');
+      };
+      previewImg.onload = () => {
+        previewContainer.classList.add('visible');
+      };
+    } else {
+      previewContainer.classList.remove('visible');
     }
+  }
 
-    /**
-     * Updates the image preview.
-     */
-    _updatePreview() {
-        if (!this.dialog) return;
+  /**
+   * Updates the rename field with the filename from the current src value.
+   */
+  _updateRename() {
+    if (!this.dialog) return;
+    const src = this._getInput('image-src').value.trim();
+    this._getInput('image-rename').value = this._extractFilename(src);
+  }
 
-        const src = this._getInput('image-src').value.trim();
-        const previewContainer = this.dialog.querySelector('#image-preview-container');
-        const previewImg = /** @type {HTMLImageElement} */ (
-            this.dialog.querySelector('#image-preview')
-        );
-
-        if (!previewContainer || !previewImg) return;
-
-        if (src) {
-            previewImg.src = src;
-            previewImg.alt = this._getInput('image-alt').value.trim() || 'Preview';
-            previewContainer.classList.add('visible');
-
-            previewImg.onerror = () => {
-                previewContainer.classList.remove('visible');
-            };
-            previewImg.onload = () => {
-                previewContainer.classList.add('visible');
-            };
-        } else {
-            previewContainer.classList.remove('visible');
-        }
-    }
-
-    /**
-     * Updates the rename field with the filename from the current src value.
-     */
-    _updateRename() {
-        if (!this.dialog) return;
-        const src = this._getInput('image-src').value.trim();
-        this._getInput('image-rename').value = this._extractFilename(src);
-    }
-
-    /**
-     * Extracts the filename from a path or URL.
-     * @param {string} src - Image source path or URL
-     * @returns {string} The filename portion, or empty string if none
-     */
-    _extractFilename(src) {
-        if (!src) return '';
-        // Strip query string and fragment
-        const clean = src.split('?')[0].split('#')[0];
-        // Handle both forward and back slashes
-        const parts = clean.split(/[/\\]/);
-        return parts[parts.length - 1] || '';
-    }
+  /**
+   * Extracts the filename from a path or URL.
+   * @param {string} src - Image source path or URL
+   * @returns {string} The filename portion, or empty string if none
+   */
+  _extractFilename(src) {
+    if (!src) return '';
+    // Strip query string and fragment
+    const clean = src.split('?')[0].split('#')[0];
+    // Handle both forward and back slashes
+    const parts = clean.split(/[/\\]/);
+    return parts[parts.length - 1] || '';
+  }
 }

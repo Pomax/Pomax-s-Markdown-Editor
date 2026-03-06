@@ -36,10 +36,10 @@ export const MIN_WIDTH_PX = 300;
  * @returns {number} New page width in pixels, clamped to [MIN_WIDTH_PX, maxContainerWidth - 40]
  */
 export function computeNewWidth({ startWidth, startX, currentX, side, maxContainerWidth }) {
-    const dx = currentX - startX;
-    const widthDelta = side === 'right' ? dx * 2 : -dx * 2;
-    const maxWidth = maxContainerWidth - 40;
-    return Math.round(Math.max(MIN_WIDTH_PX, Math.min(maxWidth, startWidth + widthDelta)));
+  const dx = currentX - startX;
+  const widthDelta = side === 'right' ? dx * 2 : -dx * 2;
+  const maxWidth = maxContainerWidth - 40;
+  return Math.round(Math.max(MIN_WIDTH_PX, Math.min(maxWidth, startWidth + widthDelta)));
 }
 
 /**
@@ -52,44 +52,44 @@ export function computeNewWidth({ startWidth, startX, currentX, side, maxContain
  * @returns {((newEditor: HTMLElement) => void) | undefined}
  */
 export function initPageResizeHandles(editor) {
-    const container = editor.parentElement;
-    if (!container) return;
+  const container = editor.parentElement;
+  if (!container) return;
 
-    /** @type {{ current: HTMLElement }} */
-    const editorRef = { current: editor };
+  /** @type {{ current: HTMLElement }} */
+  const editorRef = { current: editor };
 
-    const leftHandle = _createHandle('left');
-    const rightHandle = _createHandle('right');
+  const leftHandle = _createHandle('left');
+  const rightHandle = _createHandle('right');
 
-    document.body.appendChild(leftHandle);
-    document.body.appendChild(rightHandle);
+  document.body.appendChild(leftHandle);
+  document.body.appendChild(rightHandle);
 
-    const update = () => _positionHandles(editorRef.current, leftHandle, rightHandle);
+  const update = () => _positionHandles(editorRef.current, leftHandle, rightHandle);
 
+  update();
+
+  // Re-position whenever the editor or container resizes.
+  const ro = new ResizeObserver(update);
+  ro.observe(editor);
+  ro.observe(container);
+
+  // Re-position on scroll (the editor container is the scroll parent).
+  container.addEventListener('scroll', update, { passive: true });
+
+  _attachDrag(editorRef, leftHandle, 'left', rightHandle);
+  _attachDrag(editorRef, rightHandle, 'right', leftHandle);
+
+  /**
+   * Re-targets the resize handles to a different editor element.
+   * Called when switching tabs so the handles track the new container.
+   * @param {HTMLElement} newEditor
+   */
+  return (newEditor) => {
+    ro.unobserve(editorRef.current);
+    editorRef.current = newEditor;
+    ro.observe(newEditor);
     update();
-
-    // Re-position whenever the editor or container resizes.
-    const ro = new ResizeObserver(update);
-    ro.observe(editor);
-    ro.observe(container);
-
-    // Re-position on scroll (the editor container is the scroll parent).
-    container.addEventListener('scroll', update, { passive: true });
-
-    _attachDrag(editorRef, leftHandle, 'left', rightHandle);
-    _attachDrag(editorRef, rightHandle, 'right', leftHandle);
-
-    /**
-     * Re-targets the resize handles to a different editor element.
-     * Called when switching tabs so the handles track the new container.
-     * @param {HTMLElement} newEditor
-     */
-    return (newEditor) => {
-        ro.unobserve(editorRef.current);
-        editorRef.current = newEditor;
-        ro.observe(newEditor);
-        update();
-    };
+  };
 }
 
 // ── Private helpers ──────────────────────────────────────────────────
@@ -100,10 +100,10 @@ export function initPageResizeHandles(editor) {
  * @returns {HTMLDivElement}
  */
 function _createHandle(side) {
-    const handle = document.createElement('div');
-    handle.className = `editor-resize-handle editor-resize-handle--${side}`;
-    handle.dataset.side = side;
-    return handle;
+  const handle = document.createElement('div');
+  handle.className = `editor-resize-handle editor-resize-handle--${side}`;
+  handle.dataset.side = side;
+  return handle;
 }
 
 /**
@@ -116,27 +116,27 @@ function _createHandle(side) {
  * @param {HTMLDivElement} rightHandle
  */
 function _positionHandles(editor, leftHandle, rightHandle) {
-    leftHandle.style.display = '';
-    rightHandle.style.display = '';
+  leftHandle.style.display = '';
+  rightHandle.style.display = '';
 
-    const container = editor.parentElement;
-    if (!container) return;
+  const container = editor.parentElement;
+  if (!container) return;
 
-    const editorRect = editor.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+  const editorRect = editor.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
 
-    const handleWidth = 6; // matches CSS width
-    // Vertical extent: clip to the visible portion of the container
-    const top = containerRect.top;
-    const height = containerRect.height;
+  const handleWidth = 6; // matches CSS width
+  // Vertical extent: clip to the visible portion of the container
+  const top = containerRect.top;
+  const height = containerRect.height;
 
-    leftHandle.style.top = `${top}px`;
-    leftHandle.style.height = `${height}px`;
-    leftHandle.style.left = `${editorRect.left - handleWidth / 2}px`;
+  leftHandle.style.top = `${top}px`;
+  leftHandle.style.height = `${height}px`;
+  leftHandle.style.left = `${editorRect.left - handleWidth / 2}px`;
 
-    rightHandle.style.top = `${top}px`;
-    rightHandle.style.height = `${height}px`;
-    rightHandle.style.left = `${editorRect.right - handleWidth / 2}px`;
+  rightHandle.style.top = `${top}px`;
+  rightHandle.style.height = `${height}px`;
+  rightHandle.style.left = `${editorRect.right - handleWidth / 2}px`;
 }
 
 /**
@@ -152,99 +152,99 @@ function _positionHandles(editor, leftHandle, rightHandle) {
  * @param {HTMLDivElement} otherHandle - The opposite handle (for re-positioning)
  */
 function _attachDrag(editorRef, handle, side, otherHandle) {
-    /** @type {number} Mouse X at the moment of mousedown */
-    let startX = 0;
-    /** @type {number} Editor width (px) at the moment of mousedown */
-    let startWidth = 0;
-    /** @type {number} Left-handle starting X (viewport) at mousedown */
-    let startLeftX = 0;
-    /** @type {number} Right-handle starting X (viewport) at mousedown */
-    let startRightX = 0;
-    /** @type {number|null} Pending rAF id */
-    let rafId = null;
-    /** @type {number} Last mouse X seen during this drag */
-    let lastMouseX = 0;
+  /** @type {number} Mouse X at the moment of mousedown */
+  let startX = 0;
+  /** @type {number} Editor width (px) at the moment of mousedown */
+  let startWidth = 0;
+  /** @type {number} Left-handle starting X (viewport) at mousedown */
+  let startLeftX = 0;
+  /** @type {number} Right-handle starting X (viewport) at mousedown */
+  let startRightX = 0;
+  /** @type {number|null} Pending rAF id */
+  let rafId = null;
+  /** @type {number} Last mouse X seen during this drag */
+  let lastMouseX = 0;
 
-    /** Calls the exported computeNewWidth with current drag state. */
-    const getNewWidth = () => {
-        const container = editorRef.current.parentElement;
-        const maxContainerWidth = container ? container.clientWidth : 2040;
-        return computeNewWidth({
-            startWidth,
-            startX,
-            currentX: lastMouseX,
-            side,
-            maxContainerWidth,
-        });
-    };
-
-    /** @param {MouseEvent} e */
-    const onMouseMove = (e) => {
-        e.preventDefault();
-        lastMouseX = e.clientX;
-        if (rafId !== null) return; // coalesce into one frame
-
-        rafId = requestAnimationFrame(() => {
-            rafId = null;
-
-            const newWidth = getNewWidth();
-
-            // Set inline style directly — avoids CSS variable cascade reflow.
-            editorRef.current.style.maxWidth = `${newWidth}px`;
-
-            // Position handles directly from the delta — no layout thrash.
-            const halfGrowth = (newWidth - startWidth) / 2;
-            const handleWidth = 6;
-            const newLeftX = startLeftX - halfGrowth - handleWidth / 2;
-            const newRightX = startRightX + halfGrowth - handleWidth / 2;
-
-            handle.style.left = `${side === 'left' ? newLeftX : newRightX}px`;
-            otherHandle.style.left = `${side === 'left' ? newRightX : newLeftX}px`;
-        });
-    };
-
-    const onMouseUp = () => {
-        if (rafId !== null) {
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        }
-        handle.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-
-        // Compute final width from the delta (don't rely on rAF having run).
-        const finalWidth = getNewWidth();
-        editorRef.current.style.maxWidth = '';
-        applyPageWidth({ useFixed: false, width: finalWidth, unit: 'px' });
-
-        // Snap handles to actual editor rect now that the CSS variable is set.
-        _positionHandles(
-            editorRef.current,
-            side === 'left' ? handle : otherHandle,
-            side === 'right' ? handle : otherHandle,
-        );
-
-        _persistPageWidth(finalWidth);
-    };
-
-    handle.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        startX = e.clientX;
-        startWidth = editorRef.current.getBoundingClientRect().width;
-
-        // Capture both handles' current viewport X positions.
-        const editorRect = editorRef.current.getBoundingClientRect();
-        startLeftX = editorRect.left;
-        startRightX = editorRect.right;
-
-        handle.classList.add('dragging');
-        document.body.style.cursor = 'ew-resize';
-        document.body.style.userSelect = 'none';
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+  /** Calls the exported computeNewWidth with current drag state. */
+  const getNewWidth = () => {
+    const container = editorRef.current.parentElement;
+    const maxContainerWidth = container ? container.clientWidth : 2040;
+    return computeNewWidth({
+      startWidth,
+      startX,
+      currentX: lastMouseX,
+      side,
+      maxContainerWidth,
     });
+  };
+
+  /** @param {MouseEvent} e */
+  const onMouseMove = (e) => {
+    e.preventDefault();
+    lastMouseX = e.clientX;
+    if (rafId !== null) return; // coalesce into one frame
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+
+      const newWidth = getNewWidth();
+
+      // Set inline style directly — avoids CSS variable cascade reflow.
+      editorRef.current.style.maxWidth = `${newWidth}px`;
+
+      // Position handles directly from the delta — no layout thrash.
+      const halfGrowth = (newWidth - startWidth) / 2;
+      const handleWidth = 6;
+      const newLeftX = startLeftX - halfGrowth - handleWidth / 2;
+      const newRightX = startRightX + halfGrowth - handleWidth / 2;
+
+      handle.style.left = `${side === 'left' ? newLeftX : newRightX}px`;
+      otherHandle.style.left = `${side === 'left' ? newRightX : newLeftX}px`;
+    });
+  };
+
+  const onMouseUp = () => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+
+    // Compute final width from the delta (don't rely on rAF having run).
+    const finalWidth = getNewWidth();
+    editorRef.current.style.maxWidth = '';
+    applyPageWidth({ useFixed: false, width: finalWidth, unit: 'px' });
+
+    // Snap handles to actual editor rect now that the CSS variable is set.
+    _positionHandles(
+      editorRef.current,
+      side === 'left' ? handle : otherHandle,
+      side === 'right' ? handle : otherHandle,
+    );
+
+    _persistPageWidth(finalWidth);
+  };
+
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    startX = e.clientX;
+    startWidth = editorRef.current.getBoundingClientRect().width;
+
+    // Capture both handles' current viewport X positions.
+    const editorRect = editorRef.current.getBoundingClientRect();
+    startLeftX = editorRect.left;
+    startRightX = editorRect.right;
+
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
 }
 
 /**
@@ -252,11 +252,11 @@ function _attachDrag(editorRef, handle, side, otherHandle) {
  * @param {number} widthPx - Width in pixels
  */
 async function _persistPageWidth(widthPx) {
-    if (!window.electronAPI) return;
-    const pageWidth = { useFixed: false, width: widthPx, unit: 'px' };
-    try {
-        await window.electronAPI.setSetting('pageWidth', pageWidth);
-    } catch {
-        // Non-critical — ignore
-    }
+  if (!window.electronAPI) return;
+  const pageWidth = { useFixed: false, width: widthPx, unit: 'px' };
+  try {
+    await window.electronAPI.setSetting('pageWidth', pageWidth);
+  } catch {
+    // Non-critical — ignore
+  }
 }

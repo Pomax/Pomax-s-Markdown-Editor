@@ -18,16 +18,16 @@ import { BaseModal } from '../modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class CodeLanguageModal extends BaseModal {
-    get _prefix() {
-        return 'code-language';
-    }
+  get _prefix() {
+    return 'code-language';
+  }
 
-    get _ariaLabel() {
-        return 'Edit Code Language';
-    }
+  get _ariaLabel() {
+    return 'Edit Code Language';
+  }
 
-    _getTemplate() {
-        return `
+  _getTemplate() {
+    return `
             <form method="dialog" class="code-language-form">
                 <header class="code-language-dialog-header">
                     <h2>Set Language</h2>
@@ -45,38 +45,38 @@ export class CodeLanguageModal extends BaseModal {
                 </footer>
             </form>
         `;
-    }
+  }
 
-    /**
-     * @param {Partial<CodeLanguageData>} [existing]
-     */
-    _populateFields(existing) {
-        const input = this._getInput('code-language-input');
-        const heading = this._getHeading();
-        const btn = this._getInsertBtn();
+  /**
+   * @param {Partial<CodeLanguageData>} [existing]
+   */
+  _populateFields(existing) {
+    const input = this._getInput('code-language-input');
+    const heading = this._getHeading();
+    const btn = this._getInsertBtn();
 
-        if (existing?.language) {
-            input.value = existing.language;
-            if (heading) heading.textContent = 'Edit Language';
-            if (btn) btn.textContent = 'Update';
-        } else {
-            input.value = '';
-            if (heading) heading.textContent = 'Set Language';
-            if (btn) btn.textContent = 'Apply';
-        }
+    if (existing?.language) {
+      input.value = existing.language;
+      if (heading) heading.textContent = 'Edit Language';
+      if (btn) btn.textContent = 'Update';
+    } else {
+      input.value = '';
+      if (heading) heading.textContent = 'Set Language';
+      if (btn) btn.textContent = 'Apply';
     }
+  }
 
-    /**
-     * @param {Partial<CodeLanguageData>} [_existing]
-     * @returns {HTMLElement}
-     */
-    _getFocusTarget(_existing) {
-        return this._getInput('code-language-input');
-    }
+  /**
+   * @param {Partial<CodeLanguageData>} [_existing]
+   * @returns {HTMLElement}
+   */
+  _getFocusTarget(_existing) {
+    return this._getInput('code-language-input');
+  }
 
-    _submit() {
-        const language = this._getInput('code-language-input').value.trim();
-        // Allow empty string — this clears the language tag.
-        this._closeWithResult({ language });
-    }
+  _submit() {
+    const language = this._getInput('code-language-input').value.trim();
+    // Allow empty string — this clears the language tag.
+    this._closeWithResult({ language });
+  }
 }

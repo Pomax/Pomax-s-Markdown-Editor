@@ -17,56 +17,56 @@ let page;
 const LINKED_IMAGE_MD = '[![Logo](logo.png)](https://example.com)';
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await closeApp(electronApp);
+  await closeApp(electronApp);
 });
 
 test.describe('Linked image click-to-edit', () => {
-    test.beforeEach(async () => {
-        await loadContent(page, LINKED_IMAGE_MD);
-    });
+  test.beforeEach(async () => {
+    await loadContent(page, LINKED_IMAGE_MD);
+  });
 
-    test('clicking a linked image opens the image edit modal', async () => {
-        // Click the image element
-        const image = page.locator('.md-line.md-image');
-        await clickInEditor(page, image);
+  test('clicking a linked image opens the image edit modal', async () => {
+    // Click the image element
+    const image = page.locator('.md-line.md-image');
+    await clickInEditor(page, image);
 
-        // The image modal should appear (not the link modal)
-        const dialog = page.locator('.image-dialog');
-        await expect(dialog).toBeVisible();
+    // The image modal should appear (not the link modal)
+    const dialog = page.locator('.image-dialog');
+    await expect(dialog).toBeVisible();
 
-        // Fields should be pre-filled with the image data
-        const srcInput = page.locator('#image-src');
-        const altInput = page.locator('#image-alt');
-        await expect(srcInput).toHaveValue('logo.png');
-        await expect(altInput).toHaveValue('Logo');
+    // Fields should be pre-filled with the image data
+    const srcInput = page.locator('#image-src');
+    const altInput = page.locator('#image-alt');
+    await expect(srcInput).toHaveValue('logo.png');
+    await expect(altInput).toHaveValue('Logo');
 
-        // Cancel
-        const cancelBtn = page.locator('.image-btn--cancel');
-        await cancelBtn.click();
-        await expect(dialog).not.toBeVisible();
-    });
+    // Cancel
+    const cancelBtn = page.locator('.image-btn--cancel');
+    await cancelBtn.click();
+    await expect(dialog).not.toBeVisible();
+  });
 
-    test('editing a linked image preserves the href', async () => {
-        const image = page.locator('.md-line.md-image');
-        await clickInEditor(page, image);
+  test('editing a linked image preserves the href', async () => {
+    const image = page.locator('.md-line.md-image');
+    await clickInEditor(page, image);
 
-        const dialog = page.locator('.image-dialog');
-        await expect(dialog).toBeVisible();
+    const dialog = page.locator('.image-dialog');
+    await expect(dialog).toBeVisible();
 
-        // Update the alt text
-        await page.fill('#image-alt', 'New Logo');
+    // Update the alt text
+    await page.fill('#image-alt', 'New Logo');
 
-        // Submit
-        const updateBtn = page.locator('.image-btn--insert');
-        await updateBtn.click();
-        await expect(dialog).not.toBeVisible();
+    // Submit
+    const updateBtn = page.locator('.image-btn--insert');
+    await updateBtn.click();
+    await expect(dialog).not.toBeVisible();
 
-        // Verify the parse tree still has the href
-        const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-        expect(markdown).toContain('New Logo');
-    });
+    // Verify the parse tree still has the href
+    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
+    expect(markdown).toContain('New Logo');
+  });
 });

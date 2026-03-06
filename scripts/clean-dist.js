@@ -14,13 +14,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, '..', 'dist');
 
 for (const entry of readdirSync(dist)) {
-    const full = join(dist, entry);
-    const isDir = statSync(full).isDirectory();
-    const isArtifact =
-        entry.endsWith('.yml') || entry.endsWith('.yaml') || entry.endsWith('.blockmap') || isDir;
+  const full = join(dist, entry);
+  const isDir = statSync(full).isDirectory();
+  const isArtifact =
+    entry.endsWith('.yml') || entry.endsWith('.yaml') || entry.endsWith('.blockmap') || isDir;
 
-    if (isArtifact) {
-        rmSync(full, { recursive: true, force: true });
-        console.log(`  removed ${entry}`);
-    }
+  if (isArtifact) {
+    rmSync(full, { recursive: true, force: true });
+    console.log(`  removed ${entry}`);
+  }
 }
