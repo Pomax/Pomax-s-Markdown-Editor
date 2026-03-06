@@ -20,7 +20,7 @@ import { join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { Parser } from "../index.js";
-import { serializeTree } from "../src/serialize-tree.js";
+import { serializeTree } from "../../syntax-tree/src/serialize-tree.js";
 import { JSDOM } from "jsdom";
 
 /**

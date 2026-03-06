@@ -1,0 +1,5 @@
+{
+  "name": "@tooling/syntax-tree",
+  "private": true,
+  "type": "module"
+}

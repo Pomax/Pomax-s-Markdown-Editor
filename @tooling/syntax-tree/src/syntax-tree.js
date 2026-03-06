@@ -150,7 +150,7 @@ export class SyntaxNode {
 
     /**
      * Converts an InlineSegment (from buildInlineTree) into a SyntaxNode.
-     * @param {import('./inline-tokenizer.js').InlineSegment} segment
+     * @param {import('../../parser/src/inline-tokenizer.js').InlineSegment} segment
      * @returns {SyntaxNode}
      */
     static segmentToNode(segment) {
@@ -428,7 +428,7 @@ export class SyntaxNode {
     /**
      * Converts an InlineSegment to a DOM node.
      * @param {Document} doc
-     * @param {import('./inline-tokenizer.js').InlineSegment} segment
+     * @param {import('../../parser/src/inline-tokenizer.js').InlineSegment} segment
      * @returns {Node}
      */
     static segmentToDOM(doc, segment) {
