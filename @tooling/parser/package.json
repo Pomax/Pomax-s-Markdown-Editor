@@ -1,13 +1,11 @@
 {
   "name": "@tooling/parser",
-  "private": true,
+  "description": "This folder houses all code related to parsing markdown documents to syntax trees.",
   "type": "module",
+  "private": true,
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
     "test:spec": "npm run verify-specs && node tests/run-spec-tests.js",
     "verify-specs": "node verify-spec-files.js ./tests/spec-files"
-  },
-  "devDependencies": {
-    "jsdom": "^26.0.0"
   }
 }

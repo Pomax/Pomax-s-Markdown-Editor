@@ -1,5 +1,6 @@
 {
   "name": "@tooling/syntax-tree",
-  "private": true,
-  "type": "module"
+  "description": "This folder houses the codebase Syntax Tree, intended for representing a (gfm) markdown document as a tree structure. Note that this is only the tree structure, it does not itself do any parsing.",
+  "type": "module",
+  "private": true
 }

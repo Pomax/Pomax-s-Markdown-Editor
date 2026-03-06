@@ -3,8 +3,17 @@
  * Provides a tree structure for representing parsed markdown.
  */
 
-import { serializeNodeMarkdown, serializeTreeMarkdown } from './render-tree-as-markdown.js';
-import { renderNodeToDOM, renderTreeToDOM } from './render-tree-as-dom.js';
+export {
+  renderTreeToText,
+  renderTreeToMarkdown,
+  renderTreeToDOM,
+} from "../../renderers/src/index.js";
+
+import {
+  renderTreeToText,
+  renderTreeToMarkdown,
+  renderTreeToDOM,
+} from "../../renderers/src/index.js";
 
 /**
  * @typedef {Object} NodeAttributes
@@ -36,166 +45,181 @@ let nodeIdCounter = 0;
  * @returns {string}
  */
 function generateNodeId() {
-    return `node-${++nodeIdCounter}`;
+  return `node-${++nodeIdCounter}`;
 }
 
 /**
  * Represents a node in the syntax tree.
  */
 export class SyntaxNode {
+  /**
+   * @param {string} type - The node type (heading1-6, paragraph, etc.)
+   * @param {string} content - The text content of the node
+   */
+  constructor(type, content = "") {
     /**
-     * @param {string} type - The node type (heading1-6, paragraph, etc.)
-     * @param {string} content - The text content of the node
+     * Unique identifier for this node.
+     * @type {string}
      */
-    constructor(type, content = '') {
-        /**
-         * Unique identifier for this node.
-         * @type {string}
-         */
-        this.id = generateNodeId();
-
-        /**
-         * The type of node.
-         * @type {string}
-         */
-        this.type = type;
-
-        /**
-         * The raw text content.
-         * @type {string}
-         */
-        this.content = content;
-
-        /**
-         * Child nodes.  For inline-containing block types (paragraph,
-         * heading, blockquote, list-item), children are inline nodes
-         * (text, bold, italic, link, etc.).  For container blocks
-         * (html-element), children are other block-level nodes.
-         * @type {SyntaxNode[]}
-         */
-        this.children = [];
-
-        /**
-         * Parent node reference.
-         * @type {SyntaxNode|null}
-         */
-        this.parent = null;
-
-        /**
-         * HTML tag name for html-element nodes.
-         * @type {string}
-         */
-        this.tagName = '';
-
-        /**
-         * Additional attributes for the node.
-         * @type {NodeAttributes}
-         */
-        this.attributes = {};
-
-        /**
-         * The DOM element produced by toDOM() / renderNodeToDOM().
-         * Set by the renderer; null until the node has been rendered.
-         * @type {Element|null}
-         */
-        this.domNode = null;
-
-        /**
-         * Runtime-only data (not serialised).
-         * @type {Object}
-         */
-        this.runtime = {};
-
-        /**
-         * Starting line in the source (0-based).
-         * @type {number}
-         */
-        this.startLine = 0;
-
-        /**
-         * Ending line in the source (0-based).
-         * @type {number}
-         */
-        this.endLine = 0;
-    }
+    this.id = generateNodeId();
 
     /**
-     * Adds a child node.
-     * @param {SyntaxNode} child - The child node to add
+     * The Document associated with this node, used for DOM rendering.
      */
-    appendChild(child) {
-        child.parent = this;
-        this.children.push(child);
-    }
+    this.doc = globalThis.document;
 
     /**
-     * Converts this node to markdown.
-     * @param {number} [depth=0] - HTML nesting depth for indentation
-     * @returns {string}
+     * The type of node.
+     * @type {string}
      */
-    toMarkdown(depth = 0) {
-        return serializeNodeMarkdown(this, depth);
-    }
+    this.type = type;
 
     /**
-     * Converts this node to a DOM element. Each element gets an
-     * `__st_node` property referencing this SyntaxNode.
-     *
-     * @param {Document} doc - The Document to create elements with.
-     * @returns {Element}
+     * The raw text content.
+     * @type {string}
      */
-    toDOM(doc) {
-        return renderNodeToDOM(doc, this);
-    }
+    this.content = content;
+
+    /**
+     * Child nodes.  For inline-containing block types (paragraph,
+     * heading, blockquote, list-item), children are inline nodes
+     * (text, bold, italic, link, etc.).  For container blocks
+     * (html-element), children are other block-level nodes.
+     * @type {SyntaxNode[]}
+     */
+    this.children = [];
+
+    /**
+     * Parent node reference.
+     * @type {SyntaxNode|null}
+     */
+    this.parent = null;
+
+    /**
+     * HTML tag name for html-element nodes.
+     * @type {string}
+     */
+    this.tagName = "";
+
+    /**
+     * Additional attributes for the node.
+     * @type {NodeAttributes}
+     */
+    this.attributes = {};
+
+    /**
+     * The DOM element produced by toDOM() / renderNodeToDOM().
+     * Set by the renderer; null until the node has been rendered.
+     * @type {Element|null}
+     */
+    this.domNode = null;
+
+    /**
+     * Runtime-only data (not serialised).
+     * @type {Object}
+     */
+    this.runtime = {};
+
+    /**
+     * Starting line in the source (0-based).
+     * @type {number}
+     */
+    this.startLine = 0;
+
+    /**
+     * Ending line in the source (0-based).
+     * @type {number}
+     */
+    this.endLine = 0;
+  }
+
+  /**
+   * Adds a child node.
+   * @param {SyntaxNode} child - The child node to add
+   */
+  appendChild(child) {
+    child.parent = this;
+    this.children.push(child);
+  }
+
+  /**
+   * Converts this node to markdown.
+   * @returns {string}
+   */
+  toMarkdown() {
+    return renderTreeToMarkdown(this);
+  }
+
+  /**
+   * Converts this node to a DOM element. Each element gets an
+   * `__st_node` property referencing this SyntaxNode.
+   *
+   * @param {Document} doc - The Document to create elements with.
+   * @returns {Element}
+   */
+  toDOM(doc) {
+    return renderNodeToDOM(doc, this);
+  }
 }
 
 /**
  * Represents the root of a syntax tree.
  */
 export class SyntaxTree {
-    constructor() {
-        /**
-         * Root children nodes.
-         * @type {SyntaxNode[]}
-         */
-        this.children = [];
-    }
-
+  constructor() {
     /**
-     * Adds a child node to the tree.
-     * @param {SyntaxNode} node - The node to add
+     * Root children nodes.
+     * @type {SyntaxNode[]}
      */
-    appendChild(node) {
-        node.parent = null;
-        this.children.push(node);
-    }
+    this.children = [];
+  }
 
-    /**
-     * Converts the tree to markdown.
-     * @returns {string}
-     */
-    toMarkdown() {
-        return serializeTreeMarkdown(this);
-    }
+  /**
+   * Adds a child node to the tree.
+   * @param {SyntaxNode} node - The node to add
+   */
+  appendChild(node) {
+    node.parent = null;
+    this.children.push(node);
+  }
 
-    /**
-     * Converts the tree to a DOM element.
-     * Every element gets an `__st_node` property referencing the
-     * originating SyntaxNode.
-     *
-     * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
-     * @returns {Element}
-     */
-    toDOM(doc) {
-        return renderTreeToDOM(doc || this.doc, this);
-    }
+  /**
+   * Converts the tree to markdown.
+   * @returns {string}
+   */
+  async toMarkdown() {
+    return renderTreeToMarkdown(this);
+  }
 
-    /**
-     * Converts the tree to an HTML string.
-     * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
-     * @returns {string}
-     */
-    toHTML(doc) {
-        return this.toDOM(doc || this.doc).outerHTML;
+  /**
+   * Converts the tree to a DOM element.
+   * Every element gets an `__st_node` property referencing the
+   * originating SyntaxNode.
+   *
+   * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
+   * @returns {Element}
+   */
+  async toDOM() {
+    if (!this.doc) {
+      throw new Error(`No document was set for this tree`);
     }
+    return renderTreeToDOM(this.doc, this);
+  }
+
+  /**
+   * Converts the tree to an HTML string.
+   * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
+   * @returns {string}
+   */
+  async toHTML() {
+    return this.toDOM().outerHTML;
+  }
+
+  /**
+   * Converts the tree to a plain text representation for debugging.
+   * @returns {string}
+   */
+  toString() {
+    return renderTreeToText(this);
+  }
 }

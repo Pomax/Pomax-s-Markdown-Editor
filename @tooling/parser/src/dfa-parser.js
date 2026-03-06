@@ -120,12 +120,16 @@ export class DFAParser {
      * Parses a full markdown document.
      * @param {string} markdown
      * @param {Document} [doc]
-     * @returns {SyntaxTree}
+     * @returns {Promise<SyntaxTree>}
      */
-    parse(markdown, doc) {
+    async parse(markdown) {
         const tokens = tokenize(markdown);
-        const tree = new SyntaxTree();
-        if (doc) tree.doc = doc;
+        const tree = new SyntaxTree();       
+        if (!tree.doc) {
+            const { JSDOM } = await import('jsdom');
+            const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+            tree.doc = dom.window.document;
+        }
         const ctx = { tokens, pos: 0, line: 0 };
 
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
@@ -136,10 +140,10 @@ export class DFAParser {
                 continue;
             }
 
-            const node = this.parseBlock(ctx);
+            const node = await this.parseBlock(ctx);
             if (node) {
                 if (node.type === 'list-item') {
-                    const listNode = this.groupListItems(node, ctx);
+                    const listNode = await this.groupListItems(node, ctx);
                     tree.appendChild(listNode);
                 } else {
                     tree.appendChild(node);
@@ -157,9 +161,9 @@ export class DFAParser {
      * and dispatches to the appropriate sub-parser.
      *
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode|null}
+     * @returns {Promise<SyntaxNode|null>}
      */
-    parseBlock(ctx) {
+    async parseBlock(ctx) {
         const tok = ctx.tokens[ctx.pos];
 
         // Heading: one or more HASH at start of line, followed by a space
@@ -204,11 +208,11 @@ export class DFAParser {
 
         // HTML block: <tagname...> (possibly indented)
         if (tok.type === 'LT' && this.isHtmlBlockStart(ctx)) {
-            return this.parseHtmlBlock(ctx);
+            return await this.parseHtmlBlock(ctx);
         }
         if ((tok.type === 'SPACE' || tok.type === 'TAB') && this.isIndentedHtmlBlockStart(ctx)) {
             this.skipWhitespace(ctx);
-            return this.parseHtmlBlock(ctx);
+            return await this.parseHtmlBlock(ctx);
         }
 
         // Table: starts with PIPE
@@ -562,9 +566,9 @@ export class DFAParser {
      *
      * @param {SyntaxNode} firstItem - The first list-item already parsed
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode} A list node containing list-item children
+     * @returns {Promise<SyntaxNode>} A list node containing list-item children
      */
-    groupListItems(firstItem, ctx) {
+    async groupListItems(firstItem, ctx) {
         const baseIndent = firstItem.attributes.indent || 0;
 
         // Build the list node with attributes from the first item
@@ -602,7 +606,7 @@ export class DFAParser {
             // Peek at the indent of the next item
             const savedPos = ctx.pos;
             const savedLine = ctx.line;
-            const nextItem = this.parseBlock(ctx);
+            const nextItem = await this.parseBlock(ctx);
             if (!nextItem || nextItem.type !== 'list-item') {
                 ctx.pos = savedPos;
                 ctx.line = savedLine;
@@ -620,7 +624,7 @@ export class DFAParser {
                 listNode.appendChild(nextItem);
             } else if (nextIndent > baseIndent) {
                 // Deeper — nested list as child of the last list-item
-                const nestedList = this.groupListItems(nextItem, ctx);
+                const nestedList = await this.groupListItems(nextItem, ctx);
                 const lastItem = listNode.children[listNode.children.length - 1];
                 lastItem.appendChild(nestedList);
             } else {
@@ -1019,9 +1023,9 @@ export class DFAParser {
      * tag through the matching closing tag.
      *
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
-     * @returns {SyntaxNode}
+     * @returns {Promise<SyntaxNode>}
      */
-    parseHtmlBlock(ctx) {
+    async parseHtmlBlock(ctx) {
         const startLine = ctx.line;
 
         // Consume the opening tag line (everything up to and including the first >)
@@ -1130,7 +1134,7 @@ export class DFAParser {
         // Re-parse the body as markdown to create child nodes
         if (bodyMarkdown.length > 0) {
             const bodyParser = new DFAParser();
-            const bodyTree = bodyParser.parse(bodyMarkdown);
+            const bodyTree = await bodyParser.parse(bodyMarkdown);
             const bodyStartLine = startLine + 1;
             for (const child of bodyTree.children) {
                 this.adjustLineNumbers(child, bodyStartLine);

@@ -60,10 +60,10 @@ function serializeInlineNode(node) {
  * @param {object} tree - A SyntaxTree instance.
  * @returns {string}
  */
-export function serializeTreeMarkdown(tree) {
+export function renderTreeToMarkdown(tree) {
     const lines = [];
     for (const child of tree.children) {
-        lines.push(serializeNodeMarkdown(child));
+        lines.push(renderNodeToMarkdown(child));
     }
     return lines.join('\n\n') + '\n';
 }
@@ -75,7 +75,7 @@ export function serializeTreeMarkdown(tree) {
  * @param {number} [depth=0] - HTML nesting depth for indentation.
  * @returns {string}
  */
-export function serializeNodeMarkdown(node, depth = 0) {
+export function renderNodeToMarkdown(node, depth = 0) {
     switch (node.type) {
         case 'heading1':
             return `# ${node.content}`;
@@ -103,7 +103,7 @@ export function serializeNodeMarkdown(node, depth = 0) {
             return `${fence}${lang}\n${code}\n${fence}`;
         }
         case 'list': {
-            return node.children.map((child) => serializeNodeMarkdown(child, depth)).join('\n');
+            return node.children.map((child) => renderNodeToMarkdown(child, depth)).join('\n');
         }
         case 'list-item': {
             const listParent = node.parent;
@@ -120,7 +120,7 @@ export function serializeNodeMarkdown(node, depth = 0) {
             const lines = [`${indent}${marker}${checkbox}${node.content}`];
             for (const child of node.children) {
                 if (child.type === 'list') {
-                    lines.push(serializeNodeMarkdown(child, depth));
+                    lines.push(renderNodeToMarkdown(child, depth));
                 }
             }
             return lines.join('\n');
@@ -174,10 +174,10 @@ export function serializeNodeMarkdown(node, depth = 0) {
             const lines = [`${indent}${node.runtime.openingTag || ''}`];
             for (const child of node.children) {
                 if (child.type === 'html-element') {
-                    lines.push(serializeNodeMarkdown(child, depth + 1));
+                    lines.push(renderNodeToMarkdown(child, depth + 1));
                 } else {
                     lines.push('');
-                    lines.push(serializeNodeMarkdown(child));
+                    lines.push(renderNodeToMarkdown(child));
                     lines.push('');
                 }
             }

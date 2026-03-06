@@ -12,10 +12,10 @@
  * @param {object} tree
  * @returns {string}
  */
-export function serializeTree(tree) {
+export function renderTreeToText(tree) {
     const lines = [];
     for (const child of tree.children) {
-        serializeNode(child, '', lines);
+        renderNodeToText(child, '', lines);
     }
     return lines.join('\n') + '\n';
 }
@@ -27,7 +27,7 @@ export function serializeTree(tree) {
  * @param {string} indent
  * @param {string[]} lines
  */
-function serializeNode(node, indent, lines) {
+function renderNodeToText(node, indent, lines) {
     const attrs = serializeAttributes(node.attributes);
     const hasChildren = node.children.length > 0;
     // Use tagName as the quoted value for html-element nodes
@@ -38,7 +38,7 @@ function serializeNode(node, indent, lines) {
             : '';
     lines.push(`${indent}${node.type}${quotedValue}${attrs}`);
     for (const child of node.children) {
-        serializeNode(child, `${indent}  `, lines);
+        renderNodeToText(child, `${indent}  `, lines);
     }
 }
 
