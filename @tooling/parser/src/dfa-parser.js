@@ -98,20 +98,6 @@ const HTML_VOID_TAGS = new Set([
     'wbr',
 ]);
 
-// ── Helper: count newlines in a string ──────────────────────────────
-
-/**
- * @param {string} s
- * @returns {number}
- */
-function countNewlines(s) {
-    let n = 0;
-    for (let i = 0; i < s.length; i++) {
-        if (s[i] === '\n') n++;
-    }
-    return n;
-}
-
 // ── DFA Parser ──────────────────────────────────────────────────────
 
 /**
@@ -849,54 +835,6 @@ export class DFAParser {
         node.startLine = startLine;
         node.endLine = startLine;
         return node;
-    }
-
-    /**
-     * Extracts an attribute value from an HTML tag string without regex.
-     * Scans for `name="value"` or `name='value'` patterns.
-     * @param {string} raw
-     * @param {string} name
-     * @returns {string}
-     */
-    extractAttr(raw, name) {
-        const lower = raw.toLowerCase();
-        const search = name.toLowerCase();
-        let i = 0;
-
-        while (i < lower.length) {
-            const idx = lower.indexOf(search, i);
-            if (idx === -1) return '';
-
-            // Check this is actually an attribute name boundary
-            let j = idx + search.length;
-
-            // Skip whitespace around =
-            while (j < lower.length && (lower[j] === ' ' || lower[j] === '\t')) j++;
-            if (j >= lower.length || lower[j] !== '=') {
-                i = idx + 1;
-                continue;
-            }
-            j++; // skip =
-            while (j < lower.length && (lower[j] === ' ' || lower[j] === '\t')) j++;
-
-            // Expect quote
-            if (j >= lower.length) return '';
-            const quote = raw[j];
-            if (quote !== '"' && quote !== "'") {
-                i = idx + 1;
-                continue;
-            }
-            j++; // skip opening quote
-
-            // Collect until closing quote
-            let value = '';
-            while (j < raw.length && raw[j] !== quote) {
-                value += raw[j];
-                j++;
-            }
-            return value;
-        }
-        return '';
     }
 
     /**
