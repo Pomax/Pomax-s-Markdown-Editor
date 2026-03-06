@@ -19,7 +19,9 @@ list {"ordered":false,"indent":0}
 # html
 
 ```
-<ul><li>Item 1</li></ul>
+<ul>
+  <li>Item 1</li>
+</ul>
 ```
 
 ---
@@ -41,7 +43,9 @@ list {"ordered":false,"indent":0}
 # html
 
 ```
-<ul><li>Item 1</li></ul>
+<ul>
+  <li>Item 1</li>
+</ul>
 ```
 
 ---
@@ -63,7 +67,9 @@ list {"ordered":false,"indent":0}
 # html
 
 ```
-<ul><li>Item 1</li></ul>
+<ul>
+  <li>Item 1</li>
+</ul>
 ```
 
 ---
@@ -85,7 +91,9 @@ list {"ordered":true,"number":1,"indent":0}
 # html
 
 ```
-<ol><li>Item 1</li></ol>
+<ol>
+  <li>Item 1</li>
+</ol>
 ```
 
 ---
@@ -107,7 +115,9 @@ list {"ordered":true,"number":3,"indent":0}
 # html
 
 ```
-<ol start="3"><li>Third item</li></ol>
+<ol start="3">
+  <li>Third item</li>
+</ol>
 ```
 
 ---
@@ -142,7 +152,17 @@ list {"ordered":true,"number":1,"indent":0}
 # html
 
 ```
-<ol><li>First item<ol><li>First subitem</li><li>Second subitem</li></ol></li><li>Second item</li><li>Third item</li></ol>
+<ol>
+  <li>
+    First item
+    <ol>
+      <li>First subitem</li>
+      <li>Second subitem</li>
+    </ol>
+  </li>
+  <li>Second item</li>
+  <li>Third item</li>
+</ol>
 ```
 
 ---
@@ -170,7 +190,11 @@ list {"ordered":false,"indent":0}
 # html
 
 ```
-<ul><li>One</li><li>Two</li><li>Three</li></ul>
+<ul>
+  <li>One</li>
+  <li>Two</li>
+  <li>Three</li>
+</ul>
 ```
 
 ---
@@ -196,7 +220,14 @@ list {"ordered":false,"indent":0}
 # html
 
 ```
-<ul><li>Item 1<ul><li>Nested item</li></ul></li></ul>
+<ul>
+  <li>
+    Item 1
+    <ul>
+      <li>Nested item</li>
+    </ul>
+  </li>
+</ul>
 ```
 
 ---
@@ -218,7 +249,9 @@ list {"ordered":false,"indent":0,"checked":true}
 # html
 
 ```
-<ul><li><input type="checkbox"> Task</li></ul>
+<ul>
+  <li><input type="checkbox"> Task</li>
+</ul>
 ```
 
 ---
@@ -240,7 +273,9 @@ list {"ordered":false,"indent":0,"checked":true}
 # html
 
 ```
-<ul><li><input type="checkbox" checked> Done</li></ul>
+<ul>
+  <li><input type="checkbox" checked> Done</li>
+</ul>
 ```
 
 ---
@@ -265,5 +300,8 @@ list {"ordered":false,"indent":0,"checked":true}
 # html
 
 ```
-<ul><li><input type="checkbox"> Unchecked</li><li><input type="checkbox" checked> Checked</li></ul>
+<ul>
+  <li><input type="checkbox"> Unchecked</li>
+  <li><input type="checkbox" checked> Checked</li>
+</ul>
 ```

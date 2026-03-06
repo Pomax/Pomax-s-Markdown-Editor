@@ -1352,11 +1352,48 @@ export class DFAParser {
             }
         }
 
-        const content = lines.join('\n');
-        const node = new SyntaxNode('table', content);
+        const node = new SyntaxNode('table', '');
         node.startLine = startLine;
         node.endLine = startLine + lines.length - 1;
+
+        // Parse header (first line)
+        if (lines.length > 0) {
+            const headerCells = this._parseTableRow(lines[0]);
+            const header = new SyntaxNode('header', '');
+            for (const cellText of headerCells) {
+                const cell = new SyntaxNode('cell', '');
+                cell.appendChild(new SyntaxNode('text', cellText));
+                header.appendChild(cell);
+            }
+            node.appendChild(header);
+        }
+
+        // Parse data rows (skip separator row)
+        for (let r = 1; r < lines.length; r++) {
+            if (/^\s*\|?\s*[-:]+[-|:\s]*$/.test(lines[r])) continue;
+            const rowCells = this._parseTableRow(lines[r]);
+            const row = new SyntaxNode('row', '');
+            for (const cellText of rowCells) {
+                const cell = new SyntaxNode('cell', '');
+                cell.appendChild(new SyntaxNode('text', cellText));
+                row.appendChild(cell);
+            }
+            node.appendChild(row);
+        }
+
         return node;
+    }
+
+    /**
+     * Parses a pipe-delimited table row into an array of trimmed cell strings.
+     * @param {string} line
+     * @returns {string[]}
+     */
+    _parseTableRow(line) {
+        return line
+            .replace(/^\||\|$/g, '')
+            .split('|')
+            .map((c) => c.trim());
     }
 
     // ── Paragraph ───────────────────────────────────────────────

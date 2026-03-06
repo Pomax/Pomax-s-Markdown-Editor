@@ -11,7 +11,8 @@ Hello, world!
 # syntax tree
 
 ```
-paragraph "Hello, world!"
+paragraph
+  text "Hello, world!"
 ```
 
 # html
@@ -42,7 +43,8 @@ paragraph
 # html
 
 ```
-<p>First paragraph</p><p>Second paragraph</p>
+<p>First paragraph</p>
+<p>Second paragraph</p>
 ```
 
 ---

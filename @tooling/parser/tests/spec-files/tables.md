@@ -13,13 +13,36 @@ Tests for simple tables, multi-row tables, and tables among other elements.
 # syntax tree
 
 ```
-table "| A | B |\n|---|---|\n| 1 | 2 |"
+table
+  header
+    cell
+      text "A"
+    cell
+      text "B"
+  row
+    cell
+      text "1"
+    cell
+      text "2"
 ```
 
 # html
 
 ```
-<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>
+<table>
+  <thead>
+    <tr>
+      <th>A</th>
+      <th>B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
 ```
 
 ---
@@ -36,13 +59,54 @@ table "| A | B |\n|---|---|\n| 1 | 2 |"
 # syntax tree
 
 ```
-table "| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |"
+table
+  header
+    cell
+      text "A"
+    cell
+      text "B"
+    cell
+      text "C"
+  row
+    cell
+      text "1"
+    cell
+      text "2"
+    cell
+      text "3"
+  row
+    cell
+      text "4"
+    cell
+      text "5"
+    cell
+      text "6"
 ```
 
 # html
 
 ```
-<table><thead><tr><th>A</th><th>B</th><th>C</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr><tr><td>4</td><td>5</td><td>6</td></tr></tbody></table>
+<table>
+  <thead>
+    <tr>
+      <th>A</th>
+      <th>B</th>
+      <th>C</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>5</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
 ```
 
 ---
@@ -62,13 +126,40 @@ Some text
 # syntax tree
 
 ```
-heading1 "Title"
-table "| A | B |\n|---|---|\n| 1 | 2 |"
-paragraph "Some text"
+heading1
+  text "Title"
+table
+  header
+    cell
+      text "A"
+    cell
+      text "B"
+  row
+    cell
+      text "1"
+    cell
+      text "2"
+paragraph
+  text "Some text"
 ```
 
 # html
 
 ```
-<h1>Title</h1><table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table><p>Some text</p>
+<h1>Title</h1>
+<table>
+  <thead>
+    <tr>
+      <th>A</th>
+      <th>B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+<p>Some text</p>
 ```

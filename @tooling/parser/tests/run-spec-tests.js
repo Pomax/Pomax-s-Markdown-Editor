@@ -38,14 +38,20 @@ function normalizeHTML(html) {
 }
 
 /**
- * Recursively removes whitespace-only text nodes from a DOM tree.
+ * Recursively removes whitespace-only text nodes from a DOM tree
+ * and collapses formatting whitespace (containing newlines) in
+ * remaining text nodes.
  * @param {Node} node
  */
 function stripWhitespaceNodes(node) {
   const toRemove = [];
   for (const child of node.childNodes) {
-    if (child.nodeType === 3 && child.textContent.trim() === '') {
-      toRemove.push(child);
+    if (child.nodeType === 3) {
+      if (child.textContent.trim() === '') {
+        toRemove.push(child);
+      } else if (child.textContent.includes('\n')) {
+        child.textContent = child.textContent.replace(/^\s*\n\s*/, '').replace(/\s*\n\s*$/, '');
+      }
     } else if (child.nodeType === 1) {
       stripWhitespaceNodes(child);
     }

@@ -329,8 +329,22 @@ export class SyntaxNode {
                 }
                 return `![${imgAlt}](${imgSrc})`;
             }
-            case 'table':
-                return this.content;
+            case 'table': {
+                const rows = [];
+                for (const child of this.children) {
+                    const cells = child.children.map((cell) => {
+                        const text = cell.children.length > 0 ? cell.children[0]._content : '';
+                        return ` ${text} `;
+                    });
+                    rows.push(`|${cells.join('|')}|`);
+                    // Insert separator after header
+                    if (child.type === 'header') {
+                        const sep = child.children.map(() => '---');
+                        rows.push(`|${sep.join('|')}|`);
+                    }
+                }
+                return rows.join('\n');
+            }
             case 'html-block': {
                 const indent = '  '.repeat(depth);
                 // If the container has exactly one bare-text child, collapse
@@ -395,16 +409,11 @@ export class SyntaxNode {
                 return this.children.length > 0 ? this.children[0]._content : this.content;
 
             case 'table': {
-                // Extract visible cell text from the pipe-delimited table.
-                // Skip the separator row (e.g. |---|---|).
-                const lines = this.content.split('\n');
                 const textLines = [];
-                for (const line of lines) {
-                    if (/^\s*\|?\s*[-:]+[-|:\s]*$/.test(line)) continue;
-                    const cells = line
-                        .replace(/^\||\|$/g, '')
-                        .split('|')
-                        .map((c) => SyntaxNode._extractInlineText(c.trim()));
+                for (const child of this.children) {
+                    const cells = child.children.map((cell) => {
+                        return cell.children.length > 0 ? cell.children[0]._content : '';
+                    });
                     textLines.push(cells.join('\t'));
                 }
                 return textLines.join('\n');
@@ -850,31 +859,27 @@ export class SyntaxNode {
                 const table = doc.createElement('table');
                 table.__st_node = this;
 
-                const lines = this.content.split('\n').filter((l) => l.trim());
-                if (lines.length === 0) return table;
-
-                const headerCells = parseTableRow(lines[0]);
                 const thead = doc.createElement('thead');
-                const headerRow = doc.createElement('tr');
-                for (const cell of headerCells) {
-                    const th = doc.createElement('th');
-                    th.appendChild(SyntaxNode.renderInlineContentToDOM(doc, cell));
-                    headerRow.appendChild(th);
-                }
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-
                 const tbody = doc.createElement('tbody');
-                for (let r = 1; r < lines.length; r++) {
-                    if (isTableSeparatorRow(lines[r])) continue;
-                    const cells = parseTableRow(lines[r]);
-                    const row = doc.createElement('tr');
-                    for (const cell of cells) {
-                        const td = doc.createElement('td');
-                        td.appendChild(SyntaxNode.renderInlineContentToDOM(doc, cell));
-                        row.appendChild(td);
+
+                for (const child of this.children) {
+                    const tr = doc.createElement('tr');
+                    const isHeader = child.type === 'header';
+                    for (const cell of child.children) {
+                        const el = doc.createElement(isHeader ? 'th' : 'td');
+                        const text = cell.children.length > 0 ? cell.children[0]._content : '';
+                        el.appendChild(SyntaxNode.renderInlineContentToDOM(doc, text));
+                        tr.appendChild(el);
                     }
-                    tbody.appendChild(row);
+                    if (isHeader) {
+                        thead.appendChild(tr);
+                    } else {
+                        tbody.appendChild(tr);
+                    }
+                }
+
+                if (thead.childNodes.length > 0) {
+                    table.appendChild(thead);
                 }
                 if (tbody.childNodes.length > 0) {
                     table.appendChild(tbody);
