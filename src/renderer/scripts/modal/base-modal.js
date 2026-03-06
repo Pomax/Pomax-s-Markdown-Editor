@@ -149,11 +149,21 @@ export class BaseModal {
             });
         }
 
-        // Close on backdrop click
+        // Close on backdrop click — but only when the mousedown also
+        // started on the backdrop.  If the user mousedowns inside the
+        // form (e.g. to select text in an input) and the mouseup drifts
+        // onto the backdrop, the browser fires click with target=dialog;
+        // we must not dismiss in that case.
+        /** @type {EventTarget|null} */
+        let mouseDownTarget = null;
+        dialog.addEventListener('mousedown', (e) => {
+            mouseDownTarget = e.target;
+        });
         dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
+            if (e.target === dialog && mouseDownTarget === dialog) {
                 this._cancel();
             }
+            mouseDownTarget = null;
         });
 
         // Close on Escape key

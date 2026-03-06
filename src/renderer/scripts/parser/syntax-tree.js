@@ -39,6 +39,7 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tagName] - HTML tag name for html-block nodes
  * @property {string} [openingTag] - Full opening tag line for html-block nodes
  * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
@@ -105,6 +106,16 @@ export class SyntaxNode {
          * @type {NodeAttributes}
          */
         this.attributes = {};
+
+        /**
+         * When non-null, holds the full markdown text of this
+         * code-block while it is being edited in source view.  All
+         * keystrokes operate on this string; the normal `content` /
+         * `attributes` fields are updated only when editing ends
+         * (cursor leaves or view mode switches).
+         * @type {string|null}
+         */
+        this._sourceEditText = null;
 
         /**
          * Starting line in the source (0-based).
@@ -249,6 +260,49 @@ export class SyntaxNode {
         return false;
     }
 
+    // ── Source-view code-block editing ──────────────────
+
+    /**
+     * Enters source edit mode for a code-block node.  The full markdown
+     * representation (fences + language + content) is stored in
+     * `_sourceEditText` so the user can edit any part — including the
+     * fences and language tag — as plain text.
+     *
+     * Only valid for `code-block` nodes; no-ops for other types or when
+     * already in source edit mode.
+     */
+    enterSourceEditMode() {
+        if (this.type !== 'code-block') return;
+        if (this._sourceEditText !== null) return;
+
+        const lang = this.attributes.language || '';
+        const fence = '`'.repeat(this.attributes.fenceCount || 3);
+        this._sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
+    }
+
+    /**
+     * Returns the length of the source edit text, or 0 if not in source
+     * edit mode.  Used by edit operations to bounds-check the cursor.
+     * @returns {number}
+     */
+    get sourceEditLength() {
+        return this._sourceEditText?.length ?? 0;
+    }
+
+    /**
+     * Exits source edit mode without reparsing.  The caller is responsible
+     * for reparsing `_sourceEditText` and updating the node (or replacing
+     * it) in the tree.
+     *
+     * @returns {string|null} The source edit text that was active, or null
+     *   if the node was not in source edit mode.
+     */
+    exitSourceEditMode() {
+        const text = this._sourceEditText;
+        this._sourceEditText = null;
+        return text;
+    }
+
     /**
      * Converts this node to markdown.
      * @returns {string}
@@ -275,6 +329,7 @@ export class SyntaxNode {
                     .map((line) => `> ${line}`)
                     .join('\n');
             case 'code-block': {
+                if (this._sourceEditText !== null) return this._sourceEditText;
                 const lang = this.attributes.language || '';
                 const fence = '`'.repeat(this.attributes.fenceCount || 3);
                 return `${fence}${lang}\n${this.content}\n${fence}`;
@@ -308,15 +363,34 @@ export class SyntaxNode {
             case 'table':
                 return this.content;
             case 'html-block': {
+                // Raw content tags (script, style, textarea): body stored verbatim
+                if (this.attributes.rawContent !== undefined) {
+                    if (this.attributes.rawContent === '') {
+                        return (
+                            (this.attributes.openingTag || '') + (this.attributes.closingTag || '')
+                        );
+                    }
+                    const parts = [this.attributes.openingTag || ''];
+                    parts.push(this.attributes.rawContent);
+                    if (this.attributes.closingTag) {
+                        parts.push(this.attributes.closingTag);
+                    }
+                    return parts.join('\n');
+                }
+
+                // Void elements: opening tag only, no children, no closing tag
+                if (this.attributes.closingTag === '' && this.children.length === 0) {
+                    return this.attributes.openingTag || '';
+                }
+
                 // If the container has exactly one bare-text child, collapse
-                // to a single line: <tag>content</tag>
+                // to a single line: <tag ...>content</tag>
                 if (
                     this.children.length === 1 &&
                     this.children[0].attributes.bareText &&
                     this.children[0].type === 'paragraph'
                 ) {
-                    const tag = this.attributes.tagName || 'div';
-                    return `<${tag}>${this.children[0].content}</${tag}>`;
+                    return `${this.attributes.openingTag}${this.children[0].content}${this.attributes.closingTag}`;
                 }
 
                 const parts = [this.attributes.openingTag || ''];

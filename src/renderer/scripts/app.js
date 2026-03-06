@@ -556,11 +556,13 @@ class App {
                 this.editor.fullRenderAndPlaceCursor();
             }
 
-            // Scroll the document to the ToC heading
-            if (tocNode && this.toc) {
+            // Scroll to the cursor's node — the cursor is the single
+            // source of positional truth on restore.
+            const cursorNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
+            if (cursorNodeId) {
                 requestAnimationFrame(() => {
                     const el = this.editor?.container.querySelector(
-                        `[data-node-id="${tocNode.id}"]`,
+                        `[data-node-id="${cursorNodeId}"]`,
                     );
                     if (el) {
                         el.scrollIntoView({ block: 'start' });
@@ -571,6 +573,8 @@ class App {
                         }
                     });
                 });
+            } else if (this.toc) {
+                this.toc._programmaticScroll = false;
             }
         };
 

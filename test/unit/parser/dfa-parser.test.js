@@ -652,17 +652,227 @@ describe('DFAParser', () => {
             assert.strictEqual(tree.children[0].attributes.openingTag, '<my-element class="test">');
         });
 
-        it('should NOT treat a bare word with no hyphen as a custom element', () => {
+        it('should treat an unknown tag as an HTML block when it has proper tag syntax', () => {
             const tree = parser.parse('<notarealtag>\n\nText\n\n</notarealtag>');
-            // "notarealtag" is not in HTML_BLOCK_TAGS and has no hyphen, so
-            // it should fall through to paragraph parsing
-            assert.strictEqual(tree.children[0].type, 'paragraph');
+            // "notarealtag" is not in HTML_BLOCK_TAGS and has no hyphen, but
+            // the token stream forms a proper LT TEXT GT pattern so it is
+            // promoted to an html-block.
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, 'notarealtag');
         });
 
         it('should round-trip a custom element block', () => {
             const md = '<my-component>\n\nSome content\n\n</my-component>';
             const tree = parser.parse(md);
             assert.strictEqual(tree.toMarkdown(), md);
+        });
+    });
+
+    // ── Void HTML elements ──────────────────────────────────────
+
+    describe('void HTML elements', () => {
+        it('should parse a <link> tag without consuming following content', () => {
+            const md = '<link rel="stylesheet" href="style.css">\n\n# Heading';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, 'link');
+            assert.strictEqual(
+                tree.children[0].attributes.openingTag,
+                '<link rel="stylesheet" href="style.css">',
+            );
+            assert.strictEqual(tree.children[0].attributes.closingTag, '');
+            assert.strictEqual(tree.children[0].children.length, 0);
+            assert.strictEqual(tree.children[1].type, 'heading1');
+        });
+
+        it('should round-trip a void element', () => {
+            const md = '<link rel="stylesheet" href="style.css">';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse consecutive void elements without merging', () => {
+            const md = '<link rel="stylesheet" href="a.css">\n<link rel="stylesheet" href="b.css">';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(
+                tree.children[0].attributes.openingTag,
+                '<link rel="stylesheet" href="a.css">',
+            );
+            assert.strictEqual(
+                tree.children[1].attributes.openingTag,
+                '<link rel="stylesheet" href="b.css">',
+            );
+        });
+    });
+
+    // ── Raw content HTML tags ───────────────────────────────────
+
+    describe('raw content HTML tags', () => {
+        it('should parse a <script> tag with src attribute and preserve it', () => {
+            const md = '<script type="module" src="./app.js" async></script>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, 'script');
+            assert.strictEqual(
+                tree.children[0].attributes.openingTag,
+                '<script type="module" src="./app.js" async>',
+            );
+            assert.strictEqual(tree.children[0].attributes.closingTag, '</script>');
+            assert.strictEqual(tree.children[0].attributes.rawContent, '');
+            assert.strictEqual(tree.children[0].children.length, 0);
+        });
+
+        it('should round-trip a <script> tag with attributes', () => {
+            const md = '<script type="module" src="./app.js" async></script>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a multi-line <script> with body content', () => {
+            const md = '<script>\n  const x = 1;\n  console.log(x);\n</script>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(
+                tree.children[0].attributes.rawContent,
+                '  const x = 1;\n  console.log(x);',
+            );
+            assert.strictEqual(tree.children[0].children.length, 0);
+        });
+
+        it('should round-trip a multi-line <script>', () => {
+            const md = '<script>\n  const x = 1;\n  console.log(x);\n</script>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a <style> block and preserve CSS verbatim', () => {
+            const md = '<style>\n  body { color: red; }\n  h1 > span { font-size: 2em; }\n</style>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, 'style');
+            assert.strictEqual(
+                tree.children[0].attributes.rawContent,
+                '  body { color: red; }\n  h1 > span { font-size: 2em; }',
+            );
+        });
+
+        it('should not re-parse CSS selectors as markdown headings', () => {
+            const md = '<style>\n  #heading { color: red; }\n  > .child { margin: 0; }\n</style>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(
+                tree.children[0].attributes.rawContent,
+                '  #heading { color: red; }\n  > .child { margin: 0; }',
+            );
+        });
+
+        it('should parse a <script> followed by other content', () => {
+            const md = '<script src="app.js"></script>\n\n# Heading\n\nParagraph';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[1].type, 'heading1');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+        });
+    });
+
+    // ── Bare-text attribute preservation ────────────────────────
+
+    describe('bare-text attribute preservation', () => {
+        it('should round-trip a <summary> with attributes', () => {
+            const md = '<summary class="title">Some text</summary>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+    });
+
+    // ── Inline-only tags are not block-level ────────────────────
+
+    describe('inline-only HTML tags', () => {
+        for (const tag of ['strong', 'em', 'del', 's', 'sub', 'sup', 'b', 'i']) {
+            it(`should not treat <${tag}> as a block-level HTML element`, () => {
+                const md = `<${tag}>text</${tag}>`;
+                const tree = parser.parse(md);
+                assert.strictEqual(tree.children[0].type, 'paragraph');
+            });
+        }
+    });
+
+    // ── Unknown tag fallback ────────────────────────────────────
+
+    describe('unknown HTML tag fallback', () => {
+        it('should parse an unknown tag with attributes as html-block', () => {
+            const md = '<noscript class="no-js">\n\nFallback\n\n</noscript>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, 'noscript');
+            assert.strictEqual(tree.children[0].attributes.openingTag, '<noscript class="no-js">');
+        });
+
+        it('should round-trip an unknown tag block', () => {
+            const md = '<noscript>\n\nContent here\n\n</noscript>';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+    });
+
+    // ── HTML comments ───────────────────────────────────────────
+
+    describe('HTML comments', () => {
+        it('should parse a single-line HTML comment as html-block', () => {
+            const md = '<!-- a comment -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, '!--');
+            assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- a comment -->');
+            assert.strictEqual(tree.children[0].attributes.closingTag, '');
+        });
+
+        it('should round-trip a single-line HTML comment', () => {
+            const md = '<!-- a comment -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a multi-line HTML comment', () => {
+            const md = '<!--\nline one\nline two\n-->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 1);
+            assert.strictEqual(tree.children[0].type, 'html-block');
+            assert.strictEqual(tree.children[0].attributes.tagName, '!--');
+            assert.strictEqual(
+                tree.children[0].attributes.openingTag,
+                '<!--\nline one\nline two\n-->',
+            );
+        });
+
+        it('should round-trip a multi-line HTML comment', () => {
+            const md = '<!--\nline one\nline two\n-->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.toMarkdown(), md);
+        });
+
+        it('should parse a comment between paragraphs', () => {
+            const md = 'Before\n\n<!-- comment -->\n\nAfter';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 3);
+            assert.strictEqual(tree.children[0].type, 'paragraph');
+            assert.strictEqual(tree.children[1].type, 'html-block');
+            assert.strictEqual(tree.children[1].attributes.tagName, '!--');
+            assert.strictEqual(tree.children[2].type, 'paragraph');
+        });
+
+        it('should parse adjacent comments as separate blocks', () => {
+            const md = '<!-- first -->\n<!-- second -->';
+            const tree = parser.parse(md);
+            assert.strictEqual(tree.children.length, 2);
+            assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- first -->');
+            assert.strictEqual(tree.children[1].attributes.openingTag, '<!-- second -->');
         });
     });
 

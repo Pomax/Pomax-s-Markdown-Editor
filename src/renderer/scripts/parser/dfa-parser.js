@@ -67,6 +67,7 @@ const HTML_BLOCK_TAGS = new Set([
     'script',
     'section',
     'source',
+    'style',
     'summary',
     'table',
     'tbody',
@@ -79,6 +80,38 @@ const HTML_BLOCK_TAGS = new Set([
     'track',
     'ul',
 ]);
+
+// ── Void HTML elements (never have a closing tag) ───────────────────
+
+/** @type {Set<string>} */
+const VOID_HTML_ELEMENTS = new Set([
+    'area',
+    'base',
+    'basefont',
+    'br',
+    'col',
+    'embed',
+    'frame',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+]);
+
+// ── Raw content HTML tags (body is not markdown) ────────────────────
+
+/** @type {Set<string>} */
+const RAW_CONTENT_TAGS = new Set(['script', 'style', 'textarea']);
+
+// ── Inline-only HTML tags (never treated as block-level) ────────────
+
+/** @type {Set<string>} */
+const INLINE_ONLY_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mark', 'u', 'b', 'i']);
 
 // ── Helper: count newlines in a string ──────────────────────────────
 
@@ -839,10 +872,13 @@ export class DFAParser {
      * @returns {boolean}
      */
     _isHtmlBlockStart(ctx) {
+        // HTML comments: <!-- ... -->
+        if (this._isHtmlCommentStart(ctx)) return true;
         const tagName = this._peekTextAfterLT(ctx);
         if (!tagName) return false;
         const lower = tagName.toLowerCase();
-        return HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower);
+        if (HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower)) return true;
+        return this._isUnknownHtmlTag(ctx, lower);
     }
 
     /**
@@ -861,10 +897,14 @@ export class DFAParser {
         }
         if (i >= ctx.tokens.length || i === ctx.pos) return false;
         if (ctx.tokens[i].type !== 'LT') return false;
+        // HTML comments: <!-- ... -->
+        if (this._isHtmlCommentStart({ tokens: ctx.tokens, pos: i })) return true;
         const result = this._peekTagName(ctx.tokens, i + 1);
         if (!result) return false;
         const lower = result.name.toLowerCase();
-        return HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower);
+        if (HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower)) return true;
+        // Build a temporary ctx at the LT position for the unknown-tag check
+        return this._isUnknownHtmlTag({ tokens: ctx.tokens, pos: i }, lower);
     }
 
     /**
@@ -948,6 +988,102 @@ export class DFAParser {
     }
 
     /**
+     * Checks whether the tokens at the current position form a complete
+     * HTML tag that is not in any predefined list but still looks like
+     * a valid HTML element (LT TEXT ...attributes... GT on the same line).
+     * Excludes inline-only tags that the inline tokenizer handles.
+     *
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+     * @param {string} lower  Already-lowercased tag name.
+     * @returns {boolean}
+     */
+    _isUnknownHtmlTag(ctx, lower) {
+        if (INLINE_ONLY_TAGS.has(lower)) return false;
+        // Verify this is purely lowercase ASCII letters (standard tag shape).
+        for (let i = 0; i < lower.length; i++) {
+            const c = lower.charCodeAt(i);
+            if (c < 97 || c > 122) return false;
+        }
+        // Walk forward from LT looking for a GT on the same line.
+        let j = ctx.pos + 1;
+        while (j < ctx.tokens.length) {
+            const t = ctx.tokens[j].type;
+            if (t === 'GT') return true;
+            if (t === 'NEWLINE' || t === 'EOF') return false;
+            j++;
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether `ctx.pos` points at a `LT BANG DASH DASH`
+     * sequence, the token equivalent of `<!--`.
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+     * @returns {boolean}
+     */
+    _isHtmlCommentStart(ctx) {
+        const t = ctx.tokens;
+        const p = ctx.pos;
+        return (
+            p + 3 < t.length &&
+            t[p].type === 'LT' &&
+            t[p + 1].type === 'BANG' &&
+            t[p + 2].type === 'DASH' &&
+            t[p + 3].type === 'DASH'
+        );
+    }
+
+    /**
+     * Consumes an HTML comment from `<!--` through `-->` (inclusive)
+     * and returns an `html-block` node whose `openingTag` holds the
+     * full verbatim comment text.
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+     * @param {number} startLine
+     * @returns {SyntaxNode}
+     */
+    _parseHtmlComment(ctx, startLine) {
+        let text = '';
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+            // Look for closing sequence: DASH DASH GT
+            if (
+                ctx.tokens[ctx.pos].type === 'DASH' &&
+                ctx.pos + 2 < ctx.tokens.length &&
+                ctx.tokens[ctx.pos + 1].type === 'DASH' &&
+                ctx.tokens[ctx.pos + 2].type === 'GT'
+            ) {
+                text += '-->';
+                ctx.pos += 3;
+                break;
+            }
+            if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                text += '\n';
+                ctx.line++;
+            } else {
+                text += ctx.tokens[ctx.pos].value;
+            }
+            ctx.pos++;
+        }
+
+        const endLine = ctx.line;
+
+        // Skip trailing newline
+        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+            ctx.line++;
+            ctx.pos++;
+        }
+
+        const node = new SyntaxNode('html-block', '');
+        node.attributes = {
+            tagName: '!--',
+            openingTag: text,
+            closingTag: '',
+        };
+        node.startLine = startLine;
+        node.endLine = endLine;
+        return node;
+    }
+
+    /**
      * Peeks at the text token(s) immediately after a LT token to get
      * the tag name, including hyphenated custom element names.
      * Returns null if structure doesn't match.
@@ -971,6 +1107,11 @@ export class DFAParser {
     _parseHtmlBlock(ctx) {
         const startLine = ctx.line;
 
+        // ── HTML comments: <!-- ... --> ──────────────────────────
+        if (this._isHtmlCommentStart(ctx)) {
+            return this._parseHtmlComment(ctx, startLine);
+        }
+
         // Consume the opening tag line (everything up to and including the first >)
         let openingTag = '';
         const tagName = this._peekTextAfterLT(ctx);
@@ -990,6 +1131,70 @@ export class DFAParser {
         if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'GT') {
             openingTag += '>';
             ctx.pos++;
+        }
+
+        // ── Void elements: no body, no closing tag ──────────────
+        if (VOID_HTML_ELEMENTS.has(lowerTagName)) {
+            // Skip trailing newline
+            if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+            }
+            const node = new SyntaxNode('html-block', '');
+            node.attributes = {
+                tagName: lowerTagName,
+                openingTag,
+                closingTag: '',
+            };
+            node.startLine = startLine;
+            node.endLine = startLine;
+            return node;
+        }
+
+        // ── Raw content tags: body is stored verbatim ───────────
+        if (RAW_CONTENT_TAGS.has(lowerTagName)) {
+            // Skip newline after opening tag
+            if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+            }
+
+            let rawBody = '';
+            let closingTag = '';
+            while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+                if (this._isClosingTag(ctx, lowerTagName)) {
+                    closingTag = this._consumeClosingTag(ctx);
+                    break;
+                }
+                if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                    rawBody += '\n';
+                    ctx.line++;
+                } else {
+                    rawBody += ctx.tokens[ctx.pos].value;
+                }
+                ctx.pos++;
+            }
+            // Strip leading/trailing newlines
+            while (rawBody.startsWith('\n')) rawBody = rawBody.slice(1);
+            while (rawBody.endsWith('\n')) rawBody = rawBody.slice(0, -1);
+
+            const endLine = ctx.line;
+
+            if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+            }
+
+            const node = new SyntaxNode('html-block', '');
+            node.attributes = {
+                tagName: lowerTagName,
+                openingTag,
+                closingTag,
+                rawContent: rawBody,
+            };
+            node.startLine = startLine;
+            node.endLine = endLine;
+            return node;
         }
 
         // Check if this is a self-closed tag on one line: <tag>content</tag>

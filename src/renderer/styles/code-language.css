@@ -1,0 +1,131 @@
+/**
+ * Code-language dialog styles.
+ * Mirrors the link dialog styling for visual consistency.
+ */
+
+/* Dialog backdrop */
+.code-language-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+/* Dialog box */
+.code-language-dialog {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0;
+    width: min(360px, 90vw);
+    max-height: 80vh;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    overflow: hidden;
+}
+
+/* Form layout */
+.code-language-form {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+/* Header */
+.code-language-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.code-language-dialog-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.code-language-dialog-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: 4px;
+}
+
+.code-language-dialog-close:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-secondary);
+}
+
+/* Body */
+.code-language-dialog-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+}
+
+/* Field groups */
+.code-language-field {
+    margin-bottom: 0;
+}
+
+.code-language-field label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.code-language-field input[type="text"] {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: var(--font-family-mono);
+    background: var(--color-bg);
+    color: var(--color-text);
+    box-sizing: border-box;
+}
+
+.code-language-field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+}
+
+/* Footer */
+.code-language-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.code-language-btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.code-language-btn:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.code-language-btn--insert {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.code-language-btn--insert:hover {
+    opacity: 0.9;
+}
