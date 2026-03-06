@@ -443,17 +443,22 @@ export class DFAParser {
 
         const content = this.consumeToEndOfLine(ctx);
 
-        const node = new SyntaxNode('list-item', content);
+        // Detect checklist syntax: [ ] or [x]/[X] at the start of content
+        let checkedAttr;
+        let itemContent = content;
+        if (content.startsWith('[ ] ')) {
+            checkedAttr = false;
+            itemContent = content.slice(4);
+        } else if (content.startsWith('[x] ') || content.startsWith('[X] ')) {
+            checkedAttr = true;
+            itemContent = content.slice(4);
+        }
+
+        const node = new SyntaxNode('list-item', itemContent);
         node.attributes = { ordered: false, indent };
         node.runtime.marker = marker;
-
-        // Detect checklist syntax: [ ] or [x]/[X] at the start of content
-        if (content.startsWith('[ ] ')) {
-            node.attributes.checked = false;
-            node.content = content.slice(4);
-        } else if (content.startsWith('[x] ') || content.startsWith('[X] ')) {
-            node.attributes.checked = true;
-            node.content = content.slice(4);
+        if (typeof checkedAttr === 'boolean') {
+            node.attributes.checked = checkedAttr;
         }
 
         node.startLine = startLine;

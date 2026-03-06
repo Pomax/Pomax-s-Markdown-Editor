@@ -77,10 +77,10 @@ export class SyntaxNode {
         this.type = type;
 
         /**
-         * The raw text content (backing field for the `content` accessor).
+         * The raw text content.
          * @type {string}
          */
-        this._content = content;
+        this.content = content;
 
         /**
          * Child nodes.  For inline-containing block types (paragraph,
@@ -133,19 +133,6 @@ export class SyntaxNode {
         }
     }
 
-    /** @returns {string} */
-    get content() {
-        return this._content;
-    }
-
-    /** @param {string} val */
-    set content(val) {
-        this._content = val;
-        if (INLINE_CONTENT_TYPES.has(this.type)) {
-            this.buildInlineChildren();
-        }
-    }
-
     /**
      * (Re)builds inline child nodes from this node's raw content.
      * Only meaningful for inline-containing types (paragraph, heading,
@@ -153,8 +140,8 @@ export class SyntaxNode {
      */
     buildInlineChildren() {
         this.children = [];
-        if (!this._content) return;
-        const tokens = tokenizeInline(this._content);
+        if (!this.content) return;
+        const tokens = tokenizeInline(this.content);
         const segments = buildInlineTree(tokens);
         for (const seg of segments) {
             this.appendChild(SyntaxNode.segmentToNode(seg));
@@ -233,7 +220,7 @@ export class SyntaxNode {
             case 'code-block': {
                 const lang = this.attributes.language || '';
                 const fence = '`'.repeat(this.attributes.fenceCount || 3);
-                const code = this.children.length > 0 ? this.children[0]._content : this.content;
+                const code = this.children.length > 0 ? this.children[0].content : this.content;
                 return `${fence}${lang}\n${code}\n${fence}`;
             }
             case 'list': {
@@ -281,7 +268,7 @@ export class SyntaxNode {
                 const rows = [];
                 for (const child of this.children) {
                     const cells = child.children.map((cell) => {
-                        const text = cell.children.length > 0 ? cell.children[0]._content : '';
+                        const text = cell.children.length > 0 ? cell.children[0].content : '';
                         return ` ${text} `;
                     });
                     rows.push(`|${cells.join('|')}|`);
@@ -572,7 +559,7 @@ export class SyntaxNode {
                 if (this.attributes.language) {
                     code.setAttribute('class', `language-${this.attributes.language}`);
                 }
-                code.textContent = this.children.length > 0 ? this.children[0]._content : this.content;
+                code.textContent = this.children.length > 0 ? this.children[0].content : this.content;
                 pre.appendChild(code);
                 return pre;
             }
@@ -663,7 +650,7 @@ export class SyntaxNode {
                     const isHeader = child.type === 'header';
                     for (const cell of child.children) {
                         const el = doc.createElement(isHeader ? 'th' : 'td');
-                        const text = cell.children.length > 0 ? cell.children[0]._content : '';
+                        const text = cell.children.length > 0 ? cell.children[0].content : '';
                         el.appendChild(SyntaxNode.renderInlineContentToDOM(doc, text));
                         tr.appendChild(el);
                     }
