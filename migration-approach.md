@@ -33,6 +33,7 @@ For steps that only add new code under `@tooling/`, it is sufficient to verify t
 
 **Files to modify:**
 - `@tooling/syntax-tree/src/syntax-tree.js` — add methods to both classes
+- `@tooling/syntax-tree/package.json` — add a `"test"` script: `node --test "tests/**/*.test.js"` (runs all tests in the tests directory, matching the top-level repo's pattern)
 
 **Files to create:**
 - `@tooling/syntax-tree/tests/tree-ops.test.js` — unit tests for the new methods
@@ -45,8 +46,8 @@ For steps that only add new code under `@tooling/`, it is sufficient to verify t
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-node --test @tooling/syntax-tree/tests/tree-ops.test.js
 ```
 
 **Depends on:** Nothing.
@@ -69,8 +70,8 @@ node --test @tooling/syntax-tree/tests/tree-ops.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-node --test @tooling/syntax-tree/tests/tree-merge.test.js
 ```
 
 **Depends on:** Step 1 (uses `removeChild` internally).
@@ -102,9 +103,8 @@ node --test @tooling/syntax-tree/tests/tree-merge.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-utils.test.js
 ```
 
 **Depends on:** Nothing (reads tree structure only).
@@ -136,9 +136,8 @@ node --test @tooling/syntax-tree/tests/tree-utils.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-content.test.js
 ```
 
 **Depends on:** Steps 1–2 (uses `appendChild` which already exists, but tests may use `removeChild`).
@@ -178,9 +177,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-content.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-block.test.js
 ```
 
 **Depends on:** Steps 1, 2, 4.
@@ -213,9 +211,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-block.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-list.test.js
 ```
 
 **Depends on:** Steps 1, 2, 4, 5.
@@ -255,9 +252,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-list.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-table.test.js
 ```
 
 **Depends on:** Steps 1, 4.
@@ -287,9 +283,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-table.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-format.test.js
 ```
 
 **Depends on:** Steps 1, 4.
@@ -341,9 +336,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-format.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-selection.test.js
 ```
 
 **Depends on:** Step 3 (uses `getBlockParent`, `getPathToNode`, `getNodeAtPath`).
@@ -372,8 +366,8 @@ node --test @tooling/syntax-tree/tests/tree-selection.test.js
 
 **Verification:**
 ```
+cd @tooling/parser && npm test
 cd @tooling/parser && npm run test:spec
-cd @tooling/parser && node --test tests/unit/find-matched-token-indices.test.js
 ```
 
 **Depends on:** Nothing (uses existing tokenizer).
@@ -401,8 +395,8 @@ cd @tooling/parser && node --test tests/unit/find-matched-token-indices.test.js
 
 **Verification:**
 ```
+cd @tooling/parser && npm test
 cd @tooling/parser && npm run test:spec
-cd @tooling/parser && node --test tests/unit/parse-line.test.js
 ```
 
 **Depends on:** Nothing.
@@ -429,9 +423,8 @@ cd @tooling/parser && node --test tests/unit/parse-line.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-cd .. && cd ..
-node --test @tooling/syntax-tree/tests/tree-mutations-reparse.test.js
 ```
 
 **Depends on:** Steps 5, 11.
@@ -451,8 +444,8 @@ node --test @tooling/syntax-tree/tests/tree-mutations-reparse.test.js
 
 **Verification:**
 ```
+cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
-node --test @tooling/syntax-tree/tests/exports.test.js
 ```
 
 **Depends on:** Steps 1–12.
