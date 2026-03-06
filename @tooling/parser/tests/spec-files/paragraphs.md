@@ -33,8 +33,10 @@ Second paragraph
 # syntax tree
 
 ```
-paragraph "First paragraph"
-paragraph "Second paragraph"
+paragraph
+  text "First paragraph"
+paragraph
+  text "Second paragraph"
 ```
 
 # html

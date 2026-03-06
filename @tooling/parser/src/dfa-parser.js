@@ -140,7 +140,12 @@ export class DFAParser {
 
             const node = this._parseBlock(ctx);
             if (node) {
-                tree.appendChild(node);
+                if (node.type === 'list-item') {
+                    const listNode = this._groupListItems(node, ctx);
+                    tree.appendChild(listNode);
+                } else {
+                    tree.appendChild(node);
+                }
             }
         }
 
@@ -441,7 +446,9 @@ export class DFAParser {
         }
         const indent = Math.floor(spaces / 2);
 
-        // Skip the marker (DASH/STAR/PLUS)
+        // Skip the marker (DASH/STAR/PLUS) and record which one it was
+        const markerToken = ctx.tokens[ctx.pos];
+        const marker = markerToken.value;
         ctx.pos++;
         // Skip the SPACE after marker
         if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
@@ -451,7 +458,7 @@ export class DFAParser {
         const content = this._consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('list-item', content);
-        node.attributes = { ordered: false, indent };
+        node.attributes = { ordered: false, indent, _marker: marker };
 
         // Detect checklist syntax: [ ] or [x]/[X] at the start of content
         if (content.startsWith('[ ] ')) {
@@ -535,6 +542,102 @@ export class DFAParser {
         node.startLine = startLine;
         node.endLine = startLine;
         return node;
+    }
+
+    // ── List grouping ───────────────────────────────────────────
+
+    /**
+     * Groups consecutive list-item nodes into a list container node.
+     * Called when parse() encounters a list-item from _parseBlock.
+     * Handles nesting: deeper-indented items become a nested list
+     * that is appended as a child of the preceding list-item.
+     *
+     * @param {SyntaxNode} firstItem - The first list-item already parsed
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+     * @returns {SyntaxNode} A list node containing list-item children
+     */
+    _groupListItems(firstItem, ctx) {
+        const baseIndent = firstItem.attributes.indent || 0;
+
+        // Build the list node with attributes from the first item
+        const listNode = new SyntaxNode('list', '');
+        const listAttrs = { ordered: firstItem.attributes.ordered };
+        if (firstItem.attributes.ordered && firstItem.attributes.number !== undefined) {
+            listAttrs.number = firstItem.attributes.number;
+        }
+        listAttrs.indent = baseIndent;
+        if (!firstItem.attributes.ordered && firstItem.attributes._marker) {
+            listAttrs._marker = firstItem.attributes._marker;
+        }
+        if (typeof firstItem.attributes.checked === 'boolean') {
+            listAttrs.checked = true;
+        }
+        listNode.attributes = listAttrs;
+        listNode.startLine = firstItem.startLine;
+
+        // Strip list-level attrs from the item, keep only checked
+        this._stripListAttrsFromItem(firstItem);
+        listNode.appendChild(firstItem);
+
+        // Consume subsequent list items at the same or deeper indent
+        while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+            // Skip blank lines
+            if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                ctx.line++;
+                ctx.pos++;
+                continue;
+            }
+
+            // Check if next block is a list item
+            if (!this._isUnorderedListStart(ctx) && !this._isOrderedListStart(ctx)) break;
+
+            // Peek at the indent of the next item
+            const savedPos = ctx.pos;
+            const savedLine = ctx.line;
+            const nextItem = this._parseBlock(ctx);
+            if (!nextItem || nextItem.type !== 'list-item') {
+                ctx.pos = savedPos;
+                ctx.line = savedLine;
+                break;
+            }
+
+            const nextIndent = nextItem.attributes.indent || 0;
+
+            if (nextIndent === baseIndent) {
+                // Same level — sibling list-item
+                if (typeof nextItem.attributes.checked === 'boolean' && !listNode.attributes.checked) {
+                    listNode.attributes.checked = true;
+                }
+                this._stripListAttrsFromItem(nextItem);
+                listNode.appendChild(nextItem);
+            } else if (nextIndent > baseIndent) {
+                // Deeper — nested list as child of the last list-item
+                const nestedList = this._groupListItems(nextItem, ctx);
+                const lastItem = listNode.children[listNode.children.length - 1];
+                lastItem.appendChild(nestedList);
+            } else {
+                // Shallower — put it back, we're done
+                ctx.pos = savedPos;
+                ctx.line = savedLine;
+                break;
+            }
+        }
+
+        listNode.endLine = listNode.children[listNode.children.length - 1].endLine;
+        return listNode;
+    }
+
+    /**
+     * Strips list-level attributes (ordered, indent, number) from a
+     * list-item node, keeping only item-level attributes (checked).
+     * @param {SyntaxNode} item
+     */
+    _stripListAttrsFromItem(item) {
+        const attrs = {};
+        if (typeof item.attributes.checked === 'boolean') {
+            attrs.checked = item.attributes.checked;
+        }
+        item.attributes = attrs;
     }
 
     // ── Horizontal rule ─────────────────────────────────────────

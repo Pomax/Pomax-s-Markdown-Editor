@@ -115,6 +115,41 @@ list {"ordered":true,"number":3,"indent":0}
 # markdown
 
 ```
+1. First item
+  1. First subitem
+  1. Second subitem
+1. Second item
+1. Third item
+```
+
+# syntax tree
+
+```
+list {"ordered":true,"number":1,"indent":0}
+  list-item
+    text "First item"
+    list {"ordered":true,"number":1,"indent":1}
+      list-item
+        text "First subitem"
+      list-item
+        text "Second subitem"
+  list-item
+    text "Second item"
+  list-item
+    text "Third item"
+```
+
+# html
+
+```
+<ol><li>First item<ol><li>First subitem</li><li>Second subitem</li></ol></li><li>Second item</li><li>Third item</li></ol>
+```
+
+---
+
+# markdown
+
+```
 - One
 - Two
 - Three
@@ -123,9 +158,13 @@ list {"ordered":true,"number":3,"indent":0}
 # syntax tree
 
 ```
-list-item "One" {"ordered":false,"indent":0}
-list-item "Two" {"ordered":false,"indent":0}
-list-item "Three" {"ordered":false,"indent":0}
+list {"ordered":false,"indent":0}
+  list-item
+    text "One"
+  list-item
+    text "Two"
+  list-item
+    text "Three"
 ```
 
 # html
@@ -146,14 +185,18 @@ list-item "Three" {"ordered":false,"indent":0}
 # syntax tree
 
 ```
-list-item "Item 1" {"ordered":false,"indent":0}
-list-item "Nested item" {"ordered":false,"indent":1}
+list {"ordered":false,"indent":0}
+  list-item
+    text "Item 1"
+    list {"ordered":false,"indent":1}
+      list-item
+        text "Nested item"
 ```
 
 # html
 
 ```
-<ul><li>Item 1</li><li>Nested item</li></ul>
+<ul><li>Item 1<ul><li>Nested item</li></ul></li></ul>
 ```
 
 ---
@@ -167,13 +210,15 @@ list-item "Nested item" {"ordered":false,"indent":1}
 # syntax tree
 
 ```
-list-item "Task" {"ordered":false,"indent":0,"checked":false}
+list {"ordered":false,"indent":0,"checked":true}
+  list-item {"checked":false}
+    text "Task"
 ```
 
 # html
 
 ```
-<ul><li><input type="checkbox">Task</li></ul>
+<ul><li><input type="checkbox"> Task</li></ul>
 ```
 
 ---
@@ -187,13 +232,15 @@ list-item "Task" {"ordered":false,"indent":0,"checked":false}
 # syntax tree
 
 ```
-list-item "Done" {"ordered":false,"indent":0,"checked":true}
+list {"ordered":false,"indent":0,"checked":true}
+  list-item {"checked":true}
+    text "Done"
 ```
 
 # html
 
 ```
-<ul><li><input type="checkbox" checked="">Done</li></ul>
+<ul><li><input type="checkbox" checked> Done</li></ul>
 ```
 
 ---
@@ -208,12 +255,15 @@ list-item "Done" {"ordered":false,"indent":0,"checked":true}
 # syntax tree
 
 ```
-list-item "Unchecked" {"ordered":false,"indent":0,"checked":false}
-list-item "Checked" {"ordered":false,"indent":0,"checked":true}
+list {"ordered":false,"indent":0,"checked":true}
+  list-item {"checked":false}
+    text "Unchecked"
+  list-item {"checked":true}
+    text "Checked"
 ```
 
 # html
 
 ```
-<ul><li><input type="checkbox">Unchecked</li><li><input type="checkbox" checked="">Checked</li></ul>
+<ul><li><input type="checkbox"> Unchecked</li><li><input type="checkbox" checked> Checked</li></ul>
 ```

@@ -288,16 +288,28 @@ export class SyntaxNode {
                 const code = this.children.length > 0 ? this.children[0]._content : this.content;
                 return `${fence}${lang}\n${code}\n${fence}`;
             }
+            case 'list': {
+                return this.children.map((child) => child.toMarkdown(depth)).join('\n');
+            }
             case 'list-item': {
-                const indent = '  '.repeat(this.attributes.indent || 0);
-                const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : '- ';
+                const listParent = this.parent;
+                const indent = listParent ? '  '.repeat(listParent.attributes.indent || 0) : '';
+                const marker = listParent?.attributes.ordered
+                    ? `${listParent.attributes.number || 1}. `
+                    : `${listParent?.attributes._marker || '-'} `;
                 const checkbox =
                     typeof this.attributes.checked === 'boolean'
                         ? this.attributes.checked
                             ? '[x] '
                             : '[ ] '
                         : '';
-                return `${indent}${marker}${checkbox}${this.content}`;
+                const lines = [`${indent}${marker}${checkbox}${this.content}`];
+                for (const child of this.children) {
+                    if (child.type === 'list') {
+                        lines.push(child.toMarkdown(depth));
+                    }
+                }
+                return lines.join('\n');
             }
             case 'horizontal-rule': {
                 const hrMarker = this.attributes.marker || '-';
@@ -374,8 +386,10 @@ export class SyntaxNode {
             case 'heading6':
             case 'paragraph':
             case 'blockquote':
+            case 'list':
+                return this.children.map((child) => child.toBareText()).join('\n');
             case 'list-item':
-                return SyntaxNode._inlineChildrenToText(this.children);
+                return SyntaxNode._inlineChildrenToText(this.children.filter((c) => c.type !== 'list'));
 
             case 'code-block':
                 return this.children.length > 0 ? this.children[0]._content : this.content;
@@ -758,20 +772,40 @@ export class SyntaxNode {
                 return pre;
             }
 
+            case 'list': {
+                const isOrdered = this.attributes.ordered;
+                const listEl = doc.createElement(isOrdered ? 'ol' : 'ul');
+                listEl.__st_node = this;
+                if (isOrdered && this.attributes.number > 1) {
+                    listEl.setAttribute('start', String(this.attributes.number));
+                }
+                for (const child of this.children) {
+                    listEl.appendChild(child.toDOM(doc));
+                }
+                return listEl;
+            }
+
             case 'list-item': {
                 const li = doc.createElement('li');
                 li.__st_node = this;
                 if (typeof this.attributes.checked === 'boolean') {
                     const checkbox = doc.createElement('input');
                     checkbox.setAttribute('type', 'checkbox');
-                    checkbox.setAttribute('disabled', '');
                     if (this.attributes.checked) {
                         checkbox.setAttribute('checked', '');
                     }
                     li.appendChild(checkbox);
                     li.appendChild(doc.createTextNode(' '));
                 }
-                SyntaxNode.appendInlineChildrenToDOM(doc, this.children, li);
+                // Append inline children (text, bold, etc.) but not nested lists
+                const inlineChildren = this.children.filter((c) => c.type !== 'list');
+                SyntaxNode.appendInlineChildrenToDOM(doc, inlineChildren, li);
+                // Append nested list children
+                for (const child of this.children) {
+                    if (child.type === 'list') {
+                        li.appendChild(child.toDOM(doc));
+                    }
+                }
                 return li;
             }
 
@@ -922,74 +956,15 @@ function isTableSeparatorRow(line) {
 
 /**
  * Renders an array of block-level SyntaxNode children into a DOM
- * container, grouping consecutive list-item nodes into ul/ol.
+ * container.
  * @param {Document} doc
  * @param {SyntaxNode[]} children
  * @param {Element} container
  */
 function renderBlockChildrenToDOM(doc, children, container) {
-    let i = 0;
-    while (i < children.length) {
-        if (children[i].type === 'list-item') {
-            const run = [];
-            while (i < children.length && children[i].type === 'list-item') {
-                run.push(children[i]);
-                i++;
-            }
-            container.appendChild(buildListDOM(doc, run));
-        } else {
-            container.appendChild(children[i].toDOM(doc));
-            i++;
-        }
+    for (const child of children) {
+        container.appendChild(child.toDOM(doc));
     }
-}
-
-/**
- * Builds nested ul/ol DOM structures from a flat array of list-item
- * SyntaxNodes, using indent levels for nesting and splitting on
- * ordered/unordered type changes.
- * @param {Document} doc
- * @param {SyntaxNode[]} listItems
- * @returns {DocumentFragment}
- */
-function buildListDOM(doc, listItems) {
-    const frag = doc.createDocumentFragment();
-    const baseIndent = listItems[0].attributes.indent || 0;
-
-    let i = 0;
-    while (i < listItems.length) {
-        const isOrdered = listItems[i].attributes.ordered;
-        const list = doc.createElement(isOrdered ? 'ol' : 'ul');
-
-        while (i < listItems.length) {
-            const item = listItems[i];
-            const indent = item.attributes.indent || 0;
-
-            if (indent < baseIndent) break;
-            if (indent === baseIndent && item.attributes.ordered !== isOrdered) break;
-
-            if (indent === baseIndent) {
-                const li = item.toDOM(doc);
-                list.appendChild(li);
-                i++;
-
-                const nested = [];
-                while (i < listItems.length && (listItems[i].attributes.indent || 0) > baseIndent) {
-                    nested.push(listItems[i]);
-                    i++;
-                }
-                if (nested.length > 0) {
-                    li.appendChild(buildListDOM(doc, nested));
-                }
-            } else {
-                i++;
-            }
-        }
-
-        frag.appendChild(list);
-    }
-
-    return frag;
 }
 
 /**
@@ -1507,8 +1482,7 @@ export class SyntaxTree {
     }
 
     /**
-     * Converts the tree to a DOM element. Consecutive list-item
-     * nodes are automatically grouped into ul/ol elements.
+     * Converts the tree to a DOM element.
      * Every element gets an `__st_node` property referencing the
      * originating SyntaxNode.
      *
