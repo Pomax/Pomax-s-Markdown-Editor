@@ -143,6 +143,58 @@ export class SyntaxNode {
   }
 
   /**
+   * Removes a child node.
+   * @param {SyntaxNode} child - The child node to remove
+   * @throws {Error} If the child is not found
+   */
+  removeChild(child) {
+    const idx = this.children.indexOf(child);
+    if (idx === -1) throw new Error(`Child not found`);
+    this.children.splice(idx, 1);
+    child.parent = null;
+  }
+
+  /**
+   * Replaces a child node with a new node.
+   * @param {SyntaxNode} oldChild - The child to replace
+   * @param {SyntaxNode} newChild - The replacement node
+   * @throws {Error} If the old child is not found
+   */
+  replaceChild(oldChild, newChild) {
+    const idx = this.children.indexOf(oldChild);
+    if (idx === -1) throw new Error(`Child not found`);
+    this.children.splice(idx, 1, newChild);
+    newChild.parent = this;
+    oldChild.parent = null;
+  }
+
+  /**
+   * Inserts a new node before a reference node.
+   * @param {SyntaxNode} newNode - The node to insert
+   * @param {SyntaxNode} refNode - The reference node to insert before
+   * @throws {Error} If the reference node is not found
+   */
+  insertBefore(newNode, refNode) {
+    const idx = this.children.indexOf(refNode);
+    if (idx === -1) throw new Error(`Reference node not found`);
+    this.children.splice(idx, 0, newNode);
+    newNode.parent = this;
+  }
+
+  /**
+   * Inserts a new node after a reference node.
+   * @param {SyntaxNode} newNode - The node to insert
+   * @param {SyntaxNode} refNode - The reference node to insert after
+   * @throws {Error} If the reference node is not found
+   */
+  insertAfter(newNode, refNode) {
+    const idx = this.children.indexOf(refNode);
+    if (idx === -1) throw new Error(`Reference node not found`);
+    this.children.splice(idx + 1, 0, newNode);
+    newNode.parent = this;
+  }
+
+  /**
    * Converts this node to markdown.
    * @returns {string}
    */
@@ -181,6 +233,58 @@ export class SyntaxTree {
   appendChild(node) {
     node.parent = null;
     this.children.push(node);
+  }
+
+  /**
+   * Removes a child node from the tree.
+   * @param {SyntaxNode} node - The child node to remove
+   * @throws {Error} If the node is not found
+   */
+  removeChild(node) {
+    const idx = this.children.indexOf(node);
+    if (idx === -1) throw new Error(`Child not found`);
+    this.children.splice(idx, 1);
+    node.parent = null;
+  }
+
+  /**
+   * Replaces a child node with a new node.
+   * @param {SyntaxNode} oldChild - The child to replace
+   * @param {SyntaxNode} newChild - The replacement node
+   * @throws {Error} If the old child is not found
+   */
+  replaceChild(oldChild, newChild) {
+    const idx = this.children.indexOf(oldChild);
+    if (idx === -1) throw new Error(`Child not found`);
+    this.children.splice(idx, 1, newChild);
+    newChild.parent = null;
+    oldChild.parent = null;
+  }
+
+  /**
+   * Inserts a new node before a reference node.
+   * @param {SyntaxNode} newNode - The node to insert
+   * @param {SyntaxNode} refNode - The reference node to insert before
+   * @throws {Error} If the reference node is not found
+   */
+  insertBefore(newNode, refNode) {
+    const idx = this.children.indexOf(refNode);
+    if (idx === -1) throw new Error(`Reference node not found`);
+    this.children.splice(idx, 0, newNode);
+    newNode.parent = null;
+  }
+
+  /**
+   * Inserts a new node after a reference node.
+   * @param {SyntaxNode} newNode - The node to insert
+   * @param {SyntaxNode} refNode - The reference node to insert after
+   * @throws {Error} If the reference node is not found
+   */
+  insertAfter(newNode, refNode) {
+    const idx = this.children.indexOf(refNode);
+    if (idx === -1) throw new Error(`Reference node not found`);
+    this.children.splice(idx + 1, 0, newNode);
+    newNode.parent = null;
   }
 
   /**
