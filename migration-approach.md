@@ -8,9 +8,10 @@ This document defines the migration from the editor's built-in parser to the `@t
 
 1. **Never delete files.** Only create new files or modify existing ones.
 2. **Do not modify `@tooling` code without explicit approval.** Every step that touches files under `@tooling/` is flagged. Present the proposed changes and wait for sign-off before writing code.
-3. **Verify before proceeding.** After completing a step, run the verification commands listed. All tests must pass before moving to the next step. If a test fails, fix it before continuing.
-4. **Commit after each step.** Every completed, verified step gets its own commit. This ensures no work is lost and provides rollback points.
-5. **Use the existing terminal.** Do not open PowerShell; use `cmd` for all terminal work.
+3. **Write tests first (TDD).** For every step that adds new functions, write the test file first — before implementing the code. The tests define the expected behavior. Run them to confirm they fail (the code doesn't exist yet). Then implement the code. Then run the tests again — they should now pass. This is the red-green cycle: red (failing tests) → implement → green (passing tests).
+4. **Verify before proceeding.** After completing a step, run the verification commands listed. All tests must pass before moving to the next step. If a test fails, fix it before continuing.
+5. **Commit after each step.** Every completed, verified step gets its own commit. This ensures no work is lost and provides rollback points.
+6. **Use the existing terminal.** Do not open PowerShell; use `cmd` for all terminal work.
 
 ### Verification Commands
 
