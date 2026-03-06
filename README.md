@@ -58,49 +58,6 @@ You will also need to run a one-time `npx playwright install firefox --with-deps
 npm start
 ```
 
-## Project Structure
-
-```
-├── src/
-│   ├── main/           # Electron main process
-│   │   ├── main.js     # Application entry point
-│   │   ├── preload.cjs # Secure IPC bridge
-│   │   ├── menu-builder.js
-│   │   ├── file-manager.js
-│   │   ├── ipc-handler.js
-│   │   ├── settings-manager.js
-│   │   └── api-registry.js
-│   │
-│   └── renderer/       # Electron renderer process
-│       ├── index.html
-│       ├── styles/
-│       └── scripts/
-│           ├── app.js
-│           ├── editor/
-│           ├── parser/
-│           ├── toolbar/
-│           ├── handlers/
-│           ├── image/
-│           ├── link/
-│           ├── modal/
-│           ├── table/
-│           ├── tab-bar/
-│           ├── toc/
-│           ├── search/
-│           ├── preferences/
-│           └── word-count/
-│
-├── test/
-│   ├── unit/           # Node.js native unit tests
-│   └── integration/    # Playwright integration tests
-│
-├── docs/
-│   ├── api/            # API documentation for IPC interaction
-│   └── developers/     # Developer guides
-│
-└── scripts/            # Build utilities
-```
-
 # Testing
 
 You run the full test suite using `npm test`. Nice and obvious. This will run linting, formatting, consistency testing, unit testing, and integration testing.
@@ -146,25 +103,6 @@ npm run dist
 Build output goes to the `dist/` directory.
 
 Note that this tasks primarily exists for automated builds using a GitHub Actions workflow that builds all three platforms on every push to `main` that bumps up the project version in `package.json`.
-
-## API Documentation
-
-The editor exposes a comprehensive IPC-based API for external scripting. See [docs/api/README.md](docs/api/README.md) for full documentation.
-
-### Quick Example
-
-```javascript
-// Execute a command via IPC (api:execute channel)
-const result = await ipcRenderer.invoke('api:execute', 'document.setContent', {
-    content: '# Hello World\n\nThis is a paragraph.'
-});
-```
-
-# Developer Documentation
-
-- [Getting Started](docs/developers/getting-started.md)
-- [Architecture](docs/developers/architecture.md)
-- [Design](docs/developers/design.md)
 
 ## License
 
