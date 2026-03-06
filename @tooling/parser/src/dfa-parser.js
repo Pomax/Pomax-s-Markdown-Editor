@@ -138,10 +138,10 @@ export class DFAParser {
                 continue;
             }
 
-            const node = this._parseBlock(ctx);
+            const node = this.parseBlock(ctx);
             if (node) {
                 if (node.type === 'list-item') {
-                    const listNode = this._groupListItems(node, ctx);
+                    const listNode = this.groupListItems(node, ctx);
                     tree.appendChild(listNode);
                 } else {
                     tree.appendChild(node);
@@ -161,13 +161,13 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode|null}
      */
-    _parseBlock(ctx) {
+    parseBlock(ctx) {
         const tok = ctx.tokens[ctx.pos];
 
         // Heading: one or more HASH at start of line, followed by a space
         if (tok.type === 'HASH') {
             const saved = ctx.pos;
-            const node = this._parseHeading(ctx);
+            const node = this.parseHeading(ctx);
             if (node) return node;
             ctx.pos = saved;
         }
@@ -175,67 +175,67 @@ export class DFAParser {
         // Code fence: three or more BACKTICK tokens
         if (
             tok.type === 'BACKTICK' &&
-            this._lookType(ctx, 1) === 'BACKTICK' &&
-            this._lookType(ctx, 2) === 'BACKTICK'
+            this.lookType(ctx, 1) === 'BACKTICK' &&
+            this.lookType(ctx, 2) === 'BACKTICK'
         ) {
             const saved = ctx.pos;
-            const node = this._parseCodeBlock(ctx);
+            const node = this.parseCodeBlock(ctx);
             if (node) return node;
             ctx.pos = saved;
         }
 
         // Blockquote: GT at start
         if (tok.type === 'GT') {
-            return this._parseBlockquote(ctx);
+            return this.parseBlockquote(ctx);
         }
 
         // Unordered list: DASH/STAR/PLUS followed by SPACE, or indented
-        if (this._isUnorderedListStart(ctx)) {
-            return this._parseUnorderedListItem(ctx);
+        if (this.isUnorderedListStart(ctx)) {
+            return this.parseUnorderedListItem(ctx);
         }
 
         // Ordered list: DIGIT(s) DOT SPACE
-        if (this._isOrderedListStart(ctx)) {
-            return this._parseOrderedListItem(ctx);
+        if (this.isOrderedListStart(ctx)) {
+            return this.parseOrderedListItem(ctx);
         }
 
         // Horizontal rule: three or more DASH/STAR/UNDERSCORE
-        if (this._isHorizontalRule(ctx)) {
-            return this._parseHorizontalRule(ctx);
+        if (this.isHorizontalRule(ctx)) {
+            return this.parseHorizontalRule(ctx);
         }
 
         // HTML block: <tagname...> (possibly indented)
-        if (tok.type === 'LT' && this._isHtmlBlockStart(ctx)) {
-            return this._parseHtmlBlock(ctx);
+        if (tok.type === 'LT' && this.isHtmlBlockStart(ctx)) {
+            return this.parseHtmlBlock(ctx);
         }
-        if ((tok.type === 'SPACE' || tok.type === 'TAB') && this._isIndentedHtmlBlockStart(ctx)) {
-            this._skipWhitespace(ctx);
-            return this._parseHtmlBlock(ctx);
+        if ((tok.type === 'SPACE' || tok.type === 'TAB') && this.isIndentedHtmlBlockStart(ctx)) {
+            this.skipWhitespace(ctx);
+            return this.parseHtmlBlock(ctx);
         }
 
         // Table: starts with PIPE
         if (tok.type === 'PIPE') {
-            return this._parseTable(ctx);
+            return this.parseTable(ctx);
         }
 
         // Linked image: [![alt](src)](href)
-        if (tok.type === 'LBRACKET' && this._lookType(ctx, 1) === 'BANG') {
+        if (tok.type === 'LBRACKET' && this.lookType(ctx, 1) === 'BANG') {
             const saved = ctx.pos;
-            const node = this._tryParseLinkedImage(ctx);
+            const node = this.tryParseLinkedImage(ctx);
             if (node) return node;
             ctx.pos = saved;
         }
 
         // Image: ![alt](src)
-        if (tok.type === 'BANG' && this._lookType(ctx, 1) === 'LBRACKET') {
+        if (tok.type === 'BANG' && this.lookType(ctx, 1) === 'LBRACKET') {
             const saved = ctx.pos;
-            const node = this._tryParseImage(ctx);
+            const node = this.tryParseImage(ctx);
             if (node) return node;
             ctx.pos = saved;
         }
 
         // Default: paragraph
-        return this._parseParagraph(ctx);
+        return this.parseParagraph(ctx);
     }
 
     // ── Heading ─────────────────────────────────────────────────
@@ -244,7 +244,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode|null}
      */
-    _parseHeading(ctx) {
+    parseHeading(ctx) {
         const startLine = ctx.line;
         let level = 0;
 
@@ -267,7 +267,7 @@ export class DFAParser {
         }
 
         // Collect content until NEWLINE or EOF
-        const content = this._consumeToEndOfLine(ctx);
+        const content = this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode(`heading${level}`, content);
         node.startLine = startLine;
@@ -281,7 +281,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode|null}
      */
-    _parseCodeBlock(ctx) {
+    parseCodeBlock(ctx) {
         const startLine = ctx.line;
 
         // Count consecutive backticks (must be 3 or more)
@@ -380,7 +380,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseBlockquote(ctx) {
+    parseBlockquote(ctx) {
         const startLine = ctx.line;
         const contentLines = [];
 
@@ -392,7 +392,7 @@ export class DFAParser {
                 ctx.pos++;
             }
             // Collect to end of line
-            contentLines.push(this._consumeToEndOfLine(ctx));
+            contentLines.push(this.consumeToEndOfLine(ctx));
         }
 
         const node = new SyntaxNode('blockquote', contentLines.join('\n'));
@@ -409,7 +409,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isUnorderedListStart(ctx) {
+    isUnorderedListStart(ctx) {
         let i = ctx.pos;
         // Skip leading spaces
         while (
@@ -432,7 +432,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseUnorderedListItem(ctx) {
+    parseUnorderedListItem(ctx) {
         const startLine = ctx.line;
 
         // Count leading spaces for indent
@@ -455,10 +455,11 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        const content = this._consumeToEndOfLine(ctx);
+        const content = this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('list-item', content);
-        node.attributes = { ordered: false, indent, _marker: marker };
+        node.attributes = { ordered: false, indent };
+        node.runtime.marker = marker;
 
         // Detect checklist syntax: [ ] or [x]/[X] at the start of content
         if (content.startsWith('[ ] ')) {
@@ -480,7 +481,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isOrderedListStart(ctx) {
+    isOrderedListStart(ctx) {
         let i = ctx.pos;
         // Skip leading spaces
         while (
@@ -506,7 +507,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseOrderedListItem(ctx) {
+    parseOrderedListItem(ctx) {
         const startLine = ctx.line;
 
         // Count leading spaces for indent
@@ -535,7 +536,7 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        const content = this._consumeToEndOfLine(ctx);
+        const content = this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('list-item', content);
         node.attributes = { ordered: true, number, indent };
@@ -556,7 +557,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode} A list node containing list-item children
      */
-    _groupListItems(firstItem, ctx) {
+    groupListItems(firstItem, ctx) {
         const baseIndent = firstItem.attributes.indent || 0;
 
         // Build the list node with attributes from the first item
@@ -566,8 +567,8 @@ export class DFAParser {
             listAttrs.number = firstItem.attributes.number;
         }
         listAttrs.indent = baseIndent;
-        if (!firstItem.attributes.ordered && firstItem.attributes._marker) {
-            listAttrs._marker = firstItem.attributes._marker;
+        if (!firstItem.attributes.ordered && firstItem.runtime.marker) {
+            listNode.runtime.marker = firstItem.runtime.marker;
         }
         if (typeof firstItem.attributes.checked === 'boolean') {
             listAttrs.checked = true;
@@ -576,7 +577,7 @@ export class DFAParser {
         listNode.startLine = firstItem.startLine;
 
         // Strip list-level attrs from the item, keep only checked
-        this._stripListAttrsFromItem(firstItem);
+        this.stripListAttrsFromItem(firstItem);
         listNode.appendChild(firstItem);
 
         // Consume subsequent list items at the same or deeper indent
@@ -589,12 +590,12 @@ export class DFAParser {
             }
 
             // Check if next block is a list item
-            if (!this._isUnorderedListStart(ctx) && !this._isOrderedListStart(ctx)) break;
+            if (!this.isUnorderedListStart(ctx) && !this.isOrderedListStart(ctx)) break;
 
             // Peek at the indent of the next item
             const savedPos = ctx.pos;
             const savedLine = ctx.line;
-            const nextItem = this._parseBlock(ctx);
+            const nextItem = this.parseBlock(ctx);
             if (!nextItem || nextItem.type !== 'list-item') {
                 ctx.pos = savedPos;
                 ctx.line = savedLine;
@@ -608,11 +609,11 @@ export class DFAParser {
                 if (typeof nextItem.attributes.checked === 'boolean' && !listNode.attributes.checked) {
                     listNode.attributes.checked = true;
                 }
-                this._stripListAttrsFromItem(nextItem);
+                this.stripListAttrsFromItem(nextItem);
                 listNode.appendChild(nextItem);
             } else if (nextIndent > baseIndent) {
                 // Deeper — nested list as child of the last list-item
-                const nestedList = this._groupListItems(nextItem, ctx);
+                const nestedList = this.groupListItems(nextItem, ctx);
                 const lastItem = listNode.children[listNode.children.length - 1];
                 lastItem.appendChild(nestedList);
             } else {
@@ -632,7 +633,7 @@ export class DFAParser {
      * list-item node, keeping only item-level attributes (checked).
      * @param {SyntaxNode} item
      */
-    _stripListAttrsFromItem(item) {
+    stripListAttrsFromItem(item) {
         const attrs = {};
         if (typeof item.attributes.checked === 'boolean') {
             attrs.checked = item.attributes.checked;
@@ -649,7 +650,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isHorizontalRule(ctx) {
+    isHorizontalRule(ctx) {
         const t = ctx.tokens[ctx.pos].type;
         if (t !== 'DASH' && t !== 'STAR' && t !== 'UNDERSCORE') return false;
 
@@ -672,7 +673,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseHorizontalRule(ctx) {
+    parseHorizontalRule(ctx) {
         const startLine = ctx.line;
         const tokenType = ctx.tokens[ctx.pos].type;
         const marker = tokenType === 'DASH' ? '-' : tokenType === 'STAR' ? '*' : '_';
@@ -683,7 +684,7 @@ export class DFAParser {
         }
 
         // Consume trailing spaces and newline
-        this._consumeToEndOfLine(ctx);
+        this.consumeToEndOfLine(ctx);
 
         const node = new SyntaxNode('horizontal-rule', '');
         node.attributes.marker = marker;
@@ -700,7 +701,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode|null}
      */
-    _tryParseImage(ctx) {
+    tryParseImage(ctx) {
         const startLine = ctx.line;
 
         // Expect BANG LBRACKET
@@ -767,7 +768,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode|null}
      */
-    _tryParseLinkedImage(ctx) {
+    tryParseLinkedImage(ctx) {
         const startLine = ctx.line;
 
         // Expect [ ! [
@@ -857,7 +858,7 @@ export class DFAParser {
      * @param {string} name
      * @returns {string}
      */
-    _extractAttr(raw, name) {
+    extractAttr(raw, name) {
         const lower = raw.toLowerCase();
         const search = name.toLowerCase();
         let i = 0;
@@ -903,7 +904,7 @@ export class DFAParser {
      * @param {string} raw - The full opening tag, e.g. `<img src="pic.jpg" alt="test" />`
      * @returns {Object<string, string>}
      */
-    _extractAllAttrs(raw) {
+    extractAllAttrs(raw) {
         const attrs = {};
         // Strip the tag name and angle brackets: skip past the first whitespace
         let i = 0;
@@ -952,11 +953,11 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isHtmlBlockStart(ctx) {
-        const tagName = this._peekTextAfterLT(ctx);
+    isHtmlBlockStart(ctx) {
+        const tagName = this.peekTextAfterLT(ctx);
         if (!tagName) return false;
         const lower = tagName.toLowerCase();
-        return HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower);
+        return HTML_BLOCK_TAGS.has(lower) || this.isValidCustomElement(lower);
     }
 
     /**
@@ -965,7 +966,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isIndentedHtmlBlockStart(ctx) {
+    isIndentedHtmlBlockStart(ctx) {
         let i = ctx.pos;
         while (
             i < ctx.tokens.length &&
@@ -975,17 +976,17 @@ export class DFAParser {
         }
         if (i >= ctx.tokens.length || i === ctx.pos) return false;
         if (ctx.tokens[i].type !== 'LT') return false;
-        const result = this._peekTagName(ctx.tokens, i + 1);
+        const result = this.peekTagName(ctx.tokens, i + 1);
         if (!result) return false;
         const lower = result.name.toLowerCase();
-        return HTML_BLOCK_TAGS.has(lower) || this._isValidCustomElement(lower);
+        return HTML_BLOCK_TAGS.has(lower) || this.isValidCustomElement(lower);
     }
 
     /**
      * Skips whitespace tokens (SPACE, TAB) at current position.
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      */
-    _skipWhitespace(ctx) {
+    skipWhitespace(ctx) {
         while (
             ctx.pos < ctx.tokens.length &&
             (ctx.tokens[ctx.pos].type === 'SPACE' || ctx.tokens[ctx.pos].type === 'TAB')
@@ -1003,7 +1004,7 @@ export class DFAParser {
      * @param {number} startIndex
      * @returns {{name: string, count: number}|null}
      */
-    _peekTagName(tokens, startIndex) {
+    peekTagName(tokens, startIndex) {
         if (startIndex >= tokens.length || tokens[startIndex].type !== 'TEXT') {
             return null;
         }
@@ -1031,7 +1032,7 @@ export class DFAParser {
      * @param {string} name
      * @returns {boolean}
      */
-    _isValidCustomElement(name) {
+    isValidCustomElement(name) {
         const parts = name.split('-');
         if (parts.length < 2) return false;
         for (const part of parts) {
@@ -1047,9 +1048,9 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {string|null}
      */
-    _peekTextAfterLT(ctx) {
+    peekTextAfterLT(ctx) {
         if (ctx.tokens[ctx.pos].type !== 'LT') return null;
-        const result = this._peekTagName(ctx.tokens, ctx.pos + 1);
+        const result = this.peekTagName(ctx.tokens, ctx.pos + 1);
         if (!result) return null;
         return result.name;
     }
@@ -1061,12 +1062,12 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseHtmlBlock(ctx) {
+    parseHtmlBlock(ctx) {
         const startLine = ctx.line;
 
         // Consume the opening tag line (everything up to and including the first >)
         let openingTag = '';
-        const tagName = this._peekTextAfterLT(ctx);
+        const tagName = this.peekTextAfterLT(ctx);
         const lowerTagName = tagName ? tagName.toLowerCase() : '';
 
         // Read the entire opening tag up to GT
@@ -1094,9 +1095,10 @@ export class DFAParser {
             }
             const node = new SyntaxNode('html-block', '');
             node.tagName = lowerTagName;
-            node.attributes = { _openingTag: openingTag };
+            node.attributes = {};
+            node.runtime.openingTag = openingTag;
             // Extract HTML attributes from the raw opening tag
-            const htmlAttrs = this._extractAllAttrs(openingTag);
+            const htmlAttrs = this.extractAllAttrs(openingTag);
             for (const [key, value] of Object.entries(htmlAttrs)) {
                 node.attributes[key] = value;
             }
@@ -1107,7 +1109,7 @@ export class DFAParser {
 
         // Check if this is a self-closed tag on one line: <tag>content</tag>
         // Look ahead to see if there's content then a closing tag on same line
-        const selfClosedResult = this._trySelfClosedHtmlBlock(
+        const selfClosedResult = this.trySelfClosedHtmlBlock(
             ctx,
             lowerTagName,
             openingTag,
@@ -1129,8 +1131,8 @@ export class DFAParser {
 
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
             // Check for closing tag: LT FSLASH TEXT(tagname) GT
-            if (this._isClosingTag(ctx, lowerTagName)) {
-                closingTag = this._consumeClosingTag(ctx);
+            if (this.isClosingTag(ctx, lowerTagName)) {
+                closingTag = this.consumeClosingTag(ctx);
                 break;
             }
 
@@ -1160,10 +1162,9 @@ export class DFAParser {
         // Create the container node
         const node = new SyntaxNode('html-block', '');
         node.tagName = lowerTagName;
-        node.attributes = {
-            _openingTag: openingTag,
-            _closingTag: closingTag,
-        };
+        node.attributes = {};
+        node.runtime.openingTag = openingTag;
+        node.runtime.closingTag = closingTag;
         node.startLine = startLine;
         node.endLine = endLine;
 
@@ -1173,7 +1174,7 @@ export class DFAParser {
             const bodyTree = bodyParser.parse(bodyMarkdown);
             const bodyStartLine = startLine + 1;
             for (const child of bodyTree.children) {
-                this._adjustLineNumbers(child, bodyStartLine);
+                this.adjustLineNumbers(child, bodyStartLine);
                 node.appendChild(child);
             }
         }
@@ -1191,7 +1192,7 @@ export class DFAParser {
      * @param {number} startLine
      * @returns {SyntaxNode|null}
      */
-    _trySelfClosedHtmlBlock(ctx, tagName, openingTag, startLine) {
+    trySelfClosedHtmlBlock(ctx, tagName, openingTag, startLine) {
         // Save position in case this isn't self-closed
         const savedPos = ctx.pos;
         const savedLine = ctx.line;
@@ -1206,7 +1207,7 @@ export class DFAParser {
             ctx.tokens[ctx.pos].type !== 'EOF'
         ) {
             // Check for closing tag
-            if (this._isClosingTag(ctx, tagName)) {
+            if (this.isClosingTag(ctx, tagName)) {
                 closingFound = true;
                 // Don't consume the closing tag yet
                 break;
@@ -1223,7 +1224,7 @@ export class DFAParser {
         }
 
         // Skip the closing tag
-        this._consumeClosingTag(ctx);
+        this.consumeClosingTag(ctx);
 
         // Skip newline
         if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
@@ -1234,10 +1235,9 @@ export class DFAParser {
         // Build the node structure matching the existing parser's output
         const node = new SyntaxNode('html-block', '');
         node.tagName = tagName;
-        node.attributes = {
-            _openingTag: openingTag,
-            _closingTag: `</${tagName}>`,
-        };
+        node.attributes = {};
+        node.runtime.openingTag = openingTag;
+        node.runtime.closingTag = `</${tagName}>`;
         node.startLine = startLine;
         node.endLine = startLine;
 
@@ -1257,11 +1257,11 @@ export class DFAParser {
      * @param {string} tagName
      * @returns {boolean}
      */
-    _isClosingTag(ctx, tagName) {
+    isClosingTag(ctx, tagName) {
         const i = ctx.pos;
         if (i >= ctx.tokens.length || ctx.tokens[i].type !== 'LT') return false;
         if (i + 1 >= ctx.tokens.length || ctx.tokens[i + 1].type !== 'FSLASH') return false;
-        const result = this._peekTagName(ctx.tokens, i + 2);
+        const result = this.peekTagName(ctx.tokens, i + 2);
         if (!result) return false;
         if (result.name.toLowerCase() !== tagName) return false;
         // Check for optional space then GT
@@ -1276,7 +1276,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {string}
      */
-    _consumeClosingTag(ctx) {
+    consumeClosingTag(ctx) {
         let tag = '';
         // LT
         tag += ctx.tokens[ctx.pos].value;
@@ -1285,7 +1285,7 @@ export class DFAParser {
         tag += ctx.tokens[ctx.pos].value;
         ctx.pos++;
         // Tag name (TEXT and possibly DASH TEXT pairs)
-        const result = this._peekTagName(ctx.tokens, ctx.pos);
+        const result = this.peekTagName(ctx.tokens, ctx.pos);
         if (result) {
             for (let n = 0; n < result.count; n++) {
                 tag += ctx.tokens[ctx.pos].value;
@@ -1310,11 +1310,11 @@ export class DFAParser {
      * @param {SyntaxNode} node
      * @param {number} offset
      */
-    _adjustLineNumbers(node, offset) {
+    adjustLineNumbers(node, offset) {
         node.startLine += offset;
         node.endLine += offset;
         for (const child of node.children) {
-            this._adjustLineNumbers(child, offset);
+            this.adjustLineNumbers(child, offset);
         }
     }
 
@@ -1324,7 +1324,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseTable(ctx) {
+    parseTable(ctx) {
         const startLine = ctx.line;
         const lines = [];
 
@@ -1358,7 +1358,7 @@ export class DFAParser {
 
         // Parse header (first line)
         if (lines.length > 0) {
-            const headerCells = this._parseTableRow(lines[0]);
+            const headerCells = this.parseTableRow(lines[0]);
             const header = new SyntaxNode('header', '');
             for (const cellText of headerCells) {
                 const cell = new SyntaxNode('cell', '');
@@ -1371,7 +1371,7 @@ export class DFAParser {
         // Parse data rows (skip separator row)
         for (let r = 1; r < lines.length; r++) {
             if (/^\s*\|?\s*[-:]+[-|:\s]*$/.test(lines[r])) continue;
-            const rowCells = this._parseTableRow(lines[r]);
+            const rowCells = this.parseTableRow(lines[r]);
             const row = new SyntaxNode('row', '');
             for (const cellText of rowCells) {
                 const cell = new SyntaxNode('cell', '');
@@ -1389,7 +1389,7 @@ export class DFAParser {
      * @param {string} line
      * @returns {string[]}
      */
-    _parseTableRow(line) {
+    parseTableRow(line) {
         return line
             .replace(/^\||\|$/g, '')
             .split('|')
@@ -1402,7 +1402,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {SyntaxNode}
      */
-    _parseParagraph(ctx) {
+    parseParagraph(ctx) {
         const startLine = ctx.line;
         let content = '';
         let consecutiveNewlines = 0;
@@ -1419,7 +1419,7 @@ export class DFAParser {
                 }
 
                 // Single newline — peek at next line to see if it starts a block
-                if (this._isBlockStart(ctx)) {
+                if (this.isBlockStart(ctx)) {
                     break;
                 }
 
@@ -1452,7 +1452,7 @@ export class DFAParser {
      * @param {number} offset
      * @returns {string}
      */
-    _lookType(ctx, offset) {
+    lookType(ctx, offset) {
         const i = ctx.pos + offset;
         if (i >= ctx.tokens.length) return 'EOF';
         return ctx.tokens[i].type;
@@ -1464,7 +1464,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
      * @returns {string}
      */
-    _consumeToEndOfLine(ctx) {
+    consumeToEndOfLine(ctx) {
         let text = '';
         while (
             ctx.pos < ctx.tokens.length &&
@@ -1488,7 +1488,7 @@ export class DFAParser {
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
      * @returns {boolean}
      */
-    _isBlockStart(ctx) {
+    isBlockStart(ctx) {
         if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type === 'EOF') return true;
         if (ctx.tokens[ctx.pos].type === 'NEWLINE') return true;
 
@@ -1500,8 +1500,8 @@ export class DFAParser {
         // Code fence (three or more backticks)
         if (
             t === 'BACKTICK' &&
-            this._lookType(ctx, 1) === 'BACKTICK' &&
-            this._lookType(ctx, 2) === 'BACKTICK'
+            this.lookType(ctx, 1) === 'BACKTICK' &&
+            this.lookType(ctx, 2) === 'BACKTICK'
         )
             return true;
 
@@ -1509,23 +1509,23 @@ export class DFAParser {
         if (t === 'GT') return true;
 
         // List items
-        if (this._isUnorderedListStart(ctx)) return true;
-        if (this._isOrderedListStart(ctx)) return true;
+        if (this.isUnorderedListStart(ctx)) return true;
+        if (this.isOrderedListStart(ctx)) return true;
 
         // Horizontal rule
-        if (this._isHorizontalRule(ctx)) return true;
+        if (this.isHorizontalRule(ctx)) return true;
 
         // HTML block
-        if (t === 'LT' && this._isHtmlBlockStart(ctx)) return true;
+        if (t === 'LT' && this.isHtmlBlockStart(ctx)) return true;
 
         // Table
         if (t === 'PIPE') return true;
 
         // Image
-        if (t === 'BANG' && this._lookType(ctx, 1) === 'LBRACKET') return true;
+        if (t === 'BANG' && this.lookType(ctx, 1) === 'LBRACKET') return true;
 
         // Linked image
-        if (t === 'LBRACKET' && this._lookType(ctx, 1) === 'BANG') return true;
+        if (t === 'LBRACKET' && this.lookType(ctx, 1) === 'BANG') return true;
 
         return false;
     }

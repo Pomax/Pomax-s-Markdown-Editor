@@ -37,11 +37,8 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-block nodes
- * @property {string} [_openingTag] - Full opening tag line for html-block nodes (runtime-only, not serialised)
- * @property {string} [_closingTag] - Full closing tag line for html-block nodes (runtime-only, not serialised)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
- * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
  */
 
 /**
@@ -111,6 +108,12 @@ export class SyntaxNode {
          * @type {NodeAttributes}
          */
         this.attributes = {};
+
+        /**
+         * Runtime-only data (not serialised).
+         * @type {Object}
+         */
+        this.runtime = {};
 
         /**
          * Starting line in the source (0-based).
@@ -241,22 +244,6 @@ export class SyntaxNode {
     }
 
     /**
-     * Inserts a node before another node.
-     * @param {SyntaxNode} newNode - The node to insert
-     * @param {SyntaxNode} referenceNode - The node to insert before
-     * @returns {boolean} Whether the insertion was successful
-     */
-    insertBefore(newNode, referenceNode) {
-        const index = this.children.indexOf(referenceNode);
-        if (index !== -1) {
-            newNode.parent = this;
-            this.children.splice(index, 0, newNode);
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Converts this node to markdown.
      * @param {number} [depth=0] - HTML nesting depth for indentation
      * @returns {string}
@@ -296,7 +283,7 @@ export class SyntaxNode {
                 const indent = listParent ? '  '.repeat(listParent.attributes.indent || 0) : '';
                 const marker = listParent?.attributes.ordered
                     ? `${listParent.attributes.number || 1}. `
-                    : `${listParent?.attributes._marker || '-'} `;
+                    : `${listParent?.runtime.marker || '-'} `;
                 const checkbox =
                     typeof this.attributes.checked === 'boolean'
                         ? this.attributes.checked
@@ -358,7 +345,7 @@ export class SyntaxNode {
                     return `${indent}<${tag}>${this.children[0].content}</${tag}>`;
                 }
 
-                const lines = [`${indent}${this.attributes._openingTag || ''}`];
+                const lines = [`${indent}${this.runtime.openingTag || ''}`];
                 for (const child of this.children) {
                     if (child.type === 'html-block') {
                         lines.push(child.toMarkdown(depth + 1));
@@ -368,8 +355,8 @@ export class SyntaxNode {
                         lines.push('');
                     }
                 }
-                if (this.attributes._closingTag) {
-                    lines.push(`${indent}${this.attributes._closingTag}`);
+                if (this.runtime.closingTag) {
+                    lines.push(`${indent}${this.runtime.closingTag}`);
                 }
                 // Collapse multiple consecutive blank lines
                 const result = lines.join('\n').replace(/\n{3,}/g, '\n\n');
@@ -378,136 +365,6 @@ export class SyntaxNode {
             default:
                 return this.content;
         }
-    }
-
-    /**
-     * Returns the visible plain text for this node, with all inline
-     * formatting syntax removed.  Images and other non-text elements
-     * are omitted entirely; link text is kept but URLs are dropped.
-     *
-     * Used by the search system for writing-view matching, where the
-     * user sees rendered text rather than raw markdown.
-     *
-     * @returns {string}
-     */
-    toBareText() {
-        switch (this.type) {
-            case 'heading1':
-            case 'heading2':
-            case 'heading3':
-            case 'heading4':
-            case 'heading5':
-            case 'heading6':
-            case 'paragraph':
-            case 'blockquote':
-            case 'list':
-                return this.children.map((child) => child.toBareText()).join('\n');
-            case 'list-item':
-                return SyntaxNode._inlineChildrenToText(this.children.filter((c) => c.type !== 'list'));
-
-            case 'code-block':
-                return this.children.length > 0 ? this.children[0]._content : this.content;
-
-            case 'table': {
-                const textLines = [];
-                for (const child of this.children) {
-                    const cells = child.children.map((cell) => {
-                        return cell.children.length > 0 ? cell.children[0]._content : '';
-                    });
-                    textLines.push(cells.join('\t'));
-                }
-                return textLines.join('\n');
-            }
-
-            case 'image':
-                // Images are purely visual – no searchable text.
-                return '';
-
-            case 'horizontal-rule':
-                return '';
-
-            case 'html-block': {
-                // If the container has exactly one bare-text child,
-                // return just its text.
-                if (
-                    this.children.length === 1 &&
-                    this.children[0].attributes.bareText &&
-                    this.children[0].type === 'paragraph'
-                ) {
-                    return SyntaxNode._inlineChildrenToText(this.children[0].children);
-                }
-
-                const parts = [];
-                for (const child of this.children) {
-                    const text = child.toBareText();
-                    if (text) parts.push(text);
-                }
-                return parts.join('\n\n');
-            }
-
-            default:
-                return SyntaxNode._extractInlineText(this.content);
-        }
-    }
-
-    /**
-     * Extracts visible text from inline markdown, stripping all
-     * formatting delimiters (`**`, `*`, `~~`, `` ` ``, HTML tags)
-     * and removing images.  Link text is preserved; link URLs are dropped.
-     *
-     * @param {string} content - Raw inline markdown content
-     * @returns {string}
-     */
-    static _extractInlineText(content) {
-        const tokens = tokenizeInline(content);
-        const segments = buildInlineTree(tokens);
-        return SyntaxNode._segmentsToText(segments);
-    }
-
-    /**
-     * Recursively extracts plain text from an InlineSegment tree.
-     *
-     * @param {import('./inline-tokenizer.js').InlineSegment[]} segments
-     * @returns {string}
-     */
-    static _segmentsToText(segments) {
-        let result = '';
-        for (const seg of segments) {
-            if (seg.type === 'text') {
-                result += seg.text ?? '';
-            } else if (seg.type === 'code') {
-                result += seg.content ?? '';
-            } else if (seg.type === 'image') {
-                // Images produce no visible text.
-            } else if (seg.children) {
-                result += SyntaxNode._segmentsToText(seg.children);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Recursively extracts plain text from inline SyntaxNode children.
-     * Similar to _segmentsToText but operates on SyntaxNode children
-     * instead of InlineSegment objects.
-     *
-     * @param {SyntaxNode[]} children
-     * @returns {string}
-     */
-    static _inlineChildrenToText(children) {
-        let result = '';
-        for (const child of children) {
-            if (child.type === 'text') {
-                result += child._content;
-            } else if (child.type === 'inline-code') {
-                result += child._content;
-            } else if (child.type === 'inline-image') {
-                // Images produce no visible text.
-            } else if (child.children.length > 0) {
-                result += SyntaxNode._inlineChildrenToText(child.children);
-            }
-        }
-        return result;
     }
 
     /**
@@ -522,6 +379,7 @@ export class SyntaxNode {
         cloned.children = [];
         cloned.tagName = this.tagName;
         cloned.attributes = { ...this.attributes };
+        cloned.runtime = { ...this.runtime };
         cloned.startLine = this.startLine;
         cloned.endLine = this.endLine;
 
@@ -893,9 +751,9 @@ export class SyntaxNode {
                 const el = doc.createElement(tagName);
                 el.__st_node = this;
 
-                if (this.attributes._openingTag) {
+                if (this.runtime.openingTag) {
                     const temp = doc.createElement('div');
-                    temp.innerHTML = this.attributes._openingTag;
+                    temp.innerHTML = this.runtime.openingTag;
                     const sourceEl = temp.firstElementChild;
                     if (sourceEl) {
                         for (const attr of sourceEl.attributes) {
@@ -937,27 +795,6 @@ export class SyntaxNode {
 }
 
 // ── DOM rendering helpers ───────────────────────────────────────────
-
-/**
- * Parses a pipe-delimited table row into an array of cell strings.
- * @param {string} line
- * @returns {string[]}
- */
-function parseTableRow(line) {
-    return line
-        .replace(/^\||\|$/g, '')
-        .split('|')
-        .map((c) => c.trim());
-}
-
-/**
- * Tests whether a table row is a separator (e.g. |---|---|).
- * @param {string} line
- * @returns {boolean}
- */
-function isTableSeparatorRow(line) {
-    return /^\s*\|?\s*[-:]+[-|:\s]*$/.test(line);
-}
 
 /**
  * Renders an array of block-level SyntaxNode children into a DOM
@@ -1434,27 +1271,6 @@ export class SyntaxTree {
     }
 
     /**
-     * Gets the offset within a node for a line/column position.
-     * @param {SyntaxNode} node - The node
-     * @param {number} line - The line number (0-based)
-     * @param {number} column - The column number (0-based)
-     * @returns {number}
-     */
-    getOffsetInNode(node, line, column) {
-        const nodeStartLine = node.startLine;
-        const relativeLine = line - nodeStartLine;
-
-        const lines = node.content.split('\n');
-        let offset = 0;
-
-        for (let i = 0; i < relativeLine && i < lines.length; i++) {
-            offset += lines[i].length + 1; // +1 for newline
-        }
-
-        return offset + Math.min(column, lines[relativeLine]?.length ?? 0);
-    }
-
-    /**
      * Converts the tree to markdown.
      * @returns {string}
      */
@@ -1466,24 +1282,6 @@ export class SyntaxTree {
         }
 
         return lines.join('\n\n') + '\n';
-    }
-
-    /**
-     * Returns the plain visible text of the entire document with all
-     * formatting and syntax stripped.  Used by the search system for
-     * writing-view matching.
-     *
-     * @returns {string}
-     */
-    toBareText() {
-        const parts = [];
-
-        for (const child of this.children) {
-            const text = child.toBareText();
-            if (text !== '') parts.push(text);
-        }
-
-        return parts.join('\n\n');
     }
 
     /**

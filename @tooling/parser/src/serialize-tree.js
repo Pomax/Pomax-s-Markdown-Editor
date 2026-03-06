@@ -45,17 +45,12 @@ function serializeNode(node, indent, lines) {
 }
 
 /**
- * Serializes node attributes to a string, filtering runtime-only fields.
+ * Serializes node attributes to a string.
  *
  * @param {Object} attributes
  * @returns {string}
  */
 function serializeAttributes(attributes) {
-    const filtered = {};
-    for (const [key, value] of Object.entries(attributes)) {
-        if (key.startsWith('_')) continue;
-        filtered[key] = value;
-    }
-    if (Object.keys(filtered).length === 0) return '';
-    return ` ${JSON.stringify(filtered)}`;
+    if (Object.keys(attributes).length === 0) return '';
+    return ` ${JSON.stringify(attributes)}`;
 }
