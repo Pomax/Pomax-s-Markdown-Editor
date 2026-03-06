@@ -52,40 +52,40 @@ export const END = isMac ? 'Meta+ArrowRight' : 'End';
  * @returns {Promise<{ electronApp: import('@playwright/test').ElectronApplication, page: import('@playwright/test').Page }>}
  */
 export async function launchApp(extraArgs = []) {
-    const maxAttempts = 3;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        /** @type {import('@playwright/test').ElectronApplication|undefined} */
-        let electronApp;
-        try {
-            electronApp = await electron.launch({
-                args: [
-                    ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
-                    path.join(projectRoot, 'src', 'main', 'main.js'),
-                    ...extraArgs,
-                ],
-                env: { ...process.env, TESTING: '1' },
-            });
-            const page = await electronApp.firstWindow();
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    /** @type {import('@playwright/test').ElectronApplication|undefined} */
+    let electronApp;
+    try {
+      electronApp = await electron.launch({
+        args: [
+          ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
+          path.join(projectRoot, 'src', 'main', 'main.js'),
+          ...extraArgs,
+        ],
+        env: { ...process.env, TESTING: '1' },
+      });
+      const page = await electronApp.firstWindow();
 
-            // Wait for the renderer to be ready.
-            await page.waitForFunction(() => document.readyState === 'complete');
+      // Wait for the renderer to be ready.
+      await page.waitForFunction(() => document.readyState === 'complete');
 
-            // Force a consistent viewport so layout-sensitive tests pass on CI.
-            await page.setViewportSize(VIEWPORT);
+      // Force a consistent viewport so layout-sensitive tests pass on CI.
+      await page.setViewportSize(VIEWPORT);
 
-            return { electronApp, page };
-        } catch (err) {
-            // Clean up the failed app instance before retrying.
-            try {
-                await electronApp?.close();
-            } catch {
-                /* ignore */
-            }
-            if (attempt === maxAttempts) throw err;
-        }
+      return { electronApp, page };
+    } catch (err) {
+      // Clean up the failed app instance before retrying.
+      try {
+        await electronApp?.close();
+      } catch {
+        /* ignore */
+      }
+      if (attempt === maxAttempts) throw err;
     }
-    // Unreachable, but satisfies the type checker.
-    throw new Error('launchApp: max attempts exceeded');
+  }
+  // Unreachable, but satisfies the type checker.
+  throw new Error('launchApp: max attempts exceeded');
 }
 
 /**
@@ -96,11 +96,11 @@ export async function launchApp(extraArgs = []) {
  * @param {string} fixtureContent  Raw markdown string to load.
  */
 export async function loadContent(page, fixtureContent) {
-    await page.evaluate((content) => {
-        window.editorAPI?.setContent(content);
-    }, fixtureContent);
-    // Wait for the editor to re-render.
-    await page.waitForSelector('#editor .md-line');
+  await page.evaluate((content) => {
+    window.editorAPI?.setContent(content);
+  }, fixtureContent);
+  // Wait for the editor to re-render.
+  await page.waitForSelector('#editor .md-line');
 }
 
 /**
@@ -114,13 +114,13 @@ export async function loadContent(page, fixtureContent) {
  * @param {import('@playwright/test').Page} page
  */
 export async function defocusEditor(page) {
-    // In Firefox, clicking on a non-focusable element (like the
-    // editor-container padding) does NOT move focus away from a
-    // contenteditable.  Use the native DOM blur() API instead —
-    // this fires the full blur / focusout event chain.
-    await page.evaluate(() => /** @type {HTMLElement|null} */ (document.activeElement)?.blur());
-    // Give the editor time to re-render.
-    await page.waitForTimeout(200);
+  // In Firefox, clicking on a non-focusable element (like the
+  // editor-container padding) does NOT move focus away from a
+  // contenteditable.  Use the native DOM blur() API instead —
+  // this fires the full blur / focusout event chain.
+  await page.evaluate(() => /** @type {HTMLElement|null} */ (document.activeElement)?.blur());
+  // Give the editor time to re-render.
+  await page.waitForTimeout(200);
 }
 
 /**
@@ -135,9 +135,9 @@ export async function defocusEditor(page) {
  * @param {import('@playwright/test').Locator} locator
  */
 export async function clickInEditor(page, locator) {
-    const box = await locator.boundingBox();
-    if (!box) throw new Error('clickInEditor: element not visible');
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('clickInEditor: element not visible');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /**
@@ -149,11 +149,11 @@ export async function clickInEditor(page, locator) {
  * @param {string} qs  CSS selector
  */
 export async function clickQuerySelector(page, qs) {
-    await page.waitForSelector(qs);
-    await page.evaluate(
-        (selector) => /** @type {HTMLElement} */ (document.querySelector(selector))?.click(),
-        qs,
-    );
+  await page.waitForSelector(qs);
+  await page.evaluate(
+    (selector) => /** @type {HTMLElement} */ (document.querySelector(selector))?.click(),
+    qs,
+  );
 }
 
 /**
@@ -163,10 +163,10 @@ export async function clickQuerySelector(page, qs) {
  * @param {import('@playwright/test').Page} page
  */
 export async function setSourceView(page) {
-    const current = await page.locator('#editor').getAttribute('data-view-mode');
-    if (current === 'source') return;
-    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
-    await page.locator('#editor[data-view-mode="source"]').waitFor();
+  const current = await page.locator('#editor').getAttribute('data-view-mode');
+  if (current === 'source') return;
+  await clickQuerySelector(page, '.toolbar-view-mode-toggle');
+  await page.locator('#editor[data-view-mode="source"]').waitFor();
 }
 
 /**
@@ -180,18 +180,18 @@ export async function setSourceView(page) {
  * @param {import('@playwright/test').ElectronApplication} electronApp
  */
 export async function closeApp(electronApp) {
+  try {
+    await Promise.race([
+      electronApp.close(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('close timeout')), 5000)),
+    ]);
+  } catch {
     try {
-        await Promise.race([
-            electronApp.close(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('close timeout')), 5000)),
-        ]);
+      electronApp.process().kill();
     } catch {
-        try {
-            electronApp.process().kill();
-        } catch {
-            /* already dead */
-        }
+      /* already dead */
     }
+  }
 }
 
 /**
@@ -201,8 +201,8 @@ export async function closeApp(electronApp) {
  * @param {import('@playwright/test').Page} page
  */
 export async function setWritingView(page) {
-    const current = await page.locator('#editor').getAttribute('data-view-mode');
-    if (current !== 'source') return;
-    await clickQuerySelector(page, '.toolbar-view-mode-toggle');
-    await page.locator('#editor[data-view-mode="writing"]').waitFor();
+  const current = await page.locator('#editor').getAttribute('data-view-mode');
+  if (current !== 'source') return;
+  await clickQuerySelector(page, '.toolbar-view-mode-toggle');
+  await page.locator('#editor[data-view-mode="writing"]').waitFor();
 }

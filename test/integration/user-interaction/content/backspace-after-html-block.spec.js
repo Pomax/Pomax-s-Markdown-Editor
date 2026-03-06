@@ -18,13 +18,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
-    clickInEditor,
-    closeApp,
-    launchApp,
-    loadContent,
-    projectRoot,
-    setSourceView,
-    setWritingView,
+  clickInEditor,
+  closeApp,
+  launchApp,
+  loadContent,
+  projectRoot,
+  setSourceView,
+  setWritingView,
 } from '../../test-utils.js';
 
 const isMac = process.platform === 'darwin';
@@ -40,88 +40,88 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await closeApp(electronApp);
+  await closeApp(electronApp);
 });
 
 test('source view: backspace at start of paragraph after </details> does not delete the line', async () => {
-    // Load the fixture fresh.
-    await loadContent(page, fixtureContent);
+  // Load the fixture fresh.
+  await loadContent(page, fixtureContent);
 
-    // Switch to source view.
-    await setSourceView(page);
+  // Switch to source view.
+  await setSourceView(page);
 
-    // Find the line that contains "And then this is the main doc again."
-    const targetLine = page.locator('#editor .md-line', {
-        hasText: 'And then this is the main doc again.',
-    });
-    // There may be a parent wrapper that also matches; narrow to the
-    // innermost .md-line that has no .md-line children.
-    const innerTarget = targetLine.locator(':scope:not(:has(.md-line))').first();
-    await clickInEditor(page, innerTarget);
-    await page.waitForTimeout(100);
+  // Find the line that contains "And then this is the main doc again."
+  const targetLine = page.locator('#editor .md-line', {
+    hasText: 'And then this is the main doc again.',
+  });
+  // There may be a parent wrapper that also matches; narrow to the
+  // innermost .md-line that has no .md-line children.
+  const innerTarget = targetLine.locator(':scope:not(:has(.md-line))').first();
+  await clickInEditor(page, innerTarget);
+  await page.waitForTimeout(100);
 
-    // Move cursor to the very start of the line.
-    await page.keyboard.press(Home);
-    await page.waitForTimeout(100);
+  // Move cursor to the very start of the line.
+  await page.keyboard.press(Home);
+  await page.waitForTimeout(100);
 
-    // Press Backspace.
-    await page.keyboard.press('Backspace');
-    await page.waitForTimeout(300);
+  // Press Backspace.
+  await page.keyboard.press('Backspace');
+  await page.waitForTimeout(300);
 
-    // The line must still exist with its full content.
-    const afterLine = page.locator('#editor .md-line', {
-        hasText: 'And then this is the main doc again.',
-    });
-    const count = await afterLine.locator(':scope:not(:has(.md-line))').count();
-    expect(
-        count,
-        'paragraph should still exist after backspace in source view',
-    ).toBeGreaterThanOrEqual(1);
+  // The line must still exist with its full content.
+  const afterLine = page.locator('#editor .md-line', {
+    hasText: 'And then this is the main doc again.',
+  });
+  const count = await afterLine.locator(':scope:not(:has(.md-line))').count();
+  expect(
+    count,
+    'paragraph should still exist after backspace in source view',
+  ).toBeGreaterThanOrEqual(1);
 
-    const text = await afterLine.locator(':scope:not(:has(.md-line))').first().innerText();
-    expect(text).toContain('And then this is the main doc again.');
+  const text = await afterLine.locator(':scope:not(:has(.md-line))').first().innerText();
+  expect(text).toContain('And then this is the main doc again.');
 });
 
 test('writing view: backspace at start of paragraph after </details> merges with last child inside details', async () => {
-    // Reload the fixture fresh.
-    await loadContent(page, fixtureContent);
+  // Reload the fixture fresh.
+  await loadContent(page, fixtureContent);
 
-    // Make sure we're in writing view.
-    await setWritingView(page);
+  // Make sure we're in writing view.
+  await setWritingView(page);
 
-    // Click on "And then this is the main doc again."
-    const targetLine = page.locator('#editor .md-line', {
-        hasText: 'And then this is the main doc again.',
-    });
-    await clickInEditor(page, targetLine.first());
-    await page.waitForTimeout(100);
+  // Click on "And then this is the main doc again."
+  const targetLine = page.locator('#editor .md-line', {
+    hasText: 'And then this is the main doc again.',
+  });
+  await clickInEditor(page, targetLine.first());
+  await page.waitForTimeout(100);
 
-    // Move cursor to the very start.
-    await page.keyboard.press(Home);
-    await page.waitForTimeout(100);
+  // Move cursor to the very start.
+  await page.keyboard.press(Home);
+  await page.waitForTimeout(100);
 
-    // Press Backspace — should merge into the "better" paragraph.
-    await page.keyboard.press('Backspace');
-    await page.waitForTimeout(300);
+  // Press Backspace — should merge into the "better" paragraph.
+  await page.keyboard.press('Backspace');
+  await page.waitForTimeout(300);
 
-    // The merged text should now be "betterAnd then this is the main doc again."
-    // located inside the fake details block.
-    const mergedLine = page.locator('#editor .md-details .md-line', {
-        hasText: 'betterAnd then this is the main doc again.',
-    });
-    const mergedCount = await mergedLine.count();
-    expect(mergedCount, 'merged line should exist inside details').toBe(1);
+  // The merged text should now be "betterAnd then this is the main doc again."
+  // located inside the fake details block.
+  const mergedLine = page.locator('#editor .md-details .md-line', {
+    hasText: 'betterAnd then this is the main doc again.',
+  });
+  const mergedCount = await mergedLine.count();
+  expect(mergedCount, 'merged line should exist inside details').toBe(1);
 
-    // The standalone paragraph should no longer exist outside details.
-    // Use :not(.md-html-block) to exclude the html-block wrapper whose
-    // descendant text now includes the merged content.
-    const standaloneLine = page.locator('#editor > .md-line:not(.md-html-block)', {
-        hasText: 'And then this is the main doc again.',
-    });
-    const standaloneCount = await standaloneLine.count();
-    expect(standaloneCount, 'standalone paragraph should be gone').toBe(0);
+  // The standalone paragraph should no longer exist outside details.
+  // Use :not(.md-html-block) to exclude the html-block wrapper whose
+  // descendant text now includes the merged content.
+  const standaloneLine = page.locator('#editor > .md-line:not(.md-html-block)', {
+    hasText: 'And then this is the main doc again.',
+  });
+  const standaloneCount = await standaloneLine.count();
+  expect(standaloneCount, 'standalone paragraph should be gone').toBe(0);
 });

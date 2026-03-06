@@ -20,11 +20,11 @@ let electronApp;
 let page;
 
 test.beforeAll(async () => {
-    ({ electronApp, page } = await launchApp());
+  ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
-    await closeApp(electronApp);
+  await closeApp(electronApp);
 });
 
 /**
@@ -34,112 +34,110 @@ test.afterAll(async () => {
  * @param {number} dx - Horizontal pixel distance to drag (positive = rightward)
  */
 async function simulateDrag(pg, side, dx) {
-    await pg.evaluate(
-        ([s, delta]) => {
-            const d = /** @type {number} */ (delta);
-            const handle = document.querySelector(`.editor-resize-handle--${s}`);
-            if (!handle) throw new Error(`Handle .editor-resize-handle--${s} not found`);
-            const rect = handle.getBoundingClientRect();
-            const startX = rect.left + rect.width / 2;
-            const startY = rect.top + rect.height / 2;
+  await pg.evaluate(
+    ([s, delta]) => {
+      const d = /** @type {number} */ (delta);
+      const handle = document.querySelector(`.editor-resize-handle--${s}`);
+      if (!handle) throw new Error(`Handle .editor-resize-handle--${s} not found`);
+      const rect = handle.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const startY = rect.top + rect.height / 2;
 
-            /** @param {EventTarget} target @param {string} type @param {number} x @param {number} y */
-            const fire = (target, type, x, y) =>
-                target.dispatchEvent(
-                    new MouseEvent(type, { clientX: x, clientY: y, bubbles: true }),
-                );
+      /** @param {EventTarget} target @param {string} type @param {number} x @param {number} y */
+      const fire = (target, type, x, y) =>
+        target.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true }));
 
-            fire(handle, 'mousedown', startX, startY);
-            // Several intermediate moves for realism
-            const steps = 5;
-            for (let i = 1; i <= steps; i++) {
-                fire(document, 'mousemove', startX + (d * i) / steps, startY);
-            }
-            fire(document, 'mouseup', startX + d, startY);
-        },
-        [side, dx],
-    );
-    // Let rAF and persist settle
-    await pg.waitForTimeout(200);
+      fire(handle, 'mousedown', startX, startY);
+      // Several intermediate moves for realism
+      const steps = 5;
+      for (let i = 1; i <= steps; i++) {
+        fire(document, 'mousemove', startX + (d * i) / steps, startY);
+      }
+      fire(document, 'mouseup', startX + d, startY);
+    },
+    [side, dx],
+  );
+  // Let rAF and persist settle
+  await pg.waitForTimeout(200);
 }
 
 test('resize handles are visible in writing mode', async () => {
-    await setWritingView(page);
-    const left = page.locator('.editor-resize-handle--left');
-    const right = page.locator('.editor-resize-handle--right');
-    await expect(left).toBeAttached();
-    await expect(right).toBeAttached();
+  await setWritingView(page);
+  const left = page.locator('.editor-resize-handle--left');
+  const right = page.locator('.editor-resize-handle--right');
+  await expect(left).toBeAttached();
+  await expect(right).toBeAttached();
 });
 
 test('resize handles are visible in source mode', async () => {
-    await setSourceView(page);
-    const left = page.locator('.editor-resize-handle--left');
-    const right = page.locator('.editor-resize-handle--right');
-    await expect(left).toBeAttached();
-    await expect(right).toBeAttached();
-    await setWritingView(page);
+  await setSourceView(page);
+  const left = page.locator('.editor-resize-handle--left');
+  const right = page.locator('.editor-resize-handle--right');
+  await expect(left).toBeAttached();
+  await expect(right).toBeAttached();
+  await setWritingView(page);
 });
 
 test('dragging the right handle increases page width', async () => {
-    await setWritingView(page);
+  await setWritingView(page);
 
-    // Reset to a known narrow max-width so the drag has room to grow.
-    await page.evaluate(() => {
-        document.documentElement.style.setProperty('--page-max-width', '400px');
-    });
+  // Reset to a known narrow max-width so the drag has room to grow.
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty('--page-max-width', '400px');
+  });
 
-    const initialMaxWidth = await page.evaluate(() =>
-        Number.parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
-        ),
-    );
+  const initialMaxWidth = await page.evaluate(() =>
+    Number.parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
+    ),
+  );
 
-    await simulateDrag(page, 'right', 50);
+  await simulateDrag(page, 'right', 50);
 
-    const newMaxWidth = await page.evaluate(() =>
-        Number.parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
-        ),
-    );
-    expect(newMaxWidth).toBeGreaterThan(initialMaxWidth);
+  const newMaxWidth = await page.evaluate(() =>
+    Number.parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
+    ),
+  );
+  expect(newMaxWidth).toBeGreaterThan(initialMaxWidth);
 });
 
 test('dragging the left handle increases page width', async () => {
-    await setWritingView(page);
+  await setWritingView(page);
 
-    // Reset to a known narrow max-width so the drag has room to grow.
-    await page.evaluate(() => {
-        document.documentElement.style.setProperty('--page-max-width', '400px');
-    });
+  // Reset to a known narrow max-width so the drag has room to grow.
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty('--page-max-width', '400px');
+  });
 
-    const initialMaxWidth = await page.evaluate(() =>
-        Number.parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
-        ),
-    );
+  const initialMaxWidth = await page.evaluate(() =>
+    Number.parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
+    ),
+  );
 
-    await simulateDrag(page, 'left', -50);
+  await simulateDrag(page, 'left', -50);
 
-    const newMaxWidth = await page.evaluate(() =>
-        Number.parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
-        ),
-    );
-    expect(newMaxWidth).toBeGreaterThan(initialMaxWidth);
+  const newMaxWidth = await page.evaluate(() =>
+    Number.parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--page-max-width'),
+    ),
+  );
+  expect(newMaxWidth).toBeGreaterThan(initialMaxWidth);
 });
 
 test('page width is persisted to settings after drag', async () => {
-    await setWritingView(page);
+  await setWritingView(page);
 
-    await simulateDrag(page, 'right', 30);
+  await simulateDrag(page, 'right', 30);
 
-    const setting = await page.evaluate(async () => {
-        const result = await window.electronAPI?.getSetting('pageWidth');
-        return result?.value;
-    });
+  const setting = await page.evaluate(async () => {
+    const result = await window.electronAPI?.getSetting('pageWidth');
+    return result?.value;
+  });
 
-    expect(setting).toBeTruthy();
-    expect(setting.useFixed).toBe(false);
-    expect(setting.unit).toBe('px');
-    expect(setting.width).toBeGreaterThan(0);
+  expect(setting).toBeTruthy();
+  expect(setting.useFixed).toBe(false);
+  expect(setting.unit).toBe('px');
+  expect(setting.width).toBeGreaterThan(0);
 });

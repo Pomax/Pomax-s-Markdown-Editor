@@ -31,53 +31,53 @@
  * @returns {DFATokenType|null}  null means "plain text"
  */
 function charType(ch) {
-    switch (ch) {
-        case '\n':
-            return 'NEWLINE';
-        case '#':
-            return 'HASH';
-        case ' ':
-            return 'SPACE';
-        case '\t':
-            return 'TAB';
-        case '>':
-            return 'GT';
-        case '-':
-            return 'DASH';
-        case '*':
-            return 'STAR';
-        case '_':
-            return 'UNDERSCORE';
-        case '~':
-            return 'TILDE';
-        case '`':
-            return 'BACKTICK';
-        case '|':
-            return 'PIPE';
-        case '!':
-            return 'BANG';
-        case '[':
-            return 'LBRACKET';
-        case ']':
-            return 'RBRACKET';
-        case '(':
-            return 'LPAREN';
-        case ')':
-            return 'RPAREN';
-        case '<':
-            return 'LT';
-        case '/':
-            return 'FSLASH';
-        case '.':
-            return 'DOT';
-        case '+':
-            return 'PLUS';
-        case ':':
-            return 'COLON';
-        default:
-            if (ch >= '0' && ch <= '9') return 'DIGIT';
-            return null;
-    }
+  switch (ch) {
+    case '\n':
+      return 'NEWLINE';
+    case '#':
+      return 'HASH';
+    case ' ':
+      return 'SPACE';
+    case '\t':
+      return 'TAB';
+    case '>':
+      return 'GT';
+    case '-':
+      return 'DASH';
+    case '*':
+      return 'STAR';
+    case '_':
+      return 'UNDERSCORE';
+    case '~':
+      return 'TILDE';
+    case '`':
+      return 'BACKTICK';
+    case '|':
+      return 'PIPE';
+    case '!':
+      return 'BANG';
+    case '[':
+      return 'LBRACKET';
+    case ']':
+      return 'RBRACKET';
+    case '(':
+      return 'LPAREN';
+    case ')':
+      return 'RPAREN';
+    case '<':
+      return 'LT';
+    case '/':
+      return 'FSLASH';
+    case '.':
+      return 'DOT';
+    case '+':
+      return 'PLUS';
+    case ':':
+      return 'COLON';
+    default:
+      if (ch >= '0' && ch <= '9') return 'DIGIT';
+      return null;
+  }
 }
 
 // ── Tokenizer ───────────────────────────────────────────────────────
@@ -89,35 +89,35 @@ function charType(ch) {
  * @returns {DFAToken[]}
  */
 export function tokenize(input) {
-    /** @type {DFAToken[]} */
-    const tokens = [];
-    let i = 0;
-    let textBuf = '';
+  /** @type {DFAToken[]} */
+  const tokens = [];
+  let i = 0;
+  let textBuf = '';
 
-    function flushText() {
-        if (textBuf.length > 0) {
-            tokens.push({ type: 'TEXT', value: textBuf });
-            textBuf = '';
-        }
+  function flushText() {
+    if (textBuf.length > 0) {
+      tokens.push({ type: 'TEXT', value: textBuf });
+      textBuf = '';
+    }
+  }
+
+  while (i < input.length) {
+    const ch = input[i];
+    const type = charType(ch);
+
+    if (type === null) {
+      // Plain text — accumulate.
+      textBuf += ch;
+    } else {
+      flushText();
+      tokens.push({ type, value: ch });
     }
 
-    while (i < input.length) {
-        const ch = input[i];
-        const type = charType(ch);
+    i++;
+  }
 
-        if (type === null) {
-            // Plain text — accumulate.
-            textBuf += ch;
-        } else {
-            flushText();
-            tokens.push({ type, value: ch });
-        }
+  flushText();
+  tokens.push({ type: 'EOF', value: '' });
 
-        i++;
-    }
-
-    flushText();
-    tokens.push({ type: 'EOF', value: '' });
-
-    return tokens;
+  return tokens;
 }

@@ -10,9 +10,9 @@
  * @returns {number}
  */
 function countWords(text) {
-    const trimmed = text.trim();
-    if (trimmed.length === 0) return 0;
-    return trimmed.split(/\s+/).length;
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return 0;
+  return trimmed.split(/\s+/).length;
 }
 
 /**
@@ -22,24 +22,24 @@ function countWords(text) {
  * @returns {string}
  */
 function stripMarkdownSyntax(text) {
-    let s = text;
+  let s = text;
 
-    // Linked images: [![alt](src)](href) → alt
-    s = s.replace(/\[!\[([^\]]*)\]\([^)]*\)\]\([^)]*\)/g, '$1');
+  // Linked images: [![alt](src)](href) → alt
+  s = s.replace(/\[!\[([^\]]*)\]\([^)]*\)\]\([^)]*\)/g, '$1');
 
-    // Images: ![alt](src) → alt
-    s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  // Images: ![alt](src) → alt
+  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
 
-    // Links: [text](url) → text
-    s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  // Links: [text](url) → text
+  s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
 
-    // Bold/italic markers
-    s = s.replace(/(\*{1,3}|_{1,3})/g, '');
+  // Bold/italic markers
+  s = s.replace(/(\*{1,3}|_{1,3})/g, '');
 
-    // Strikethrough
-    s = s.replace(/~~/g, '');
+  // Strikethrough
+  s = s.replace(/~~/g, '');
 
-    return s;
+  return s;
 }
 
 /**
@@ -48,7 +48,7 @@ function stripMarkdownSyntax(text) {
  * @returns {string}
  */
 function stripInlineCode(text) {
-    return text.replace(/`[^`]*`/g, '');
+  return text.replace(/`[^`]*`/g, '');
 }
 
 /**
@@ -63,53 +63,53 @@ function stripInlineCode(text) {
  * @returns {WordCountResult}
  */
 export function getWordCounts(syntaxTree) {
-    if (!syntaxTree) return { total: 0, excludingCode: 0 };
+  if (!syntaxTree) return { total: 0, excludingCode: 0 };
 
-    let total = 0;
-    let excludingCode = 0;
+  let total = 0;
+  let excludingCode = 0;
 
-    for (const node of syntaxTree.children) {
-        const raw = node.content;
-        const stripped = stripMarkdownSyntax(raw);
-        total += countWords(stripped);
+  for (const node of syntaxTree.children) {
+    const raw = node.content;
+    const stripped = stripMarkdownSyntax(raw);
+    total += countWords(stripped);
 
-        if (node.type === 'code-block') {
-            // Code block counts toward total but not excludingCode
-            continue;
-        }
-
-        // For non-code-block nodes, also strip inline code for the excluding count
-        const withoutInline = stripInlineCode(stripped);
-        excludingCode += countWords(withoutInline);
+    if (node.type === 'code-block') {
+      // Code block counts toward total but not excludingCode
+      continue;
     }
 
-    return { total, excludingCode };
+    // For non-code-block nodes, also strip inline code for the excluding count
+    const withoutInline = stripInlineCode(stripped);
+    excludingCode += countWords(withoutInline);
+  }
+
+  return { total, excludingCode };
 }
 
 /**
  * A modal dialog that displays the word count of the current document.
  */
 export class WordCountModal {
-    constructor() {
-        /** @type {HTMLDialogElement|null} */
-        this.dialog = null;
+  constructor() {
+    /** @type {HTMLDialogElement|null} */
+    this.dialog = null;
 
-        /** @type {boolean} */
-        this._built = false;
-    }
+    /** @type {boolean} */
+    this._built = false;
+  }
 
-    /**
-     * Lazily builds the dialog DOM the first time it is needed.
-     */
-    _build() {
-        if (this._built) return;
-        this._built = true;
+  /**
+   * Lazily builds the dialog DOM the first time it is needed.
+   */
+  _build() {
+    if (this._built) return;
+    this._built = true;
 
-        const dialog = document.createElement('dialog');
-        dialog.className = 'word-count-dialog';
-        dialog.setAttribute('aria-label', 'Word Count');
+    const dialog = document.createElement('dialog');
+    dialog.className = 'word-count-dialog';
+    dialog.setAttribute('aria-label', 'Word Count');
 
-        dialog.innerHTML = `
+    dialog.innerHTML = `
             <div class="word-count-content">
                 <header class="word-count-header">
                     <h2>Word Count</h2>
@@ -135,37 +135,37 @@ export class WordCountModal {
             </div>
         `;
 
-        // Close handlers
-        dialog.querySelector('.word-count-close')?.addEventListener('click', () => this.close());
-        dialog.querySelector('.word-count-ok')?.addEventListener('click', () => this.close());
-        dialog.addEventListener('cancel', () => this.close());
+    // Close handlers
+    dialog.querySelector('.word-count-close')?.addEventListener('click', () => this.close());
+    dialog.querySelector('.word-count-ok')?.addEventListener('click', () => this.close());
+    dialog.addEventListener('cancel', () => this.close());
 
-        document.body.appendChild(dialog);
-        this.dialog = dialog;
-    }
+    document.body.appendChild(dialog);
+    this.dialog = dialog;
+  }
 
-    /**
-     * Opens the modal, displaying counts from the given syntax tree.
-     * @param {import('../parser/syntax-tree.js').SyntaxTree | null} syntaxTree
-     */
-    open(syntaxTree) {
-        this._build();
-        if (!this.dialog) return;
+  /**
+   * Opens the modal, displaying counts from the given syntax tree.
+   * @param {import('../parser/syntax-tree.js').SyntaxTree | null} syntaxTree
+   */
+  open(syntaxTree) {
+    this._build();
+    if (!this.dialog) return;
 
-        const { total, excludingCode } = getWordCounts(syntaxTree);
+    const { total, excludingCode } = getWordCounts(syntaxTree);
 
-        const totalEl = this.dialog.querySelector('#wc-total');
-        const exclEl = this.dialog.querySelector('#wc-excluding-code');
-        if (totalEl) totalEl.textContent = total.toLocaleString();
-        if (exclEl) exclEl.textContent = excludingCode.toLocaleString();
+    const totalEl = this.dialog.querySelector('#wc-total');
+    const exclEl = this.dialog.querySelector('#wc-excluding-code');
+    if (totalEl) totalEl.textContent = total.toLocaleString();
+    if (exclEl) exclEl.textContent = excludingCode.toLocaleString();
 
-        this.dialog.showModal();
-    }
+    this.dialog.showModal();
+  }
 
-    /**
-     * Closes the modal.
-     */
-    close() {
-        this.dialog?.close();
-    }
+  /**
+   * Closes the modal.
+   */
+  close() {
+    this.dialog?.close();
+  }
 }

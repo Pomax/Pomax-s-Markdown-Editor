@@ -23,63 +23,63 @@ import { findMatchedTokenIndices, tokenizeInline } from '../parser/inline-tokeni
  * @returns {number}
  */
 export function rawOffsetToRenderedOffset(content, rawOffset) {
-    if (!content || rawOffset <= 0) return 0;
+  if (!content || rawOffset <= 0) return 0;
 
-    const tokens = tokenizeInline(content);
-    const matched = findMatchedTokenIndices(tokens);
-    let rawPos = 0;
-    let renderedPos = 0;
+  const tokens = tokenizeInline(content);
+  const matched = findMatchedTokenIndices(tokens);
+  let rawPos = 0;
+  let renderedPos = 0;
 
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-        const rawLen = token.raw.length;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const rawLen = token.raw.length;
 
-        if (token.type === 'text') {
-            // Visible text: raw length == rendered length.
-            if (rawOffset <= rawPos + rawLen) {
-                return renderedPos + (rawOffset - rawPos);
-            }
-            rawPos += rawLen;
-            renderedPos += rawLen;
-        } else if (token.type === 'code') {
-            // Code span: `content` — backticks are invisible.
-            const contentLen = token.content?.length ?? 0;
-            const openDelim = 1;
-            if (rawOffset <= rawPos + openDelim) {
-                return renderedPos;
-            }
-            if (rawOffset <= rawPos + openDelim + contentLen) {
-                return renderedPos + (rawOffset - rawPos - openDelim);
-            }
-            if (rawOffset < rawPos + rawLen) {
-                return renderedPos + contentLen;
-            }
-            rawPos += rawLen;
-            renderedPos += contentLen;
-        } else if (token.type === 'image') {
-            // Image: ![alt](src) — entire syntax replaced by one rendered unit.
-            if (rawOffset < rawPos + rawLen) {
-                return renderedPos;
-            }
-            rawPos += rawLen;
-            renderedPos += 1;
-        } else if (matched.has(i)) {
-            // Matched delimiter — invisible in rendered output.
-            if (rawOffset < rawPos + rawLen) {
-                return renderedPos;
-            }
-            rawPos += rawLen;
-        } else {
-            // Unmatched delimiter — rendered as visible text.
-            if (rawOffset <= rawPos + rawLen) {
-                return renderedPos + (rawOffset - rawPos);
-            }
-            rawPos += rawLen;
-            renderedPos += rawLen;
-        }
+    if (token.type === 'text') {
+      // Visible text: raw length == rendered length.
+      if (rawOffset <= rawPos + rawLen) {
+        return renderedPos + (rawOffset - rawPos);
+      }
+      rawPos += rawLen;
+      renderedPos += rawLen;
+    } else if (token.type === 'code') {
+      // Code span: `content` — backticks are invisible.
+      const contentLen = token.content?.length ?? 0;
+      const openDelim = 1;
+      if (rawOffset <= rawPos + openDelim) {
+        return renderedPos;
+      }
+      if (rawOffset <= rawPos + openDelim + contentLen) {
+        return renderedPos + (rawOffset - rawPos - openDelim);
+      }
+      if (rawOffset < rawPos + rawLen) {
+        return renderedPos + contentLen;
+      }
+      rawPos += rawLen;
+      renderedPos += contentLen;
+    } else if (token.type === 'image') {
+      // Image: ![alt](src) — entire syntax replaced by one rendered unit.
+      if (rawOffset < rawPos + rawLen) {
+        return renderedPos;
+      }
+      rawPos += rawLen;
+      renderedPos += 1;
+    } else if (matched.has(i)) {
+      // Matched delimiter — invisible in rendered output.
+      if (rawOffset < rawPos + rawLen) {
+        return renderedPos;
+      }
+      rawPos += rawLen;
+    } else {
+      // Unmatched delimiter — rendered as visible text.
+      if (rawOffset <= rawPos + rawLen) {
+        return renderedPos + (rawOffset - rawPos);
+      }
+      rawPos += rawLen;
+      renderedPos += rawLen;
     }
+  }
 
-    return renderedPos;
+  return renderedPos;
 }
 
 /**
@@ -93,50 +93,50 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
  * @returns {number}
  */
 export function renderedOffsetToRawOffset(content, renderedOffset) {
-    if (!content || renderedOffset <= 0) return 0;
+  if (!content || renderedOffset <= 0) return 0;
 
-    const tokens = tokenizeInline(content);
-    const matched = findMatchedTokenIndices(tokens);
-    let rawPos = 0;
-    let renderedPos = 0;
+  const tokens = tokenizeInline(content);
+  const matched = findMatchedTokenIndices(tokens);
+  let rawPos = 0;
+  let renderedPos = 0;
 
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-        const rawLen = token.raw.length;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const rawLen = token.raw.length;
 
-        if (token.type === 'text') {
-            if (renderedOffset <= renderedPos + rawLen) {
-                return rawPos + (renderedOffset - renderedPos);
-            }
-            rawPos += rawLen;
-            renderedPos += rawLen;
-        } else if (token.type === 'code') {
-            const contentLen = token.content?.length ?? 0;
-            const openDelim = 1;
-            if (renderedOffset < renderedPos + contentLen) {
-                return rawPos + openDelim + (renderedOffset - renderedPos);
-            }
-            rawPos += rawLen;
-            renderedPos += contentLen;
-        } else if (token.type === 'image') {
-            // Image: ![alt](src) — one rendered unit maps to entire raw syntax.
-            if (renderedOffset < renderedPos + 1) {
-                return rawPos;
-            }
-            rawPos += rawLen;
-            renderedPos += 1;
-        } else if (matched.has(i)) {
-            // Matched delimiter — invisible, advance raw position only.
-            rawPos += rawLen;
-        } else {
-            // Unmatched delimiter — visible as text.
-            if (renderedOffset <= renderedPos + rawLen) {
-                return rawPos + (renderedOffset - renderedPos);
-            }
-            rawPos += rawLen;
-            renderedPos += rawLen;
-        }
+    if (token.type === 'text') {
+      if (renderedOffset <= renderedPos + rawLen) {
+        return rawPos + (renderedOffset - renderedPos);
+      }
+      rawPos += rawLen;
+      renderedPos += rawLen;
+    } else if (token.type === 'code') {
+      const contentLen = token.content?.length ?? 0;
+      const openDelim = 1;
+      if (renderedOffset < renderedPos + contentLen) {
+        return rawPos + openDelim + (renderedOffset - renderedPos);
+      }
+      rawPos += rawLen;
+      renderedPos += contentLen;
+    } else if (token.type === 'image') {
+      // Image: ![alt](src) — one rendered unit maps to entire raw syntax.
+      if (renderedOffset < renderedPos + 1) {
+        return rawPos;
+      }
+      rawPos += rawLen;
+      renderedPos += 1;
+    } else if (matched.has(i)) {
+      // Matched delimiter — invisible, advance raw position only.
+      rawPos += rawLen;
+    } else {
+      // Unmatched delimiter — visible as text.
+      if (renderedOffset <= renderedPos + rawLen) {
+        return rawPos + (renderedOffset - renderedPos);
+      }
+      rawPos += rawLen;
+      renderedPos += rawLen;
     }
+  }
 
-    return rawPos;
+  return rawPos;
 }
