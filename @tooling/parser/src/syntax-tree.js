@@ -157,7 +157,7 @@ export class SyntaxNode {
         const tokens = tokenizeInline(this._content);
         const segments = buildInlineTree(tokens);
         for (const seg of segments) {
-            this.appendChild(SyntaxNode._segmentToNode(seg));
+            this.appendChild(SyntaxNode.segmentToNode(seg));
         }
     }
 
@@ -166,7 +166,7 @@ export class SyntaxNode {
      * @param {import('./inline-tokenizer.js').InlineSegment} segment
      * @returns {SyntaxNode}
      */
-    static _segmentToNode(segment) {
+    static segmentToNode(segment) {
         switch (segment.type) {
             case 'text':
                 return new SyntaxNode('text', segment.text ?? '');
@@ -187,7 +187,7 @@ export class SyntaxNode {
                 if (segment.href) node.attributes.href = segment.href;
                 if (segment.children) {
                     for (const child of segment.children) {
-                        node.appendChild(SyntaxNode._segmentToNode(child));
+                        node.appendChild(SyntaxNode.segmentToNode(child));
                     }
                 }
                 return node;

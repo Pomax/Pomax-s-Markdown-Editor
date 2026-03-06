@@ -535,7 +535,7 @@ export class DFAParser {
 
     /**
      * Groups consecutive list-item nodes into a list container node.
-     * Called when parse() encounters a list-item from _parseBlock.
+     * Called when parse() encounters a list-item from parseBlock.
      * Handles nesting: deeper-indented items become a nested list
      * that is appended as a child of the preceding list-item.
      *
