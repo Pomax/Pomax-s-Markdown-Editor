@@ -5,17 +5,52 @@
  * inline syntax (`**`, `*`, `_`, `__`, `~~`, `` ` ``, `[]()`) and HTML
  * inline tags (`<strong>`, `<em>`, `<sub>`, `<sup>`, etc.).
  *
- * The token list is then assembled into a tree of inline segments by
- * {@link buildInlineTree}, which a renderer can walk to produce DOM nodes.
+ * The token list is consumed by {@link parseInlineContent} in
+ * syntax-tree.js, which assembles it into SyntaxNode children.
  */
 
-// ── Known inline HTML tags ──────────────────────────────────────────
-//
-// Adding support for a new inline HTML tag is a one-line change: just
-// add the tag name to this set.
+// ── Void HTML elements ──────────────────────────────────────────────
 
 /** @type {Set<string>} */
-const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mark', 'u', 'b', 'i']);
+const VOID_HTML_ELEMENTS = new Set([
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+    'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+// ── HTML helpers ────────────────────────────────────────────────────
+
+/**
+ * Finds the closing '>' for a tag, skipping '>' inside quoted attributes.
+ * @param {string} input
+ * @param {number} start - Position after the '<'
+ * @returns {number} Index of closing '>', or -1
+ */
+function findClosingAngle(input, start) {
+    let inDouble = false;
+    let inSingle = false;
+    for (let j = start; j < input.length; j++) {
+        const c = input[j];
+        if (c === '"' && !inSingle) inDouble = !inDouble;
+        else if (c === "'" && !inDouble) inSingle = !inSingle;
+        else if (c === '>' && !inDouble && !inSingle) return j;
+    }
+    return -1;
+}
+
+/**
+ * Parses HTML attribute key-value pairs from a string.
+ * @param {string} str - e.g. 'src="x.png" alt="pic"'
+ * @returns {Record<string, string>}
+ */
+function parseHTMLAttributes(str) {
+    const attrs = {};
+    const re = /([a-zA-Z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
+    let m;
+    while ((m = re.exec(str)) !== null) {
+        attrs[m[1]] = m[2] ?? m[3] ?? m[4] ?? '';
+    }
+    return attrs;
+}
 
 // ── Token types ─────────────────────────────────────────────────────
 
@@ -25,7 +60,7 @@ const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
  *   |'strikethrough-open'|'strikethrough-close'|'code'
  *   |'link-open'|'link-close'|'link-href'
  *   |'image'
- *   |'html-open'|'html-close'} TokenType
+ *   |'html-open'|'html-close'|'html-void'} TokenType
  */
 
 /**
@@ -33,7 +68,8 @@ const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
  * @property {TokenType} type
  * @property {string} raw      - The original source text of the token.
  * @property {string} [content] - Inner content (for code spans / text).
- * @property {string} [tag]     - HTML tag name (for html-open / html-close).
+ * @property {string} [tag]     - HTML tag name (for html-open / html-close / html-void).
+ * @property {Record<string, string>} [attrs] - HTML attributes (for html-open / html-void).
  * @property {string} [href]    - Link URL (for link-href).
  * @property {string} [alt]     - Alt text (for image tokens).
  * @property {string} [src]     - Image URL (for image tokens).
@@ -280,42 +316,44 @@ export function tokenizeInline(input) {
             }
         }
 
-        // ── <tag> / </tag> HTML inline tags ──────────────────────
+        // ── <tag> / </tag> / <tag /> HTML tags ──────────────────
         if (ch === '<') {
-            const closeAngle = input.indexOf('>', i + 1);
+            const closeAngle = findClosingAngle(input, i + 1);
             if (closeAngle !== -1) {
                 const tagContent = input.slice(i + 1, closeAngle);
                 // Closing tag: </tagname>
                 const closeMatch = tagContent.match(/^\/([a-zA-Z][a-zA-Z0-9]*)$/);
                 if (closeMatch) {
                     const tagName = closeMatch[1].toLowerCase();
-                    if (INLINE_HTML_TAGS.has(tagName)) {
-                        flushText(i);
-                        tokens.push({
-                            type: 'html-close',
-                            raw: input.slice(i, closeAngle + 1),
-                            tag: tagName,
-                        });
-                        i = closeAngle + 1;
-                        textStart = i;
-                        continue;
-                    }
+                    flushText(i);
+                    tokens.push({
+                        type: 'html-close',
+                        raw: input.slice(i, closeAngle + 1),
+                        tag: tagName,
+                    });
+                    i = closeAngle + 1;
+                    textStart = i;
+                    continue;
                 }
-                // Opening tag: <tagname> (no attributes for inline tags)
-                const openMatch = tagContent.match(/^([a-zA-Z][a-zA-Z0-9]*)$/);
+                // Opening or void tag: <tagname ...> or <tagname ... />
+                const openMatch = tagContent.match(/^([a-zA-Z][a-zA-Z0-9]*)([\s/].*)?$/);
                 if (openMatch) {
                     const tagName = openMatch[1].toLowerCase();
-                    if (INLINE_HTML_TAGS.has(tagName)) {
-                        flushText(i);
-                        tokens.push({
-                            type: 'html-open',
-                            raw: input.slice(i, closeAngle + 1),
-                            tag: tagName,
-                        });
-                        i = closeAngle + 1;
-                        textStart = i;
-                        continue;
-                    }
+                    const rest = (openMatch[2] || '').trim();
+                    const selfClosing = rest.endsWith('/');
+                    const attrString = selfClosing ? rest.slice(0, -1).trim() : rest;
+                    const attrs = attrString ? parseHTMLAttributes(attrString) : {};
+                    const isVoid = selfClosing || VOID_HTML_ELEMENTS.has(tagName);
+                    flushText(i);
+                    tokens.push({
+                        type: isVoid ? 'html-void' : 'html-open',
+                        raw: input.slice(i, closeAngle + 1),
+                        tag: tagName,
+                        attrs,
+                    });
+                    i = closeAngle + 1;
+                    textStart = i;
+                    continue;
                 }
             }
         }
@@ -327,216 +365,4 @@ export function tokenizeInline(input) {
     flushText(input.length);
 
     return tokens;
-}
-
-// ── Tree builder ────────────────────────────────────────────────────
-
-/**
- * An inline segment: either plain text, a code span, or a formatted
- * container with children.
- *
- * @typedef {object} InlineSegment
- * @property {'text'|'code'|'image'|'bold'|'italic'|'strikethrough'|'link'|string} type
- * @property {string} [text]     - Plain text content (type === 'text').
- * @property {string} [content]  - Code content (type === 'code').
- * @property {string} [href]     - Link URL (type === 'link'). * @property {string} [alt]     - Alt text (type === 'image').
- * @property {string} [src]     - Image URL (type === 'image'). * @property {string} [tag]      - HTML tag name (for html inline elements).
- * @property {InlineSegment[]} [children] - Child segments for containers.
- */
-
-/**
- * Map from open token type to the corresponding close token type.
- * @type {Record<string, string>}
- */
-const CLOSE_TYPE_FOR = {
-    'bold-open': 'bold-close',
-    'italic-open': 'italic-close',
-    'bold-italic-open': 'bold-italic-close',
-    'strikethrough-open': 'strikethrough-close',
-    'link-open': 'link-close',
-};
-
-/**
- * Map from open token type to segment type.
- * @type {Record<string, string>}
- */
-const SEGMENT_TYPE_FOR = {
-    'bold-open': 'bold',
-    'italic-open': 'italic',
-    'bold-italic-open': 'bold-italic',
-    'strikethrough-open': 'strikethrough',
-    'link-open': 'link',
-};
-
-/**
- * Builds a tree of inline segments from a flat token list.
- *
- * Uses a stack: when an open token is encountered, a new container is
- * pushed.  When the matching close is found, the container is popped
- * and appended to its parent.  Unmatched open/close tokens are emitted
- * as plain text.
- *
- * @param {InlineToken[]} tokens
- * @returns {InlineSegment[]}
- */
-export function buildInlineTree(tokens) {
-    /** @type {InlineSegment[][]} */
-    const stack = [[]]; // stack[0] is the root children list
-
-    /**
-     * Metadata for each open container on the stack.
-     * @type {Array<{type: string, closeType: string, raw: string, href?: string, tag?: string}>}
-     */
-    const openStack = [];
-
-    for (const token of tokens) {
-        const current = stack[stack.length - 1];
-
-        if (token.type === 'text') {
-            current.push({ type: 'text', text: token.raw });
-            continue;
-        }
-
-        if (token.type === 'code') {
-            current.push({ type: 'code', content: token.content });
-            continue;
-        }
-
-        if (token.type === 'image') {
-            current.push({ type: 'image', alt: token.alt, src: token.src });
-            continue;
-        }
-
-        // ── Markdown open tokens ────────────────────────────────
-        if (CLOSE_TYPE_FOR[token.type]) {
-            const closeType = CLOSE_TYPE_FOR[token.type];
-            const segType = SEGMENT_TYPE_FOR[token.type];
-            openStack.push({
-                type: segType,
-                closeType,
-                raw: token.raw,
-                href: token.href,
-            });
-            stack.push([]);
-            continue;
-        }
-
-        // ── Markdown close tokens ───────────────────────────────
-        if (
-            token.type === 'bold-close' ||
-            token.type === 'italic-close' ||
-            token.type === 'bold-italic-close' ||
-            token.type === 'strikethrough-close'
-        ) {
-            // Find the matching open on the stack
-            const idx = findMatchingOpen(openStack, token.type);
-            if (idx !== -1) {
-                // Pop everything from idx to top, collapsing unmatched opens
-                collapseStack(stack, openStack, idx);
-                const meta = /** @type {{type: string}} */ (openStack.pop());
-                const children = /** @type {InlineSegment[]} */ (stack.pop());
-                const parent = stack[stack.length - 1];
-                parent.push({ type: meta.type, children });
-            } else {
-                // Unmatched close — emit as text
-                current.push({ type: 'text', text: token.raw });
-            }
-            continue;
-        }
-
-        if (token.type === 'link-close') {
-            const idx = findMatchingOpen(openStack, 'link-close');
-            if (idx !== -1) {
-                collapseStack(stack, openStack, idx);
-                openStack.pop();
-                const children = /** @type {InlineSegment[]} */ (stack.pop());
-                const parent = stack[stack.length - 1];
-                parent.push({ type: 'link', href: token.href, children });
-            } else {
-                current.push({ type: 'text', text: token.raw });
-            }
-            continue;
-        }
-
-        // ── HTML open tags ──────────────────────────────────────
-        if (token.type === 'html-open') {
-            const tag = /** @type {string} */ (token.tag);
-            openStack.push({
-                type: tag,
-                closeType: `html-close:${tag}`,
-                raw: token.raw,
-                tag,
-            });
-            stack.push([]);
-            continue;
-        }
-
-        // ── HTML close tags ─────────────────────────────────────
-        if (token.type === 'html-close') {
-            const tag = /** @type {string} */ (token.tag);
-            const closeKey = `html-close:${tag}`;
-            const idx = findMatchingOpen(openStack, closeKey);
-            if (idx !== -1) {
-                collapseStack(stack, openStack, idx);
-                const meta = /** @type {{tag: string}} */ (openStack.pop());
-                const children = /** @type {InlineSegment[]} */ (stack.pop());
-                const parent = stack[stack.length - 1];
-                parent.push({ type: meta.tag, tag: meta.tag, children });
-            } else {
-                // Unmatched close tag — emit as text
-                current.push({ type: 'text', text: token.raw });
-            }
-        }
-    }
-
-    // Collapse any remaining unclosed opens as text
-    while (openStack.length > 0) {
-        const meta = /** @type {{raw: string}} */ (openStack.pop());
-        const children = /** @type {InlineSegment[]} */ (stack.pop());
-        const parent = stack[stack.length - 1];
-        // Emit the open delimiter as text, then append children
-        parent.push({ type: 'text', text: meta.raw });
-        for (const child of children) {
-            parent.push(child);
-        }
-    }
-
-    return stack[0];
-}
-
-/**
- * Finds the index of the most recent matching open entry on the stack.
- *
- * @param {Array<{closeType: string}>} openStack
- * @param {string} closeType
- * @returns {number} Index into openStack, or -1
- */
-function findMatchingOpen(openStack, closeType) {
-    for (let i = openStack.length - 1; i >= 0; i--) {
-        if (openStack[i].closeType === closeType) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-/**
- * Collapses unmatched opens between `targetIdx + 1` and the top of the
- * stack, converting them back to plain text so they don't produce
- * phantom containers.
- *
- * @param {InlineSegment[][]} stack
- * @param {Array<{type: string, closeType: string, raw: string}>} openStack
- * @param {number} targetIdx
- */
-function collapseStack(stack, openStack, targetIdx) {
-    while (openStack.length - 1 > targetIdx) {
-        const meta = /** @type {{raw: string}} */ (openStack.pop());
-        const children = /** @type {InlineSegment[]} */ (stack.pop());
-        const parent = stack[stack.length - 1];
-        parent.push({ type: 'text', text: meta.raw });
-        for (const child of children) {
-            parent.push(child);
-        }
-    }
 }

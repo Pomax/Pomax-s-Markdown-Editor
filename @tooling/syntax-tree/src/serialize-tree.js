@@ -29,13 +29,11 @@ export function serializeTree(tree) {
  */
 function serializeNode(node, indent, lines) {
     const attrs = serializeAttributes(node.attributes);
-    const hasInlineChildren =
-        node.children.length > 0 &&
-        node.children.some((c) => c.type !== 'html-block');
-    // Use tagName as the quoted value for html-block and html-inline nodes
+    const hasChildren = node.children.length > 0;
+    // Use tagName as the quoted value for html-element nodes
     const quotedValue = node.tagName
         ? ` "${node.tagName}"`
-        : node.content && !hasInlineChildren
+        : node.content && !hasChildren
             ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
             : '';
     lines.push(`${indent}${node.type}${quotedValue}${attrs}`);
