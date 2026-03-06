@@ -195,6 +195,48 @@ export class SyntaxNode {
   }
 
   /**
+   * Merges a child node into its previous sibling.
+   * The previous sibling survives: its content and children are extended.
+   * The merged node is removed.
+   * @param {SyntaxNode} node - The child node to merge into its predecessor
+   * @throws {Error} If the node is not found or has no previous sibling
+   */
+  mergeToPrevious(node) {
+    const idx = this.children.indexOf(node);
+    if (idx === -1) throw new Error(`Child not found`);
+    if (idx === 0) throw new Error(`No previous sibling`);
+    const prev = this.children[idx - 1];
+    prev.content += node.content;
+    for (const child of node.children) {
+      child.parent = prev;
+    }
+    prev.children.push(...node.children);
+    node.children = [];
+    this.removeChild(node);
+  }
+
+  /**
+   * Merges the next sibling into a child node.
+   * The node survives: its content and children are extended.
+   * The next sibling is removed.
+   * @param {SyntaxNode} node - The child node to merge its successor into
+   * @throws {Error} If the node is not found or has no next sibling
+   */
+  mergeToNext(node) {
+    const idx = this.children.indexOf(node);
+    if (idx === -1) throw new Error(`Child not found`);
+    if (idx === this.children.length - 1) throw new Error(`No next sibling`);
+    const next = this.children[idx + 1];
+    node.content += next.content;
+    for (const child of next.children) {
+      child.parent = node;
+    }
+    node.children.push(...next.children);
+    next.children = [];
+    this.removeChild(next);
+  }
+
+  /**
    * Converts this node to markdown.
    * @returns {string}
    */
@@ -285,6 +327,48 @@ export class SyntaxTree {
     if (idx === -1) throw new Error(`Reference node not found`);
     this.children.splice(idx + 1, 0, newNode);
     newNode.parent = null;
+  }
+
+  /**
+   * Merges a child node into its previous sibling.
+   * The previous sibling survives: its content and children are extended.
+   * The merged node is removed.
+   * @param {SyntaxNode} node - The child node to merge into its predecessor
+   * @throws {Error} If the node is not found or has no previous sibling
+   */
+  mergeToPrevious(node) {
+    const idx = this.children.indexOf(node);
+    if (idx === -1) throw new Error(`Child not found`);
+    if (idx === 0) throw new Error(`No previous sibling`);
+    const prev = this.children[idx - 1];
+    prev.content += node.content;
+    for (const child of node.children) {
+      child.parent = prev;
+    }
+    prev.children.push(...node.children);
+    node.children = [];
+    this.removeChild(node);
+  }
+
+  /**
+   * Merges the next sibling into a child node.
+   * The node survives: its content and children are extended.
+   * The next sibling is removed.
+   * @param {SyntaxNode} node - The child node to merge its successor into
+   * @throws {Error} If the node is not found or has no next sibling
+   */
+  mergeToNext(node) {
+    const idx = this.children.indexOf(node);
+    if (idx === -1) throw new Error(`Child not found`);
+    if (idx === this.children.length - 1) throw new Error(`No next sibling`);
+    const next = this.children[idx + 1];
+    node.content += next.content;
+    for (const child of next.children) {
+      child.parent = node;
+    }
+    node.children.push(...next.children);
+    next.children = [];
+    this.removeChild(next);
   }
 
   /**
