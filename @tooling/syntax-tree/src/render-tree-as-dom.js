@@ -25,6 +25,12 @@ function appendInlineChildrenToDOM(doc, children, container) {
  * @param {SyntaxNode} child
  * @returns {Node}
  */
+function link(node, domNode) {
+    node.domNode = domNode;
+    domNode.__st_node = node;
+    return domNode;
+}
+
 function inlineChildToDOM(doc, child) {
     switch (child.type) {
         case 'text':
@@ -32,14 +38,14 @@ function inlineChildToDOM(doc, child) {
 
         case 'inline-code': {
             const code = doc.createElement('code');
-            code.__st_node = child;
+            link(child, code);
             code.textContent = child.content;
             return code;
         }
 
         case 'inline-image': {
             const img = doc.createElement('img');
-            img.__st_node = child;
+            link(child, img);
             img.setAttribute('src', child.attributes.src ?? '');
             img.setAttribute('alt', child.attributes.alt ?? '');
             return img;
@@ -47,21 +53,21 @@ function inlineChildToDOM(doc, child) {
 
         case 'bold': {
             const el = doc.createElement('strong');
-            el.__st_node = child;
+            link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
         case 'italic': {
             const el = doc.createElement('em');
-            el.__st_node = child;
+            link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
         case 'bold-italic': {
             const strong = doc.createElement('strong');
-            strong.__st_node = child;
+            link(child, strong);
             const em = doc.createElement('em');
             appendInlineChildrenToDOM(doc, child.children, em);
             strong.appendChild(em);
@@ -70,14 +76,14 @@ function inlineChildToDOM(doc, child) {
 
         case 'strikethrough': {
             const el = doc.createElement('del');
-            el.__st_node = child;
+            link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
         case 'link': {
             const a = doc.createElement('a');
-            a.__st_node = child;
+            link(child, a);
             a.setAttribute('href', child.attributes.href ?? '');
             appendInlineChildrenToDOM(doc, child.children, a);
             return a;
@@ -85,7 +91,7 @@ function inlineChildToDOM(doc, child) {
 
         case 'html-element': {
             const el = doc.createElement(child.tagName);
-            el.__st_node = child;
+            link(child, el);
             for (const [attr, value] of Object.entries(child.attributes)) {
                 el.setAttribute(attr, value);
             }
@@ -95,7 +101,7 @@ function inlineChildToDOM(doc, child) {
 
         default: {
             const el = doc.createElement(child.type);
-            el.__st_node = child;
+            link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
@@ -135,28 +141,28 @@ export function renderNodeToDOM(doc, node) {
         case 'heading6': {
             const level = node.type.charAt(node.type.length - 1);
             const el = doc.createElement(`h${level}`);
-            el.__st_node = node;
+            link(node, el);
             appendInlineChildrenToDOM(doc, node.children, el);
             return el;
         }
 
         case 'paragraph': {
             const el = doc.createElement('p');
-            el.__st_node = node;
+            link(node, el);
             appendInlineChildrenToDOM(doc, node.children, el);
             return el;
         }
 
         case 'blockquote': {
             const el = doc.createElement('blockquote');
-            el.__st_node = node;
+            link(node, el);
             appendInlineChildrenToDOM(doc, node.children, el);
             return el;
         }
 
         case 'code-block': {
             const pre = doc.createElement('pre');
-            pre.__st_node = node;
+            link(node, pre);
             const code = doc.createElement('code');
             if (node.attributes.language) {
                 code.setAttribute('class', `language-${node.attributes.language}`);
@@ -169,7 +175,7 @@ export function renderNodeToDOM(doc, node) {
         case 'list': {
             const isOrdered = node.attributes.ordered;
             const listEl = doc.createElement(isOrdered ? 'ol' : 'ul');
-            listEl.__st_node = node;
+            link(node, listEl);
             if (isOrdered && node.attributes.number > 1) {
                 listEl.setAttribute('start', String(node.attributes.number));
             }
@@ -181,7 +187,7 @@ export function renderNodeToDOM(doc, node) {
 
         case 'list-item': {
             const li = doc.createElement('li');
-            li.__st_node = node;
+            link(node, li);
             if (typeof node.attributes.checked === 'boolean') {
                 const checkbox = doc.createElement('input');
                 checkbox.setAttribute('type', 'checkbox');
@@ -205,7 +211,7 @@ export function renderNodeToDOM(doc, node) {
 
         case 'horizontal-rule': {
             const hr = doc.createElement('hr');
-            hr.__st_node = node;
+            link(node, hr);
             return hr;
         }
 
@@ -215,7 +221,7 @@ export function renderNodeToDOM(doc, node) {
             const style = node.attributes.style ?? '';
 
             const figure = doc.createElement('figure');
-            figure.__st_node = node;
+            link(node, figure);
 
             if (alt) {
                 const figcaption = doc.createElement('figcaption');
@@ -242,16 +248,18 @@ export function renderNodeToDOM(doc, node) {
 
         case 'table': {
             const table = doc.createElement('table');
-            table.__st_node = node;
+            link(node, table);
 
             const thead = doc.createElement('thead');
             const tbody = doc.createElement('tbody');
 
             for (const child of node.children) {
                 const tr = doc.createElement('tr');
+                link(child, tr);
                 const isHeader = child.type === 'header';
                 for (const cell of child.children) {
                     const el = doc.createElement(isHeader ? 'th' : 'td');
+                    link(cell, el);
                     appendInlineChildrenToDOM(doc, cell.children, el);
                     tr.appendChild(el);
                 }
@@ -275,7 +283,7 @@ export function renderNodeToDOM(doc, node) {
         case 'html-element': {
             const tagName = node.tagName || 'div';
             const el = doc.createElement(tagName);
-            el.__st_node = node;
+            link(node, el);
 
             if (node.runtime.openingTag) {
                 const temp = doc.createElement('div');
@@ -303,7 +311,7 @@ export function renderNodeToDOM(doc, node) {
 
         default: {
             const el = doc.createElement('div');
-            el.__st_node = node;
+            link(node, el);
             el.textContent = node.content;
             return el;
         }
