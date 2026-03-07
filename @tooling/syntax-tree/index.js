@@ -32,6 +32,7 @@ export {
   removeTableRow,
   removeTableColumn,
   applyFormat,
+  reparseLine,
 } from "./src/tree-mutations.js";
 
 export {

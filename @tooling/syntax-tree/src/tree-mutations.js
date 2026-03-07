@@ -649,6 +649,123 @@ export function removeTableColumn(tableNode, colIndex) {
   };
 }
 
+// ── Reparse ─────────────────────────────────────────────────────────
+
+/**
+ * Reconstruct the full markdown line for a node from its type, content,
+ * and attributes — i.e. prepend the block-level prefix.
+ *
+ * @param {string} type
+ * @param {string} content
+ * @param {Record<string, any>} attributes
+ * @returns {string}
+ */
+function buildMarkdownLine(type, content, attributes) {
+  switch (type) {
+    case "heading1":
+      return `# ${content}`;
+    case "heading2":
+      return `## ${content}`;
+    case "heading3":
+      return `### ${content}`;
+    case "heading4":
+      return `#### ${content}`;
+    case "heading5":
+      return `##### ${content}`;
+    case "heading6":
+      return `###### ${content}`;
+    case "blockquote":
+      return `> ${content}`;
+    case "list-item": {
+      const indent = "  ".repeat(attributes?.indent || 0);
+      const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : "- ";
+      const checkbox =
+        typeof attributes?.checked === "boolean"
+          ? attributes.checked
+            ? "[x] "
+            : "[ ] "
+          : "";
+      return `${indent}${marker}${checkbox}${content}`;
+    }
+    case "image": {
+      const imgAlt = attributes?.alt ?? content;
+      const imgSrc = attributes?.url ?? "";
+      if (attributes?.href) {
+        return `[![${imgAlt}](${imgSrc})](${attributes.href})`;
+      }
+      return `![${imgAlt}](${imgSrc})`;
+    }
+    default:
+      return content;
+  }
+}
+
+/**
+ * Re-parse a node's content to detect implicit type changes.
+ *
+ * Called on every keystroke. Builds the full markdown line from the node's
+ * current type + new content, runs it through `parseFn`, and applies the
+ * result — updating type, content, and attributes as needed.
+ *
+ * Suppresses code-block and image/linked-image conversions during typing
+ * (those are handled by Enter / toolbar actions, not by live re-parsing).
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} node — the node being edited
+ * @param {string} newContent — the new content for the node (without prefix)
+ * @param {(text: string) => import("./syntax-tree.js").SyntaxNode | null} parseFn
+ *     Synchronous single-line parse function (e.g. `parseLine` from @tooling/parser).
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: null } | null}
+ *     A render-hints object when the type changed, or null when only the content was updated.
+ */
+export function reparseLine(node, newContent, parseFn) {
+  const oldType = node.type;
+  const fullLine = buildMarkdownLine(oldType, newContent, node.attributes);
+  const parsed = parseFn(fullLine);
+
+  if (parsed) {
+    // Suppress code-block fence conversion during typing — the fence
+    // pattern (```) is converted on Enter, not while typing.
+    if (parsed.type === "code-block" && oldType !== "code-block") {
+      node.content = newContent;
+      rebuildInlineChildren(node);
+      return null;
+    }
+
+    // Suppress image/linked-image block conversion during typing —
+    // the inline tokenizer handles ![alt](src) within paragraphs.
+    if (
+      parsed.type === "image" &&
+      oldType !== "image"
+    ) {
+      node.content = newContent;
+      rebuildInlineChildren(node);
+      return null;
+    }
+
+    if (parsed.type !== oldType) {
+      // Type changed — apply the parsed result
+      node.type = parsed.type;
+      node.content = parsed.content;
+      node.attributes = parsed.attributes;
+      rebuildInlineChildren(node);
+      return {
+        renderHints: { updated: [node.id], added: [], removed: [] },
+        selection: null,
+      };
+    }
+
+    // Same type — just update content and attributes from the parse
+    node.content = parsed.content;
+    node.attributes = parsed.attributes;
+  } else {
+    // parseFn returned null — just update content
+    node.content = newContent;
+  }
+
+  rebuildInlineChildren(node);
+  return null;
+}
+
 // ── Hint Utilities ──────────────────────────────────────────────────
 
 /**
