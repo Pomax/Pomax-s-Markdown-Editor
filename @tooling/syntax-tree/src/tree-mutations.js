@@ -3,6 +3,7 @@
 // Each mutation is synchronous and side-effect-free beyond the tree.
 
 import { parseInlineContent } from "../../parser/src/parse-inline-content.js";
+import { tokenizeInline } from "../../parser/src/inline-tokenizer.js";
 
 // Block types whose `content` should be parsed into inline children.
 const INLINE_CONTENT_TYPES = new Set([
@@ -227,6 +228,284 @@ export function toggleListType(list, kind) {
 export function renumberOrderedList(list) {
   if (!list.attributes.ordered) return;
   list.attributes.number = 1;
+}
+
+// ── Format Operations ───────────────────────────────────────────────
+
+/** @type {Record<string, { open: string, close: string }>} */
+const FORMAT_DELIMITERS = {
+  bold: { open: "**", close: "**" },
+  italic: { open: "*", close: "*" },
+  code: { open: "`", close: "`" },
+  strikethrough: { open: "~~", close: "~~" },
+  subscript: { open: "<sub>", close: "</sub>" },
+  superscript: { open: "<sup>", close: "</sup>" },
+};
+
+/** Maps format names to the token-type pairs emitted by the inline tokenizer. */
+const TOKEN_TYPE_MAP = {
+  bold: { open: "bold-open", close: "bold-close", htmlTags: ["strong", "b"] },
+  italic: { open: "italic-open", close: "italic-close", htmlTags: ["em", "i"] },
+  strikethrough: {
+    open: "strikethrough-open",
+    close: "strikethrough-close",
+    htmlTags: ["del", "s"],
+  },
+};
+
+/** Maps sub/sup format names to their HTML tag. */
+const HTML_TAG_MAP = {
+  subscript: "sub",
+  superscript: "sup",
+};
+
+/**
+ * Find the boundaries of an existing format span that overlaps the selection.
+ * Returns `{ openStart, openEnd, closeStart, closeEnd }` or `null`.
+ *
+ * @param {string} content
+ * @param {number} selStart
+ * @param {number} selEnd
+ * @param {string} format
+ * @returns {{ openStart: number, openEnd: number, closeStart: number, closeEnd: number } | null}
+ */
+function findFormatSpan(content, selStart, selEnd, format) {
+  const tokens = tokenizeInline(content);
+
+  // ── Code: single token, not paired open/close ─────────────────
+  if (format === "code") {
+    let rawPos = 0;
+    for (const token of tokens) {
+      const tokenStart = rawPos;
+      rawPos += token.raw.length;
+      if (token.type === "code") {
+        const contentStart = tokenStart + 1; // after opening `
+        const contentEnd = rawPos - 1; // before closing `
+        if (selStart <= contentEnd && selEnd >= contentStart) {
+          return {
+            openStart: tokenStart,
+            openEnd: contentStart,
+            closeStart: contentEnd,
+            closeEnd: rawPos,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  // ── Paired markdown delimiters: bold / italic / strikethrough ──
+  const spec = TOKEN_TYPE_MAP[format];
+
+  // ── HTML-tag formats: subscript / superscript ─────────────────
+  if (!spec) {
+    const tagName = HTML_TAG_MAP[format];
+    if (!tagName) return null; // link — no toggle
+
+    let rawPos = 0;
+    const htmlOpens = [];
+
+    for (const token of tokens) {
+      const tokenStart = rawPos;
+      rawPos += token.raw.length;
+
+      if (token.type === "html-open" && token.tag === tagName) {
+        htmlOpens.push({ rawStart: tokenStart, rawEnd: rawPos });
+      } else if (token.type === "html-close" && token.tag === tagName && htmlOpens.length > 0) {
+        const open = htmlOpens.pop();
+        if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+          return {
+            openStart: open.rawStart,
+            openEnd: open.rawEnd,
+            closeStart: tokenStart,
+            closeEnd: rawPos,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  // ── Markdown paired delimiters ────────────────────────────────
+  let rawPos = 0;
+  const opens = [];
+
+  for (const token of tokens) {
+    const tokenStart = rawPos;
+    rawPos += token.raw.length;
+
+    if (token.type === spec.open) {
+      opens.push({ rawStart: tokenStart, rawEnd: rawPos });
+    } else if (token.type === spec.close && opens.length > 0) {
+      const open = opens.pop();
+      if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+        return {
+          openStart: open.rawStart,
+          openEnd: open.rawEnd,
+          closeStart: tokenStart,
+          closeEnd: rawPos,
+        };
+      }
+    }
+  }
+
+  // ── Fall back to HTML-tag equivalents (e.g. <strong> for bold) ──
+  if (spec.htmlTags) {
+    for (const tagName of spec.htmlTags) {
+      let htmlPos = 0;
+      const htmlOpens = [];
+
+      for (const token of tokens) {
+        const tokenStart = htmlPos;
+        htmlPos += token.raw.length;
+
+        if (token.type === "html-open" && token.tag === tagName) {
+          htmlOpens.push({ rawStart: tokenStart, rawEnd: htmlPos });
+        } else if (token.type === "html-close" && token.tag === tagName && htmlOpens.length > 0) {
+          const open = htmlOpens.pop();
+          if (selStart <= tokenStart && selEnd >= open.rawEnd) {
+            return {
+              openStart: open.rawStart,
+              openEnd: open.rawEnd,
+              closeStart: tokenStart,
+              closeEnd: htmlPos,
+            };
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find the word boundaries around a raw offset. A "word" is a contiguous
+ * run of non-whitespace characters.
+ *
+ * @param {string} content
+ * @param {number} offset
+ * @returns {{ start: number, end: number }}
+ */
+function findWordBoundaries(content, offset) {
+  const pos = Math.min(offset, content.length);
+
+  let start = pos;
+  while (start > 0 && !/\s/.test(content[start - 1])) {
+    start--;
+  }
+
+  let end = pos;
+  while (end < content.length && !/\s/.test(content[end])) {
+    end++;
+  }
+
+  return { start, end };
+}
+
+/**
+ * Apply an inline format to a node's content between `startOffset` and
+ * `endOffset`. Toggle-on wraps the text in the format's delimiters;
+ * toggle-off strips existing delimiters. Calls `rebuildInlineChildren`
+ * after mutating content.
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} node
+ * @param {number} startOffset
+ * @param {number} endOffset
+ * @param {"bold"|"italic"|"code"|"strikethrough"|"subscript"|"superscript"|"link"} format
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: { nodeId: string, offset: number } }}
+ */
+export function applyFormat(node, startOffset, endOffset, format) {
+  let selStart = startOffset;
+  let selEnd = endOffset;
+
+  // ── Collapsed cursor (no selection): infer the target ─────────
+  if (selStart === selEnd) {
+    const span = findFormatSpan(node.content, selStart, selStart, format);
+    if (span) {
+      const withoutClose =
+        node.content.substring(0, span.closeStart) + node.content.substring(span.closeEnd);
+      node.content =
+        withoutClose.substring(0, span.openStart) + withoutClose.substring(span.openEnd);
+      const contentLen = span.closeStart - span.openEnd;
+      const newOffset = span.openStart + contentLen;
+      rebuildInlineChildren(node);
+      return {
+        renderHints: { updated: [node.id], added: [], removed: [] },
+        selection: { nodeId: node.id, offset: newOffset },
+      };
+    }
+    // Find word around cursor
+    const bounds = findWordBoundaries(node.content, startOffset);
+    if (bounds.start === bounds.end) {
+      // No word — no-op
+      return {
+        renderHints: { updated: [], added: [], removed: [] },
+        selection: { nodeId: node.id, offset: startOffset },
+      };
+    }
+    selStart = bounds.start;
+    selEnd = bounds.end;
+  }
+
+  // ── Toggle-off: check if selection overlaps an existing span ──
+  const span = findFormatSpan(node.content, selStart, selEnd, format);
+  if (span) {
+    const withoutClose =
+      node.content.substring(0, span.closeStart) + node.content.substring(span.closeEnd);
+    node.content =
+      withoutClose.substring(0, span.openStart) + withoutClose.substring(span.openEnd);
+    const contentLen = span.closeStart - span.openEnd;
+    const newOffset = span.openStart + contentLen;
+    rebuildInlineChildren(node);
+    return {
+      renderHints: { updated: [node.id], added: [], removed: [] },
+      selection: { nodeId: node.id, offset: newOffset },
+    };
+  }
+
+  // ── Mutual exclusion: sub ↔ sup ───────────────────────────────
+  if (format === "subscript" || format === "superscript") {
+    const opposite = format === "subscript" ? "superscript" : "subscript";
+    const oppositeSpan = findFormatSpan(node.content, selStart, selEnd, opposite);
+    if (oppositeSpan) {
+      const withoutClose =
+        node.content.substring(0, oppositeSpan.closeStart) +
+        node.content.substring(oppositeSpan.closeEnd);
+      node.content =
+        withoutClose.substring(0, oppositeSpan.openStart) +
+        withoutClose.substring(oppositeSpan.openEnd);
+      selStart = oppositeSpan.openStart;
+      selEnd = oppositeSpan.openStart + (oppositeSpan.closeStart - oppositeSpan.openEnd);
+    }
+  }
+
+  // ── Toggle-on: wrap the selected text ─────────────────────────
+  const before = node.content.substring(0, selStart);
+  let selected = node.content.substring(selStart, selEnd);
+  const after = node.content.substring(selEnd);
+
+  // Trim trailing whitespace so delimiters hug the text
+  const trimmed = selected.replace(/\s+$/, "");
+  const trailingWS = selected.substring(trimmed.length);
+  selected = trimmed;
+
+  let formatted;
+  if (format === "link") {
+    formatted = `[${selected}](url)`;
+  } else {
+    const delims = FORMAT_DELIMITERS[format];
+    formatted = `${delims.open}${selected}${delims.close}`;
+  }
+
+  node.content = before + formatted + trailingWS + after;
+  const newOffset = selStart + formatted.length;
+
+  rebuildInlineChildren(node);
+  return {
+    renderHints: { updated: [node.id], added: [], removed: [] },
+    selection: { nodeId: node.id, offset: newOffset },
+  };
 }
 
 // ── Table Mutations ─────────────────────────────────────────────────

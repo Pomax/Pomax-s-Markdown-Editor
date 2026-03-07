@@ -31,6 +31,7 @@ export {
   addTableColumn,
   removeTableRow,
   removeTableColumn,
+  applyFormat,
 } from "./src/tree-mutations.js";
 
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";
