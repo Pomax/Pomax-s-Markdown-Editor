@@ -1136,7 +1136,7 @@ export class Editor {
         const tagNames = [...htmlBlockParents]
           .map(
             (p) =>
-              `<${/** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
+              `<${/** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (p).tagName ?? 'html'}>`,
           )
           .join(', ');
         const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({

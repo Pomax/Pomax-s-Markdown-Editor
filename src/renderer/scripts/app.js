@@ -283,7 +283,7 @@ class App {
         const detailsIds = [];
         if (this.editor.syntaxTree) {
           for (const node of this.editor.syntaxTree.children) {
-            if (node.type === 'html-element' && node.attributes.tagName === 'details') {
+            if (node.type === 'html-element' && node.tagName === 'details') {
               detailsIds.push(node.id);
             }
           }

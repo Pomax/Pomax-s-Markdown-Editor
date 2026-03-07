@@ -1069,8 +1069,8 @@ export class DFAParser {
     }
 
     const node = new SyntaxNode('html-element', '');
+    node.tagName = '!--';
     node.attributes = {
-      tagName: '!--',
       openingTag: text,
       closingTag: '',
     };
@@ -1137,8 +1137,8 @@ export class DFAParser {
         ctx.pos++;
       }
       const node = new SyntaxNode('html-element', '');
+      node.tagName = lowerTagName;
       node.attributes = {
-        tagName: lowerTagName,
         openingTag,
         closingTag: '',
       };
@@ -1182,8 +1182,8 @@ export class DFAParser {
       }
 
       const node = new SyntaxNode('html-element', '');
+      node.tagName = lowerTagName;
       node.attributes = {
-        tagName: lowerTagName,
         openingTag,
         closingTag,
         rawContent: rawBody,
@@ -1240,8 +1240,8 @@ export class DFAParser {
 
     // Create the container node
     const node = new SyntaxNode('html-element', '');
+    node.tagName = lowerTagName;
     node.attributes = {
-      tagName: lowerTagName,
       openingTag,
       closingTag,
     };
@@ -1314,8 +1314,8 @@ export class DFAParser {
 
     // Build the node structure matching the existing parser's output
     const node = new SyntaxNode('html-element', '');
+    node.tagName = tagName;
     node.attributes = {
-      tagName,
       openingTag,
       closingTag: `</${tagName}>`,
     };

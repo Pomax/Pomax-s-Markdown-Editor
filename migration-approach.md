@@ -440,7 +440,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 14: `attributes.tag` → `node.tagName` (Inline HTML)
+## Step 14: `attributes.tag` → `node.tagName` (Inline HTML) ✅
 
 **Goal:** For inline HTML child nodes, change `child.attributes.tag` → `child.tagName`. ~3 sites in writing-renderer.js and syntax-tree.js.
 

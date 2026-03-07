@@ -71,7 +71,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
           const child = node.children[0];
           if (child.id === cursor.nodeId) {
             // <tag>content</tag> — cursor is inside the content
-            const tag = node.attributes.tagName || 'div';
+            const tag = node.tagName || 'div';
             return pos + `<${tag}>`.length + cursor.offset;
           }
           // Not found here; advance past this node's markdown
@@ -144,7 +144,7 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
             node.children[0].type === 'paragraph'
           ) {
             const child = node.children[0];
-            const tag = node.attributes.tagName || 'div';
+            const tag = node.tagName || 'div';
             const openLen = `<${tag}>`.length;
             const contentOffset = absoluteOffset - pos - openLen;
             return {

@@ -636,7 +636,7 @@ export class WritingRenderer {
    */
   renderHtmlBlock(node, element, isFocused) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
-    const tagName = attrs.tagName || 'div';
+    const tagName = node.tagName || 'div';
 
     // For <details> blocks we use a fake disclosure widget built from
     // plain <div>s so we have full control over collapsing without any
@@ -722,7 +722,7 @@ export class WritingRenderer {
     const bodyChildren = [];
 
     for (const child of node.children) {
-      if (!summaryNode && child.type === 'html-element' && child.attributes.tagName === 'summary') {
+      if (!summaryNode && child.type === 'html-element' && child.tagName === 'summary') {
         summaryNode = child;
       } else {
         bodyChildren.push(child);
