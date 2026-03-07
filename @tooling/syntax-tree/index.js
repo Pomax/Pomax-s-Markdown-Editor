@@ -46,4 +46,4 @@ export {
 } from "./src/tree-selection.js";
 
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";
-export { tokenizeInline } from "../parser/src/inline-tokenizer.js";
+export { tokenizeInline, findMatchedTokenIndices } from "../parser/src/inline-tokenizer.js";

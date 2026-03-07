@@ -19,3 +19,5 @@ const parser = new DFAParser();
 export async function parse(markdown) {
   return parser.parse(markdown);
 }
+
+export { findMatchedTokenIndices } from "./src/inline-tokenizer.js";

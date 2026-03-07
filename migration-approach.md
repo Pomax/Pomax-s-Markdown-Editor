@@ -327,11 +327,14 @@ cd @tooling/parser && npm run test:spec
 
 **Function to implement:**
 
-### `findMatchedTokenIndices(content) → { index, length, type }[]`
-- Tokenize the content using `tokenizeInline`.
-- Return the matched delimiter pairs with their string indices and lengths.
-- Must handle: `**bold**`, `*italic*`, `` `code` ``, `~~strikethrough~~`, `[link](url)`, `![image](url)`, HTML inline tags.
-- Unmatched delimiters are NOT included in the result.
+### `findMatchedTokenIndices(tokens) → Set<number>`
+- Takes the flat `InlineToken[]` array produced by `tokenizeInline`.
+- Returns a `Set` of token indices whose delimiters are successfully paired (open ↔ close).
+- Matched delimiters are invisible in the rendered view; unmatched ones are visible text. This distinction drives cursor offset mapping.
+- Uses a stack to pair opens with closes. Images are always matched. `text` and `code` tokens are skipped.
+- Must handle: `**bold**`, `*italic*`, `***bold-italic***`, `~~strikethrough~~`, `[link](url)`, `![image](url)`, HTML inline tags (`<sub>`, `<sup>`, `<strong>`, etc.).
+- Unmatched delimiters are NOT included in the result set.
+- Mirrors the renderer's existing `findMatchedTokenIndices` at `src/renderer/scripts/parser/inline-tokenizer.js`.
 
 **Verification:**
 ```
