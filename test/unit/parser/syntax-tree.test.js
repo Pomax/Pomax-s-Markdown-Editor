@@ -353,8 +353,8 @@ describe('SyntaxNode.toBareText', () => {
     assert.ok(!result.includes('---'));
   });
 
-  it('handles html-block with children', () => {
-    const container = new SyntaxNode('html-block', '');
+  it('handles html-element with children', () => {
+    const container = new SyntaxNode('html-element', '');
     container.attributes = {
       tagName: 'details',
       openingTag: '<details>',
@@ -420,7 +420,7 @@ describe('SyntaxTree.getPathToCursor', () => {
 
   it('returns path through nested children', () => {
     const tree = new SyntaxTree();
-    const container = new SyntaxNode('html-block', '');
+    const container = new SyntaxNode('html-element', '');
     container.attributes = { tagName: 'details' };
     const child0 = new SyntaxNode('paragraph', 'summary');
     const child1 = new SyntaxNode('paragraph', 'detail text');
@@ -435,8 +435,8 @@ describe('SyntaxTree.getPathToCursor', () => {
 
   it('returns path for deeply nested node', () => {
     const tree = new SyntaxTree();
-    const outer = new SyntaxNode('html-block', '');
-    const inner = new SyntaxNode('html-block', '');
+    const outer = new SyntaxNode('html-element', '');
+    const inner = new SyntaxNode('html-element', '');
     const leaf = new SyntaxNode('paragraph', 'deep content');
     inner.appendChild(leaf);
     outer.appendChild(new SyntaxNode('paragraph', 'filler'));
@@ -479,7 +479,7 @@ describe('SyntaxTree.setCursorPath', () => {
 
   it('sets treeCursor for a nested node', () => {
     const tree = new SyntaxTree();
-    const container = new SyntaxNode('html-block', '');
+    const container = new SyntaxNode('html-element', '');
     const child0 = new SyntaxNode('paragraph', 'first');
     const child1 = new SyntaxNode('paragraph', 'second');
     container.appendChild(child0);
@@ -517,7 +517,7 @@ describe('SyntaxTree.setCursorPath', () => {
 
   it('roundtrips with getPathToCursor', () => {
     const tree = new SyntaxTree();
-    const container = new SyntaxNode('html-block', '');
+    const container = new SyntaxNode('html-element', '');
     const child = new SyntaxNode('paragraph', 'inner text');
     container.appendChild(child);
     tree.appendChild(new SyntaxNode('heading1', 'Title'));

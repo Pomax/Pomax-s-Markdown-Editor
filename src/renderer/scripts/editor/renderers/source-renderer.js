@@ -144,9 +144,9 @@ export class SourceRenderer {
         }
       }
 
-      // No previous sibling — if inside an html-block, re-render
+      // No previous sibling — if inside an html-element, re-render
       // the parent instead; otherwise prepend to the container.
-      if (node.parent && node.parent.type === 'html-block') {
+      if (node.parent && node.parent.type === 'html-element') {
         this._replaceNodeElement(container, tree, node.parent.id);
       } else {
         container.prepend(element);
@@ -161,8 +161,8 @@ export class SourceRenderer {
    * Finds a node by id in the syntax tree, renders it, and replaces
    * the corresponding DOM element in the container.
    *
-   * For children of bare-text html-blocks (e.g. `<summary>text</summary>`)
-   * the parent html-block owns the DOM element, so the parent is
+   * For children of bare-text html-elements (e.g. `<summary>text</summary>`)
+   * the parent html-element owns the DOM element, so the parent is
    * re-rendered instead.
    *
    * @param {HTMLElement} container
@@ -173,10 +173,10 @@ export class SourceRenderer {
     const node = tree.findNodeById(nodeId);
     if (!node) return;
 
-    // Bare-text html-block children are rendered as part of the
-    // parent html-block element — re-render the parent instead.
+    // Bare-text html-element children are rendered as part of the
+    // parent html-element element — re-render the parent instead.
     const parent = node.parent;
-    if (parent?.type === 'html-block' && parent.children.length === 1 && node.attributes.bareText) {
+    if (parent?.type === 'html-element' && parent.children.length === 1 && node.attributes.bareText) {
       const parentEl = container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!parentEl) return;
       const updated = this.renderNode(parent);
@@ -237,7 +237,7 @@ export class SourceRenderer {
       case 'table':
         return this.renderTable(node, element);
 
-      case 'html-block':
+      case 'html-element':
         return this.renderHtmlBlock(node, element);
 
       default:

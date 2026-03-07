@@ -279,11 +279,11 @@ class App {
       if (this.editor && detail) {
         this.editor.detailsClosed = !!detail.detailsClosed;
 
-        // Only re-render <details> html-block nodes.
+        // Only re-render <details> html-element nodes.
         const detailsIds = [];
         if (this.editor.syntaxTree) {
           for (const node of this.editor.syntaxTree.children) {
-            if (node.type === 'html-block' && node.attributes.tagName === 'details') {
+            if (node.type === 'html-element' && node.attributes.tagName === 'details') {
               detailsIds.push(node.id);
             }
           }

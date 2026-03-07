@@ -1031,7 +1031,7 @@ export class DFAParser {
 
   /**
    * Consumes an HTML comment from `<!--` through `-->` (inclusive)
-   * and returns an `html-block` node whose `openingTag` holds the
+   * and returns an `html-element` node whose `openingTag` holds the
    * full verbatim comment text.
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
    * @param {number} startLine
@@ -1068,7 +1068,7 @@ export class DFAParser {
       ctx.pos++;
     }
 
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode('html-element', '');
     node.attributes = {
       tagName: '!--',
       openingTag: text,
@@ -1136,7 +1136,7 @@ export class DFAParser {
         ctx.line++;
         ctx.pos++;
       }
-      const node = new SyntaxNode('html-block', '');
+      const node = new SyntaxNode('html-element', '');
       node.attributes = {
         tagName: lowerTagName,
         openingTag,
@@ -1181,7 +1181,7 @@ export class DFAParser {
         ctx.pos++;
       }
 
-      const node = new SyntaxNode('html-block', '');
+      const node = new SyntaxNode('html-element', '');
       node.attributes = {
         tagName: lowerTagName,
         openingTag,
@@ -1239,7 +1239,7 @@ export class DFAParser {
     }
 
     // Create the container node
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode('html-element', '');
     node.attributes = {
       tagName: lowerTagName,
       openingTag,
@@ -1313,7 +1313,7 @@ export class DFAParser {
     }
 
     // Build the node structure matching the existing parser's output
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode('html-element', '');
     node.attributes = {
       tagName,
       openingTag,

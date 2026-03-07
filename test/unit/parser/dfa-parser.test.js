@@ -579,7 +579,7 @@ describe('DFAParser', () => {
     it('should parse a self-closed HTML block', () => {
       const tree = parser.parse('<summary>Some text</summary>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'summary');
       assert.strictEqual(tree.children[0].children.length, 1);
       assert.strictEqual(tree.children[0].children[0].type, 'paragraph');
@@ -590,7 +590,7 @@ describe('DFAParser', () => {
     it('should parse a multi-line HTML block', () => {
       const tree = parser.parse('<details>\n\n## Heading\n\nSome text\n\n</details>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'details');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<details>');
       assert.strictEqual(tree.children[0].attributes.closingTag, '</details>');
@@ -601,13 +601,13 @@ describe('DFAParser', () => {
       const markdown = '<details>\n\n<summary>Title</summary>\n\n## Heading\n\nText\n\n</details>';
       const tree = parser.parse(markdown);
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'details');
     });
 
     it('should recursively parse markdown inside HTML blocks', () => {
       const tree = parser.parse('<div>\n\n# Title\n\nParagraph\n\n</div>');
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       const children = tree.children[0].children;
       assert.strictEqual(children[0].type, 'heading1');
       assert.strictEqual(children[0].content, 'Title');
@@ -618,7 +618,7 @@ describe('DFAParser', () => {
     it('should parse a custom element with a hyphenated tag name', () => {
       const tree = parser.parse('<my-component>\n\nHello\n\n</my-component>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'my-component');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<my-component>');
       assert.strictEqual(tree.children[0].attributes.closingTag, '</my-component>');
@@ -630,14 +630,14 @@ describe('DFAParser', () => {
     it('should parse a custom element with multiple hyphens', () => {
       const tree = parser.parse('<my-cool-widget>\n\nContent\n\n</my-cool-widget>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'my-cool-widget');
     });
 
     it('should parse a self-closed custom element', () => {
       const tree = parser.parse('<app-header>Title text</app-header>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'app-header');
       assert.strictEqual(tree.children[0].children[0].content, 'Title text');
       assert.strictEqual(tree.children[0].children[0].attributes.bareText, true);
@@ -646,7 +646,7 @@ describe('DFAParser', () => {
     it('should parse custom elements with attributes', () => {
       const tree = parser.parse('<my-element class="test">\n\nBody\n\n</my-element>');
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'my-element');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<my-element class="test">');
     });
@@ -655,8 +655,8 @@ describe('DFAParser', () => {
       const tree = parser.parse('<notarealtag>\n\nText\n\n</notarealtag>');
       // "notarealtag" is not in HTML_BLOCK_TAGS and has no hyphen, but
       // the token stream forms a proper LT TEXT GT pattern so it is
-      // promoted to an html-block.
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      // promoted to an html-element.
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'notarealtag');
     });
 
@@ -674,7 +674,7 @@ describe('DFAParser', () => {
       const md = '<link rel="stylesheet" href="style.css">\n\n# Heading';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'link');
       assert.strictEqual(
         tree.children[0].attributes.openingTag,
@@ -713,7 +713,7 @@ describe('DFAParser', () => {
       const md = '<script type="module" src="./app.js" async></script>';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'script');
       assert.strictEqual(
         tree.children[0].attributes.openingTag,
@@ -733,7 +733,7 @@ describe('DFAParser', () => {
     it('should parse a multi-line <script> with body content', () => {
       const md = '<script>\n  const x = 1;\n  console.log(x);\n</script>';
       const tree = parser.parse(md);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(
         tree.children[0].attributes.rawContent,
         '  const x = 1;\n  console.log(x);',
@@ -750,7 +750,7 @@ describe('DFAParser', () => {
     it('should parse a <style> block and preserve CSS verbatim', () => {
       const md = '<style>\n  body { color: red; }\n  h1 > span { font-size: 2em; }\n</style>';
       const tree = parser.parse(md);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'style');
       assert.strictEqual(
         tree.children[0].attributes.rawContent,
@@ -762,7 +762,7 @@ describe('DFAParser', () => {
       const md = '<style>\n  #heading { color: red; }\n  > .child { margin: 0; }\n</style>';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(
         tree.children[0].attributes.rawContent,
         '  #heading { color: red; }\n  > .child { margin: 0; }',
@@ -773,7 +773,7 @@ describe('DFAParser', () => {
       const md = '<script src="app.js"></script>\n\n# Heading\n\nParagraph';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[1].type, 'heading1');
       assert.strictEqual(tree.children[2].type, 'paragraph');
     });
@@ -804,10 +804,10 @@ describe('DFAParser', () => {
   // ── Unknown tag fallback ────────────────────────────────────
 
   describe('unknown HTML tag fallback', () => {
-    it('should parse an unknown tag with attributes as html-block', () => {
+    it('should parse an unknown tag with attributes as html-element', () => {
       const md = '<noscript class="no-js">\n\nFallback\n\n</noscript>';
       const tree = parser.parse(md);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, 'noscript');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<noscript class="no-js">');
     });
@@ -822,11 +822,11 @@ describe('DFAParser', () => {
   // ── HTML comments ───────────────────────────────────────────
 
   describe('HTML comments', () => {
-    it('should parse a single-line HTML comment as html-block', () => {
+    it('should parse a single-line HTML comment as html-element', () => {
       const md = '<!-- a comment -->';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, '!--');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- a comment -->');
       assert.strictEqual(tree.children[0].attributes.closingTag, '');
@@ -842,7 +842,7 @@ describe('DFAParser', () => {
       const md = '<!--\nline one\nline two\n-->';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
-      assert.strictEqual(tree.children[0].type, 'html-block');
+      assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].attributes.tagName, '!--');
       assert.strictEqual(tree.children[0].attributes.openingTag, '<!--\nline one\nline two\n-->');
     });
@@ -858,7 +858,7 @@ describe('DFAParser', () => {
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, 'paragraph');
-      assert.strictEqual(tree.children[1].type, 'html-block');
+      assert.strictEqual(tree.children[1].type, 'html-element');
       assert.strictEqual(tree.children[1].attributes.tagName, '!--');
       assert.strictEqual(tree.children[2].type, 'paragraph');
     });

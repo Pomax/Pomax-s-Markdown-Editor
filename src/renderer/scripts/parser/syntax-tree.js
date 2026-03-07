@@ -36,9 +36,9 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [src] - Image source URL (for inline-image nodes)
  * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
- * @property {string} [tagName] - HTML tag name for html-block nodes
- * @property {string} [openingTag] - Full opening tag line for html-block nodes
- * @property {string} [closingTag] - Full closing tag line for html-block nodes
+ * @property {string} [tagName] - HTML tag name for html-element nodes
+ * @property {string} [openingTag] - Full opening tag line for html-element nodes
+ * @property {string} [closingTag] - Full closing tag line for html-element nodes
  * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
@@ -90,7 +90,7 @@ export class SyntaxNode {
      * Child nodes.  For inline-containing block types (paragraph,
      * heading, blockquote, list-item), children are inline nodes
      * (text, bold, italic, link, etc.).  For container blocks
-     * (html-block), children are other block-level nodes.
+     * (html-element), children are other block-level nodes.
      * @type {SyntaxNode[]}
      */
     this.children = [];
@@ -362,7 +362,7 @@ export class SyntaxNode {
       }
       case 'table':
         return this.content;
-      case 'html-block': {
+      case 'html-element': {
         // Raw content tags (script, style, textarea): body stored verbatim
         if (this.attributes.rawContent !== undefined) {
           if (this.attributes.rawContent === '') {
@@ -454,7 +454,7 @@ export class SyntaxNode {
       case 'horizontal-rule':
         return '';
 
-      case 'html-block': {
+      case 'html-element': {
         // If the container has exactly one bare-text child,
         // return just its text.
         if (
@@ -641,7 +641,7 @@ export class SyntaxTree {
 
   /**
    * Finds the node at a given position.
-   * Recurses into container nodes (e.g. html-block) to find the
+   * Recurses into container nodes (e.g. html-element) to find the
    * deepest (leaf) node that contains the position.
    * @param {number} line - The line number (0-based)
    * @param {number} column - The column number (0-based)
@@ -665,7 +665,7 @@ export class SyntaxTree {
    * @returns {SyntaxNode}
    */
   findDeepestNodeAtPosition(node, line, column) {
-    // Only descend into block-level children (e.g. html-block
+    // Only descend into block-level children (e.g. html-element
     // containers).  Inline children (text, bold, italic, etc.)
     // share the parent's line range and should not be traversed.
     if (!INLINE_CONTENT_TYPES.has(node.type) && node.children.length > 0) {

@@ -12,6 +12,10 @@ This document defines the migration from the editor's built-in parser to the `@t
 4. **Verify before proceeding.** After completing a step, run the verification commands listed. All tests must pass before moving to the next step. If a test fails, fix it before continuing.
 5. **Commit after each step.** Every completed, verified step gets its own commit. This ensures no work is lost and provides rollback points.
 6. **Use the existing terminal.** Do not open PowerShell; use `cmd` for all terminal work.
+7. **Always ask the user instead of guessing or assuming**, do not keep reasoning when there is uncertainty about what the user meant, **ask them**.
+8. **NEVER** present the user with question UI, always ask normal text based questions
+9. **NEVER** assume the work was already complete when being told to resume, reread the **ENTIRE** code base first, and **keep that in context**.
+10. **Read the ENTIRE source code — never cherry-pick.** When told to read the codebase, read every single file from first line to last line. Do not selectively read files you think are relevant. Read ALL `@tooling/` source files, ALL `@tooling/` test files, ALL parser files, ALL renderer files, ALL editor files, ALL test files — every `.js` file in the workspace, completely. No skipping, no summarizing, no "I'll read the important ones." If a file exists, read it top to bottom.
 
 ### Verification Commands
 
@@ -27,7 +31,7 @@ For steps that only add new code under `@tooling/`, it is sufficient to verify t
 
 ---
 
-## Step 1: Add Child-Manipulation Operations
+## Step 1: Add Child-Manipulation Operations ✅
 
 **Goal:** Add `insertChild(node, index)` and `removeChild(child)` to both `SyntaxNode` and `SyntaxTree`. The existing `appendChild` becomes a thin wrapper around `insertChild`. These are generic tree operations needed by nearly every later step.
 
@@ -53,7 +57,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 2: Create Tree Query Utilities (`tree-utils.js`)
+## Step 2: Create Tree Query Utilities (`tree-utils.js`) ✅
 
 **Goal:** Create a module of pure functions that query/walk the syntax tree. No mutations, no side effects.
 
@@ -86,7 +90,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 3: Content-Level Mutations — `rebuildInlineChildren` and `mergeHints`
+## Step 3: Content-Level Mutations — `rebuildInlineChildren` and `mergeHints` ✅
 
 **Goal:** Create the `tree-mutations.js` module with the two foundational content-level functions. `rebuildInlineChildren` is the most critical function in the migration — it keeps inline children in sync when `node.content` changes.
 
@@ -122,7 +126,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 4: Block-Level Mutations
+## Step 4: Block-Level Mutations ✅
 
 **Goal:** Add structural editing operations to `tree-mutations.js`. These implement Enter, paste, and type-change behavior. All operations follow markdown-first: edit the markdown content, reparse, update the tree.
 
@@ -158,7 +162,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 5: List Operations
+## Step 5: List Operations ✅
 
 **Goal:** Add list-level helpers to `tree-mutations.js`. Lists in `@tooling` use a container model (`list` node wraps `list-item` children). The operations here are minimal — most behavior follows from markdown-first editing + reparsing.
 
@@ -192,7 +196,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 6: Table Operations
+## Step 6: Table Operations ✅
 
 **Goal:** Add table-level helpers to `tree-mutations.js`. Tables use `@tooling`'s structured model (`table → header/row → cell[]`). Most table edits are structural (adding/removing rows or columns), not markdown-text edits, so direct tree manipulation is appropriate here.
 
@@ -234,7 +238,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 7: Format Operations — `applyFormat`
+## Step 7: Format Operations — `applyFormat` ✅
 
 **Goal:** Add the `applyFormat` function to `tree-mutations.js`. This is the implementation behind every toolbar button (bold, italic, code, strikethrough, link, sub, sup).
 
@@ -265,7 +269,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 8: Cursor and Selection as Tree State
+## Step 8: Cursor and Selection as Tree State ✅
 
 **Goal:** Create `TreePosition` and `TreeSelection` types as plain-object data structures, plus pure-function utilities in a new `tree-selection.js`. No modifications to existing `@tooling` code — the existing `SyntaxTree` class stays untouched.
 
@@ -313,7 +317,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 9: `findMatchedTokenIndices` — Offset Mapping Support
+## Step 9: `findMatchedTokenIndices` — Offset Mapping Support ✅
 
 **Goal:** Add `findMatchedTokenIndices` to the inline tokenizer and export it from the parser package. This function identifies which delimiter tokens (e.g. `**`, `*`) are actual matched pairs vs literal text, which is essential for cursor offset mapping.
 
@@ -346,7 +350,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 10: Synchronous Single-Line Parse Entry Point
+## Step 10: Synchronous Single-Line Parse Entry Point ✅
 
 **Goal:** Add a synchronous single-line parse function to the parser. The editor calls `_reparseLine(text)` on every keystroke to detect implicit type changes (paragraph → heading when `# ` is typed). The existing `Parser.parse()` is async; making `_reparseLine` async would propagate async through the entire input pipeline, which is unacceptable.
 
@@ -375,7 +379,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 11: `reparseLine` Mutation Function
+## Step 11: `reparseLine` Mutation Function ✅
 
 **Goal:** Add `reparseLine` to `tree-mutations.js`. This is the hot-path function that re-parses a single node's content through the parser on every keystroke to detect implicit type changes.
 
@@ -403,7 +407,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 12: Export Consolidation and Package Wiring
+## Step 12: Export Consolidation and Package Wiring ✅
 
 **Goal:** Ensure all new modules are properly exported from both `@tooling/syntax-tree` and `@tooling/parser` packages, and that cross-package imports work correctly.
 

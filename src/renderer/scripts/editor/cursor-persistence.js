@@ -42,13 +42,13 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
 
       // If this is the cursor node, compute final offset.
       if (node.id === cursor.nodeId) {
-        // For html-block containers, the cursor may be on the
+        // For html-element containers, the cursor may be on the
         // opening/closing tag line (source view tagPart).
-        if (node.type === 'html-block' && node.children.length > 0 && !cursor.tagPart) {
+        if (node.type === 'html-element' && node.children.length > 0 && !cursor.tagPart) {
           // Cursor is on a child — not this node itself.
           // Fall through to walk children below.
         } else if (cursor.tagPart === 'closing') {
-          // Cursor is on the closing tag line of an html-block.
+          // Cursor is on the closing tag line of an html-element.
           const md = node.toMarkdown();
           const closingTag = node.attributes.closingTag ?? '';
           return pos + md.length - closingTag.length + cursor.offset;
@@ -58,8 +58,8 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
         }
       }
 
-      // For html-block containers, walk children to find the cursor.
-      if (node.type === 'html-block' && node.children.length > 0) {
+      // For html-element containers, walk children to find the cursor.
+      if (node.type === 'html-element' && node.children.length > 0) {
         const openingTag = node.attributes.openingTag ?? '';
 
         // Check if this is a single bare-text child (collapsed form).
@@ -79,7 +79,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
           continue;
         }
 
-        // Multi-child html-block: opening tag \n\n child1 \n\n child2 ... \n\n closing tag
+        // Multi-child html-element: opening tag \n\n child1 \n\n child2 ... \n\n closing tag
         pos += openingTag.length;
         // Separator between opening tag and first child
         pos += '\n\n'.length;
@@ -135,8 +135,8 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
       if (absoluteOffset <= nodeEnd) {
         // Target is within this node (or at its end boundary).
 
-        // For html-block containers with children, recurse.
-        if (node.type === 'html-block' && node.children.length > 0) {
+        // For html-element containers with children, recurse.
+        if (node.type === 'html-element' && node.children.length > 0) {
           // Single bare-text child (collapsed):  <tag>content</tag>
           if (
             node.children.length === 1 &&

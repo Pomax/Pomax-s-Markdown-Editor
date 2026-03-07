@@ -36,7 +36,7 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [src] - Image source URL (for inline-image nodes)
  * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
- * @property {string} [tagName] - HTML tag name for html-block nodes
+ * @property {string} [tagName] - HTML tag name for html-element nodes
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  */
@@ -86,7 +86,7 @@ export class SyntaxNode {
          * Child nodes.  For inline-containing block types (paragraph,
          * heading, blockquote, list-item), children are inline nodes
          * (text, bold, italic, link, etc.).  For container blocks
-         * (html-block), children are other block-level nodes.
+         * (html-element), children are other block-level nodes.
          * @type {SyntaxNode[]}
          */
         this.children = [];
@@ -98,7 +98,7 @@ export class SyntaxNode {
         this.parent = null;
 
         /**
-         * HTML tag name for html-block and html-inline nodes.
+         * HTML tag name for html-element nodes.
          * @type {string}
          */
         this.tagName = '';
@@ -169,7 +169,7 @@ export class SyntaxNode {
                 // Containers: bold, italic, bold-italic, strikethrough,
                 // link, and HTML inline tags (sub, sup, etc.)
                 const isHtmlInline = !!segment.tag;
-                const node = new SyntaxNode(isHtmlInline ? 'html-inline' : segment.type, '');
+                const node = new SyntaxNode(isHtmlInline ? 'html-element' : segment.type, '');
                 if (isHtmlInline) node.tagName = segment.tag;
                 if (segment.href) node.attributes.href = segment.href;
                 if (segment.children) {
@@ -280,7 +280,7 @@ export class SyntaxNode {
                 }
                 return rows.join('\n');
             }
-            case 'html-block': {
+            case 'html-element': {
                 const indent = '  '.repeat(depth);
                 // If the container has exactly one bare-text child, collapse
                 // to a single line: <tag>content</tag>
@@ -295,7 +295,7 @@ export class SyntaxNode {
 
                 const lines = [`${indent}${this.runtime.openingTag || ''}`];
                 for (const child of this.children) {
-                    if (child.type === 'html-block') {
+                    if (child.type === 'html-element') {
                         lines.push(child.toMarkdown(depth + 1));
                     } else {
                         lines.push('');
@@ -391,7 +391,7 @@ export class SyntaxNode {
                 return a;
             }
 
-            case 'html-inline': {
+            case 'html-element': {
                 const el = doc.createElement(child.tagName);
                 el.__st_node = child;
                 SyntaxNode.appendInlineChildrenToDOM(doc, child.children, el);
@@ -671,7 +671,7 @@ export class SyntaxNode {
                 return table;
             }
 
-            case 'html-block': {
+            case 'html-element': {
                 const tagName = this.tagName || 'div';
                 const el = doc.createElement(tagName);
                 el.__st_node = this;

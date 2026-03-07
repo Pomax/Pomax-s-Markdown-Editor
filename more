@@ -1,0 +1,1190 @@
+commit 12dd6783c8bf51c8edcc41dbb1ad931fc73cee92
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 21:50:47 2026 -0800
+
+    Update migration approach: renumber Step 13 sub-steps as Steps 13-20
+
+commit 8d857ad2551bb7c5dc2adafb56a4fd57a4ab880a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 20:47:59 2026 -0800
+
+    Step 12: export consolidation and package wiring verification
+
+commit 2843f218207bf02ed19e56caafa1acca67bdedc6
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 20:46:41 2026 -0800
+
+    Step 11: add reparseLine mutation function to @tooling/syntax-tree
+
+commit 7e58095ba8b23aeec62802c3f019356f4e87e932
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 20:41:35 2026 -0800
+
+    Step 10: add synchronous parseLine entry point to @tooling/parser
+
+commit 0413c25ef628f660ef3f7a698d081f4ef90f4ec6
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 19:48:50 2026 -0800
+
+    Step 9: Add findMatchedTokenIndices to @tooling/parser inline tokenizer
+
+commit d236bf696a1d0d90a75a5875c34fa3c01e31af2c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 19:14:56 2026 -0800
+
+    Step 8: Add tree-selection utilities (pure functions, no class modifications)
+
+commit d2e25f7e3a1f9d8eb09d3492702944c81a465f36
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 19:00:50 2026 -0800
+
+    Step 7: Add applyFormat with toggle, HTML tag fallback, sub/sup mutual exclusion
+
+commit 8e49d4d74ff95a14dc5feed98f926c92fd23f0ba
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 18:21:39 2026 -0800
+
+    Step 6: Add table operations (getTableCell, setTableCellText, addTableRow, addTableColumn, removeTableRow, removeTableColumn)
+
+commit daf196ff1c584b4dc437587ca504224593d1dc3f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 18:15:11 2026 -0800
+
+    Step 5: Add list operations (toggleListType, renumberOrderedList)
+
+commit f24242b5815239e3a80f1c1867ed42778a466faf
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 17:51:01 2026 -0800
+
+    Step 4: Add block-level mutations (splitNode, insertNodesAfter, changeNodeType)
+
+commit 53fb3919d82e58fb04e282251aa7cebb2e2e3a1f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 17:44:40 2026 -0800
+
+    Step 3 update: rebuildInlineChildren now reconciles to preserve node identity
+
+commit 48a1d513e049921217477e4d912649f5d707d0a5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 17:15:41 2026 -0800
+
+    Step 3: Add rebuildInlineChildren and mergeHints (tree-mutations.js)
+
+commit 50c8c11b5cfb8918411828ad2790fafadd052e29
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 17:09:46 2026 -0800
+
+    Step 2: Add tree query utilities (findNodeById, findNodeAtPosition, getBlockParent, isInlineNode, toBareText, getPathToNode, getNodeAtPath)
+
+commit f770a242b6b2875a41743296b9a67e71addf234d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 16:55:26 2026 -0800
+
+    migration-approach: rewrite Steps 4-6 for markdown-first editing model
+
+commit e1a7bc804afe1f809e483bcffaeed32a4302568f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 16:40:07 2026 -0800
+
+    Step 1: simplify to insertChild + appendChild (delegation) + removeChild; remove merges, replaceChild, insertBefore/After
+
+commit d3d58ce1593e47369a6ce03b3e55e94d4ef18869
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 15:17:57 2026 -0800
+
+    Step 2: add mergeToPrevious and mergeToNext to SyntaxNode and SyntaxTree
+
+commit 7120846d0bfd9ed7bffd23390000f3b5faa8d0c5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 15:11:31 2026 -0800
+
+    Step 1: add removeChild, replaceChild, insertBefore, insertAfter to SyntaxNode and SyntaxTree
+
+commit 70ac6e11310afd630c08444a554e507c8555cae9
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 14:49:35 2026 -0800
+
+    migration-approach: add npm test script to syntax-tree package, use npm test everywhere instead of bare node --test
+
+commit b53c56c06537629ce39732bf08f85d70157fc3f8
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 14:43:33 2026 -0800
+
+    migration-approach: enforce TDD - write tests first, confirm they fail, then implement
+
+commit 771e86d6850bbc1ee9498bcef4603e515dca9514
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 14:41:30 2026 -0800
+
+    Update migration-approach: split Step 1 into primitives (Step 1) and merges (Step 2), renumber all steps
+
+commit 23691de5e53e0b9366d2d301ce6a3de924560b6b
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Mar 6 14:30:09 2026 -0800
+
+    Add migration-approach.md with concrete task breakdown and agent instructions
+
+commit 25ad2d51964a08bd074f43fd2135bf01435ee493
+Author: GitHub Actions <githubactions@example.com>
+Date:   Fri Mar 6 09:31:30 2026 -0800
+
+    prep
+
+commit 0a4deb2c1b85949b820544d92162e92562ac09f0
+Author: GitHub Actions <githubactions@example.com>
+Date:   Thu Mar 5 22:36:37 2026 -0800
+
+    migration plan
+
+commit 10ab26d743d83a84abb30c3d252434613f6e4811
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Mar 5 22:26:11 2026 -0800
+
+    readme (#105)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 5fe8dda5e1e384ff36f0e7fac976ff2143a45905
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Mar 5 22:08:08 2026 -0800
+
+    linting (#104)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit f4295c80f24c612a7e7c568509240bfa2ff7085c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Mar 5 21:39:35 2026 -0800
+
+    bidirectionaly node/dom linking (#103)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 5718144cf5ee76d29f27b8dabcc23629b8dc0357
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Mar 5 21:34:28 2026 -0800
+
+    Refactor: separate parsing from data structures, unify html-element type (#102)
+    
+    - Extract toMarkdown serializer to render-tree-as-markdown.js
+    - Extract toDOM renderer to render-tree-as-dom.js
+    - Eliminate InlineSegment intermediate representation
+    - Move inline-tokenizer.js and parse-inline-content.js to parser package
+    - Remove parsing logic from SyntaxNode (parser owns all parsing)
+    - Remove parser dependency from DOM renderer
+    - Support arbitrary HTML elements in inline tokenizer
+    - Unify html-block/html-inline into single html-element type
+    - Add table spec test with inline formatting and nested HTML
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 42c3f17daef954bbe8b64f9d82893892aaf3e413
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Mar 5 20:24:44 2026 -0800
+
+    Issue 30 parser library (#101)
+    
+    * Phase 1: scaffold @tooling/parser directory with package.json and issue-30 plan
+    
+    * Phase 2: copy parser source files, create index.js, implement toDOM/toHTML on SyntaxNode and SyntaxTree
+    
+    * Phase 3: spec file infrastructure — verify script, test runner, example spec file, serialize-tree, async Parser.parse with jsdom
+    
+    * parser: add tagName property, html-inline node type, code-block text children, and spec test infrastructure
+    
+    * parser: add list container nodes wrapping list-items, remove disabled attr from checkboxes, fix list spec HTML
+    
+    * parser: structured table nodes with header/row/cell children, fix spec files, improve HTML normalizer
+    
+    * parser: remove _ prefix from methods, add runtime container, remove dead code
+    
+    * parser: strip app-only methods from syntax-tree.js
+    
+    * parser: remove dead code from dfa-parser.js and inline-tokenizer.js
+    
+    * parser: rename _segmentToNode to segmentToNode, fix stale comment
+    
+    * parser: replace content getter/setter with plain property, remove _ prefix
+    
+    * parser: move syntax-tree, inline-tokenizer, serialize-tree to @tooling/syntax-tree
+
+commit d5e498c1036795555c4460b6966051cd8ba994a9
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Mar 1 17:28:20 2026 -0800
+
+    Fix/preserve html tags (#97)
+    
+    * fix: preserve HTML tag attributes, void elements, and raw content tags in parser
+    
+    * fix: add HTML comment parsing and hide void/raw/comment blocks in writing mode
+    
+    * fix: session restore scrolls to cursor position, fix flaky ToC tests
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 364028a37db6781bb740ca43a1895b298112f13c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Mar 1 14:34:49 2026 -0800
+
+    Fix/95 source view codeblock editing (#96)
+    
+    * feat: make code-block fences and language tag editable in source view (#95)
+    
+    * fix: backspace at offset 0 finalizes code-block when opening fence removed (#95)
+    
+    * feat: display code-block language tag via ::before/::after in writing view (#95)
+    
+    * writing mode: language tag display with click-to-edit dialog
+    
+    * preserve text selection across language-tag dialog open/close
+    
+    * docs: code-block source edit mode, language tags, dialog state pattern
+
+commit 7123a1add355f3ae9e6282a2550ed03edbb324d7
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 28 13:38:33 2026 -0800
+
+    Reorganize integration tests (#94)
+    
+    * Reorganize integration tests into categorical subdirectories and fix imports
+    
+    * fix: harden test teardown with closeApp helper and fix toc-scroll timeout
+    
+    * .
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit c6bdb1bbf02d7a7901e7ba9303c32f864d55e5af
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 28 11:34:33 2026 -0800
+
+    Add paste support (#92)
+    
+    * Add integration tests for paste support in source and writing views
+    
+    * Add source-view editing tests and expand paste tests for all hint shapes
+    
+    * Add incremental renderNodes() to source renderer, eliminating fullRender fallback
+    
+    * Preserve text selection (treeRange) across tab switches
+    
+    * Add paste option to right-click context menu
+    
+    * Update docs for incremental source rendering, selection preservation, and context menu paste
+    
+    * Update paste.spec.js
+    
+    * Update paste.spec.js
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit d6ddc2cc01615c2acb570aa76b474f23cc65db21
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 27 17:37:34 2026 -0800
+
+    Fix/writing view copy (#90)
+    
+    * Implement writing-view copy with block prefixes and HTML tag repair (#16)
+    
+    * Stop handleBlur from clearing treeCursor and re-rendering on defocus (#16)
+    
+    * Add always-on context menu and writing-view copy/cut integration tests (#16)
+    
+    * .
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 783e303ae2a4871a824da65636bccc6dd4b4c6cf
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 27 15:35:01 2026 -0800
+
+    Add checklist (checkmark list) support with toolbar switching (#89)
+    
+    * Add checklist (checkmark list) support with toolbar three-way switching (closes #88)
+    
+    * sigh
+    
+    * checkpoint: pre-reload refactor
+    
+    * Refactor reload to reuse startup flow; make SettingsManager a singleton
+    
+    * Preserve treeRange across external interactions; async toggleList with html-block lifting
+    
+    * moderately working
+    
+    * .
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit e9aa1a2b36c7fe9454e33ea357ccb033ade6ffdf
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 24 22:47:52 2026 -0800
+
+    . (#86)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 0c57c2a27274853c4465b72c67650e2eafc9b3e4
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 24 17:58:31 2026 -0800
+
+    Fix/trailing paragraph after code block (#85)
+    
+    * Add phantom paragraph after trailing code block in writing mode
+    
+    * Add phantom paragraph in source view, adjust code-block and paragraph spacing
+    
+    * .
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit d17cc57d091cafb4cef2cc7849486092695ecc45
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 24 11:29:45 2026 -0800
+
+    Fix/82 variable length code fences (#83)
+    
+    * feat: support variable-length code fences (3+ backticks) - parser, serialization, rendering, and tests
+    
+    * fix: add md-content class to source-view code block content div for correct cursor placement
+    
+    * fix: backspace in empty code block peels back language then reverts to paragraph
+    
+    * fix: append trailing newline in code block renderers to prevent visual collapse of empty and trailing lines
+    
+    * fix: make code-block backspace view-mode-aware (source reverts to paragraph with fence text, writing converts to empty paragraph)
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 42575ca557cb25303c842a516b6e3a57c007e471
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 23 22:12:51 2026 -0800
+
+    Remove 3 duplicate integration tests: merge backspace-heading specs, drop repeated delimiter tests (#81)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 1be19c5bfbfd18dd8e03b7be5e36cee69589a4a5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 23 19:26:52 2026 -0800
+
+    various fixes (#79)
+    
+    * Use same page dimensions and resize handles in source view, fix cursor placement on session restore
+    
+    * Re-render focused node when restoring a tab so cursor element gets highlighted
+    
+    * .
+    
+    * Rename focused view mode to writing throughout codebase
+    
+    * HTML tag toolbar integration, fix handleClick cursor overwrite
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit f3bb52412ab23ebf1ca81c2cc2d1616954c51304
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 23 14:46:36 2026 -0800
+
+    Add file buttons to toolbar, fix tab-switch content corruption (#77)
+    
+    * Add file buttons to toolbar, fix tab-switch content corruption and toolbar update bugs
+    
+    * Fix search bar across view mode switches, dismiss with Escape from anywhere, add figcaption styling
+    
+    ---------
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit 52d48272af727500113aeeae6b7591fbabbf0e9d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 23 13:32:31 2026 -0800
+
+    feat: true inline cursor, toolbar active states, sub/sup toggle fix (#76)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit ef5ffd1d5a7a3542747677cf0d6685aeba840064
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 23 11:15:35 2026 -0800
+
+    Model inline formatting as nested SyntaxNode children; fix Cmd+Q on macOS; fix page resizer across tabs (#73)
+    
+    Co-authored-by: GitHub Actions <githubactions@example.com>
+
+commit c619cfd5f9ecfb0a52b4e06ee3c833bde7c2620d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 21:09:28 2026 -0800
+
+    1.7.0
+
+commit f70e8489f678948ac700ecd1ffc1a527254fa537
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 21:09:15 2026 -0800
+
+    chore: remove dead regex parser, update docs and RELEASE_LOG for v1.7 (#71)
+
+commit 82e928482cd65a10b206b9c3ca49889d1ab16406
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 20:39:27 2026 -0800
+
+    feat: support ***bold-italic*** formatting, fix HR eating *** at EOF (#70)
+
+commit 87bb7ca6c5dddad79f60be1224ab89fb7ceffca4
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 19:38:32 2026 -0800
+
+    Make DFA parser the only parser, remove regex parser and parser switching UI (#69)
+
+commit 83a74c675f4e5471e4df2a79ea47ce5ac4b39742
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 19:32:40 2026 -0800
+
+    Update all docs to reflect current codebase (closes #59) (#60)
+
+commit e4c8e9efe9f9b816b2b8fbcf5370ddede1ee839c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 18:15:29 2026 -0800
+
+    disallow spinning releases
+
+commit 552ae68bfa6c2d47d516527e4e1ddc7d74d57fad
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 18:11:58 2026 -0800
+
+    1.6.0
+
+commit 4911e8e6c1e7646bc522ed30d8e34d8549bf7ce4
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 18:11:28 2026 -0800
+
+    prerelease
+
+commit 850ccb6c5b29e9a41d2da07d30ff69d4813137ad
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 17:55:33 2026 -0800
+
+    fix: restore cursor position, ToC heading, and scroll on close-and-reopen (closes #62) (#68)
+
+commit cc5e26aac7466875811970ba8b32be238bc629dd
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 22 15:04:14 2026 -0800
+
+    move the treeCursor to the syntax tree (obviously) (#67)
+    
+    * Add parser engine preference (regex/DFA) to settings modal
+    
+    * Wire parser engine swap, improve view-mode scroll anchoring, add temp toolbar toggle
+    
+    * Per-tab containers, tab switching state preservation, ToC heading lock across tab switches
+    
+    * Fix flush promise chain and synchronous scrollTop restore for close/reopen
+    
+    * Add SyntaxTree.getPathToCursor and persist cursorPath on close
+    
+    * Remove cursor restore code from session and file-open restore paths
+    
+    * Mirror editor.treeCursor to syntaxTree.treeCursor at every assignment site, add cursor-sync integration tests, fix view-mode-dropdown test and missing data-view-mode default
+    
+    * fix: reobserve ToC after creating a new tab so headings load immediately
+    
+    * refactor: read treeCursor from syntaxTree in app.js and editor.js
+    
+    * refactor: read treeCursor from syntaxTree in event-handler.js
+    
+    * refactor: read treeCursor from syntaxTree in cursor-manager.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in focused-renderer.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in selection-manager.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in input-handler.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in search-bar.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in toc.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in table-manager.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in range-operations.js
+    
+    * refactor: replace treeCursor read access with syntaxTree.treeCursor in edit-operations.js
+    
+    * refactor: remove redundant editor.treeCursor write in link-helper.js
+    
+    * refactor: remove redundant editor.treeCursor write in toc.js
+    
+    * refactor: remove redundant editor.treeCursor writes in image-helper.js
+    
+    * refactor: remove redundant editor.treeCursor writes in range-operations.js
+    
+    * refactor: remove redundant editor.treeCursor writes in event-handler.js, update cursor-sync tests
+    
+    * refactor: remove redundant editor.treeCursor write in cursor-manager.js
+    
+    * refactor: remove redundant editor.treeCursor writes and guard in table-manager.js
+    
+    * refactor: remove redundant editor.treeCursor writes in app.js
+    
+    * refactor: remove redundant editor.treeCursor property, writes, and guards in editor.js and edit-operations.js
+    
+    * fix: update stale editor.treeCursor JSDoc reference in cursor-manager.js
+    
+    * docs: update cursor model docs to reflect treeCursor living on syntaxTree
+
+commit 519031590edfdf4212a571ccd4ebaf969d97f196
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 21 15:25:13 2026 -0800
+
+    Add DFA-based tokenizer and parser with unit tests (issue #63) (#64)
+
+commit e95412c2195bc0f25279856cff6320f85d41b139
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 21 10:03:03 2026 -0800
+
+    Add search feature with plain text and regex support (closes #57) (#58)
+
+commit 35cc5a829d53d3f7993317e50465dd0aa3cf1ce0
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 19:29:16 2026 -0800
+
+    1.5.0
+
+commit 2459d0e433fa80bded3c6a78dbc4622e0440e4b5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 19:28:43 2026 -0800
+
+    prerelease
+
+commit 186222a7c834a533b5469e4501ff027f183e2a85
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 19:26:14 2026 -0800
+
+    Cycle select-all through node/parent/document, remove empty elements on delete (#56)
+
+commit 0d88f75bd1036e77d8486d697d1af8e7a725264a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 18:42:52 2026 -0800
+
+    Feat/list support (#54)
+    
+    * Fix list toolbar buttons: ordered list, toggle, applicableTo, container buttons
+    
+    * Add Enter key list continuation, empty-item exit, source-view marker guard
+    
+    * Enable image/table on list items, multi-element selection to list conversion
+    
+    * Whole-list toggle/switch, integration tests for list support
+    
+    * Renumber ordered list items on add/remove, fix source view Enter split
+    
+    * Fix multi-line paste: split into separate nodes, handle CRLF, add integration tests
+
+commit a020c254ccccf9dc2e25dc3a6add1c299351119d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 16:03:06 2026 -0800
+
+    Update ai-agent-notes with verified corrections (#53)
+
+commit 0f05234b36545cae40a7290ceb9ffc5a42396bc6
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 15:25:43 2026 -0800
+
+    feat: highlight active ToC section on scroll (issue #42) (#51)
+
+commit eaaff0c32bb982d3786cdb69dc3255dd479f995f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 14:39:40 2026 -0800
+
+    feat: remember cursor position across app restarts (issue #41) (#50)
+
+commit 2e6bf6c52546729a4967aa929dc957cee840de0a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 11:10:51 2026 -0800
+
+    fix: add inline image tokenization so ![alt](src) renders as an image instead of a stray ! + link (#49)
+
+commit 7c5abf35f9a254008c1927360763ea628bc29eda
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Fri Feb 20 10:45:07 2026 -0800
+
+    Fix cursor jump when typing inline delimiters in focused view (closes #44) (#46)
+
+commit 1dd333b841953493819b149cab78563623593b8e
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 17 09:15:02 2026 -0800
+
+    refactor: split editor.js into focused manager classes (closes #37) (#39)
+
+commit a5ad3ec1e0c7331907f0ee72095e39b9df993aa0
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 17:32:54 2026 -0800
+
+    1.4.0
+
+commit 6770b70b9bca54fdf7b9f8e6eda9da5d94e6d7c0
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 17:32:37 2026 -0800
+
+    prerelease
+
+commit 0fc81dfd000d0abb1016f89072ddd43b75f35965
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 17:17:46 2026 -0800
+
+    Add HTML img tag support with style attribute in image modal (#36)
+    
+    * Add HTML img tag support with style attribute in image modal
+    
+    * Fix duplicate ImageModal dialog causing Playwright strict mode failures
+
+commit b7eff069e12a906c0c6bffd8960a5b9651ec7ebc
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 15:54:14 2026 -0800
+
+    Add page resize by dragging edges in focused mode (closes #29) (#38)
+
+commit 55e0e84020231460c2ecb4122e102ef733a6e997
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 11:37:10 2026 -0800
+
+    Use incremental render for detailsClosed setting and rewriteImagePaths (#35)
+
+commit 78c318c2fadce8f1ad65fad4ab1fa2cc4d290e71
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 11:25:04 2026 -0800
+
+    ToC scroll: use incremental render instead of full DOM rebuild (#31)
+
+commit 0726ff97c2f805f60db94c2ff303c5fa74a29b6a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 10:43:18 2026 -0800
+
+    additional button bar spec tests (#28)
+
+commit abe4755193cdf9f8457bd91a5de84e03055bf652
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 16 10:36:05 2026 -0800
+
+    Fix/bold button dom authority (#27)
+    
+    * Fix bold button: use tree-coordinate selection, add whitespace trimming, toggle detection, and cursor placement
+    
+    * Handle collapsed cursor in applyFormat: bold word under caret or unbold existing bold
+
+commit 2b36b3807f372ea75d19d99d0f3cea1d45f97e1e
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 15 22:03:07 2026 -0800
+
+    lint-fix (#25)
+
+commit 48ad3831123fd3deb6368418b93842ca8b4661b4
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 15 21:57:37 2026 -0800
+
+    Issue 22 range handling (#24)
+    
+    * Add range handling: selection delete, cross-node merge, Ctrl+A, cut/copy/paste, parallel tests (#22)
+    
+    * Update docs: range handling architecture, agent notes with lessons learned
+    
+    * Add critical context-retention instruction to ai-agent-notes
+    
+    * Replace regex offset mapping with tokenizer-based implementation, fixing inline HTML cursor
+    
+    * fix: use _lastRenderedNodeId to track focused-mode node transitions reliably
+    
+    * Rewrite integration tests to use real interactions and fix cursor offset regression on view-mode switch
+    
+    * Use platform-aware keyboard shortcuts in tests for macOS CI compatibility
+    
+    * Retry Electron launch up to 3 times to handle transient CI timeouts
+
+commit 897aa191fa9b6533c0195727127344da6b594502
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 15 12:58:58 2026 -0800
+
+    Incremental rendering (#21)
+    
+    * Replace full document re-renders with incremental node rendering
+    
+    - Rename render() to fullRender() and renderAndPlaceCursor() to fullRenderAndPlaceCursor() across all renderers
+    
+    - Add renderNodes({ updated, added, removed }) to FocusedRenderer for incremental DOM updates
+    
+    - Add renderNodes() and renderNodesAndPlaceCursor() to Editor that delegate to focused renderer or fall back to full render
+    
+    - Extend recordAndRender() to accept optional render hints for incremental updates
+    
+    - Update all edit operation call sites to pass render hints
+    
+    - handleBlur() now re-renders only the defocused node instead of rebuilding the entire document
+    
+    - handleClick() and handleSelectionChange() use incremental rendering for focus changes
+    
+    - Full renders retained only for: initialize, loadMarkdown, reset, setViewMode, undo, redo, handleDrop
+    
+    * Fix link single-click, modal focus restoration, and BaseModal refactor
+    
+    * .
+
+commit fc9367b60a31928e50a404880880e720a45f402d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Feb 12 16:26:10 2026 -0800
+
+    1.3.0
+
+commit b307d2931d9e198ce92c9113572c8e7565e74a4b
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Feb 12 16:25:50 2026 -0800
+
+    pre release log
+
+commit c4bdb10a27696031368cb2c5294907ede982f5ff
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Feb 12 16:22:47 2026 -0800
+
+    what
+
+commit 905ddf5c3906520e015dd75c00ee3ee89a173638
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Feb 12 16:22:17 2026 -0800
+
+    fix: render inline formatting in table cells (#20)
+
+commit 3abe76ba464750b8a2c2f7b7681479529fc69fe7
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Thu Feb 12 16:06:01 2026 -0800
+
+    Inline html markup v2 (#19)
+    
+    * Phase 1: WYSIWYG inline rendering + cursor offset mapping
+    
+    - Remove isFocused raw-text branch in renderInlineContent(); all nodes
+      now always render inline formatting via renderInlineParts()
+    - Add INLINE_RE constant matching renderInlineParts() regex exactly
+    - Add rawOffsetToRenderedOffset() and renderedOffsetToRawOffset() for
+      bi-directional cursor offset mapping between raw markdown and rendered DOM
+    - Update placeCursor() to convert raw treeCursor offset to rendered offset
+      in focused mode before walking DOM text nodes
+    - Update computeOffsetInContent() to convert rendered DOM offset back to
+      raw offset via new _toRawOffset() helper
+    
+    * Phase 2: WYSIWYG block rendering + test updates
+    
+    * - handleEnterKey: typing `lang + Enter on a paragraph converts it
+      to a code-block node with empty content and captured language
+    - handleEnterKey: Enter inside a code-block inserts a newline instead
+      of splitting the node
+    - insertTextAtCursor: suppress fence-pattern conversion during typing
+      so ` stays as paragraph text until Enter is pressed
+    - insertTextAtCursor/handleBackspace/handleDelete: skip re-parsing for
+      code-block nodes (raw code is not markdown syntax)
+    - Add code-block-enter.spec.js integration tests
+    
+    * Phase 4: table cell editing - direct typing, backspace, delete, Enter, Tab/Shift+Tab navigation
+    
+    * Phase 5: click image in focused mode opens edit modal
+    
+    * Phase 6: Link click-to-edit in focused mode
+    
+    * Phase 7: Final cleanup and additional integration tests
+    
+    * Add inline HTML markup support with tokenizer-based rendering
+    
+    * prevent thread competition?
+    
+    * Fix macOS test failures: use platform-aware Home/End key sequences
+    
+    * playwright...
+    
+    * Increase Electron launch timeout on macOS to reduce CI flakiness
+    
+    * 2 workers for macos
+
+commit fa59ddc6889fc9f87d2a2e28a961313a655ac930
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Wed Feb 11 09:31:52 2026 -0800
+
+    no need for a secondary script (#13)
+    
+    * no need for a secondary script
+    * "no-ci" label
+
+commit cd117bc43fb52f87b5982b14acf7d39a2bc4a9c4
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 15:42:01 2026 -0800
+
+    1.2.0
+
+commit 65c60d63e506ca82ce4a558e3c039d9e59b96018
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 15:40:58 2026 -0800
+
+    updates (#11)
+
+commit 5a88335bb22b758fcb86004a99066f66a3809a90
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 14:42:27 2026 -0800
+
+    1.1.1
+
+commit 09d1a12962333ec257e7e6895cbd1f225168b592
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 14:42:12 2026 -0800
+
+    fix build (#10)
+
+commit a8f77f00e6bd57e51bb5a277ab14a92f29d625a3
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 13:49:54 2026 -0800
+
+    1.1.0
+
+commit 54ec33be8427717b92f87a7edfd54cea78be86cc
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 13:49:25 2026 -0800
+
+    Release log (#9)
+    
+    * .
+    
+    * release log
+
+commit 9ffd130412294bd93f7990f9faa477e5661dd68d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 12:49:26 2026 -0800
+
+    readme
+
+commit 17ba449a78905f736f9c2c69b4c6d5be170ba5a5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Tue Feb 10 12:36:49 2026 -0800
+
+    Details element (#6)
+    
+    * html container support
+    
+    * pre details
+    
+    * fix: add white-space: pre-wrap to .md-line and integration test for details/summary input
+    
+    * Make html-block tag lines editable in source view via tagPart cursor routing
+    
+    * hm
+    
+    * hmmmm
+    
+    * .
+    
+    * details
+    
+    * .
+    
+    * tests
+    
+    * .
+    
+    * CI fix
+    
+    * CI
+    
+    * linux CI fix
+    
+    * ci...??
+
+commit 5989e5a619f63a9c217bec8dbb3ad6b60206931b
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 9 18:40:14 2026 -0800
+
+    Update validate.yml (#7)
+
+commit 1e0fe8bdeb16cbc5ec5ab05f8262ed2800959368
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Mon Feb 9 11:32:05 2026 -0800
+
+    Feature/multi file tabs (#3)
+    
+    * Add tab bar UI at bottom of editor window
+    
+    * Add multi-file tab switching via tab bar and View menu
+    
+    * docs updates
+    
+    * and workflow improvements
+    
+    * .
+
+commit 9bf24301c01826de553d0e7492b7fb4a430197fc
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 13:49:15 2026 -0800
+
+    Update README.md
+
+commit 8ea11a521aa3d569d86a2a9e301d1a9870934b42
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 13:30:04 2026 -0800
+
+    builds
+
+commit 40a455ccee06c0004ecaca358a4d7e01b6987825
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 13:22:58 2026 -0800
+
+    1.0.1
+
+commit e22e0e0f59aa22e828dfc47f6f6cc6a02778cb66
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 13:22:37 2026 -0800
+
+    standalone builds
+
+commit 44b5ac36b4d92c32c80f4346cf1630a91a28ff41
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:54:01 2026 -0800
+
+    make images local
+
+commit 13e642d6b68b2737c57bc239c8e805d24356f878
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:52:43 2026 -0800
+
+    image location
+
+commit d2cbff5d2c3ff10a88d7a639303183ecd7c32445
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:36:09 2026 -0800
+
+    yes
+
+commit 33214a1f19d0143d480b6b15446218d52ab9255f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:23:49 2026 -0800
+
+    lol
+
+commit f880cc7746b4b4fd78a729fd221a6c8439d8e5b5
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:23:03 2026 -0800
+
+    license shenanigans
+
+commit 04046809e3fe6941969f7d54192011a176654d5b
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:16:30 2026 -0800
+
+    word counts
+
+commit 870116ba0a991b298763abbc5f6752c96c94fee8
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 12:06:22 2026 -0800
+
+    yo
+
+commit ea75697b5c3ff4f8910226b25d0d87c1e27b1928
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 11:46:21 2026 -0800
+
+    .
+
+commit 49fd4cdd9eed79410e54e84606310d27f9101b3c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 11:34:27 2026 -0800
+
+    debug
+
+commit 9b3d12769a7c6b25596627db3b561515fb1435a3
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 11:24:17 2026 -0800
+
+    mostly done
+
+commit 30c8f5a4a1387282e167c89b2cf2f5a9b81d781c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 10:51:42 2026 -0800
+
+    image dnd
+
+commit 0e5b1d423f500b2347c25aa5d3995b5564853352
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 10:13:38 2026 -0800
+
+    docs
+
+commit 3e675d8c3af58a5cef4c7e2150f761f8fcd8393c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 10:11:03 2026 -0800
+
+    docs
+
+commit 4334f2ad80a5c1f3dd4d88f78a51f80e14d4472d
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 10:07:05 2026 -0800
+
+    prefs improvement
+
+commit 09c6b0e23c05a0882643755daf35090b617ae814
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 09:58:19 2026 -0800
+
+    sidebar
+
+commit 2855a382aee73703151d6f4e78cf467a888d2ce7
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sun Feb 8 09:12:27 2026 -0800
+
+    .
+
+commit f0ce57b85d4d150200e092025cbdce1d26f3e508
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 21:17:37 2026 -0800
+
+    syntax highlight
+
+commit b786721af3d86776384c65b9ed7eaff2129e1018
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 20:52:42 2026 -0800
+
+    sigh
+
+commit ab3dc76f61f850e49665e0b974718167f65402c7
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 20:09:28 2026 -0800
+
+    .
+
+commit 0ab4c86c931435b8ce97e9210889b47703ffff75
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:52:17 2026 -0800
+
+    .
+
+commit e21f6dbcaeb0b47ee1c1d9efa506e55e87fd0d27
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:39:40 2026 -0800
+
+    nice
+
+commit 35df60d5403e8749023a9ed50055f409055902f7
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:32:31 2026 -0800
+
+    .
+
+commit 11a8fb3ebbe38662882038392956d7b6b48c8665
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:31:46 2026 -0800
+
+    .
+
+commit f600ec68fa571bec41d35c3a634ec82689ecc772
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:23:26 2026 -0800
+
+    Tables?
+
+commit 4940c842b9f84c0a9df87bd6ee1c733a5c43a173
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 19:04:38 2026 -0800
+
+    Tables?
+
+commit dd0e2a82f8667b4f9dfc9e599d772b416b8912e9
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 17:55:00 2026 -0800
+
+    damn, images.
+
+commit 296bfee9712b6291bde1aefa6bfca4680145e263
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 17:25:34 2026 -0800
+
+    .
+
+commit 74394d845eb712ff71ad4b07463c84972c9eb7ce
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 17:12:25 2026 -0800
+
+    kk
+
+commit 0da41f68ef9303d5d6462175a07c203f6365c576
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 17:04:50 2026 -0800
+
+    wows
+
+commit c20284046a88146af4c288d59b228cd9cb680106
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 16:40:57 2026 -0800
+
+    wos
+
+commit da42f8c012c1b9c15ce1e7723610b64371f5ec3c
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 16:36:53 2026 -0800
+
+    wos
+
+commit 24b7ae5f44ccaf0fc8678544613b513e6db934d8
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 16:27:04 2026 -0800
+
+    settings
+
+commit eda99fa71bf238f955b730ac3b6a36e583ec67d3
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 15:35:40 2026 -0800
+
+    .
+
+commit 9b47e5183d3aff3bf0fba9dff460e820bb30c43a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 15:27:05 2026 -0800
+
+    prefs
+
+commit c924f55c74f6fa6d56b1b63c108dd428b37772d9
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 15:17:08 2026 -0800
+
+    still better
+
+commit 11b85c68facaf05458813e32d19873c442b81ffd
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 14:46:35 2026 -0800
+
+    .
+
+commit c2ce761959b4499e15677dc4179b4ac41165e42a
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 14:29:08 2026 -0800
+
+    .
+
+commit bec03a45b7591f46aaa8269464593d2eb6b06d4f
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 13:55:29 2026 -0800
+
+    better
+
+commit b63c0d746d6bd0561f247c257e5d79ad3d581090
+Author: Pomax <pomax@nihongoresources.com>
+Date:   Sat Feb 7 10:41:21 2026 -0800
+
+    initial pass

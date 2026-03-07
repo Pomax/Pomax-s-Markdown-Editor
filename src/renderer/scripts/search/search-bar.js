@@ -377,10 +377,10 @@ export class SearchBar {
     const walk = (nodes, isFirst) => {
       let first = isFirst;
       for (const node of nodes) {
-        // html-block containers are virtual — their text is produced
+        // html-element containers are virtual — their text is produced
         // by their children.  In source mode the opening/closing tag
         // lines are part of toMarkdown(), so we handle them as a unit.
-        if (node.type === 'html-block' && node.children.length > 0) {
+        if (node.type === 'html-element' && node.children.length > 0) {
           if (isSource) {
             // Source mode: the whole block is one markdown chunk.
             const text = node.toMarkdown();

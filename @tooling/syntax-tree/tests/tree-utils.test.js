@@ -271,8 +271,8 @@ describe("isInlineNode", () => {
     assert.strictEqual(isInlineNode(new SyntaxNode("inline-image", "")), true);
   });
 
-  it("returns true for html-inline", () => {
-    assert.strictEqual(isInlineNode(new SyntaxNode("html-inline", "")), true);
+  it("returns true for html-element (inline role)", () => {
+    assert.strictEqual(isInlineNode(new SyntaxNode("html-element", "")), true);
   });
 
   it("returns false for paragraph", () => {
@@ -307,8 +307,8 @@ describe("isInlineNode", () => {
     assert.strictEqual(isInlineNode(new SyntaxNode("horizontal-rule", "")), false);
   });
 
-  it("returns false for html-element", () => {
-    assert.strictEqual(isInlineNode(new SyntaxNode("html-element", "")), false);
+  it("returns true for html-element (block role uses same type)", () => {
+    assert.strictEqual(isInlineNode(new SyntaxNode("html-element", "")), true);
   });
 });
 

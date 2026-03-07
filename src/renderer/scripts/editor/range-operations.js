@@ -139,7 +139,7 @@ export class RangeOperations {
    *
    * 1. First press: select the current node's content
    * 2. Second press: if the node has a "content parent" (e.g., list run
-   *    for a list-item, html-block for its children), select that group.
+   *    for a list-item, html-element for its children), select that group.
    *    If there is no content parent, jump straight to document.
    * 3. Third press (or second if no parent): select the entire document.
    *
@@ -184,8 +184,8 @@ export class RangeOperations {
   _hasContentParent(node) {
     // List items belong to a contiguous list run
     if (node.type === 'list-item') return true;
-    // Nodes inside an html-block container (e.g., children of <details>)
-    if (node.parent && node.parent.type === 'html-block') return true;
+    // Nodes inside an html-element container (e.g., children of <details>)
+    if (node.parent && node.parent.type === 'html-element') return true;
     return false;
   }
 
@@ -250,7 +250,7 @@ export class RangeOperations {
   /**
    * Selects the content-parent group of a node (level 2).
    * - List items: selects the entire contiguous list run.
-   * - html-block children: selects all children of the html-block parent.
+   * - html-element children: selects all children of the html-element parent.
    * @param {SyntaxNode} node
    */
   _selectContentParent(node) {
@@ -263,7 +263,7 @@ export class RangeOperations {
       }
     }
 
-    if (node.parent && node.parent.type === 'html-block') {
+    if (node.parent && node.parent.type === 'html-element') {
       const children = node.parent.children;
       if (children.length > 0) {
         this._selectNodeRange(children[0], children[children.length - 1]);
@@ -287,16 +287,16 @@ export class RangeOperations {
 
   /**
    * Returns the first leaf (deepest first-child) of a node.
-   * For nodes with children (html-blocks), descends into children.
+   * For nodes with children (html-elements), descends into children.
    * @param {SyntaxNode} node
    * @returns {SyntaxNode}
    */
   _firstLeaf(node) {
     let current = node;
-    // Only descend into block-level children (html-block containers).
+    // Only descend into block-level children (html-element containers).
     // Inline children (text, bold, etc.) are not rendered as separate
     // DOM elements with data-node-id, so we must stop at block nodes.
-    while (current.type === 'html-block' && current.children.length > 0) {
+    while (current.type === 'html-element' && current.children.length > 0) {
       current = current.children[0];
     }
     return current;
@@ -309,7 +309,7 @@ export class RangeOperations {
    */
   _lastLeaf(node) {
     let current = node;
-    while (current.type === 'html-block' && current.children.length > 0) {
+    while (current.type === 'html-element' && current.children.length > 0) {
       current = current.children[current.children.length - 1];
     }
     return current;

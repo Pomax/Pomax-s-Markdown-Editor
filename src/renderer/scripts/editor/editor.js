@@ -46,7 +46,7 @@ import { UndoManager } from './undo-manager.js';
  * @property {number} offset - The character offset within the block node's
  *     raw content string (always relative to the block, not the inline).
  * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
- *     html-block container's opening or closing tag line (source view only).
+ *     html-element container's opening or closing tag line (source view only).
  * @property {number} [cellRow] - Row index for table cell editing (0 = header).
  * @property {number} [cellCol] - Column index for table cell editing.
  */
@@ -408,7 +408,7 @@ export class Editor {
   /**
    * Returns the sibling list that contains the given node.
    * For top-level nodes this is `syntaxTree.children`; for nodes
-   * inside a container (e.g. html-block) it is `node.parent.children`.
+   * inside a container (e.g. html-element) it is `node.parent.children`.
    * @param {SyntaxNode} node
    * @returns {SyntaxNode[]}
    */
@@ -686,17 +686,17 @@ export class Editor {
   }
 
   /**
-   * Ensures that the document does not end with an html-block container.
+   * Ensures that the document does not end with an html-element container.
    * In writing view there is no way to place the cursor after a trailing
    * `</details>` block, so we append an empty paragraph whenever the last
-   * top-level node is a container html-block.
+   * top-level node is a container html-element.
    */
   _ensureTrailingParagraph() {
     if (!this.syntaxTree) return null;
     const children = this.syntaxTree.children;
     if (children.length === 0) return null;
     const last = children[children.length - 1];
-    if (last.type === 'html-block' && last.children.length > 0) {
+    if (last.type === 'html-element' && last.children.length > 0) {
       const para = new SyntaxNode('paragraph', '');
       this.syntaxTree.appendChild(para);
       return para;
@@ -724,7 +724,7 @@ export class Editor {
       this.syntaxTree.appendChild(node);
     }
 
-    // Ensure the document doesn't end with a container html-block
+    // Ensure the document doesn't end with a container html-element
     // (the user would have no way to place the cursor after it in
     // writing view).
     this._ensureTrailingParagraph();
@@ -1029,8 +1029,8 @@ export class Editor {
     const currentNode = this.getCurrentBlockNode();
     if (!currentNode || !this.syntaxTree) return;
 
-    // html-block containers are structural nodes, not type-changeable.
-    if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+    // html-element containers are structural nodes, not type-changeable.
+    if (currentNode.type === 'html-element' && currentNode.children.length > 0) return;
 
     const wasListItem = currentNode.type === 'list-item';
     const siblings = this.getSiblings(currentNode);
@@ -1075,8 +1075,8 @@ export class Editor {
     const currentNode = this.getCurrentBlockNode();
     if (!currentNode || !this.syntaxTree) return;
 
-    // html-block containers are structural nodes, not convertible.
-    if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+    // html-element containers are structural nodes, not convertible.
+    if (currentNode.type === 'html-element' && currentNode.children.length > 0) return;
 
     const before = this.getMarkdown();
 
@@ -1123,11 +1123,11 @@ export class Editor {
     if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
       const nodes = this._getNodesInRange(this.treeRange.startNodeId, this.treeRange.endNodeId);
 
-      // Detect nodes that live inside html-block containers.
+      // Detect nodes that live inside html-element containers.
       // Converting them requires dissolving their parent wrapper.
       const htmlBlockParents = new Set();
       for (const n of nodes) {
-        if (n.parent && n.parent.type === 'html-block') {
+        if (n.parent && n.parent.type === 'html-element') {
           htmlBlockParents.add(n.parent);
         }
       }
@@ -1156,7 +1156,7 @@ export class Editor {
           const idx = treeChildren.indexOf(parent);
           if (idx === -1) continue;
           const lifted = parent.children.slice();
-          // Splice the children into the tree at the html-block's position
+          // Splice the children into the tree at the html-element's position
           treeChildren.splice(idx, 1, ...lifted);
           for (const child of lifted) {
             child.parent = null;
@@ -1167,7 +1167,7 @@ export class Editor {
       const updatedIds = [];
       let num = 1;
       for (const n of nodes) {
-        if (n.type === 'html-block' && n.children.length > 0) continue;
+        if (n.type === 'html-element' && n.children.length > 0) continue;
         if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
         applyKind(n, kind, num);
         if (kind === 'ordered') num++;
@@ -1314,7 +1314,7 @@ export class Editor {
     if (!this.syntaxTree) return [];
 
     /**
-     * Walks children (recursing into html-block containers) and
+     * Walks children (recursing into html-element containers) and
      * collects all leaf block nodes between startId and endId.
      * @param {import('../parser/syntax-tree.js').SyntaxNode[]} children
      * @param {{collecting: boolean, done: boolean}} state
@@ -1323,8 +1323,8 @@ export class Editor {
     const walk = (children, state, result) => {
       for (const child of children) {
         if (state.done) break;
-        // Recurse into html-block containers
-        if (child.type === 'html-block' && child.children.length > 0) {
+        // Recurse into html-element containers
+        if (child.type === 'html-element' && child.children.length > 0) {
           walk(child.children, state, result);
           continue;
         }

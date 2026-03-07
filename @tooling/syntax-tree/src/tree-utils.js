@@ -11,7 +11,7 @@ const INLINE_TYPES = new Set([
   "link",
   "image",
   "inline-image",
-  "html-inline",
+  "html-element",
 ]);
 
 /**

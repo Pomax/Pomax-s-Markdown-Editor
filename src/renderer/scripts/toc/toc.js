@@ -156,7 +156,7 @@ export class TableOfContents {
 
   /**
    * Recursively collects h1–h3 headings from a list of nodes.
-   * Descends into container nodes (e.g. html-block) so that headings
+   * Descends into container nodes (e.g. html-element) so that headings
    * nested inside HTML elements appear in the table of contents.
    * @param {import('../parser/syntax-tree.js').SyntaxNode[]} nodes
    * @param {TocHeading[]} headings

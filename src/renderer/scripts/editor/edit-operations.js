@@ -27,7 +27,7 @@ const REMOVABLE_WHEN_EMPTY = new Set([
   'list-item',
   'code-block',
   'table',
-  'html-block',
+  'html-element',
 ]);
 
 /**
@@ -64,8 +64,8 @@ export class EditOperations {
     if (node.content !== '') return;
     // For tables, content is '' but rows may still have data — skip.
     if (node.type === 'table') return;
-    // For html-blocks with children, skip unless all children are gone.
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    // For html-elements with children, skip unless all children are gone.
+    if (node.type === 'html-element' && node.children.length > 0) return;
 
     const siblings = this.editor.getSiblings(node);
     const idx = siblings.indexOf(node);
@@ -147,9 +147,9 @@ export class EditOperations {
     const node = this.editor.getCurrentBlockNode();
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
-    // When the cursor is on an html-block tag line (source view), edit
+    // When the cursor is on an html-element tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
       const attr =
         this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
@@ -166,8 +166,8 @@ export class EditOperations {
       return;
     }
 
-    // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    // html-element containers without tagPart are structural (writing view).
+    if (node.type === 'html-element' && node.children.length > 0) return;
 
     const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
 
@@ -364,9 +364,9 @@ export class EditOperations {
     const node = this.editor.getCurrentBlockNode();
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
-    // When the cursor is on an html-block tag line (source view), edit
+    // When the cursor is on an html-element tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       if (this.editor.syntaxTree.treeCursor.offset > 0) {
         const before = this.editor.syntaxTree.toMarkdown();
         const attr =
@@ -385,8 +385,8 @@ export class EditOperations {
       return;
     }
 
-    // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    // html-element containers without tagPart are structural (writing view).
+    if (node.type === 'html-element' && node.children.length > 0) return;
 
     // ── Table cell backspace ──
     if (
@@ -479,7 +479,7 @@ export class EditOperations {
       // _sourceEditText so offset 0 means the very start of the
       // opening fence — there is nothing before it to merge into
       // while still preserving the code-block structure, so this
-      // is a no-op (consistent with html-block boundary behaviour).
+      // is a no-op (consistent with html-element boundary behaviour).
       // In writing view with empty content, convert to paragraph.
       if (node.type === 'code-block') {
         if (this.editor.viewMode === 'source') {
@@ -551,14 +551,14 @@ export class EditOperations {
         if (idx > 0) {
           const prev = siblings[idx - 1];
 
-          if (prev.type === 'html-block' && prev.children.length > 0) {
-            // Previous sibling is a container html-block.
+          if (prev.type === 'html-element' && prev.children.length > 0) {
+            // Previous sibling is a container html-element.
             if (this.editor.viewMode === 'source') {
               // In source view the container boundary is
               // structural — backspace is a no-op.
             } else {
               // In writing view, merge into the last child
-              // of the html-block container.
+              // of the html-element container.
               const lastChild = prev.children[prev.children.length - 1];
               const lastChildLen = lastChild.content.length;
               lastChild.content += node.content;
@@ -606,9 +606,9 @@ export class EditOperations {
     const node = this.editor.getCurrentBlockNode();
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
-    // When the cursor is on an html-block tag line (source view), edit
+    // When the cursor is on an html-element tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       const attr =
         this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
       const old = node.attributes[attr] || '';
@@ -627,8 +627,8 @@ export class EditOperations {
       return;
     }
 
-    // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    // html-element containers without tagPart are structural (writing view).
+    if (node.type === 'html-element' && node.children.length > 0) return;
 
     // ── Table cell delete ──
     if (
@@ -734,20 +734,20 @@ export class EditOperations {
       if (idx < siblings.length - 1) {
         const next = siblings[idx + 1];
 
-        if (next.type === 'html-block' && next.children.length > 0) {
-          // Next sibling is a container html-block.
+        if (next.type === 'html-element' && next.children.length > 0) {
+          // Next sibling is a container html-element.
           if (this.editor.viewMode === 'source') {
             // In source view the container boundary is
             // structural — delete is a no-op.
           } else {
             // In writing view, merge the first child of the
-            // html-block container into this node.
+            // html-element container into this node.
             const firstChild = next.children[0];
             const curLen = node.content.length;
             node.content += firstChild.content;
             next.children.splice(0, 1);
             firstChild.parent = null;
-            // If the html-block is now empty, remove it too.
+            // If the html-element is now empty, remove it too.
             if (next.children.length === 0) {
               siblings.splice(idx + 1, 1);
               next.parent = null;
@@ -796,9 +796,9 @@ export class EditOperations {
     const node = this.editor.getCurrentBlockNode();
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
-    // html-block tag lines and containers are not splittable.
+    // html-element tag lines and containers are not splittable.
     if (
-      node.type === 'html-block' &&
+      node.type === 'html-element' &&
       (this.editor.syntaxTree.treeCursor.tagPart || node.children.length > 0)
     ) {
       return;

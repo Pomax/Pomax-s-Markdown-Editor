@@ -128,7 +128,7 @@ export class CursorManager {
             blockNodeId: nodeId,
             offset,
           };
-          // If this element represents an html-block tag line in
+          // If this element represents an html-element tag line in
           // source view, record which part so edit methods can
           // route changes to the correct attribute.
           const tagPart = htmlEl.dataset?.tagPart;

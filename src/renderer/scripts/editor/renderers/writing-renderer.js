@@ -165,9 +165,9 @@ export class WritingRenderer {
         }
       }
 
-      // No previous sibling — if inside an html-block, re-render
+      // No previous sibling — if inside an html-element, re-render
       // the parent instead; otherwise prepend to the container.
-      if (node.parent && node.parent.type === 'html-block') {
+      if (node.parent && node.parent.type === 'html-element') {
         const parentFocused = node.parent.id === currentNodeId;
         this._replaceNodeElement(container, tree, node.parent.id, parentFocused);
       } else {
@@ -305,7 +305,7 @@ export class WritingRenderer {
       case 'table':
         return this.renderTable(node, element);
 
-      case 'html-block':
+      case 'html-element':
         return this.renderHtmlBlock(node, element, isFocused);
 
       default:
@@ -684,7 +684,7 @@ export class WritingRenderer {
 
   /**
    * Renders a fake &lt;details&gt; disclosure widget using plain divs.
-   * The first child that is itself an html-block with tagName "summary"
+   * The first child that is itself an html-element with tagName "summary"
    * is rendered as the summary row (with a clickable disclosure triangle).
    * All remaining children form the collapsible body.
    *
@@ -722,7 +722,7 @@ export class WritingRenderer {
     const bodyChildren = [];
 
     for (const child of node.children) {
-      if (!summaryNode && child.type === 'html-block' && child.attributes.tagName === 'summary') {
+      if (!summaryNode && child.type === 'html-element' && child.attributes.tagName === 'summary') {
         summaryNode = child;
       } else {
         bodyChildren.push(child);
