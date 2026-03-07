@@ -17,5 +17,10 @@ export {
   getNodeAtPath,
 } from "./src/tree-utils.js";
 
+export {
+  rebuildInlineChildren,
+  mergeHints,
+} from "./src/tree-mutations.js";
+
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";
 export { tokenizeInline } from "../parser/src/inline-tokenizer.js";
