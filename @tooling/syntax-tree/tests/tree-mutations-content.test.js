@@ -67,17 +67,116 @@ describe("rebuildInlineChildren", () => {
     assert.ok(node.children.length >= 2);
   });
 
-  it("clears existing children before reparsing", () => {
+  it("clears existing children when structure changes completely", () => {
     const node = new SyntaxNode("paragraph", "old content");
     const staleChild = new SyntaxNode("text", "stale");
     node.appendChild(staleChild);
-    // Change content and rebuild
+    // Change content to something with different structure
     node.content = "new **content**";
     rebuildInlineChildren(node);
-    // Stale child should be gone
-    assert.ok(!node.children.includes(staleChild));
-    assert.strictEqual(node.children.length, 2);
+    // First child type still matches (text=text), so identity is preserved
+    // but content is updated. The bold node is new.
+    assert.strictEqual(node.children[0], staleChild);
     assert.strictEqual(node.children[0].content, "new ");
+    assert.strictEqual(node.children.length, 2);
+    assert.strictEqual(node.children[1].type, "bold");
+  });
+
+  // ── Identity preservation (reconciliation) ──────────────────────
+
+  it("preserves child identity when only text content changes", () => {
+    const node = new SyntaxNode("paragraph", "Hello **world**");
+    rebuildInlineChildren(node);
+    const textNode = node.children[0];
+    const boldNode = node.children[1];
+    const boldTextNode = boldNode.children[0];
+    const textId = textNode.id;
+    const boldId = boldNode.id;
+    const boldTextId = boldTextNode.id;
+
+    // Simulate user typing in the bold word
+    node.content = "Hello **worlds**";
+    rebuildInlineChildren(node);
+
+    // Same node objects should still be there
+    assert.strictEqual(node.children[0], textNode);
+    assert.strictEqual(node.children[0].id, textId);
+    assert.strictEqual(node.children[1], boldNode);
+    assert.strictEqual(node.children[1].id, boldId);
+    assert.strictEqual(node.children[1].children[0], boldTextNode);
+    assert.strictEqual(node.children[1].children[0].id, boldTextId);
+    // But content should be updated
+    assert.strictEqual(node.children[1].children[0].content, "worlds");
+  });
+
+  it("preserves identity for leading text when only text changes", () => {
+    const node = new SyntaxNode("paragraph", "Hello world");
+    rebuildInlineChildren(node);
+    const textNode = node.children[0];
+    const textId = textNode.id;
+
+    node.content = "Hello world!";
+    rebuildInlineChildren(node);
+
+    assert.strictEqual(node.children[0], textNode);
+    assert.strictEqual(node.children[0].id, textId);
+    assert.strictEqual(node.children[0].content, "Hello world!");
+  });
+
+  it("replaces nodes when structure changes", () => {
+    const node = new SyntaxNode("paragraph", "Hello world");
+    rebuildInlineChildren(node);
+    const originalText = node.children[0];
+
+    // Adding bold changes the structure
+    node.content = "Hello **world**";
+    rebuildInlineChildren(node);
+
+    // First child is still text type with same id (content prefix matches)
+    assert.strictEqual(node.children[0], originalText);
+    assert.strictEqual(node.children[0].content, "Hello ");
+    // But now there's a bold node too
+    assert.strictEqual(node.children.length, 2);
+    assert.strictEqual(node.children[1].type, "bold");
+  });
+
+  it("preserves identity across multiple rebuilds", () => {
+    const node = new SyntaxNode("paragraph", "A *B* C");
+    rebuildInlineChildren(node);
+    const aNode = node.children[0]; // text "A "
+    const italicNode = node.children[1]; // italic
+    const cNode = node.children[2]; // text " C"
+
+    // Edit 1: change text in italic
+    node.content = "A *Bx* C";
+    rebuildInlineChildren(node);
+    assert.strictEqual(node.children[0], aNode);
+    assert.strictEqual(node.children[1], italicNode);
+    assert.strictEqual(node.children[2], cNode);
+
+    // Edit 2: change trailing text
+    node.content = "A *Bx* C!";
+    rebuildInlineChildren(node);
+    assert.strictEqual(node.children[0], aNode);
+    assert.strictEqual(node.children[1], italicNode);
+    assert.strictEqual(node.children[2], cNode);
+    assert.strictEqual(cNode.content, " C!");
+  });
+
+  it("handles adding a node at the end while preserving earlier nodes", () => {
+    const node = new SyntaxNode("paragraph", "Hello world");
+    rebuildInlineChildren(node);
+    const textNode = node.children[0];
+
+    // Structure change: text → text + bold (diverges at index 1, but index 0 still matches)
+    // Actually "Hello " is text type, but original was single "Hello world" text
+    // After adding bold, first child becomes "Hello " — type matches (text=text) so id preserved
+    node.content = "Hello **world**";
+    rebuildInlineChildren(node);
+
+    assert.strictEqual(node.children[0], textNode);
+    assert.strictEqual(node.children.length, 2);
+    assert.strictEqual(node.children[1].type, "bold");
   });
 
   it("sets parent on new children", () => {

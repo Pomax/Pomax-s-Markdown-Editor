@@ -18,8 +18,12 @@ const INLINE_CONTENT_TYPES = new Set([
 ]);
 
 /**
- * Clear `node.children` and re-parse `node.content` via `parseInlineContent`,
- * appending the resulting inline nodes as new children.
+ * Re-parse `node.content` and reconcile the resulting inline nodes against
+ * the existing `node.children`.  Where old and new children structurally
+ * match (same type at the same position), the existing node is kept and its
+ * content is updated in place — preserving node identity (and thus DOM nodes
+ * and cursor position). Only where the structure genuinely changes are nodes
+ * added or removed.
  *
  * No-op if the node's type is not in `INLINE_CONTENT_TYPES`.
  *
@@ -29,15 +33,50 @@ const INLINE_CONTENT_TYPES = new Set([
 export function rebuildInlineChildren(node) {
   if (!INLINE_CONTENT_TYPES.has(node.type)) return;
 
-  // Remove existing children
-  while (node.children.length > 0) {
-    node.removeChild(node.children[node.children.length - 1]);
+  const newChildren = parseInlineContent(node.content);
+
+  reconcileChildren(node, newChildren);
+}
+
+/**
+ * Reconcile `parent.children` against `newChildren`.
+ * Walk both arrays in parallel:
+ *   - Same type at same index → update content in place, recurse.
+ *   - Different type or length mismatch → replace from that point on.
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} parent
+ * @param {import("./syntax-tree.js").SyntaxNode[]} newChildren
+ */
+function reconcileChildren(parent, newChildren) {
+  const oldChildren = parent.children;
+  const minLen = Math.min(oldChildren.length, newChildren.length);
+  let divergeIndex = minLen; // assume they match up to minLen
+
+  for (let i = 0; i < minLen; i++) {
+    const old = oldChildren[i];
+    const fresh = newChildren[i];
+
+    if (old.type === fresh.type) {
+      // Structure matches — update content in place, recurse into children
+      old.content = fresh.content;
+      // Copy attributes that parsing may set (e.g. link href, image src)
+      old.attributes = fresh.attributes;
+      reconcileChildren(old, fresh.children);
+    } else {
+      // Structure diverged — replace everything from here on
+      divergeIndex = i;
+      break;
+    }
   }
 
-  // Parse and append new inline children
-  const newChildren = parseInlineContent(node.content);
-  for (const child of newChildren) {
-    node.appendChild(child);
+  // Remove excess old children (from the end to avoid index shifting)
+  while (oldChildren.length > divergeIndex) {
+    parent.removeChild(oldChildren[oldChildren.length - 1]);
+  }
+
+  // Append new children beyond the matched range
+  for (let i = divergeIndex; i < newChildren.length; i++) {
+    parent.appendChild(newChildren[i]);
   }
 }
 

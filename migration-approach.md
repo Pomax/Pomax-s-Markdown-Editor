@@ -100,9 +100,12 @@ cd @tooling/parser && npm run test:spec
 **Functions to implement:**
 
 ### `rebuildInlineChildren(node) → void`
-- Clear `node.children`, re-parse `node.content` via `parseInlineContent`, append new children.
+- Re-parse `node.content` via `parseInlineContent`, then **reconcile** old children against new ones.
+- Where old and new children structurally match (same type at the same position), the existing node is kept and its content/attributes are updated **in place** — preserving node identity (IDs, DOM node references, cursor position).
+- Where structure diverges (type mismatch or length change), old nodes are removed and new nodes are appended from that point on.
 - **Synchronous.** The editor calls this on every keystroke and reads `node.children` immediately after.
 - No-op if `node.type` is not in `INLINE_CONTENT_TYPES` (`paragraph`, `heading1`–`heading6`, `blockquote`, `list-item`).
+- **Design note:** Full reparse is always performed (inline formatting is context-sensitive — a single `*` can restructure the whole inline tree). The reconciliation pass is what makes it efficient: editing a bolded word updates the text node in place without touching sibling nodes or regenerating IDs.
 
 ### `mergeHints(a, b) → { renderHints, selection }`
 - Combine two `{ renderHints: { updated, added, removed }, selection }` objects.
