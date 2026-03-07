@@ -27,22 +27,21 @@ For steps that only add new code under `@tooling/`, it is sufficient to verify t
 
 ---
 
-## Step 1: Add Primitive Child-Manipulation Operations
+## Step 1: Add Child-Manipulation Operations
 
-**Goal:** Add `removeChild`, `replaceChild`, `insertBefore`, and `insertAfter` to both `SyntaxNode` and `SyntaxTree`. These are generic tree operations needed by nearly every later step.
+**Goal:** Add `insertChild(node, index)` and `removeChild(child)` to both `SyntaxNode` and `SyntaxTree`. The existing `appendChild` becomes a thin wrapper around `insertChild`. These are generic tree operations needed by nearly every later step.
 
 **Files to modify:**
-- `@tooling/syntax-tree/src/syntax-tree.js` — add methods to both classes
+- `@tooling/syntax-tree/src/syntax-tree.js` — add methods to both classes, refactor `appendChild` to delegate
 - `@tooling/syntax-tree/package.json` — add a `"test"` script: `node --test "tests/**/*.test.js"` (runs all tests in the tests directory, matching the top-level repo's pattern)
 
 **Files to create:**
 - `@tooling/syntax-tree/tests/tree-ops.test.js` — unit tests for the new methods
 
 **Implementation details (on both `SyntaxNode` and `SyntaxTree`):**
+- `insertChild(child, index)`: Splice `child` into `this.children` at `index`, set `child.parent = this` (or `null` for `SyntaxTree`). Index 0 prepends, index `children.length` appends.
+- `appendChild(child)`: Delegates to `insertChild(child, this.children.length)`.
 - `removeChild(child)`: Find `child` in `this.children` by identity (`===`), splice it out, set `child.parent = null`. Throw if `child` is not found.
-- `replaceChild(oldChild, newChild)`: Find `oldChild` in `this.children`, splice `newChild` in at the same index, set `newChild.parent = this` (or `null` for `SyntaxTree`), set `oldChild.parent = null`. Throw if `oldChild` is not found.
-- `insertBefore(newNode, refNode)`: Find `refNode` in `this.children`, splice `newNode` in at that index, set `newNode.parent = this` (or `null` for `SyntaxTree`). Throw if `refNode` is not found.
-- `insertAfter(newNode, refNode)`: Find `refNode` in `this.children`, splice `newNode` in at index + 1, set `newNode.parent = this` (or `null` for `SyntaxTree`). Throw if `refNode` is not found.
 
 **Verification:**
 ```
@@ -54,31 +53,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 2: Merge Operations — `mergeToPrevious` and `mergeToNext`
-
-**Goal:** Add `mergeToPrevious(node)` and `mergeToNext(node)` to both `SyntaxNode` and `SyntaxTree`. These are the merge operations for Backspace-at-position-0 and Delete-at-end-of-content.
-
-**Files to modify:**
-- `@tooling/syntax-tree/src/syntax-tree.js` — add methods to both classes
-
-**Files to create/modify:**
-- `@tooling/syntax-tree/tests/tree-merge.test.js` — unit tests for merge operations
-
-**Implementation details (on both `SyntaxNode` and `SyntaxTree`):**
-- `mergeToPrevious(node)`: Merge `node` into its previous sibling. The previous sibling survives — its content gets `node`'s content appended, its children get `node`'s children appended. `node` is then removed from the parent. The surviving node's ID, type, and attributes are preserved. Throw if there is no previous sibling.
-- `mergeToNext(node)`: Merge `node`'s next sibling into `node`. `node` survives — it gets the next sibling's content appended, its children get the next sibling's children appended. The next sibling is then removed. `node`'s ID, type, and attributes are preserved. Throw if there is no next sibling.
-
-**Verification:**
-```
-cd @tooling/syntax-tree && npm test
-cd @tooling/parser && npm run test:spec
-```
-
-**Depends on:** Step 1 (uses `removeChild` internally).
-
----
-
-## Step 3: Create Tree Query Utilities (`tree-utils.js`)
+## Step 2: Create Tree Query Utilities (`tree-utils.js`)
 
 **Goal:** Create a module of pure functions that query/walk the syntax tree. No mutations, no side effects.
 
@@ -111,7 +86,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 4: Content-Level Mutations — `rebuildInlineChildren` and `mergeHints`
+## Step 3: Content-Level Mutations — `rebuildInlineChildren` and `mergeHints`
 
 **Goal:** Create the `tree-mutations.js` module with the two foundational content-level functions. `rebuildInlineChildren` is the most critical function in the migration — it keeps inline children in sync when `node.content` changes.
 
@@ -140,13 +115,13 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1–2 (uses `appendChild` which already exists, but tests may use `removeChild`).
+**Depends on:** Step 1 (uses `appendChild` and `removeChild`).
 
 ---
 
-## Step 5: Block-Level Mutations
+## Step 4: Block-Level Mutations
 
-**Goal:** Add structural editing operations to `tree-mutations.js`. These implement Enter, paste, and type-change behavior. (Backspace/Delete merges are already handled by the `mergeToPrevious`/`mergeToNext` primitives from Step 2.)
+**Goal:** Add structural editing operations to `tree-mutations.js`. These implement Enter, paste, and type-change behavior. Backspace/Delete merges happen at the markdown source level (the user edits text, the parser re-parses, and the tree is reconciled).
 
 **Files to modify:**
 - `@tooling/syntax-tree/src/tree-mutations.js` — add functions
@@ -181,11 +156,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1, 2, 4.
+**Depends on:** Steps 1, 3.
 
 ---
 
-## Step 6: List Operations
+## Step 5: List Operations
 
 **Goal:** Add list-level mutation functions to `tree-mutations.js`. These operate on `@tooling`'s list-container model (where a `list` node wraps `list-item` children), NOT the editor's current flat-sibling model.
 
@@ -215,11 +190,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1, 2, 4, 5.
+**Depends on:** Steps 1, 3, 4.
 
 ---
 
-## Step 7: Table Operations
+## Step 6: Table Operations
 
 **Goal:** Add table-level mutation functions to `tree-mutations.js`. These operate on `@tooling`'s structured table model (`table → header/row → cell[]`), NOT the editor's raw-markdown table content approach.
 
@@ -256,11 +231,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1, 4.
+**Depends on:** Steps 1, 3.
 
 ---
 
-## Step 8: Format Operations — `applyFormat`
+## Step 7: Format Operations — `applyFormat`
 
 **Goal:** Add the `applyFormat` function to `tree-mutations.js`. This is the implementation behind every toolbar button (bold, italic, code, strikethrough, link, sub, sup).
 
@@ -287,11 +262,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1, 4.
+**Depends on:** Steps 1, 3.
 
 ---
 
-## Step 9: Cursor and Selection as Tree State
+## Step 8: Cursor and Selection as Tree State
 
 **Goal:** Create `TreePosition` and `TreeSelection` types and add selection state to `SyntaxTree`.
 
@@ -340,11 +315,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Step 3 (uses `getBlockParent`, `getPathToNode`, `getNodeAtPath`).
+**Depends on:** Step 2 (uses `getBlockParent`, `getPathToNode`, `getNodeAtPath`).
 
 ---
 
-## Step 10: `findMatchedTokenIndices` — Offset Mapping Support
+## Step 9: `findMatchedTokenIndices` — Offset Mapping Support
 
 **Goal:** Add `findMatchedTokenIndices` to the inline tokenizer and export it from the parser package. This function identifies which delimiter tokens (e.g. `**`, `*`) are actual matched pairs vs literal text, which is essential for cursor offset mapping.
 
@@ -374,7 +349,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 11: Synchronous Single-Line Parse Entry Point
+## Step 10: Synchronous Single-Line Parse Entry Point
 
 **Goal:** Add a synchronous single-line parse function to the parser. The editor calls `_reparseLine(text)` on every keystroke to detect implicit type changes (paragraph → heading when `# ` is typed). The existing `Parser.parse()` is async; making `_reparseLine` async would propagate async through the entire input pipeline, which is unacceptable.
 
@@ -403,7 +378,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 12: `reparseLine` Mutation Function
+## Step 11: `reparseLine` Mutation Function
 
 **Goal:** Add `reparseLine` to `tree-mutations.js`. This is the hot-path function that re-parses a single node's content through the parser on every keystroke to detect implicit type changes.
 
@@ -427,11 +402,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 5, 11.
+**Depends on:** Steps 4, 10.
 
 ---
 
-## Step 13: Export Consolidation and Package Wiring
+## Step 12: Export Consolidation and Package Wiring
 
 **Goal:** Ensure all new modules are properly exported from both `@tooling/syntax-tree` and `@tooling/parser` packages, and that cross-package imports work correctly.
 
@@ -448,11 +423,11 @@ cd @tooling/syntax-tree && npm test
 cd @tooling/parser && npm run test:spec
 ```
 
-**Depends on:** Steps 1–12.
+**Depends on:** Steps 1–11.
 
 ---
 
-## Step 14: Editor-Side Type and Property Reconciliation
+## Step 13: Editor-Side Type and Property Reconciliation
 
 **Goal:** Update all editor call sites to use `@tooling` types and property shapes. This step does NOT switch the parser — it only aligns the editor's property access patterns with `@tooling`'s data model so that the eventual parser swap is seamless.
 
@@ -484,11 +459,11 @@ npm run test:unit
 npm run test:integration
 ```
 
-**Depends on:** Nothing from Steps 1–13 (this is editor-side only). However, it logically prepares for the parser swap.
+**Depends on:** Nothing from Steps 1–12 (this is editor-side only). However, it logically prepares for the parser swap.
 
 ---
 
-## Step 15: Code-Block Source Editing Helper
+## Step 14: Code-Block Source Editing Helper
 
 **Goal:** Create an editor-side helper that implements source-edit mode for code blocks using a `Map<string, string>` keyed by node ID, rather than a property on `SyntaxNode`.
 
@@ -510,28 +485,28 @@ npm run test:unit
 npm run test:integration
 ```
 
-**Depends on:** Nothing from Steps 1–13.
+**Depends on:** Nothing from Steps 1–12.
 
 ---
 
 ## Step Dependency Graph
 
 ```
-Step 1  (child ops)         ──> Step 2 (merge ops) ──┐
-Step 3  (tree utils)        ──────────────────────────┼──> Step 9  (cursor/selection)
-Step 10 (findMatchedTokens)                           │
-Step 11 (sync parseLine)    ──────────────────────────┼──> Step 12 (reparseLine)
-                                                      │
-Step 4  (rebuildInline)     ──> Step 5 (block muts) ──┼──> Step 6  (list ops)
-                                                      │    Step 7  (table ops)
-                                                      │    Step 8  (format ops)
-                                                      │
-Step 13 (export wiring)     ──────────────────────────┘    (depends on all above)
-Step 14 (type reconciliation)      (independent — editor-side)
-Step 15 (source-edit helper)       (independent — editor-side)
+Step 1  (child ops)         ─────────────────────────────┐
+Step 2  (tree utils)        ─────────────────────────────┼──> Step 8  (cursor/selection)
+Step 9  (findMatchedTokens)                              │
+Step 10 (sync parseLine)    ─────────────────────────────┼──> Step 11 (reparseLine)
+                                                         │
+Step 3  (rebuildInline)     ──> Step 4  (block muts) ────┼──> Step 5  (list ops)
+                                                         │    Step 6  (table ops)
+                                                         │    Step 7  (format ops)
+                                                         │
+Step 12 (export wiring)     ─────────────────────────────┘    (depends on all above)
+Step 13 (type reconciliation)      (independent — editor-side)
+Step 14 (source-edit helper)       (independent — editor-side)
 ```
 
-Steps 1, 3, 10, 11, 14, and 15 have no dependencies and could theoretically be done in parallel. However, for clear progress tracking, work through them sequentially as numbered.
+Steps 1, 2, 9, 10, 13, and 14 have no dependencies and could theoretically be done in parallel. However, for clear progress tracking, work through them sequentially as numbered.
 
 ---
 

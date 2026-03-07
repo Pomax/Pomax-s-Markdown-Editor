@@ -134,12 +134,22 @@ export class SyntaxNode {
   }
 
   /**
-   * Adds a child node.
+   * Inserts a child node at the given index.
+   * Index 0 prepends, index === children.length appends.
+   * @param {SyntaxNode} child - The child node to insert
+   * @param {number} index - The position to insert at
+   */
+  insertChild(child, index) {
+    child.parent = this;
+    this.children.splice(index, 0, child);
+  }
+
+  /**
+   * Appends a child node (convenience wrapper around insertChild).
    * @param {SyntaxNode} child - The child node to add
    */
   appendChild(child) {
-    child.parent = this;
-    this.children.push(child);
+    this.insertChild(child, this.children.length);
   }
 
   /**
@@ -152,88 +162,6 @@ export class SyntaxNode {
     if (idx === -1) throw new Error(`Child not found`);
     this.children.splice(idx, 1);
     child.parent = null;
-  }
-
-  /**
-   * Replaces a child node with a new node.
-   * @param {SyntaxNode} oldChild - The child to replace
-   * @param {SyntaxNode} newChild - The replacement node
-   * @throws {Error} If the old child is not found
-   */
-  replaceChild(oldChild, newChild) {
-    const idx = this.children.indexOf(oldChild);
-    if (idx === -1) throw new Error(`Child not found`);
-    this.children.splice(idx, 1, newChild);
-    newChild.parent = this;
-    oldChild.parent = null;
-  }
-
-  /**
-   * Inserts a new node before a reference node.
-   * @param {SyntaxNode} newNode - The node to insert
-   * @param {SyntaxNode} refNode - The reference node to insert before
-   * @throws {Error} If the reference node is not found
-   */
-  insertBefore(newNode, refNode) {
-    const idx = this.children.indexOf(refNode);
-    if (idx === -1) throw new Error(`Reference node not found`);
-    this.children.splice(idx, 0, newNode);
-    newNode.parent = this;
-  }
-
-  /**
-   * Inserts a new node after a reference node.
-   * @param {SyntaxNode} newNode - The node to insert
-   * @param {SyntaxNode} refNode - The reference node to insert after
-   * @throws {Error} If the reference node is not found
-   */
-  insertAfter(newNode, refNode) {
-    const idx = this.children.indexOf(refNode);
-    if (idx === -1) throw new Error(`Reference node not found`);
-    this.children.splice(idx + 1, 0, newNode);
-    newNode.parent = this;
-  }
-
-  /**
-   * Merges a child node into its previous sibling.
-   * The previous sibling survives: its content and children are extended.
-   * The merged node is removed.
-   * @param {SyntaxNode} node - The child node to merge into its predecessor
-   * @throws {Error} If the node is not found or has no previous sibling
-   */
-  mergeToPrevious(node) {
-    const idx = this.children.indexOf(node);
-    if (idx === -1) throw new Error(`Child not found`);
-    if (idx === 0) throw new Error(`No previous sibling`);
-    const prev = this.children[idx - 1];
-    prev.content += node.content;
-    for (const child of node.children) {
-      child.parent = prev;
-    }
-    prev.children.push(...node.children);
-    node.children = [];
-    this.removeChild(node);
-  }
-
-  /**
-   * Merges the next sibling into a child node.
-   * The node survives: its content and children are extended.
-   * The next sibling is removed.
-   * @param {SyntaxNode} node - The child node to merge its successor into
-   * @throws {Error} If the node is not found or has no next sibling
-   */
-  mergeToNext(node) {
-    const idx = this.children.indexOf(node);
-    if (idx === -1) throw new Error(`Child not found`);
-    if (idx === this.children.length - 1) throw new Error(`No next sibling`);
-    const next = this.children[idx + 1];
-    node.content += next.content;
-    for (const child of next.children) {
-      child.parent = node;
-    }
-    node.children.push(...next.children);
-    next.children = [];
-    this.removeChild(next);
   }
 
   /**
@@ -269,12 +197,23 @@ export class SyntaxTree {
   }
 
   /**
-   * Adds a child node to the tree.
+   * Inserts a child node at the given index.
+   * Index 0 prepends, index === children.length appends.
+   * Tree-level children have parent = null.
+   * @param {SyntaxNode} node - The child node to insert
+   * @param {number} index - The position to insert at
+   */
+  insertChild(node, index) {
+    node.parent = null;
+    this.children.splice(index, 0, node);
+  }
+
+  /**
+   * Appends a child node to the tree (convenience wrapper around insertChild).
    * @param {SyntaxNode} node - The node to add
    */
   appendChild(node) {
-    node.parent = null;
-    this.children.push(node);
+    this.insertChild(node, this.children.length);
   }
 
   /**
@@ -287,88 +226,6 @@ export class SyntaxTree {
     if (idx === -1) throw new Error(`Child not found`);
     this.children.splice(idx, 1);
     node.parent = null;
-  }
-
-  /**
-   * Replaces a child node with a new node.
-   * @param {SyntaxNode} oldChild - The child to replace
-   * @param {SyntaxNode} newChild - The replacement node
-   * @throws {Error} If the old child is not found
-   */
-  replaceChild(oldChild, newChild) {
-    const idx = this.children.indexOf(oldChild);
-    if (idx === -1) throw new Error(`Child not found`);
-    this.children.splice(idx, 1, newChild);
-    newChild.parent = null;
-    oldChild.parent = null;
-  }
-
-  /**
-   * Inserts a new node before a reference node.
-   * @param {SyntaxNode} newNode - The node to insert
-   * @param {SyntaxNode} refNode - The reference node to insert before
-   * @throws {Error} If the reference node is not found
-   */
-  insertBefore(newNode, refNode) {
-    const idx = this.children.indexOf(refNode);
-    if (idx === -1) throw new Error(`Reference node not found`);
-    this.children.splice(idx, 0, newNode);
-    newNode.parent = null;
-  }
-
-  /**
-   * Inserts a new node after a reference node.
-   * @param {SyntaxNode} newNode - The node to insert
-   * @param {SyntaxNode} refNode - The reference node to insert after
-   * @throws {Error} If the reference node is not found
-   */
-  insertAfter(newNode, refNode) {
-    const idx = this.children.indexOf(refNode);
-    if (idx === -1) throw new Error(`Reference node not found`);
-    this.children.splice(idx + 1, 0, newNode);
-    newNode.parent = null;
-  }
-
-  /**
-   * Merges a child node into its previous sibling.
-   * The previous sibling survives: its content and children are extended.
-   * The merged node is removed.
-   * @param {SyntaxNode} node - The child node to merge into its predecessor
-   * @throws {Error} If the node is not found or has no previous sibling
-   */
-  mergeToPrevious(node) {
-    const idx = this.children.indexOf(node);
-    if (idx === -1) throw new Error(`Child not found`);
-    if (idx === 0) throw new Error(`No previous sibling`);
-    const prev = this.children[idx - 1];
-    prev.content += node.content;
-    for (const child of node.children) {
-      child.parent = prev;
-    }
-    prev.children.push(...node.children);
-    node.children = [];
-    this.removeChild(node);
-  }
-
-  /**
-   * Merges the next sibling into a child node.
-   * The node survives: its content and children are extended.
-   * The next sibling is removed.
-   * @param {SyntaxNode} node - The child node to merge its successor into
-   * @throws {Error} If the node is not found or has no next sibling
-   */
-  mergeToNext(node) {
-    const idx = this.children.indexOf(node);
-    if (idx === -1) throw new Error(`Child not found`);
-    if (idx === this.children.length - 1) throw new Error(`No next sibling`);
-    const next = this.children[idx + 1];
-    node.content += next.content;
-    for (const child of next.children) {
-      child.parent = node;
-    }
-    node.children.push(...next.children);
-    next.children = [];
-    this.removeChild(next);
   }
 
   /**
