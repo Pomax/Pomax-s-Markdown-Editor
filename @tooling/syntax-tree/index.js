@@ -34,5 +34,16 @@ export {
   applyFormat,
 } from "./src/tree-mutations.js";
 
+export {
+  createPosition,
+  createCollapsed,
+  createSelection,
+  isCollapsed,
+  selectionSpans,
+  containsPosition,
+  getPathToCursor,
+  setCursorFromPath,
+} from "./src/tree-selection.js";
+
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";
 export { tokenizeInline } from "../parser/src/inline-tokenizer.js";

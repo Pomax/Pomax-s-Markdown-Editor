@@ -267,17 +267,16 @@ cd @tooling/parser && npm run test:spec
 
 ## Step 8: Cursor and Selection as Tree State
 
-**Goal:** Create `TreePosition` and `TreeSelection` types and add selection state to `SyntaxTree`.
+**Goal:** Create `TreePosition` and `TreeSelection` types as plain-object data structures, plus pure-function utilities in a new `tree-selection.js`. No modifications to existing `@tooling` code — the existing `SyntaxTree` class stays untouched.
 
 **Files to create:**
 - `@tooling/syntax-tree/src/tree-selection.js`
 - `@tooling/syntax-tree/tests/tree-selection.test.js`
 
 **Files to modify:**
-- `@tooling/syntax-tree/src/syntax-tree.js` — add `selection` property, `cursor` getter, `hasSelection()`, `getSelectedRange()`, path serialization methods
-- `@tooling/syntax-tree/index.js` — export TreePosition, TreeSelection
+- `@tooling/syntax-tree/index.js` — export new functions
 
-**Types/classes to implement:**
+**Types (plain objects, documented via JSDoc):**
 
 ### `TreePosition`
 ```
@@ -294,19 +293,15 @@ cd @tooling/parser && npm run test:spec
 ```
 - When `anchor` equals `focus`, the selection is collapsed (cursor only).
 
-### SyntaxTree additions:
-- `selection` property — a `TreeSelection`
-- `cursor` — getter returning `this.selection.focus`
-- `hasSelection()` — returns `true` when anchor ≠ focus
-- `getSelectedRange()` — returns `{ start, end }` in document order
-- `getPathToCursor()` — serialize cursor as index path (for session save/restore)
-- `setCursorPath(path)` — restore cursor from path
-
-### Selection utilities (in `tree-selection.js`):
-- `isCollapsed(selection)` — anchor equals focus
-- `spans(selection, nodeId)` — does the selection include the given node?
+### Functions (in `tree-selection.js`):
+- `createPosition(nodeId, offset, extras?)` — factory for TreePosition
+- `createCollapsed(nodeId, offset, extras?)` — factory for collapsed TreeSelection (anchor === focus)
+- `createSelection(anchor, focus)` — factory for TreeSelection
+- `isCollapsed(selection)` — anchor equals focus (same nodeId + offset)
+- `selectionSpans(selection, nodeId, tree)` — does the selection include the given node?
 - `containsPosition(selection, position)` — is a position within the selection?
-- `createCollapsedSelection(nodeId, offset, blockNodeId?)` — convenience factory
+- `getPathToCursor(tree, cursor)` — serialize cursor as index path (for session save/restore)
+- `setCursorFromPath(tree, path)` — restore cursor from index path
 
 **Verification:**
 ```
