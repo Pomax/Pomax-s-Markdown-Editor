@@ -20,6 +20,9 @@ export {
 export {
   rebuildInlineChildren,
   mergeHints,
+  splitNode,
+  insertNodesAfter,
+  changeNodeType,
 } from "./src/tree-mutations.js";
 
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";

@@ -80,6 +80,98 @@ function reconcileChildren(parent, newChildren) {
   }
 }
 
+// ── Block-Level Mutations ───────────────────────────────────────────
+
+/**
+ * Split a block node at `offset` within its `content`. The two resulting
+ * markdown strings are each passed to `parseFn` to determine the correct
+ * block type, then inserted into the tree in place of the original node.
+ * `rebuildInlineChildren` is called on each resulting node.
+ *
+ * @param {import("./syntax-tree.js").SyntaxTree} tree
+ * @param {import("./syntax-tree.js").SyntaxNode} node
+ * @param {number} offset — character offset within `node.content`
+ * @param {(markdown: string) => import("./syntax-tree.js").SyntaxNode} parseFn
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function splitNode(tree, node, offset, parseFn) {
+  const firstContent = node.content.slice(0, offset);
+  const secondContent = node.content.slice(offset);
+
+  const firstNode = parseFn(firstContent);
+  const secondNode = parseFn(secondContent);
+
+  // Find the parent that holds this node (tree or a container node)
+  const parent = node.parent ?? tree;
+  const idx = parent.children.indexOf(node);
+
+  // Remove original, insert the two halves
+  parent.removeChild(node);
+  parent.insertChild(firstNode, idx);
+  parent.insertChild(secondNode, idx + 1);
+
+  // Rebuild inline children for both
+  rebuildInlineChildren(firstNode);
+  rebuildInlineChildren(secondNode);
+
+  return {
+    renderHints: {
+      updated: [],
+      added: [firstNode.id, secondNode.id],
+      removed: [node.id],
+    },
+    selection: { nodeId: secondNode.id, offset: 0 },
+  };
+}
+
+/**
+ * Insert an array of new nodes after `refNode` in its parent's children.
+ * Used for multi-line paste and similar operations.
+ *
+ * @param {import("./syntax-tree.js").SyntaxTree} tree
+ * @param {import("./syntax-tree.js").SyntaxNode} refNode
+ * @param {import("./syntax-tree.js").SyntaxNode[]} newNodes
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function insertNodesAfter(tree, refNode, newNodes) {
+  if (newNodes.length === 0) {
+    return {
+      renderHints: { updated: [], added: [], removed: [] },
+      selection: null,
+    };
+  }
+
+  const parent = refNode.parent ?? tree;
+  const refIdx = parent.children.indexOf(refNode);
+
+  for (let i = 0; i < newNodes.length; i++) {
+    parent.insertChild(newNodes[i], refIdx + 1 + i);
+  }
+
+  const lastNode = newNodes[newNodes.length - 1];
+
+  return {
+    renderHints: {
+      updated: [],
+      added: newNodes.map((n) => n.id),
+      removed: [],
+    },
+    selection: { nodeId: lastNode.id, offset: lastNode.content.length },
+  };
+}
+
+/**
+ * Change a node's type. That's it — no content manipulation.
+ * The caller is responsible for editing markdown content and reparsing.
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} node
+ * @param {string} newType
+ * @returns {void}
+ */
+export function changeNodeType(node, newType) {
+  node.type = newType;
+}
+
 /**
  * Merge two render-hint objects. Unions each ID array and picks `b.selection`
  * (falling back to `a.selection` when `b.selection` is null).
