@@ -7,5 +7,15 @@
 
 export { SyntaxNode, SyntaxTree } from "./src/syntax-tree.js";
 
+export {
+  findNodeById,
+  findNodeAtPosition,
+  getBlockParent,
+  isInlineNode,
+  toBareText,
+  getPathToNode,
+  getNodeAtPath,
+} from "./src/tree-utils.js";
+
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";
 export { tokenizeInline } from "../parser/src/inline-tokenizer.js";
