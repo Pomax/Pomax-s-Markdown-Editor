@@ -110,6 +110,12 @@ export class SyntaxNode {
         this.attributes = {};
 
         /**
+         * Whether this node contains raw (non-markdown) content.
+         * @type {boolean}
+         */
+        this.raw = false;
+
+        /**
          * Runtime-only data (not serialised).
          * @type {Object}
          */
@@ -282,6 +288,17 @@ export class SyntaxNode {
             }
             case 'html-element': {
                 const indent = '  '.repeat(depth);
+
+                // Raw content elements: body stored verbatim in content
+                if (this.raw) {
+                    const tag = this.runtime.openingTag || `<${this.tagName}>`;
+                    const close = this.runtime.closingTag || `</${this.tagName}>`;
+                    if (!this.content) {
+                        return `${indent}${tag}${close}`;
+                    }
+                    return `${indent}${tag}\n${this.content}\n${close}`;
+                }
+
                 // If the container has exactly one bare-text child, collapse
                 // to a single line: <tag>content</tag>
                 if (

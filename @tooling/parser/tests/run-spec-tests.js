@@ -141,6 +141,9 @@ function extractTestCases(content) {
  * @returns {string}
  */
 function normalizeHTML(html) {
+  // JSDOM's HTML parser eats the first newline inside <textarea> (per spec).
+  // Double it so the expected content survives parsing.
+  html = html.replace(/<textarea([^>]*)>\n/g, '<textarea$1>\n\n');
   const dom = new JSDOM(`<!DOCTYPE html><html><body>${html}</body></html>`);
   const body = dom.window.document.body;
   stripWhitespaceNodes(body);
@@ -150,10 +153,13 @@ function normalizeHTML(html) {
 /**
  * Recursively removes whitespace-only text nodes from a DOM tree
  * and collapses formatting whitespace (containing newlines) in
- * remaining text nodes.
+ * remaining text nodes. Skips raw content elements (script, style,
+ * textarea) whose whitespace is significant.
  * @param {Node} node
  */
+const RAW_CONTENT_ELEMENTS = new Set(['SCRIPT', 'STYLE', 'TEXTAREA']);
 function stripWhitespaceNodes(node) {
+  if (RAW_CONTENT_ELEMENTS.has(node.nodeName)) return;
   const toRemove = [];
   for (const child of node.childNodes) {
     if (child.nodeType === 3) {

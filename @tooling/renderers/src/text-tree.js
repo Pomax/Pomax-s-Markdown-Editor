@@ -37,6 +37,14 @@ function renderNodeToText(node, indent, lines) {
             ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
             : '';
     lines.push(`${indent}${node.type}${quotedValue}${attrs}`);
+    // Raw html-elements store body text in content
+    if (node.raw) {
+        if (node.content) {
+            lines.push(`${indent}  text "\n${node.content}\n"`);
+        } else {
+            lines.push(`${indent}  text ""`);
+        }
+    }
     for (const child of node.children) {
         renderNodeToText(child, `${indent}  `, lines);
     }

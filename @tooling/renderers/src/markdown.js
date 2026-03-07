@@ -160,6 +160,17 @@ export function renderNodeToMarkdown(node, depth = 0) {
         }
         case 'html-element': {
             const indent = '  '.repeat(depth);
+
+            // Raw content elements: body stored verbatim in content
+            if (node.raw) {
+                const tag = node.runtime.openingTag || `<${node.tagName}>`;
+                const close = node.runtime.closingTag || `</${node.tagName}>`;
+                if (!node.content) {
+                    return `${indent}${tag}${close}`;
+                }
+                return `${indent}${tag}\n${node.content}\n${close}`;
+            }
+
             // If the container has exactly one bare-text child, collapse
             // to a single line: <tag>content</tag>
             if (

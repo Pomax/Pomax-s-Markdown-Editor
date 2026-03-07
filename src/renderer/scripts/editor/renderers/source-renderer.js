@@ -176,7 +176,11 @@ export class SourceRenderer {
     // Bare-text html-element children are rendered as part of the
     // parent html-element element — re-render the parent instead.
     const parent = node.parent;
-    if (parent?.type === 'html-element' && parent.children.length === 1 && node.attributes.bareText) {
+    if (
+      parent?.type === 'html-element' &&
+      parent.children.length === 1 &&
+      node.attributes.bareText
+    ) {
       const parentEl = container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!parentEl) return;
       const updated = this.renderNode(parent);

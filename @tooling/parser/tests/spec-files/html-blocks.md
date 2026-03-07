@@ -158,7 +158,7 @@ Body
 # syntax tree
 
 ```
-html-element "my-element"
+html-element "my-element" {"class":"test"}
   paragraph
     text "Body"
 ```

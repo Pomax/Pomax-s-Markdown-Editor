@@ -335,7 +335,9 @@ function renderNodeToDOM(doc, node) {
         }
       }
 
-      if (
+      if (node.raw) {
+        el.textContent = node.content ? `\n${node.content}\n` : '';
+      } else if (
         node.children.length === 1 &&
         node.children[0].attributes.bareText &&
         node.children[0].type === "paragraph"

@@ -115,6 +115,12 @@ export class SyntaxNode {
     this.domNode = null;
 
     /**
+     * Whether this node contains raw (non-markdown) content.
+     * @type {boolean}
+     */
+    this.raw = false;
+
+    /**
      * Runtime-only data (not serialised).
      * @type {Object}
      */

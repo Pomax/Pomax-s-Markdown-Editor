@@ -80,6 +80,7 @@ const HTML_BLOCK_TAGS = new Set([
     'script',
     'section',
     'source',
+    'style',
     'summary',
     'table',
     'tbody',
@@ -87,11 +88,14 @@ const HTML_BLOCK_TAGS = new Set([
     'tfoot',
     'th',
     'thead',
+    'textarea',
     'title',
     'tr',
     'track',
     'ul',
 ]);
+
+const RAW_CONTENT_TAGS = new Set(['script', 'style', 'textarea']);
 
 const HTML_VOID_TAGS = new Set([
     'area',
@@ -124,7 +128,7 @@ export class DFAParser {
      */
     async parse(markdown) {
         const tokens = tokenize(markdown);
-        const tree = new SyntaxTree();       
+        const tree = new SyntaxTree();
         if (!tree.doc) {
             const { JSDOM } = await import('jsdom');
             const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
@@ -890,7 +894,11 @@ export class DFAParser {
             if (!name) break;
             // Skip whitespace around =
             while (i < raw.length && (raw[i] === ' ' || raw[i] === '\t')) i++;
-            if (i >= raw.length || raw[i] !== '=') continue;
+            if (i >= raw.length || raw[i] !== '=') {
+                // Boolean attribute (no value)
+                attrs[name.toLowerCase()] = true;
+                continue;
+            }
             i++; // skip =
             while (i < raw.length && (raw[i] === ' ' || raw[i] === '\t')) i++;
             if (i >= raw.length) break;
@@ -1126,10 +1134,21 @@ export class DFAParser {
         const node = new SyntaxNode('html-element', '');
         node.tagName = lowerTagName;
         node.attributes = {};
+        const htmlAttrs = this.extractAllAttrs(openingTag);
+        for (const [key, value] of Object.entries(htmlAttrs)) {
+            node.attributes[key] = value;
+        }
         node.runtime.openingTag = openingTag;
         node.runtime.closingTag = closingTag;
         node.startLine = startLine;
         node.endLine = endLine;
+
+        // Raw content tags store body verbatim, never parsed as markdown
+        if (RAW_CONTENT_TAGS.has(lowerTagName)) {
+            node.raw = true;
+            node.content = bodyMarkdown;
+            return node;
+        }
 
         // Re-parse the body as markdown to create child nodes
         if (bodyMarkdown.length > 0) {
@@ -1199,17 +1218,26 @@ export class DFAParser {
         const node = new SyntaxNode('html-element', '');
         node.tagName = tagName;
         node.attributes = {};
+        const htmlAttrs = this.extractAllAttrs(openingTag);
+        for (const [key, value] of Object.entries(htmlAttrs)) {
+            node.attributes[key] = value;
+        }
         node.runtime.openingTag = openingTag;
         node.runtime.closingTag = `</${tagName}>`;
         node.startLine = startLine;
         node.endLine = startLine;
 
-        const child = new SyntaxNode('paragraph', content.trim());
-        populateInlineChildren(child);
-        child.attributes = { bareText: true };
-        child.startLine = startLine;
-        child.endLine = startLine;
-        node.appendChild(child);
+        if (RAW_CONTENT_TAGS.has(tagName)) {
+            node.raw = true;
+            node.content = content;
+        } else {
+            const child = new SyntaxNode('paragraph', content.trim());
+            populateInlineChildren(child);
+            child.attributes = { bareText: true };
+            child.startLine = startLine;
+            child.endLine = startLine;
+            node.appendChild(child);
+        }
 
         return node;
     }

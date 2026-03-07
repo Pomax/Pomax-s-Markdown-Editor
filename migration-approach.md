@@ -450,7 +450,7 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 15: `attributes.tagName` → `node.tagName` (Block-Level)
+## Step 15: `attributes.tagName` → `node.tagName` (Block-Level) ✅
 
 **Goal:** Add `this.tagName = ''` to the old SyntaxNode constructor. Update all `node.attributes.tagName` → `node.tagName` access sites in `src/` and tests. ~11 sites.
 
