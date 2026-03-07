@@ -171,11 +171,16 @@ cd @tooling/parser && npm run test:spec
 **Functions to implement:**
 
 ### `toggleListType(list, kind) → void`
-- Change the `list` node's `attributes.ordered` between `true`/`false`. That's it — the list structure already exists, this just switches between `<ol>` and `<ul>` rendering.
-- For checklist: a checklist is an unordered list with auto-injected `<input type="checkbox">` in each list-item's DOM. This is a rendering concern (scoped `querySelectorAll` on the list element), not a tree mutation.
+- Switch a list between three kinds: `"unordered"`, `"ordered"`, `"checklist"`.
+- **→ unordered**: set `ordered: false`, delete `checked` from list and all items, delete `number` from list.
+- **→ ordered**: set `ordered: true`, set `number: 1`, delete `checked` from list and all items.
+- **→ checklist**: set `ordered: false`, set `checked: true` on list, set `checked: false` on every item that doesn't already have a boolean `checked`. Delete `number` from list.
+- Checklists are always unordered (the parser only detects `[ ]`/`[x]` inside `parseUnorderedListItem`).
+- The `list.attributes.checked` flag means "this list contains checklist items" — it is always `true` when present. Each `list-item.attributes.checked` is the per-item checked state (`true`/`false`).
 
 ### `renumberOrderedList(list) → void`
-- Walk the list's children and update each list-item's `attributes.number` sequentially starting from 1. This is an in-place HTML attribute update after any list edit (add/remove/reorder items).
+- Set `list.attributes.number` to `1` (reset the start number). Individual list-item numbers are not stored — the parser strips them via `stripListAttrsFromItem`. The markdown renderer derives item numbers from the list-level `number` attribute.
+- No-op if `list.attributes.ordered` is not `true`.
 
 **Verification:**
 ```

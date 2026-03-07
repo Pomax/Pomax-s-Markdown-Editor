@@ -172,6 +172,64 @@ export function changeNodeType(node, newType) {
   node.type = newType;
 }
 
+// ── List Mutations ──────────────────────────────────────────────────
+
+/**
+ * Toggle a list node between "unordered", "ordered", and "checklist".
+ * Mutates the list and its children in place — preserving node identity.
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} list — a node with type "list"
+ * @param {"unordered" | "ordered" | "checklist"} kind
+ * @returns {void}
+ */
+export function toggleListType(list, kind) {
+  switch (kind) {
+    case "unordered": {
+      list.attributes.ordered = false;
+      delete list.attributes.number;
+      delete list.attributes.checked;
+      for (const item of list.children) {
+        delete item.attributes.checked;
+      }
+      break;
+    }
+    case "ordered": {
+      list.attributes.ordered = true;
+      list.attributes.number = 1;
+      delete list.attributes.checked;
+      for (const item of list.children) {
+        delete item.attributes.checked;
+      }
+      break;
+    }
+    case "checklist": {
+      list.attributes.ordered = false;
+      delete list.attributes.number;
+      list.attributes.checked = true;
+      for (const item of list.children) {
+        if (item.attributes.checked === undefined) {
+          item.attributes.checked = false;
+        }
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Reset an ordered list's starting number to 1.
+ * No-op if the list is not ordered.
+ *
+ * @param {import("./syntax-tree.js").SyntaxNode} list — a node with type "list"
+ * @returns {void}
+ */
+export function renumberOrderedList(list) {
+  if (!list.attributes.ordered) return;
+  list.attributes.number = 1;
+}
+
+// ── Hint Utilities ──────────────────────────────────────────────────
+
 /**
  * Merge two render-hint objects. Unions each ID array and picks `b.selection`
  * (falling back to `a.selection` when `b.selection` is null).
