@@ -272,7 +272,7 @@ html-block (type: 'html-block', tagName: 'details')
   element — the native element caused too many quirks):
 
   ```
-  div.md-line.md-html-block
+  div.md-line.md-html-element
     div.md-html-container.md-details(.md-details--open)
       div.md-details-summary
         span.md-details-triangle   ← clickable ▶/▼

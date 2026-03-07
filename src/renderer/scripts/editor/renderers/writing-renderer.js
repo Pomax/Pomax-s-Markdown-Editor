@@ -944,8 +944,8 @@ export class WritingRenderer {
         }
         default: {
           // HTML inline tags (sub, sup, mark, u, etc.)
-          if (child.attributes.tag) {
-            const el = document.createElement(child.attributes.tag);
+          if (child.tagName) {
+            const el = document.createElement(child.tagName);
             el.dataset.nodeId = child.id;
             this.renderSyntaxNodeChildren(child.children, el);
             container.appendChild(el);

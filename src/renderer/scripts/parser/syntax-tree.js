@@ -108,6 +108,13 @@ export class SyntaxNode {
     this.attributes = {};
 
     /**
+     * HTML tag name for inline HTML elements (sub, sup, mark, etc.)
+     * and block-level html-element containers (details, div, etc.).
+     * @type {string}
+     */
+    this.tagName = '';
+
+    /**
      * When non-null, holds the full markdown text of this
      * code-block while it is being edited in source view.  All
      * keystrokes operate on this string; the normal `content` /
@@ -185,7 +192,7 @@ export class SyntaxNode {
         // link, and HTML inline tags (sub, sup, etc.)
         const node = new SyntaxNode(segment.type, '');
         if (segment.href) node.attributes.href = segment.href;
-        if (segment.tag) node.attributes.tag = segment.tag;
+        if (segment.tag) node.tagName = segment.tag;
         if (segment.children) {
           for (const child of segment.children) {
             node.appendChild(SyntaxNode._segmentToNode(child));
