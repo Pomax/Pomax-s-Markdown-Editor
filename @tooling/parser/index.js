@@ -21,3 +21,4 @@ export async function parse(markdown) {
 }
 
 export { findMatchedTokenIndices } from "./src/inline-tokenizer.js";
+export { parseLine } from "./src/parse-line.js";
