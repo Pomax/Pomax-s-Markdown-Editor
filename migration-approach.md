@@ -121,7 +121,7 @@ cd @tooling/parser && npm run test:spec
 
 ## Step 4: Block-Level Mutations
 
-**Goal:** Add structural editing operations to `tree-mutations.js`. These implement Enter, paste, and type-change behavior. Backspace/Delete merges happen at the markdown source level (the user edits text, the parser re-parses, and the tree is reconciled).
+**Goal:** Add structural editing operations to `tree-mutations.js`. These implement Enter, paste, and type-change behavior. All operations follow markdown-first: edit the markdown content, reparse, update the tree.
 
 **Files to modify:**
 - `@tooling/syntax-tree/src/tree-mutations.js` — add functions
@@ -131,24 +131,19 @@ cd @tooling/parser && npm run test:spec
 
 **Functions to implement:**
 
-### `splitNode(tree, node, offset) → { renderHints, selection }`
-- Split `node` at content `offset` into two adjacent nodes.
-- The first node keeps content `[0, offset)`, the second gets `[offset, end)`.
-- Both get `rebuildInlineChildren` called.
-- Insert the new node after the original in its parent's children array.
-- Handle html-element children: splitting inside an html-element child stays within the container.
+### `splitNode(tree, node, offset, parseFn) → { renderHints, selection }`
+- Split the markdown: take `node.content`, split at `offset` into two strings.
+- Reparse each half using `parseFn` to determine the correct types. (E.g. `## Hello world` split at offset 5 → `## Hello` parses as heading2 + `world` parses as paragraph.)
+- Replace the original node with the parse results in the tree.
+- Call `rebuildInlineChildren` on each resulting node.
 
 ### `insertNodesAfter(tree, refNode, newNodes) → { renderHints, selection }`
 - Insert an array of new nodes after `refNode` in its parent's children.
 - Needed for multi-line paste.
 
-### `changeNodeType(node, newType) → { renderHints, selection }`
-- Change the node's `type` property.
-- Handle prefix stripping/adding:
-  - heading → paragraph: strip `## ` prefix from content
-  - paragraph → heading: prepend `## ` prefix
-  - any → blockquote / blockquote → any: add/strip `> ` prefix
-- Call `rebuildInlineChildren` after content changes.
+### `changeNodeType(node, newType) → void`
+- Change `node.type` to `newType`. That's it — no content manipulation.
+- The caller is responsible for editing markdown content (adding/removing prefixes) and reparsing. This is just the primitive that mutates the type field.
 
 **Verification:**
 ```
@@ -162,7 +157,7 @@ cd @tooling/parser && npm run test:spec
 
 ## Step 5: List Operations
 
-**Goal:** Add list-level mutation functions to `tree-mutations.js`. These operate on `@tooling`'s list-container model (where a `list` node wraps `list-item` children), NOT the editor's current flat-sibling model.
+**Goal:** Add list-level helpers to `tree-mutations.js`. Lists in `@tooling` use a container model (`list` node wraps `list-item` children). The operations here are minimal — most behavior follows from markdown-first editing + reparsing.
 
 **Files to modify:**
 - `@tooling/syntax-tree/src/tree-mutations.js` — add functions
@@ -172,17 +167,12 @@ cd @tooling/parser && npm run test:spec
 
 **Functions to implement:**
 
-### `toggleList(tree, node, kind) → { renderHints, selection }`
-- If `node` is not in a list: wrap it in a new `list` container with the given `kind` (`'unordered'` or `'ordered'`), converting the node to a `list-item`.
-- If `node` is already a list-item of the same kind: unwrap it (extract from the list container, convert to paragraph).
-- If `node` is a list-item of a different kind: change the list container's kind.
+### `toggleListType(list, kind) → void`
+- Change the `list` node's `attributes.ordered` between `true`/`false`. That's it — the list structure already exists, this just switches between `<ol>` and `<ul>` rendering.
+- For checklist: a checklist is an unordered list with auto-injected `<input type="checkbox">` in each list-item's DOM. This is a rendering concern (scoped `querySelectorAll` on the list element), not a tree mutation.
 
-### `splitListAroundItem(tree, list, item) → { renderHints, selection }`
-- Extract `item` from `list`, splitting the list into up to three parts: a list-before (items above), the extracted item (now a standalone paragraph), and a list-after (items below).
-- Remove empty list containers.
-
-### `renumberOrderedList(list) → { renderHints, selection }`
-- Walk the list container's children and update `attributes.number` sequentially starting from 1.
+### `renumberOrderedList(list) → void`
+- Walk the list's children and update each list-item's `attributes.number` sequentially starting from 1. This is an in-place HTML attribute update after any list edit (add/remove/reorder items).
 
 **Verification:**
 ```
@@ -196,7 +186,7 @@ cd @tooling/parser && npm run test:spec
 
 ## Step 6: Table Operations
 
-**Goal:** Add table-level mutation functions to `tree-mutations.js`. These operate on `@tooling`'s structured table model (`table → header/row → cell[]`), NOT the editor's raw-markdown table content approach.
+**Goal:** Add table-level helpers to `tree-mutations.js`. Tables use `@tooling`'s structured model (`table → header/row → cell[]`). Most table edits are structural (adding/removing rows or columns), not markdown-text edits, so direct tree manipulation is appropriate here.
 
 **Files to modify:**
 - `@tooling/syntax-tree/src/tree-mutations.js` — add functions
@@ -215,6 +205,7 @@ cd @tooling/parser && npm run test:spec
 
 ### `addTableRow(tableNode) → { renderHints, selection }`
 - Append a new `row` node with empty `cell` children matching the column count.
+- This is what happens on Shift-Enter from the last cell: a new fully qualified row is created and the cursor moves to its first cell.
 
 ### `addTableColumn(tableNode) → { renderHints, selection }`
 - Append a new `cell` to every row (including header).
@@ -393,8 +384,8 @@ cd @tooling/parser && npm run test:spec
 ### `reparseLine(node, parseFn) → { renderHints, selection } | null`
 - Call `parseFn(node.content)` to detect the type of the current content.
 - If the detected type matches `node.type`, return `null` (no change).
-- If the type differs, call `changeNodeType` and return its result.
-- `parseFn` is the synchronous `parseLine` from Step 11, injected as a parameter to avoid coupling the syntax-tree package to the parser.
+- If the type differs: update `node.type` via `changeNodeType`, strip/normalize the content as needed (e.g. `parseFn` returns both the type and the cleaned content), call `rebuildInlineChildren`.
+- `parseFn` is the synchronous `parseLine` from Step 10, injected as a parameter to avoid coupling the syntax-tree package to the parser.
 
 **Verification:**
 ```
