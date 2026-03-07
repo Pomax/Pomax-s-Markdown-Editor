@@ -15,6 +15,7 @@ const INLINE_CONTENT_TYPES = new Set([
   "heading6",
   "blockquote",
   "list-item",
+  "cell",
 ]);
 
 /**
@@ -226,6 +227,147 @@ export function toggleListType(list, kind) {
 export function renumberOrderedList(list) {
   if (!list.attributes.ordered) return;
   list.attributes.number = 1;
+}
+
+// ── Table Mutations ─────────────────────────────────────────────────
+
+import { SyntaxNode } from "./syntax-tree.js";
+
+/**
+ * Return the cell node at `(row, col)` within a table.
+ * Row 0 = the header row; row 1+ = body rows.
+ *
+ * @param {SyntaxNode} tableNode
+ * @param {number} row
+ * @param {number} col
+ * @returns {SyntaxNode|null}
+ */
+export function getTableCell(tableNode, row, col) {
+  if (row < 0 || col < 0) return null;
+  const rowNode = tableNode.children[row];
+  if (!rowNode) return null;
+  const cell = rowNode.children[col];
+  return cell ?? null;
+}
+
+/**
+ * Update a table cell's text content and rebuild its inline children.
+ *
+ * @param {SyntaxNode} tableNode
+ * @param {number} row
+ * @param {number} col
+ * @param {string} text
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function setTableCellText(tableNode, row, col, text) {
+  const cell = getTableCell(tableNode, row, col);
+  cell.content = text;
+  rebuildInlineChildren(cell);
+  return {
+    renderHints: { updated: [cell.id], added: [], removed: [] },
+    selection: { nodeId: cell.id, offset: text.length },
+  };
+}
+
+/**
+ * Append a new body row to a table, with empty cells matching the column count
+ * (derived from the header row).
+ *
+ * @param {SyntaxNode} tableNode
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function addTableRow(tableNode) {
+  const colCount = tableNode.children[0].children.length;
+  const row = new SyntaxNode("row", "");
+  const addedIds = [row.id];
+
+  for (let i = 0; i < colCount; i++) {
+    const cell = new SyntaxNode("cell", "");
+    row.appendChild(cell);
+    addedIds.push(cell.id);
+  }
+
+  tableNode.appendChild(row);
+
+  return {
+    renderHints: { updated: [], added: addedIds, removed: [] },
+    selection: { nodeId: row.children[0].id, offset: 0 },
+  };
+}
+
+/**
+ * Append a new column to every row (header + body) in a table.
+ *
+ * @param {SyntaxNode} tableNode
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function addTableColumn(tableNode) {
+  const addedIds = [];
+  let headerCell = null;
+
+  for (const rowNode of tableNode.children) {
+    const cell = new SyntaxNode("cell", "");
+    rowNode.appendChild(cell);
+    addedIds.push(cell.id);
+    if (!headerCell) headerCell = cell;
+  }
+
+  return {
+    renderHints: { updated: [], added: addedIds, removed: [] },
+    selection: { nodeId: headerCell.id, offset: 0 },
+  };
+}
+
+/**
+ * Remove a body row from a table. Cannot remove the header (row 0).
+ * No-op if the index is out of bounds.
+ *
+ * @param {SyntaxNode} tableNode
+ * @param {number} rowIndex — 0 = header (protected), 1+ = body rows
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function removeTableRow(tableNode, rowIndex) {
+  const noOp = { renderHints: { updated: [], added: [], removed: [] }, selection: null };
+  if (rowIndex === 0) return noOp; // cannot remove header
+  const rowNode = tableNode.children[rowIndex];
+  if (!rowNode) return noOp;
+
+  const removedIds = [rowNode.id, ...rowNode.children.map((c) => c.id)];
+  tableNode.removeChild(rowNode);
+
+  return {
+    renderHints: { updated: [], added: [], removed: removedIds },
+    selection: null,
+  };
+}
+
+/**
+ * Remove a column from every row in a table. Cannot remove the last column.
+ * No-op if the index is out of bounds.
+ *
+ * @param {SyntaxNode} tableNode
+ * @param {number} colIndex
+ * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
+ */
+export function removeTableColumn(tableNode, colIndex) {
+  const noOp = { renderHints: { updated: [], added: [], removed: [] }, selection: null };
+  const headerCells = tableNode.children[0].children;
+  if (colIndex < 0 || colIndex >= headerCells.length) return noOp;
+  if (headerCells.length <= 1) return noOp; // cannot remove last column
+
+  const removedIds = [];
+  for (const rowNode of tableNode.children) {
+    const cell = rowNode.children[colIndex];
+    if (cell) {
+      removedIds.push(cell.id);
+      rowNode.removeChild(cell);
+    }
+  }
+
+  return {
+    renderHints: { updated: [], added: [], removed: removedIds },
+    selection: null,
+  };
 }
 
 // ── Hint Utilities ──────────────────────────────────────────────────

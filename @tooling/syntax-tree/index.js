@@ -25,6 +25,12 @@ export {
   changeNodeType,
   toggleListType,
   renumberOrderedList,
+  getTableCell,
+  setTableCellText,
+  addTableRow,
+  addTableColumn,
+  removeTableRow,
+  removeTableColumn,
 } from "./src/tree-mutations.js";
 
 export { parseInlineContent } from "../parser/src/parse-inline-content.js";

@@ -188,7 +188,7 @@ describe("rebuildInlineChildren", () => {
   });
 
   it("is a no-op for non-inline-content types", () => {
-    const types = ["list", "table", "code-block", "horizontal-rule", "header", "row", "cell", "html-element"];
+    const types = ["list", "table", "code-block", "horizontal-rule", "header", "row", "html-element"];
     for (const type of types) {
       const node = new SyntaxNode(type, "Some **content**");
       node.appendChild(new SyntaxNode("text", "original"));
