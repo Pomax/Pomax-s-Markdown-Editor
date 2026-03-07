@@ -424,43 +424,79 @@ cd @tooling/parser && npm run test:spec
 
 ---
 
-## Step 13: Editor-Side Type and Property Reconciliation
+## Step 13: `html-block` → `html-element` Type Rename
 
-**Goal:** Update all editor call sites to use `@tooling` types and property shapes. This step does NOT switch the parser — it only aligns the editor's property access patterns with `@tooling`'s data model so that the eventual parser swap is seamless.
+**Goal:** Rename the type string `'html-block'` to `'html-element'` everywhere in `src/` and `test/unit/` — code, comments, and test assertions. No property-shape changes.
 
-**This is the first step that modifies editor source code (`src/`).** Run the full test suite.
+**This is the first step that modifies editor source code (`src/`).**
 
-**Changes by category:**
+**Verification:** `npm run test:unit` then `npm run test:integration`
 
-### 13a: Type name updates (~17 sites)
-- `node.type === 'linked-image'` → `node.type === 'image' && node.attributes.href` (~7 sites)
-- `node.type === 'html-block'` → `node.type === 'html-element'` (~10 sites)
-
-### 13b: Inline HTML tag name (~3 sites)
-- `child.attributes.tag` → `child.tagName`
-
-### 13c: Block-level tag name (~5 sites)
-- `node.attributes.tagName` → `node.tagName`
-
-### 13d: openingTag/closingTag storage (~15 sites)
-- `node.attributes.openingTag` → `node.runtime.openingTag`
-- `node.attributes.closingTag` → `node.runtime.closingTag`
-
-### 13e: Runtime-only state
-- `node.attributes._detailsOpen` → `node.runtime._detailsOpen`
-- `node.attributes.bareText` → `node.runtime.bareText`
-
-**Verification:**
-```
-npm run test:unit
-npm run test:integration
-```
-
-**Depends on:** Nothing from Steps 1–12 (this is editor-side only). However, it logically prepares for the parser swap.
+**Depends on:** Nothing from Steps 1–12 (editor-side only).
 
 ---
 
-## Step 14: Code-Block Source Editing Helper
+## Step 14: `attributes.tag` → `node.tagName` (Inline HTML)
+
+**Goal:** For inline HTML child nodes, change `child.attributes.tag` → `child.tagName`. ~3 sites in writing-renderer.js and syntax-tree.js.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Nothing from Steps 1–12 (editor-side only).
+
+---
+
+## Step 15: `attributes.tagName` → `node.tagName` (Block-Level)
+
+**Goal:** Add `this.tagName = ''` to the old SyntaxNode constructor. Update all `node.attributes.tagName` → `node.tagName` access sites in `src/` and tests. ~11 sites.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Nothing from Steps 1–12 (editor-side only).
+
+---
+
+## Step 16: `openingTag`/`closingTag` → `runtime.*`
+
+**Goal:** Add `this.runtime = {}` to the old SyntaxNode constructor. Move `node.attributes.openingTag` → `node.runtime.openingTag` and `node.attributes.closingTag` → `node.runtime.closingTag` everywhere. Includes `node.attributes[attr]` bracket-access patterns. ~33 sites.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Step 15 (uses `this.runtime` added there, or adds it here if not yet present).
+
+---
+
+## Step 17: `attributes._detailsOpen` → `runtime.detailsOpen`
+
+**Goal:** Move the details-open state flag. Remove the underscore prefix — no private-marker naming. ~5 sites.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Step 16 (uses `this.runtime`).
+
+---
+
+## Step 18: `attributes.bareText` → `runtime.bareText`
+
+**Goal:** Move the bare-text flag from attributes to runtime. ~15 sites.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Step 16 (uses `this.runtime`).
+
+---
+
+## Step 19: `linked-image` → `image` Consolidation
+
+**Goal:** Remove `linked-image` as a distinct type. Linked images are `type === 'image'` with `attributes.href` set. Update type checks, switch cases, and skip-lists. ~7 sites.
+
+**Verification:** `npm run test:unit` then `npm run test:integration`
+
+**Depends on:** Nothing from Steps 1–12 (editor-side only).
+
+---
+
+## Step 20: Code-Block Source Editing Helper
 
 **Goal:** Create an editor-side helper that implements source-edit mode for code blocks using a `Map<string, string>` keyed by node ID, rather than a property on `SyntaxNode`.
 
@@ -499,11 +535,17 @@ Step 3  (rebuildInline)     ──> Step 4  (block muts) ────┼──> 
                                                          │    Step 7  (format ops)
                                                          │
 Step 12 (export wiring)     ─────────────────────────────┘    (depends on all above)
-Step 13 (type reconciliation)      (independent — editor-side)
-Step 14 (source-edit helper)       (independent — editor-side)
+Step 13 (html-block rename)         ─┐
+Step 14 (inline tag → tagName)       │
+Step 15 (block tagName)              ├──> editor-side, sequential
+Step 16 (openingTag/closingTag)      │
+Step 17 (detailsOpen)                │
+Step 18 (bareText)                   │
+Step 19 (linked-image)              ─┘
+Step 20 (source-edit helper)        (independent — editor-side)
 ```
 
-Steps 1, 2, 9, 10, 13, and 14 have no dependencies and could theoretically be done in parallel. However, for clear progress tracking, work through them sequentially as numbered.
+Steps 1, 2, 9, 10, and 13–20 have no dependencies on each other and could theoretically be done in parallel. However, Steps 13–19 are sequential (each builds on the previous). For clear progress tracking, work through all steps sequentially as numbered.
 
 ---
 
