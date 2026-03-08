@@ -592,8 +592,8 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'details');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<details>');
-      assert.strictEqual(tree.children[0].attributes.closingTag, '</details>');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<details>');
+      assert.strictEqual(tree.children[0].runtime.closingTag, '</details>');
       assert.ok(tree.children[0].children.length >= 2);
     });
 
@@ -620,8 +620,8 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'my-component');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<my-component>');
-      assert.strictEqual(tree.children[0].attributes.closingTag, '</my-component>');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<my-component>');
+      assert.strictEqual(tree.children[0].runtime.closingTag, '</my-component>');
       assert.strictEqual(tree.children[0].children.length, 1);
       assert.strictEqual(tree.children[0].children[0].type, 'paragraph');
       assert.strictEqual(tree.children[0].children[0].content, 'Hello');
@@ -648,7 +648,7 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'my-element');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<my-element class="test">');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<my-element class="test">');
     });
 
     it('should treat an unknown tag as an HTML block when it has proper tag syntax', () => {
@@ -677,10 +677,10 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'link');
       assert.strictEqual(
-        tree.children[0].attributes.openingTag,
+        tree.children[0].runtime.openingTag,
         '<link rel="stylesheet" href="style.css">',
       );
-      assert.strictEqual(tree.children[0].attributes.closingTag, '');
+      assert.strictEqual(tree.children[0].runtime.closingTag, '');
       assert.strictEqual(tree.children[0].children.length, 0);
       assert.strictEqual(tree.children[1].type, 'heading1');
     });
@@ -696,11 +696,11 @@ describe('DFAParser', () => {
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(
-        tree.children[0].attributes.openingTag,
+        tree.children[0].runtime.openingTag,
         '<link rel="stylesheet" href="a.css">',
       );
       assert.strictEqual(
-        tree.children[1].attributes.openingTag,
+        tree.children[1].runtime.openingTag,
         '<link rel="stylesheet" href="b.css">',
       );
     });
@@ -716,11 +716,11 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'script');
       assert.strictEqual(
-        tree.children[0].attributes.openingTag,
+        tree.children[0].runtime.openingTag,
         '<script type="module" src="./app.js" async>',
       );
-      assert.strictEqual(tree.children[0].attributes.closingTag, '</script>');
-      assert.strictEqual(tree.children[0].attributes.rawContent, '');
+      assert.strictEqual(tree.children[0].runtime.closingTag, '</script>');
+      assert.strictEqual(tree.children[0].runtime.rawContent, '');
       assert.strictEqual(tree.children[0].children.length, 0);
     });
 
@@ -735,7 +735,7 @@ describe('DFAParser', () => {
       const tree = parser.parse(md);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(
-        tree.children[0].attributes.rawContent,
+        tree.children[0].runtime.rawContent,
         '  const x = 1;\n  console.log(x);',
       );
       assert.strictEqual(tree.children[0].children.length, 0);
@@ -753,7 +753,7 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'style');
       assert.strictEqual(
-        tree.children[0].attributes.rawContent,
+        tree.children[0].runtime.rawContent,
         '  body { color: red; }\n  h1 > span { font-size: 2em; }',
       );
     });
@@ -764,7 +764,7 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(
-        tree.children[0].attributes.rawContent,
+        tree.children[0].runtime.rawContent,
         '  #heading { color: red; }\n  > .child { margin: 0; }',
       );
     });
@@ -809,7 +809,7 @@ describe('DFAParser', () => {
       const tree = parser.parse(md);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'noscript');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<noscript class="no-js">');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<noscript class="no-js">');
     });
 
     it('should round-trip an unknown tag block', () => {
@@ -828,8 +828,8 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, '!--');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- a comment -->');
-      assert.strictEqual(tree.children[0].attributes.closingTag, '');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<!-- a comment -->');
+      assert.strictEqual(tree.children[0].runtime.closingTag, '');
     });
 
     it('should round-trip a single-line HTML comment', () => {
@@ -844,7 +844,7 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, '!--');
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<!--\nline one\nline two\n-->');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<!--\nline one\nline two\n-->');
     });
 
     it('should round-trip a multi-line HTML comment', () => {
@@ -867,8 +867,8 @@ describe('DFAParser', () => {
       const md = '<!-- first -->\n<!-- second -->';
       const tree = parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
-      assert.strictEqual(tree.children[0].attributes.openingTag, '<!-- first -->');
-      assert.strictEqual(tree.children[1].attributes.openingTag, '<!-- second -->');
+      assert.strictEqual(tree.children[0].runtime.openingTag, '<!-- first -->');
+      assert.strictEqual(tree.children[1].runtime.openingTag, '<!-- second -->');
     });
   });
 

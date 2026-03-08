@@ -37,9 +37,6 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
  * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-element nodes
- * @property {string} [openingTag] - Full opening tag line for html-element nodes
- * @property {string} [closingTag] - Full closing tag line for html-element nodes
- * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
@@ -106,6 +103,13 @@ export class SyntaxNode {
      * @type {NodeAttributes}
      */
     this.attributes = {};
+
+    /**
+     * Runtime-only properties (openingTag, closingTag, rawContent, etc.).
+     * Not serialised to markdown attributes.
+     * @type {Object}
+     */
+    this.runtime = {};
 
     /**
      * HTML tag name for inline HTML elements (sub, sup, mark, etc.)
@@ -371,21 +375,21 @@ export class SyntaxNode {
         return this.content;
       case 'html-element': {
         // Raw content tags (script, style, textarea): body stored verbatim
-        if (this.attributes.rawContent !== undefined) {
-          if (this.attributes.rawContent === '') {
-            return (this.attributes.openingTag || '') + (this.attributes.closingTag || '');
+        if (this.runtime.rawContent !== undefined) {
+          if (this.runtime.rawContent === '') {
+            return (this.runtime.openingTag || '') + (this.runtime.closingTag || '');
           }
-          const parts = [this.attributes.openingTag || ''];
-          parts.push(this.attributes.rawContent);
-          if (this.attributes.closingTag) {
-            parts.push(this.attributes.closingTag);
+          const parts = [this.runtime.openingTag || ''];
+          parts.push(this.runtime.rawContent);
+          if (this.runtime.closingTag) {
+            parts.push(this.runtime.closingTag);
           }
           return parts.join('\n');
         }
 
         // Void elements: opening tag only, no children, no closing tag
-        if (this.attributes.closingTag === '' && this.children.length === 0) {
-          return this.attributes.openingTag || '';
+        if (this.runtime.closingTag === '' && this.children.length === 0) {
+          return this.runtime.openingTag || '';
         }
 
         // If the container has exactly one bare-text child, collapse
@@ -395,15 +399,15 @@ export class SyntaxNode {
           this.children[0].attributes.bareText &&
           this.children[0].type === 'paragraph'
         ) {
-          return `${this.attributes.openingTag}${this.children[0].content}${this.attributes.closingTag}`;
+          return `${this.runtime.openingTag}${this.children[0].content}${this.runtime.closingTag}`;
         }
 
-        const parts = [this.attributes.openingTag || ''];
+        const parts = [this.runtime.openingTag || ''];
         for (const child of this.children) {
           parts.push(child.toMarkdown());
         }
-        if (this.attributes.closingTag) {
-          parts.push(this.attributes.closingTag);
+        if (this.runtime.closingTag) {
+          parts.push(this.runtime.closingTag);
         }
         return parts.join('\n\n');
       }

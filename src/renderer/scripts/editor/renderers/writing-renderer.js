@@ -648,8 +648,8 @@ export class WritingRenderer {
     // HTML comments, void elements, and raw content tags have no
     // visual representation in writing mode — hide them entirely.
     const isComment = tagName === '!--';
-    const isVoid = attrs.closingTag === '' && node.children.length === 0;
-    const isRawContent = attrs.rawContent !== undefined;
+    const isVoid = node.runtime.closingTag === '' && node.children.length === 0;
+    const isRawContent = node.runtime.rawContent !== undefined;
     if (isComment || isVoid || isRawContent) {
       element.hidden = true;
       return element;
@@ -660,7 +660,7 @@ export class WritingRenderer {
     container.className = 'md-html-container';
 
     // Copy attributes from the opening tag onto the container element
-    this.applyHtmlAttributes(container, attrs.openingTag || '');
+    this.applyHtmlAttributes(container, node.runtime.openingTag || '');
 
     // Determine which child (if any) is focused
     const currentNodeId = this.editor.getBlockNodeId();
@@ -711,7 +711,7 @@ export class WritingRenderer {
     }
 
     // Copy any extra attributes from the original opening tag
-    this.applyHtmlAttributes(container, attrs.openingTag || '');
+    this.applyHtmlAttributes(container, node.runtime.openingTag || '');
 
     const currentNodeId = this.editor.getBlockNodeId();
 

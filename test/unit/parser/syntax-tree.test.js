@@ -357,6 +357,8 @@ describe('SyntaxNode.toBareText', () => {
     const container = new SyntaxNode('html-element', '');
     container.attributes = {
       tagName: 'details',
+    };
+    container.runtime = {
       openingTag: '<details>',
       closingTag: '</details>',
     };

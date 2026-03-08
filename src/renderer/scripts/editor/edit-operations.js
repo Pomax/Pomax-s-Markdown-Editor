@@ -148,15 +148,15 @@ export class EditOperations {
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
     // When the cursor is on an html-element tag line (source view), edit
-    // the openingTag / closingTag attribute directly.
+    // the openingTag / closingTag runtime property directly.
     if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
       const attr =
         this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-      const old = node.attributes[attr] || '';
+      const old = node.runtime[attr] || '';
       const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
       const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
-      node.attributes[attr] = left + text + right;
+      node.runtime[attr] = left + text + right;
       this.editor.syntaxTree.treeCursor = {
         nodeId: node.id,
         offset: left.length + text.length,
@@ -365,16 +365,16 @@ export class EditOperations {
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
     // When the cursor is on an html-element tag line (source view), edit
-    // the openingTag / closingTag attribute directly.
+    // the openingTag / closingTag runtime property directly.
     if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       if (this.editor.syntaxTree.treeCursor.offset > 0) {
         const before = this.editor.syntaxTree.toMarkdown();
         const attr =
           this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-        const old = node.attributes[attr] || '';
+        const old = node.runtime[attr] || '';
         const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset - 1);
         const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
-        node.attributes[attr] = left + right;
+        node.runtime[attr] = left + right;
         this.editor.syntaxTree.treeCursor = {
           nodeId: node.id,
           offset: left.length,
@@ -607,16 +607,16 @@ export class EditOperations {
     if (!node || !this.editor.syntaxTree || !this.editor.syntaxTree.treeCursor) return;
 
     // When the cursor is on an html-element tag line (source view), edit
-    // the openingTag / closingTag attribute directly.
+    // the openingTag / closingTag runtime property directly.
     if (node.type === 'html-element' && this.editor.syntaxTree.treeCursor.tagPart) {
       const attr =
         this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-      const old = node.attributes[attr] || '';
+      const old = node.runtime[attr] || '';
       if (this.editor.syntaxTree.treeCursor.offset < old.length) {
         const before = this.editor.syntaxTree.toMarkdown();
         const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
         const right = old.substring(this.editor.syntaxTree.treeCursor.offset + 1);
-        node.attributes[attr] = left + right;
+        node.runtime[attr] = left + right;
         this.editor.syntaxTree.treeCursor = {
           nodeId: node.id,
           offset: left.length,

@@ -60,8 +60,6 @@ interface NodeAttributes {
     alt?: string;
     href?: string;
     tagName?: string;
-    openingTag?: string;
-    closingTag?: string;
     bareText?: boolean;
     /** Runtime-only toggle for fake details collapse state (not serialised). */
     _detailsOpen?: boolean;

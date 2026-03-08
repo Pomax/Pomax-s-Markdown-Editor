@@ -50,7 +50,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
         } else if (cursor.tagPart === 'closing') {
           // Cursor is on the closing tag line of an html-element.
           const md = node.toMarkdown();
-          const closingTag = node.attributes.closingTag ?? '';
+          const closingTag = node.runtime.closingTag ?? '';
           return pos + md.length - closingTag.length + cursor.offset;
         } else {
           const prefix = getPrefixLength(node.type, node.attributes);
@@ -60,7 +60,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
 
       // For html-element containers, walk children to find the cursor.
       if (node.type === 'html-element' && node.children.length > 0) {
-        const openingTag = node.attributes.openingTag ?? '';
+        const openingTag = node.runtime.openingTag ?? '';
 
         // Check if this is a single bare-text child (collapsed form).
         if (
@@ -88,9 +88,9 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
         if (result !== -1) return result;
 
         // Closing tag
-        if (node.attributes.closingTag) {
+        if (node.runtime.closingTag) {
           pos += '\n\n'.length;
-          pos += node.attributes.closingTag.length;
+          pos += node.runtime.closingTag.length;
         }
       } else {
         // Leaf node — advance past its markdown
@@ -154,7 +154,7 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
           }
 
           // Multi-child: opening tag \n\n children \n\n closing tag
-          const openingTag = node.attributes.openingTag ?? '';
+          const openingTag = node.runtime.openingTag ?? '';
           const afterOpen = pos + openingTag.length + '\n\n'.length;
 
           if (absoluteOffset < afterOpen) {
@@ -171,12 +171,12 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
           if (result) return result;
 
           // If we get here, offset is in the closing tag area
-          if (node.attributes.closingTag) {
+          if (node.runtime.closingTag) {
             pos += '\n\n'.length;
             const closingOffset = absoluteOffset - pos;
             return {
               nodeId: node.id,
-              offset: Math.max(0, Math.min(closingOffset, node.attributes.closingTag.length)),
+              offset: Math.max(0, Math.min(closingOffset, node.runtime.closingTag.length)),
               tagPart: 'closing',
             };
           }

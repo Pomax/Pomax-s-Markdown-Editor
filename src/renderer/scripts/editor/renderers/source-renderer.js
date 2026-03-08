@@ -449,7 +449,7 @@ export class SourceRenderer {
 
       const openSyntax = document.createElement('span');
       openSyntax.className = 'md-syntax md-html-tag';
-      openSyntax.textContent = attrs.openingTag || '';
+      openSyntax.textContent = node.runtime.openingTag || '';
       element.appendChild(openSyntax);
 
       const contentSpan = document.createElement('span');
@@ -459,7 +459,7 @@ export class SourceRenderer {
 
       const closeSyntax = document.createElement('span');
       closeSyntax.className = 'md-syntax md-html-tag';
-      closeSyntax.textContent = attrs.closingTag || '';
+      closeSyntax.textContent = node.runtime.closingTag || '';
       element.appendChild(closeSyntax);
 
       return element;
@@ -472,14 +472,14 @@ export class SourceRenderer {
     openLine.dataset.tagPart = 'opening';
     const openContent = document.createElement('span');
     openContent.className = 'md-content';
-    openContent.textContent = attrs.openingTag || '';
+    openContent.textContent = node.runtime.openingTag || '';
     openLine.appendChild(openContent);
     element.appendChild(openLine);
 
     // Raw content tags: render body lines verbatim (not as markdown)
-    if (attrs.rawContent !== undefined) {
-      if (attrs.rawContent) {
-        for (const line of attrs.rawContent.split('\n')) {
+    if (node.runtime.rawContent !== undefined) {
+      if (node.runtime.rawContent) {
+        for (const line of node.runtime.rawContent.split('\n')) {
           const rawLine = document.createElement('div');
           rawLine.className = 'md-line md-html-raw';
           rawLine.dataset.nodeId = node.id;
@@ -501,14 +501,14 @@ export class SourceRenderer {
     }
 
     // Closing tag line — editable via data-tag-part="closing"
-    if (attrs.closingTag) {
+    if (node.runtime.closingTag) {
       const closeLine = document.createElement('div');
       closeLine.className = 'md-line md-html-tag';
       closeLine.dataset.nodeId = node.id;
       closeLine.dataset.tagPart = 'closing';
       const closeContent = document.createElement('span');
       closeContent.className = 'md-content';
-      closeContent.textContent = attrs.closingTag;
+      closeContent.textContent = node.runtime.closingTag;
       closeLine.appendChild(closeContent);
       element.appendChild(closeLine);
     }
