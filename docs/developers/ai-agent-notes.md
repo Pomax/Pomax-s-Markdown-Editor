@@ -283,7 +283,7 @@ html-block (type: 'html-block', tagName: 'details')
         div.md-line.md-paragraph
   ```
 
-- Collapse/expand state is stored as `node.attributes._detailsOpen`
+- Collapse/expand state is stored as `node.runtime.detailsOpen`
   (runtime-only — not serialized to markdown).
 - Default open/closed state is controlled by a user preference
   (`detailsClosed` setting in the Content preferences section).

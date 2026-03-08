@@ -39,7 +39,6 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [tagName] - HTML tag name for html-element nodes
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
- * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
  */
 
 /**

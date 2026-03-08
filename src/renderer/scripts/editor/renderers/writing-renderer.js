@@ -699,10 +699,10 @@ export class WritingRenderer {
 
     // Check runtime toggle state stored on the node; fall back to the
     // user preference on first render.
-    if (node.attributes._detailsOpen === undefined) {
-      node.attributes._detailsOpen = defaultOpen;
+    if (node.runtime.detailsOpen === undefined) {
+      node.runtime.detailsOpen = defaultOpen;
     }
-    const isOpen = !!node.attributes._detailsOpen;
+    const isOpen = !!node.runtime.detailsOpen;
 
     const container = document.createElement('div');
     container.className = 'md-html-container md-details';
@@ -751,7 +751,7 @@ export class WritingRenderer {
       });
       triangle.addEventListener('click', (e) => {
         e.stopPropagation();
-        node.attributes._detailsOpen = !node.attributes._detailsOpen;
+        node.runtime.detailsOpen = !node.runtime.detailsOpen;
         this.editor.renderNodes({ updated: [node.id] });
         this.editor.placeCursor();
       });
