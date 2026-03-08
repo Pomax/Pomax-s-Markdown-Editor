@@ -171,25 +171,35 @@ export function renderNodeToMarkdown(node, depth = 0) {
                 return `${indent}${tag}\n${node.content}\n${close}`;
             }
 
-            // If the container has exactly one bare-text child, collapse
-            // to a single line: <tag>content</tag>
+            // If all children are inline (text or inline html-element)
+            // and the element was on a single line, collapse to: <tag>content</tag>
             if (
-                node.children.length === 1 &&
-                node.children[0].attributes.bareText &&
-                node.children[0].type === 'paragraph'
+                node.children.length > 0 &&
+                node.startLine === node.endLine &&
+                node.children.every(c => c.type === 'text' || (c.type === 'html-element' && !c.runtime.openingTag))
             ) {
                 const tag = node.tagName || 'div';
-                return `${indent}<${tag}>${node.children[0].content}</${tag}>`;
+                const inner = node.children.map(c => renderNodeToMarkdown(c)).join('');
+                return `${indent}<${tag}>${inner}</${tag}>`;
             }
 
             const lines = [`${indent}${node.runtime.openingTag || ''}`];
+            let prevWasInline = false;
             for (const child of node.children) {
-                if (child.type === 'html-element') {
+                const isInline = child.type === 'text' || (child.type === 'html-element' && !child.runtime.openingTag);
+                if (isInline) {
+                    lines.push(renderNodeToMarkdown(child));
+                    prevWasInline = true;
+                } else if (child.type === 'html-element') {
+                    if (prevWasInline) lines.push('');
                     lines.push(renderNodeToMarkdown(child, depth + 1));
+                    prevWasInline = false;
                 } else {
+                    if (prevWasInline) lines.push('');
                     lines.push('');
                     lines.push(renderNodeToMarkdown(child));
                     lines.push('');
+                    prevWasInline = false;
                 }
             }
             if (node.runtime.closingTag) {

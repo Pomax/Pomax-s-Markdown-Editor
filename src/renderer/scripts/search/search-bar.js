@@ -396,12 +396,11 @@ export class SearchBar {
             pos += text.length;
             first = false;
           } else {
-            // Writing mode: only bare-text single-child containers
+            // Writing mode: only single-paragraph-child containers
             // collapse into one entry; multi-child containers
             // flatten their children.
             if (
               node.children.length === 1 &&
-              node.children[0].attributes.bareText &&
               node.children[0].type === 'paragraph'
             ) {
               const text = node.toBareText();

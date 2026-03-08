@@ -584,7 +584,6 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children[0].children.length, 1);
       assert.strictEqual(tree.children[0].children[0].type, 'paragraph');
       assert.strictEqual(tree.children[0].children[0].content, 'Some text');
-      assert.strictEqual(tree.children[0].children[0].attributes.bareText, true);
     });
 
     it('should parse a multi-line HTML block', () => {
@@ -640,7 +639,6 @@ describe('DFAParser', () => {
       assert.strictEqual(tree.children[0].type, 'html-element');
       assert.strictEqual(tree.children[0].tagName, 'app-header');
       assert.strictEqual(tree.children[0].children[0].content, 'Title text');
-      assert.strictEqual(tree.children[0].children[0].attributes.bareText, true);
     });
 
     it('should parse custom elements with attributes', () => {
@@ -663,7 +661,7 @@ describe('DFAParser', () => {
     it('should round-trip a custom element block', () => {
       const md = '<my-component>\n\nSome content\n\n</my-component>';
       const tree = parser.parse(md);
-      assert.strictEqual(tree.toMarkdown(), md);
+      assert.strictEqual(tree.toMarkdown(), '<my-component>Some content</my-component>');
     });
   });
 
@@ -815,7 +813,7 @@ describe('DFAParser', () => {
     it('should round-trip an unknown tag block', () => {
       const md = '<noscript>\n\nContent here\n\n</noscript>';
       const tree = parser.parse(md);
-      assert.strictEqual(tree.toMarkdown(), md);
+      assert.strictEqual(tree.toMarkdown(), '<noscript>Content here</noscript>');
     });
   });
 

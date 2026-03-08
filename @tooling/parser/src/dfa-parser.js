@@ -124,9 +124,11 @@ export class DFAParser {
      * Parses a full markdown document.
      * @param {string} markdown
      * @param {Document} [doc]
+     * @param {{ htmlMode?: boolean }} [options]
      * @returns {Promise<SyntaxTree>}
      */
-    async parse(markdown) {
+    async parse(markdown, options = {}) {
+        this.htmlMode = options.htmlMode || false;
         const tokens = tokenize(markdown);
         const tree = new SyntaxTree();
         if (!tree.doc) {
@@ -139,6 +141,7 @@ export class DFAParser {
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
             // Skip blank lines between blocks
             if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+                if (this.htmlMode) this.htmlMode = false;
                 ctx.line++;
                 ctx.pos++;
                 continue;
@@ -169,6 +172,19 @@ export class DFAParser {
      */
     async parseBlock(ctx) {
         const tok = ctx.tokens[ctx.pos];
+
+        // In HTML mode, only recognise HTML tag starts as blocks.
+        // Everything else is inline text.
+        if (this.htmlMode) {
+            if (tok.type === 'LT' && this.isHtmlBlockStart(ctx)) {
+                return await this.parseHtmlBlock(ctx);
+            }
+            if ((tok.type === 'SPACE' || tok.type === 'TAB') && this.isIndentedHtmlBlockStart(ctx)) {
+                this.skipWhitespace(ctx);
+                return await this.parseHtmlBlock(ctx);
+            }
+            return this.parseTextLine(ctx);
+        }
 
         // Heading: one or more HASH at start of line, followed by a space
         if (tok.type === 'HASH') {
@@ -1096,12 +1112,16 @@ export class DFAParser {
             ctx.pos++;
         }
 
-        // Collect body content until we find the closing tag </tagname>
+        // Detect whether the body starts with a blank line.
+        // Blank line → markdown mode from the start; otherwise HTML mode.
+        const startsWithBlankLine =
+            ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE';
+
+        // Collect body content until we find the closing tag </tagname>.
         let bodyMarkdown = '';
         let closingTag = '';
 
         while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
-            // Check for closing tag: LT FSLASH TEXT(tagname) GT
             if (this.isClosingTag(ctx, lowerTagName)) {
                 closingTag = this.consumeClosingTag(ctx);
                 break;
@@ -1117,10 +1137,12 @@ export class DFAParser {
         }
 
         // Remove leading/trailing whitespace-only lines from body
-        const lines = bodyMarkdown.split('\n');
-        while (lines.length && lines[0].trim() === '') lines.shift();
-        while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
-        bodyMarkdown = lines.join('\n');
+        if (bodyMarkdown) {
+            const mdLines = bodyMarkdown.split('\n');
+            while (mdLines.length && mdLines[0].trim() === '') mdLines.shift();
+            while (mdLines.length && mdLines[mdLines.length - 1].trim() === '') mdLines.pop();
+            bodyMarkdown = mdLines.join('\n');
+        }
 
         const endLine = ctx.line;
 
@@ -1150,10 +1172,15 @@ export class DFAParser {
             return node;
         }
 
-        // Re-parse the body as markdown to create child nodes
+        // Re-parse the body with a sub-parser. If the body starts right
+        // after the opening tag (no blank line), the sub-parser enters
+        // HTML mode: non-tag lines become text nodes. A blank line in
+        // the body transitions to markdown mode for the remainder.
         if (bodyMarkdown.length > 0) {
             const bodyParser = new DFAParser();
-            const bodyTree = await bodyParser.parse(bodyMarkdown);
+            const bodyTree = await bodyParser.parse(bodyMarkdown, {
+                htmlMode: !startsWithBlankLine,
+            });
             const bodyStartLine = startLine + 1;
             for (const child of bodyTree.children) {
                 this.adjustLineNumbers(child, bodyStartLine);
@@ -1231,12 +1258,12 @@ export class DFAParser {
             node.raw = true;
             node.content = content;
         } else {
-            const child = new SyntaxNode('paragraph', content.trim());
-            populateInlineChildren(child);
-            child.attributes = { bareText: true };
-            child.startLine = startLine;
-            child.endLine = startLine;
-            node.appendChild(child);
+            const trimmed = content.trim();
+            for (const child of parseInlineContent(trimmed)) {
+                child.startLine = startLine;
+                child.endLine = startLine;
+                node.appendChild(child);
+            }
         }
 
         return node;
@@ -1389,6 +1416,32 @@ export class DFAParser {
     }
 
     // ── Paragraph ───────────────────────────────────────────────
+
+    /**
+     * Parses a single line as a text node (used in htmlMode).
+     * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+     * @returns {SyntaxNode}
+     */
+    parseTextLine(ctx) {
+        const startLine = ctx.line;
+        let content = '';
+        while (
+            ctx.pos < ctx.tokens.length &&
+            ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
+            ctx.tokens[ctx.pos].type !== 'EOF'
+        ) {
+            content += ctx.tokens[ctx.pos].value;
+            ctx.pos++;
+        }
+        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+            ctx.line++;
+            ctx.pos++;
+        }
+        const node = new SyntaxNode('text', content.trim());
+        node.startLine = startLine;
+        node.endLine = startLine;
+        return node;
+    }
 
     /**
      * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx

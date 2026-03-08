@@ -256,15 +256,16 @@ Checklist items are regular `list-item` nodes distinguished by `attributes.check
 ```
 html-block (type: 'html-block', tagName: 'details')
   ├── html-block (tagName: 'summary')
-  │     └── paragraph (bareText: true)   ← "This is a paragraph"
+  │     └── paragraph                        ← "This is a paragraph"
   ├── heading2                           ← "## and this an h2"
   └── paragraph                          ← "better"
 ```
 
-- `bareText: true` means the node's text was originally wrapped in an HTML
-  tag (e.g., `<summary>text</summary>`) and is rendered without markdown
-  block-level syntax in source view (no `#`, `>`, etc. prefix — just the
-  raw tag + text).
+- An html-element with exactly one paragraph child is rendered as a
+  collapsed single line (e.g., `<summary>text</summary>`) in both
+  `toMarkdown()` and source view. No special flag is needed — the
+  structural condition (`children.length === 1 && type === 'paragraph'`)
+  is sufficient.
 - In **source view**, each line is rendered independently; the opening tag,
   child lines, and closing tag are separate `.md-line` elements.
 - In **writing view**, the `<details>` block is rendered as a **fake
@@ -312,13 +313,6 @@ code that opens a modal from within the editor must:
 4. Set `_isRendering = true` around the placement call and clear it via
    `queueMicrotask` to suppress the async `selectionchange` that the
    placement itself triggers.
-
-### bareText preservation
-
-When `insertTextAtCursor`, `handleBackspace`, or `handleDelete` re-parse a
-single line via `_reparseLine`, they must check whether the node had
-`bareText: true` before the re-parse and restore it afterward, because
-`_reparseLine` does not know about the HTML-block context.
 
 ### Backspace/delete at html-block boundaries
 

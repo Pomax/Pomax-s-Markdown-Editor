@@ -60,7 +60,6 @@ interface NodeAttributes {
     alt?: string;
     href?: string;
     tagName?: string;
-    bareText?: boolean;
 }
 
 declare global {

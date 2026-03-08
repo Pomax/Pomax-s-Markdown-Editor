@@ -761,7 +761,7 @@ export class WritingRenderer {
       const summaryContent = document.createElement('div');
       summaryContent.className = 'md-details-summary-content';
       const summaryFocused = summaryNode.id === currentNodeId;
-      // Render summary's own children (the bareText paragraph)
+      // Render summary's own children (the paragraph)
       for (const sc of summaryNode.children) {
         const scFocused = sc.id === currentNodeId;
         const scEl = this.renderNode(sc, scFocused);

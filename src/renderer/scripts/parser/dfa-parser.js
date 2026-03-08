@@ -1323,7 +1323,6 @@ export class DFAParser {
     node.endLine = startLine;
 
     const child = new SyntaxNode('paragraph', content.trim());
-    child.attributes = { bareText: true };
     child.startLine = startLine;
     child.endLine = startLine;
     node.appendChild(child);

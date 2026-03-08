@@ -62,10 +62,9 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
       if (node.type === 'html-element' && node.children.length > 0) {
         const openingTag = node.runtime.openingTag ?? '';
 
-        // Check if this is a single bare-text child (collapsed form).
+        // Check if this is a single paragraph child (collapsed form).
         if (
           node.children.length === 1 &&
-          node.children[0].attributes.bareText &&
           node.children[0].type === 'paragraph'
         ) {
           const child = node.children[0];
@@ -137,10 +136,9 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
 
         // For html-element containers with children, recurse.
         if (node.type === 'html-element' && node.children.length > 0) {
-          // Single bare-text child (collapsed):  <tag>content</tag>
+          // Single paragraph child (collapsed):  <tag>content</tag>
           if (
             node.children.length === 1 &&
-            node.children[0].attributes.bareText &&
             node.children[0].type === 'paragraph'
           ) {
             const child = node.children[0];

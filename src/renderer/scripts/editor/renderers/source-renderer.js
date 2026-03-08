@@ -173,13 +173,13 @@ export class SourceRenderer {
     const node = tree.findNodeById(nodeId);
     if (!node) return;
 
-    // Bare-text html-element children are rendered as part of the
+    // Single-paragraph html-element children are rendered as part of the
     // parent html-element element — re-render the parent instead.
     const parent = node.parent;
     if (
       parent?.type === 'html-element' &&
       parent.children.length === 1 &&
-      node.attributes.bareText
+      node.type === 'paragraph'
     ) {
       const parentEl = container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!parentEl) return;
@@ -434,11 +434,10 @@ export class SourceRenderer {
   renderHtmlBlock(node, element) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
 
-    // Bare-text container (e.g. <summary>text</summary>): render as a
+    // Single-paragraph container (e.g. <summary>text</summary>): render as a
     // single line matching the original markdown source.
     if (
       node.children.length === 1 &&
-      node.children[0].attributes.bareText &&
       node.children[0].type === 'paragraph'
     ) {
       const child = node.children[0];

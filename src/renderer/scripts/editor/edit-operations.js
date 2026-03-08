@@ -288,7 +288,6 @@ export class EditOperations {
     // ── Single-line insert ──
     // Re-parse the full markdown line to detect type changes
     let newOffset;
-    const wasBareText = !!node.attributes.bareText;
     const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
     const parsed = this.editor._reparseLine(fullLine);
 
@@ -312,12 +311,6 @@ export class EditOperations {
       }
     } else {
       node.content = newContent;
-    }
-
-    // Preserve the bareText flag — it is not part of the markdown syntax
-    // that parseSingleLine can reconstruct, so it would be lost.
-    if (wasBareText) {
-      node.attributes.bareText = true;
     }
 
     // Compute cursor position in the new content.
@@ -445,7 +438,6 @@ export class EditOperations {
 
       // Re-parse to detect type changes
       let newOffset;
-      const wasBareText = !!node.attributes.bareText;
       const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
       const parsed = this.editor._reparseLine(fullLine);
 
@@ -455,11 +447,6 @@ export class EditOperations {
         node.attributes = parsed.attributes;
       } else {
         node.content = newContent;
-      }
-
-      // Preserve the bareText flag (see insertTextAtCursor).
-      if (wasBareText) {
-        node.attributes.bareText = true;
       }
 
       // Compute new cursor offset
@@ -695,7 +682,6 @@ export class EditOperations {
 
       // Re-parse to detect type changes
       let newOffset;
-      const wasBareText = !!node.attributes.bareText;
       const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
       const parsed = this.editor._reparseLine(fullLine);
 
@@ -707,11 +693,7 @@ export class EditOperations {
         node.content = newContent;
       }
 
-      // Preserve the bareText flag (see insertTextAtCursor).
-      if (wasBareText) {
-        node.attributes.bareText = true;
-      }
-
+      // Compute new cursor offset
       if (oldType === node.type) {
         newOffset = left.length;
       } else {
@@ -927,12 +909,6 @@ export class EditOperations {
 
     // Current node keeps the text before the cursor
     node.content = contentBefore;
-
-    // If the node was bare text inside an HTML container, splitting it
-    // means it is no longer a single bare-text line — clear the flag.
-    if (node.attributes?.bareText) {
-      node.attributes.bareText = undefined;
-    }
 
     // New node is always a paragraph
     const newNode = new SyntaxNode('paragraph', contentAfter);

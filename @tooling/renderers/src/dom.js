@@ -338,13 +338,20 @@ function renderNodeToDOM(doc, node) {
       if (node.raw) {
         el.textContent = node.content ? `\n${node.content}\n` : '';
       } else if (
-        node.children.length === 1 &&
-        node.children[0].attributes.bareText &&
-        node.children[0].type === "paragraph"
+        node.children.length > 0 &&
+        node.children.every(c => c.type === "text" || (c.type === "html-element" && !c.runtime.openingTag))
       ) {
-        appendInlineChildrenToDOM(doc, node.children[0].children, el);
+        appendInlineChildrenToDOM(doc, node.children, el);
       } else {
-        renderBlockChildrenToDOM(doc, node.children, el);
+        // Mixed or block-only content
+        for (const child of node.children) {
+          const isInline = child.type === "text" || (child.type === "html-element" && !child.runtime.openingTag);
+          if (isInline) {
+            el.appendChild(inlineChildToDOM(doc, child));
+          } else {
+            el.appendChild(renderNodeToDOM(doc, child));
+          }
+        }
       }
 
       attachToggleView(doc, el, node);

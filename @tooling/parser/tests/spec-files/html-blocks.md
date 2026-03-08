@@ -12,8 +12,7 @@ Tests for HTML blocks including details/summary, div, and custom elements.
 
 ```
 html-element "summary"
-  paragraph {"bareText":true}
-    text "Some text"
+  text "Some text"
 ```
 
 # html
@@ -42,8 +41,7 @@ better
 ```
 html-element "details"
   html-element "summary"
-    paragraph {"bareText":true}
-      text "This is a paragraph"
+    text "This is a paragraph"
   heading2
     text "and this an h2"
   paragraph
@@ -133,8 +131,7 @@ html-element "my-component"
 
 ```
 html-element "app-header"
-  paragraph {"bareText":true}
-    text "Title text"
+  text "Title text"
 ```
 
 # html
@@ -195,14 +192,13 @@ paragraph
 html-element "section"
   html-element "div"
     html-element "p"
-      paragraph {"bareText":true}
-        text "some "
-        html-element "i"
-          text "italic"
-        text " and "
-        html-element "b"
-          text "bold"
-        text " text"
+      text "some "
+      html-element "i"
+        text "italic"
+      text " and "
+      html-element "b"
+        text "bold"
+      text " text"
 paragraph
   text "Test text"
 ```

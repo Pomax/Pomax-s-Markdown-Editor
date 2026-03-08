@@ -559,5 +559,26 @@ The following are explicitly deferred per the migration plan:
 
 1. **Operation-based undo/redo (Phase 5):** The current snapshot-based undo system works with `@tooling`'s tree (call `toMarkdown()` before/after). Operation-based undo is a future optimization.
 2. **`SyntaxNode.clone()` / `SyntaxTree.clone()`:** Only needed for operation-based undo. Deferred alongside Phase 5.
-3. **Full parser swap in the editor:** The steps above build all the infrastructure. The actual swap of the editor's parser to use `@tooling`'s parser is a subsequent project that composes these building blocks.
-4. **`insertTextAtCursor` orchestration:** This is the editor-side function that composes Phase 3 primitives on every keystroke. It is editor integration work, not `@tooling` library work.
+3. **`insertTextAtCursor` orchestration:** This is the editor-side function that composes Phase 3 primitives on every keystroke. It is editor integration work, not `@tooling` library work.
+
+---
+
+## Step 21: Full Parser Swap
+
+**Goal:** Replace the editor's built-in parser (`src/renderer/scripts/parser/`) with `@tooling/parser` so the editor uses the new parser and syntax tree at runtime.
+
+**Status: NOT INVESTIGATED.** No audit has been performed yet — the scope, affected files, required changes, and potential breakage are all unknown. Before starting this step, a full investigation is needed to understand:
+- Which editor files import from `src/renderer/scripts/parser/` and need to be rewired
+- Which editor files import from `src/renderer/scripts/parser/syntax-tree.js` specifically
+- What API surface differences remain between the old and new parser/tree
+- What breaks when the swap is made
+- Whether the old parser files can simply be deleted or need to be kept as shims
+
+**Verification:**
+```
+npm run test:unit
+npm run test:integration
+```
+Manual testing of the editor is required — automated tests alone are insufficient for this step.
+
+**Depends on:** All previous steps (1–20).

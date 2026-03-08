@@ -31,7 +31,6 @@ import {
  * @property {string} [style] - Inline CSS style string for HTML images
  * @property {string} [tagName] - HTML tag name for html-element nodes
  * @property {boolean} [checked] - Whether a checklist item is checked
- * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
  */
 
 /**
