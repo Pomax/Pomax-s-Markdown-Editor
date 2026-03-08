@@ -299,7 +299,6 @@ export class WritingRenderer {
         return this.renderHorizontalRule(node, element);
 
       case 'image':
-      case 'linked-image':
         return this.renderImage(node, element);
 
       case 'table':

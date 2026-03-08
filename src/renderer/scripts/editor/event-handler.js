@@ -144,7 +144,7 @@ export class EventHandler {
     // In writing view, clicking an image opens the edit modal directly.
     if (this.editor.viewMode === 'writing' && this.editor.syntaxTree?.treeCursor) {
       const clickedNode = this.editor.getCurrentBlockNode();
-      if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
+      if (clickedNode?.type === 'image') {
         this.editor.imageHelper.openImageModalForNode(clickedNode);
         return;
       }

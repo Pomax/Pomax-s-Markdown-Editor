@@ -1168,7 +1168,7 @@ export class Editor {
       let num = 1;
       for (const n of nodes) {
         if (n.type === 'html-element' && n.children.length > 0) continue;
-        if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
+        if (n.type === 'table' || n.type === 'image') continue;
         applyKind(n, kind, num);
         if (kind === 'ordered') num++;
         updatedIds.push(n.id);

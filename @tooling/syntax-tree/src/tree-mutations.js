@@ -707,7 +707,7 @@ function buildMarkdownLine(type, content, attributes) {
  * current type + new content, runs it through `parseFn`, and applies the
  * result — updating type, content, and attributes as needed.
  *
- * Suppresses code-block and image/linked-image conversions during typing
+ * Suppresses code-block and image conversions during typing
  * (those are handled by Enter / toolbar actions, not by live re-parsing).
  *
  * @param {import("./syntax-tree.js").SyntaxNode} node — the node being edited
@@ -731,7 +731,7 @@ export function reparseLine(node, newContent, parseFn) {
       return null;
     }
 
-    // Suppress image/linked-image block conversion during typing —
+    // Suppress image block conversion during typing —
     // the inline tokenizer handles ![alt](src) within paragraphs.
     if (
       parsed.type === "image" &&

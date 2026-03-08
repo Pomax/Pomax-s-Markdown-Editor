@@ -48,6 +48,9 @@ this **before** doing any work.
 - **ALways** use the active terminal to run any commands
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
   terminal invocation must be a single command.
+- **Never** run `echo` in the terminal — not for checking exit codes, not
+  for checking if the terminal is free, not for any reason. `echo` is an
+  illegal command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
 - When asked to offer multiple choices, **never** present option picking

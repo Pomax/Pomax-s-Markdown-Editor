@@ -59,7 +59,7 @@ export class ImageHelper {
       return changedIds;
 
     for (const node of this.editor.syntaxTree.children) {
-      if (node.type !== 'image' && node.type !== 'linked-image') continue;
+      if (node.type !== 'image') continue;
 
       const url = node.attributes.url;
       if (!url) continue;
