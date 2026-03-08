@@ -7,6 +7,8 @@
  * @typedef {import('../../parser/syntax-tree.js').NodeAttributes} NodeAttributes
  */
 
+import { enterSourceEditMode, getSourceEditText } from '../source-edit-map.js';
+
 /**
  * Renders the syntax tree in source view mode.
  */
@@ -315,7 +317,7 @@ export class SourceRenderer {
    *
    * The node enters "source edit mode" (see
    * {@link SyntaxNode#enterSourceEditMode}) which stores the full
-   * markdown text in `_sourceEditText`.  All subsequent keystrokes
+   * markdown text in the source edit map.  All subsequent keystrokes
    * operate on that string.  When the cursor leaves the node (or the
    * view mode switches), the text is reparsed back into tree properties.
    *
@@ -326,13 +328,13 @@ export class SourceRenderer {
   renderCodeBlock(node, element) {
     // Enter source-edit mode so the full markdown is available as a
     // single editable string.
-    node.enterSourceEditMode();
+    enterSourceEditMode(this.editor.sourceEditMap, node);
 
     const codeContent = document.createElement('div');
     codeContent.className = 'md-code-content md-content';
     // Append an extra newline so trailing empty lines have visual
     // height (same reason as the old per-section render).
-    codeContent.textContent = `${node._sourceEditText}\n`;
+    codeContent.textContent = `${getSourceEditText(this.editor.sourceEditMap, node.id)}\n`;
     element.appendChild(codeContent);
 
     return element;

@@ -61,7 +61,7 @@ export class LinkHelper {
     if (!result) return;
 
     if (!this.editor.syntaxTree) return;
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
 
     const newMarkdown = `[${result.text}](${result.url})`;
     node.content = node.content.replace(oldMarkdown, newMarkdown);

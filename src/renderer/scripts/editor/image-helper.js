@@ -83,7 +83,7 @@ export class ImageHelper {
   insertOrUpdateImage(alt, src, href, style = '') {
     if (!this.editor.syntaxTree) return;
 
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
     const currentNode = this.editor.getCurrentBlockNode();
     let renderHints;
 
@@ -192,7 +192,7 @@ export class ImageHelper {
     // may have moved, so we cannot rely on insertOrUpdateImage which
     // reads getCurrentBlockNode().
     if (!this.editor.syntaxTree) return;
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
     node.content = result.alt;
     node.attributes = { alt: result.alt, url: src };
     if (result.href) {

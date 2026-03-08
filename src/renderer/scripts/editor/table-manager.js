@@ -286,7 +286,7 @@ export class TableManager {
         };
       } else {
         // Last cell — add a new row
-        const before = this.editor.syntaxTree.toMarkdown();
+        const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
         const newRowIdx = this.tableAddRow(node);
         this.editor.syntaxTree.treeCursor = {
           nodeId: node.id,

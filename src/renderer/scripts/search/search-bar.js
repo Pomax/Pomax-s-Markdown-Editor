@@ -383,7 +383,7 @@ export class SearchBar {
         if (node.type === 'html-element' && node.children.length > 0) {
           if (isSource) {
             // Source mode: the whole block is one markdown chunk.
-            const text = node.toMarkdown();
+            const text = node.toMarkdown(this.editor.sourceEditMap);
             if (!first) {
               pos += 2; // \n\n separator
             }
@@ -421,7 +421,7 @@ export class SearchBar {
           continue;
         }
 
-        const text = isSource ? node.toMarkdown() : node.toBareText();
+        const text = isSource ? node.toMarkdown(this.editor.sourceEditMap) : node.toBareText();
         // Skip nodes that produce no text (images, hr in writing)
         if (text === '') continue;
 

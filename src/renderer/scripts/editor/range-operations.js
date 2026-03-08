@@ -81,7 +81,7 @@ export class RangeOperations {
     const endNode = this.editor.syntaxTree.findNodeById(endNodeId);
     if (!startNode || !endNode) return null;
 
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
 
     // ── Same-node selection ──
     if (startNodeId === endNodeId) {

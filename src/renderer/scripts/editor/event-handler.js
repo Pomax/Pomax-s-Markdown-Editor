@@ -7,6 +7,7 @@
 
 import { CodeLanguageModal } from '../code-language/code-language-modal.js';
 import { SyntaxNode } from '../parser/syntax-tree.js';
+import { isInSourceEditMode } from './source-edit-map.js';
 
 /**
  * Handles non-editing DOM events for the editor.
@@ -185,7 +186,7 @@ export class EventHandler {
     // Finalize source-edit mode for code-blocks on click away.
     if (oldBlockId && oldBlockId !== newBlockId) {
       const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-      if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+      if (oldNode?.type === 'code-block' && isInSourceEditMode(this.editor.sourceEditMap, oldNode.id)) {
         const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
         if (hints) {
           this.editor.renderNodes(hints);
@@ -257,7 +258,7 @@ export class EventHandler {
     // We're handling this — prevent the browser from doing anything else.
     event.preventDefault();
 
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
 
     for (const file of imageFiles) {
       // Use the Electron webUtils bridge to get the real filesystem path.
@@ -424,7 +425,7 @@ export class EventHandler {
       // back into tree properties (fenceCount, language, content).
       if (oldBlockId && oldBlockId !== newBlockId) {
         const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-        if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+        if (oldNode?.type === 'code-block' && isInSourceEditMode(this.editor.sourceEditMap, oldNode.id)) {
           const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
           if (hints) {
             this.editor.renderNodes(hints);
@@ -508,7 +509,7 @@ export class EventHandler {
     }
 
     if (!this.editor.syntaxTree) return;
-    const before = this.editor.syntaxTree.toMarkdown();
+    const before = this.editor.syntaxTree.toMarkdown(this.editor.sourceEditMap);
 
     attrs.language = result.language || '';
     this.editor.recordAndRender(before, { updated: [node.id] });

@@ -15,6 +15,7 @@
 
 import { DFAParser } from '../parser/dfa-parser.js';
 import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
+import { exitSourceEditMode, isInSourceEditMode } from './source-edit-map.js';
 import { ClipboardHandler } from './clipboard-handler.js';
 import { CursorManager } from './cursor-manager.js';
 import { EditOperations } from './edit-operations.js';
@@ -119,6 +120,13 @@ export class Editor {
     /** @type {LinkHelper} */
     this.linkHelper = new LinkHelper(this);
 
+    /**
+     * Map of node ID → source-edit text for code-blocks currently
+     * being edited in source view.
+     * @type {Map<string, string>}
+     */
+    this.sourceEditMap = new Map();
+
     // ── Editor state ──
 
     /** @type {ViewMode} */
@@ -203,7 +211,7 @@ export class Editor {
 
   /**
    * Finalizes source-edit mode for a code-block node.  The raw text
-   * stored in `_sourceEditText` is reparsed through the DFA parser.
+   * stored in the source edit map is reparsed through the DFA parser.
    *
    * - If the result is still a single code-block, the node's `content`
    *   and `attributes` are updated in place.
@@ -216,7 +224,7 @@ export class Editor {
    *   Render hints, or null if the node was not in source-edit mode.
    */
   finalizeCodeBlockSourceEdit(node) {
-    const text = node.exitSourceEditMode();
+    const text = exitSourceEditMode(this.sourceEditMap, node.id);
     if (text === null) return null;
 
     const parsed = this._parseMultiLine(text);
@@ -245,7 +253,6 @@ export class Editor {
     node.type = first.type;
     node.content = first.content;
     node.attributes = first.attributes;
-    node._sourceEditText = null;
 
     const addedIds = [];
     for (let j = 1; j < parsed.length; j++) {
@@ -672,7 +679,7 @@ export class Editor {
       hints.added.push(addedPara.id);
     }
 
-    const after = this.syntaxTree.toMarkdown();
+    const after = this.syntaxTree.toMarkdown(this.sourceEditMap);
     if (before !== after) {
       this.undoManager.recordChange({ type: 'input', before, after });
       this.setUnsavedChanges(true);
@@ -753,7 +760,7 @@ export class Editor {
    * @returns {string}
    */
   getMarkdown() {
-    return this.syntaxTree?.toMarkdown() ?? '';
+    return this.syntaxTree?.toMarkdown(this.sourceEditMap) ?? '';
   }
 
   /**
@@ -788,9 +795,9 @@ export class Editor {
     if (this.syntaxTree) {
       const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
       for (const child of this.syntaxTree.children) {
-        if (child.type === 'code-block' && child._sourceEditText !== null) {
+        if (child.type === 'code-block' && isInSourceEditMode(this.sourceEditMap, child.id)) {
           // Source → writing: convert the offset from
-          // _sourceEditText-relative to content-relative by
+          // source-edit-relative to content-relative by
           // subtracting the opening-fence preamble length.
           if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
             const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
@@ -808,7 +815,7 @@ export class Editor {
     }
 
     // Writing → source: if the cursor is on a code-block, convert
-    // the content-relative offset to _sourceEditText-relative by
+    // the content-relative offset to source-edit-relative by
     // adding the opening-fence preamble length.
     if (mode === 'source' && this.syntaxTree?.treeCursor) {
       const cursorBlockId =
@@ -984,7 +991,7 @@ export class Editor {
     // Build markdown from the cells
     const markdown = this.tableManager.buildTableMarkdown(tableData);
 
-    const before = this.syntaxTree.toMarkdown();
+    const before = this.syntaxTree.toMarkdown(this.sourceEditMap);
     const currentNode = this.getCurrentBlockNode();
     let renderHints;
 
