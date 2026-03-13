@@ -42,7 +42,7 @@ const INLINE_CONTENT_TYPES = new Set([
  * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
  * @property {boolean} [checked] - Whether a checklist item is checked
  * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
- * @property {boolean} [_detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
+ * @property {boolean} [detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
  */
 
 /**
@@ -115,7 +115,7 @@ export class SyntaxNode {
      * (cursor leaves or view mode switches).
      * @type {string|null}
      */
-    this._sourceEditText = null;
+    this.sourceEditText = null;
 
     /**
      * Starting line in the source (0-based).
@@ -159,7 +159,7 @@ export class SyntaxNode {
     const tokens = tokenizeInline(this._content);
     const segments = buildInlineTree(tokens);
     for (const seg of segments) {
-      this.appendChild(SyntaxNode._segmentToNode(seg));
+      this.appendChild(SyntaxNode.segmentToNode(seg));
     }
   }
 
@@ -168,7 +168,7 @@ export class SyntaxNode {
    * @param {import('./inline-tokenizer.js').InlineSegment} segment
    * @returns {SyntaxNode}
    */
-  static _segmentToNode(segment) {
+  static segmentToNode(segment) {
     switch (segment.type) {
       case 'text':
         return new SyntaxNode('text', segment.text ?? '');
@@ -188,7 +188,7 @@ export class SyntaxNode {
         if (segment.tag) node.attributes.tag = segment.tag;
         if (segment.children) {
           for (const child of segment.children) {
-            node.appendChild(SyntaxNode._segmentToNode(child));
+            node.appendChild(SyntaxNode.segmentToNode(child));
           }
         }
         return node;
@@ -265,7 +265,7 @@ export class SyntaxNode {
   /**
    * Enters source edit mode for a code-block node.  The full markdown
    * representation (fences + language + content) is stored in
-   * `_sourceEditText` so the user can edit any part — including the
+   * `sourceEditText` so the user can edit any part — including the
    * fences and language tag — as plain text.
    *
    * Only valid for `code-block` nodes; no-ops for other types or when
@@ -273,11 +273,11 @@ export class SyntaxNode {
    */
   enterSourceEditMode() {
     if (this.type !== 'code-block') return;
-    if (this._sourceEditText !== null) return;
+    if (this.sourceEditText !== null) return;
 
     const lang = this.attributes.language || '';
     const fence = '`'.repeat(this.attributes.fenceCount || 3);
-    this._sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
+    this.sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
   }
 
   /**
@@ -286,20 +286,20 @@ export class SyntaxNode {
    * @returns {number}
    */
   get sourceEditLength() {
-    return this._sourceEditText?.length ?? 0;
+    return this.sourceEditText?.length ?? 0;
   }
 
   /**
    * Exits source edit mode without reparsing.  The caller is responsible
-   * for reparsing `_sourceEditText` and updating the node (or replacing
+   * for reparsing `sourceEditText` and updating the node (or replacing
    * it) in the tree.
    *
    * @returns {string|null} The source edit text that was active, or null
    *   if the node was not in source edit mode.
    */
   exitSourceEditMode() {
-    const text = this._sourceEditText;
-    this._sourceEditText = null;
+    const text = this.sourceEditText;
+    this.sourceEditText = null;
     return text;
   }
 
@@ -329,7 +329,7 @@ export class SyntaxNode {
           .map((line) => `> ${line}`)
           .join('\n');
       case 'code-block': {
-        if (this._sourceEditText !== null) return this._sourceEditText;
+        if (this.sourceEditText !== null) return this.sourceEditText;
         const lang = this.attributes.language || '';
         const fence = '`'.repeat(this.attributes.fenceCount || 3);
         return `${fence}${lang}\n${this.content}\n${fence}`;

@@ -27,18 +27,18 @@ export class TableModal extends BaseModal {
      * The existing table data when editing (null for insert).
      * @type {TableData|null}
      */
-    this._existing = null;
+    this.existing = null;
   }
 
-  get _prefix() {
+  get prefix() {
     return 'table';
   }
 
-  get _ariaLabel() {
+  get ariaLabel() {
     return 'Insert Table';
   }
 
-  _getTemplate() {
+  getTemplate() {
     return `
             <form method="dialog" class="table-form">
                 <header class="table-dialog-header">
@@ -68,13 +68,13 @@ export class TableModal extends BaseModal {
   /**
    * @param {TableData|null} [existing]
    */
-  _populateFields(existing) {
-    this._existing = existing ?? null;
+  populateFields(existing) {
+    this.existing = existing ?? null;
 
-    const colsInput = this._getInput('table-columns');
-    const rowsInput = this._getInput('table-rows');
-    const insertBtn = this._getInsertBtn();
-    const heading = this._getHeading();
+    const colsInput = this.getInput('table-columns');
+    const rowsInput = this.getInput('table-rows');
+    const insertBtn = this.getInsertBtn();
+    const heading = this.getHeading();
 
     if (existing) {
       colsInput.value = String(existing.columns);
@@ -92,27 +92,27 @@ export class TableModal extends BaseModal {
   /**
    * @returns {HTMLElement}
    */
-  _getFocusTarget() {
-    const colsInput = this._getInput('table-columns');
+  getFocusTarget() {
+    const colsInput = this.getInput('table-columns');
     colsInput.select();
     return colsInput;
   }
 
-  _submit() {
-    const newCols = Number.parseInt(this._getInput('table-columns').value, 10) || 1;
-    const newRows = Number.parseInt(this._getInput('table-rows').value, 10) || 1;
+  submit() {
+    const newCols = Number.parseInt(this.getInput('table-columns').value, 10) || 1;
+    const newRows = Number.parseInt(this.getInput('table-rows').value, 10) || 1;
 
     // Clamp to valid range
     const cols = Math.max(1, Math.min(20, newCols));
     const rows = Math.max(1, Math.min(100, newRows));
 
-    if (this._existing) {
-      const oldCols = this._existing.columns;
-      const oldRows = this._existing.rows;
+    if (this.existing) {
+      const oldCols = this.existing.columns;
+      const oldRows = this.existing.rows;
 
       // Check whether the user is shrinking the table — data may be lost
       if (cols < oldCols || rows < oldRows) {
-        const wouldLose = this._wouldLoseData(this._existing, rows, cols);
+        const wouldLose = this.wouldLoseData(this.existing, rows, cols);
         if (wouldLose) {
           const ok = window.confirm(
             'Reducing the table size will remove data from the deleted rows or columns. Continue?',
@@ -121,11 +121,11 @@ export class TableModal extends BaseModal {
         }
       }
 
-      const cells = this._resizeCells(this._existing.cells, rows, cols);
-      this._closeWithResult({ rows, columns: cols, cells });
+      const cells = this.resizeCells(this.existing.cells, rows, cols);
+      this.closeWithResult({ rows, columns: cols, cells });
     } else {
-      const cells = this._emptyCells(rows, cols);
-      this._closeWithResult({ rows, columns: cols, cells });
+      const cells = this.emptyCells(rows, cols);
+      this.closeWithResult({ rows, columns: cols, cells });
     }
   }
 
@@ -141,7 +141,7 @@ export class TableModal extends BaseModal {
    * @param {number} newCols
    * @returns {boolean}
    */
-  _wouldLoseData(data, newRows, newCols) {
+  wouldLoseData(data, newRows, newCols) {
     const totalOldRows = data.cells.length;
     const keepRows = newRows + 1; // +1 for header
 
@@ -167,7 +167,7 @@ export class TableModal extends BaseModal {
    * @param {number} newCols
    * @returns {string[][]}
    */
-  _resizeCells(oldCells, newRows, newCols) {
+  resizeCells(oldCells, newRows, newCols) {
     const totalRows = newRows + 1; // +1 for header
     const cells = [];
 
@@ -192,7 +192,7 @@ export class TableModal extends BaseModal {
    * @param {number} cols
    * @returns {string[][]}
    */
-  _emptyCells(rows, cols) {
+  emptyCells(rows, cols) {
     const cells = [];
 
     // Header row

@@ -43,7 +43,7 @@ export class CursorManager {
     const range = selection.getRangeAt(0);
 
     // Map the start (anchor) position to tree coordinates.
-    const startInfo = this._mapDOMPositionToTree(range.startContainer, range.startOffset);
+    const startInfo = this.mapDOMPositionToTree(range.startContainer, range.startOffset);
     if (!startInfo) return;
 
     if (this.editor.syntaxTree) this.editor.syntaxTree.treeCursor = startInfo.cursor;
@@ -55,7 +55,7 @@ export class CursorManager {
     }
 
     // Map the end (focus) position to tree coordinates.
-    const endInfo = this._mapDOMPositionToTree(range.endContainer, range.endOffset);
+    const endInfo = this.mapDOMPositionToTree(range.endContainer, range.endOffset);
     if (!endInfo) {
       if (!preserveRange) this.editor.treeRange = null;
       return;
@@ -82,7 +82,7 @@ export class CursorManager {
    * @param {number} domOffset - The offset within `domNode`
    * @returns {{ cursor: import('./editor.js').TreeCursor } | null}
    */
-  _mapDOMPositionToTree(domNode, domOffset) {
+  mapDOMPositionToTree(domNode, domOffset) {
     /** @type {string|null} */
     let inlineNodeId = null;
 
@@ -188,8 +188,8 @@ export class CursorManager {
     while (node) {
       if (node === cursorNode) {
         const renderedOff = offset + cursorOffset;
-        const afterFmt = this._isOutsideFormatting(cursorNode, contentEl);
-        return this._toRawOffset(nodeElement, renderedOff, afterFmt);
+        const afterFmt = this.isOutsideFormatting(cursorNode, contentEl);
+        return this.toRawOffset(nodeElement, renderedOff, afterFmt);
       }
       offset += node.textContent?.length ?? 0;
       node = walker.nextNode();
@@ -209,12 +209,12 @@ export class CursorManager {
       // Clamp to total text length in case cursorOffset >= child count.
       const total = cursorNode.textContent?.length ?? 0;
       const renderedOff = Math.min(charOffset, total);
-      return this._toRawOffset(nodeElement, renderedOff);
+      return this.toRawOffset(nodeElement, renderedOff);
     }
 
     // Fallback: clamp to content length.
     const renderedOff = Math.min(cursorOffset, offset);
-    return this._toRawOffset(nodeElement, renderedOff);
+    return this.toRawOffset(nodeElement, renderedOff);
   }
 
   /**
@@ -233,13 +233,13 @@ export class CursorManager {
    *   inside any inline formatting element in the DOM.
    * @returns {number}
    */
-  _toRawOffset(nodeElement, renderedOffset, afterFormatting = false) {
+  toRawOffset(nodeElement, renderedOffset, afterFormatting = false) {
     if (this.editor.viewMode !== 'writing') return renderedOffset;
     const nodeId = nodeElement.dataset?.nodeId;
     if (!nodeId) return renderedOffset;
     const syntaxNode = this.editor.syntaxTree?.findNodeById(nodeId);
     if (!syntaxNode) return renderedOffset;
-    if (!this._hasInlineFormatting(syntaxNode.type)) return renderedOffset;
+    if (!this.hasInlineFormatting(syntaxNode.type)) return renderedOffset;
 
     let rawOffset = renderedOffsetToRawOffset(syntaxNode.content, renderedOffset);
 
@@ -268,7 +268,7 @@ export class CursorManager {
    * @param {string} type
    * @returns {boolean}
    */
-  _hasInlineFormatting(type) {
+  hasInlineFormatting(type) {
     switch (type) {
       case 'paragraph':
       case 'heading1':
@@ -336,7 +336,7 @@ export class CursorManager {
     let cursorOffset = this.editor.syntaxTree.treeCursor.offset;
     if (this.editor.viewMode === 'writing') {
       const node = this.editor.getCurrentBlockNode();
-      if (node && this._hasInlineFormatting(node.type)) {
+      if (node && this.hasInlineFormatting(node.type)) {
         cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
       }
     }
@@ -396,8 +396,8 @@ export class CursorManager {
 
     const { startNodeId, startOffset, endNodeId, endOffset } = this.editor.treeRange;
 
-    const startPos = this._resolveOffsetInDOM(startNodeId, startOffset);
-    const endPos = this._resolveOffsetInDOM(endNodeId, endOffset);
+    const startPos = this.resolveOffsetInDOM(startNodeId, startOffset);
+    const endPos = this.resolveOffsetInDOM(endNodeId, endOffset);
 
     if (!startPos || !endPos) {
       // If either endpoint can't be resolved, fall back to cursor.
@@ -423,7 +423,7 @@ export class CursorManager {
    * @param {number} offset
    * @returns {{ node: Node, offset: number } | null}
    */
-  _resolveOffsetInDOM(nodeId, offset) {
+  resolveOffsetInDOM(nodeId, offset) {
     const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
     if (!nodeElement) return null;
 
@@ -433,7 +433,7 @@ export class CursorManager {
     let cursorOffset = offset;
     if (this.editor.viewMode === 'writing') {
       const node = this.editor.syntaxTree?.findNodeById(nodeId);
-      if (node && this._hasInlineFormatting(node.type)) {
+      if (node && this.hasInlineFormatting(node.type)) {
         cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
       }
     }
@@ -462,7 +462,7 @@ export class CursorManager {
   // ── Formatting-affinity helpers ─────────────────────────────────
 
   /** @type {Set<string>} */
-  static _FORMATTING_TAGS = new Set([
+  static FORMATTING_TAGS = new Set([
     'EM',
     'STRONG',
     'DEL',
@@ -487,13 +487,13 @@ export class CursorManager {
    * @param {Node} contentEl
    * @returns {boolean}
    */
-  _isOutsideFormatting(node, contentEl) {
+  isOutsideFormatting(node, contentEl) {
     /** @type {Node|null} */
     let el = node.parentNode;
     while (el && el !== contentEl) {
       if (
         el.nodeType === Node.ELEMENT_NODE &&
-        CursorManager._FORMATTING_TAGS.has(/** @type {Element} */ (el).tagName)
+        CursorManager.FORMATTING_TAGS.has(/** @type {Element} */ (el).tagName)
       ) {
         return false;
       }

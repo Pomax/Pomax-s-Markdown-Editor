@@ -58,13 +58,13 @@ export function initPageResizeHandles(editor) {
   /** @type {{ current: HTMLElement }} */
   const editorRef = { current: editor };
 
-  const leftHandle = _createHandle('left');
-  const rightHandle = _createHandle('right');
+  const leftHandle = createHandle('left');
+  const rightHandle = createHandle('right');
 
   document.body.appendChild(leftHandle);
   document.body.appendChild(rightHandle);
 
-  const update = () => _positionHandles(editorRef.current, leftHandle, rightHandle);
+  const update = () => positionHandles(editorRef.current, leftHandle, rightHandle);
 
   update();
 
@@ -76,8 +76,8 @@ export function initPageResizeHandles(editor) {
   // Re-position on scroll (the editor container is the scroll parent).
   container.addEventListener('scroll', update, { passive: true });
 
-  _attachDrag(editorRef, leftHandle, 'left', rightHandle);
-  _attachDrag(editorRef, rightHandle, 'right', leftHandle);
+  attachDrag(editorRef, leftHandle, 'left', rightHandle);
+  attachDrag(editorRef, rightHandle, 'right', leftHandle);
 
   /**
    * Re-targets the resize handles to a different editor element.
@@ -99,7 +99,7 @@ export function initPageResizeHandles(editor) {
  * @param {'left' | 'right'} side
  * @returns {HTMLDivElement}
  */
-function _createHandle(side) {
+function createHandle(side) {
   const handle = document.createElement('div');
   handle.className = `editor-resize-handle editor-resize-handle--${side}`;
   handle.dataset.side = side;
@@ -115,7 +115,7 @@ function _createHandle(side) {
  * @param {HTMLDivElement} leftHandle
  * @param {HTMLDivElement} rightHandle
  */
-function _positionHandles(editor, leftHandle, rightHandle) {
+function positionHandles(editor, leftHandle, rightHandle) {
   leftHandle.style.display = '';
   rightHandle.style.display = '';
 
@@ -151,7 +151,7 @@ function _positionHandles(editor, leftHandle, rightHandle) {
  * @param {'left' | 'right'} side   - Which side this handle sits on
  * @param {HTMLDivElement} otherHandle - The opposite handle (for re-positioning)
  */
-function _attachDrag(editorRef, handle, side, otherHandle) {
+function attachDrag(editorRef, handle, side, otherHandle) {
   /** @type {number} Mouse X at the moment of mousedown */
   let startX = 0;
   /** @type {number} Editor width (px) at the moment of mousedown */
@@ -220,13 +220,13 @@ function _attachDrag(editorRef, handle, side, otherHandle) {
     applyPageWidth({ useFixed: false, width: finalWidth, unit: 'px' });
 
     // Snap handles to actual editor rect now that the CSS variable is set.
-    _positionHandles(
+    positionHandles(
       editorRef.current,
       side === 'left' ? handle : otherHandle,
       side === 'right' ? handle : otherHandle,
     );
 
-    _persistPageWidth(finalWidth);
+    persistPageWidth(finalWidth);
   };
 
   handle.addEventListener('mousedown', (e) => {
@@ -251,7 +251,7 @@ function _attachDrag(editorRef, handle, side, otherHandle) {
  * Persists the page width to the settings database.
  * @param {number} widthPx - Width in pixels
  */
-async function _persistPageWidth(widthPx) {
+async function persistPageWidth(widthPx) {
   if (!window.electronAPI) return;
   const pageWidth = { useFixed: false, width: widthPx, unit: 'px' };
   try {

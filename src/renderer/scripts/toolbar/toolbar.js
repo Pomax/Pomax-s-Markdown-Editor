@@ -280,7 +280,7 @@ export class Toolbar {
    */
   initialize() {
     // ── File-button group (grid-area: left) ──
-    this._createFileButtonGroup();
+    this.createFileButtonGroup();
 
     // ── Content toolbar (grid-area: center) ──
     this.toolbarElement = document.createElement('div');
@@ -289,7 +289,7 @@ export class Toolbar {
     this.toolbarElement.setAttribute('aria-label', 'Formatting toolbar');
 
     // Create view mode toggle
-    const viewModeGroup = this._createViewModeToggle();
+    const viewModeGroup = this.createViewModeToggle();
     this.toolbarElement.appendChild(viewModeGroup);
 
     // Separator after toggle
@@ -314,8 +314,8 @@ export class Toolbar {
 
     // Scale toolbar down when container is narrower than the toolbar's
     // natural width.  Never scale up beyond 1.
-    this._resizeObserver = new ResizeObserver(() => this._scaleToolbar());
-    this._resizeObserver.observe(this.container);
+    this.resizeObserver = new ResizeObserver(() => this.scaleToolbar());
+    this.resizeObserver.observe(this.container);
 
     // Listen for selection changes on document so tab switches
     // (which swap editor.container) keep working.
@@ -333,7 +333,7 @@ export class Toolbar {
    * than the toolbar's natural (unwrapped) width.  Never scales above 1.
    * Uses uniform scale so icons keep their aspect ratio.
    */
-  _scaleToolbar() {
+  scaleToolbar() {
     if (!this.toolbarElement) return;
 
     // Reset so we can measure the natural width
@@ -397,7 +397,7 @@ export class Toolbar {
    * Creates the file-button group and appends it to the container.
    * These buttons live in the grid "left" area.
    */
-  _createFileButtonGroup() {
+  createFileButtonGroup() {
     const group = document.createElement('div');
     group.className = 'toolbar-file-group';
 
@@ -415,7 +415,7 @@ export class Toolbar {
    * Creates the view-mode toggle button with a label.
    * @returns {HTMLElement}
    */
-  _createViewModeToggle() {
+  createViewModeToggle() {
     const wrapper = document.createElement('div');
     wrapper.className = 'toolbar-view-mode-group';
 
@@ -512,15 +512,15 @@ export class Toolbar {
 
     // Handle file rename if the filename changed
     if (result.rename && window.electronAPI) {
-      const originalFilename = this._extractFilename(src);
+      const originalFilename = this.extractFilename(src);
       if (result.rename !== originalFilename) {
         const renameResult = await window.electronAPI.renameImage(
-          this._resolveImagePath(src),
+          this.resolveImagePath(src),
           result.rename,
         );
         if (renameResult.success && renameResult.newPath) {
           // Update the src to reflect the new filename
-          src = this._replaceFilename(src, result.rename);
+          src = this.replaceFilename(src, result.rename);
         }
       }
     }
@@ -538,7 +538,7 @@ export class Toolbar {
    * @param {string} src
    * @returns {string}
    */
-  _extractFilename(src) {
+  extractFilename(src) {
     if (!src) return '';
     const clean = src.split('?')[0].split('#')[0];
     const parts = clean.split(/[/\\]/);
@@ -551,7 +551,7 @@ export class Toolbar {
    * @param {string} newName - New filename
    * @returns {string}
    */
-  _replaceFilename(src, newName) {
+  replaceFilename(src, newName) {
     const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
     if (lastSlash === -1) return newName;
     return src.substring(0, lastSlash + 1) + newName;
@@ -563,7 +563,7 @@ export class Toolbar {
    * @param {string} src
    * @returns {string}
    */
-  _resolveImagePath(src) {
+  resolveImagePath(src) {
     let resolved = src;
     if (resolved.startsWith('file:///')) {
       resolved = resolved.slice(8); // Remove 'file:///'

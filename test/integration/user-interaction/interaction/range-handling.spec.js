@@ -554,7 +554,7 @@ test.describe('Writing-view copy', () => {
         endOffset: 10, // "te*xt* _o_" = 10 chars
       };
 
-      return editor.clipboardHandler._getSelectedMarkdownWriting();
+      return editor.clipboardHandler.getSelectedMarkdownWriting();
     });
 
     expect(clipboardText).toBe('# ading\n\nte*xt* _o_');
@@ -581,7 +581,7 @@ test.describe('Writing-view copy', () => {
         endOffset: 7, // "ading"
       };
 
-      return editor.clipboardHandler._getSelectedMarkdownWriting();
+      return editor.clipboardHandler.getSelectedMarkdownWriting();
     });
 
     expect(clipboardText).toBe('# ading');
@@ -613,7 +613,7 @@ test.describe('Writing-view copy', () => {
         endOffset: 14, // "nd <strong>in"
       };
 
-      return editor.clipboardHandler._getSelectedMarkdownWriting();
+      return editor.clipboardHandler.getSelectedMarkdownWriting();
     });
 
     expect(clipboardText).toBe('nd <strong>in</strong>');
@@ -651,7 +651,7 @@ test.describe('Writing-view cut', () => {
         endOffset: 7, // "te*xt* " (7 chars, note trailing space)
       };
 
-      return editor.clipboardHandler._getSelectedMarkdownWriting();
+      return editor.clipboardHandler.getSelectedMarkdownWriting();
     });
 
     expect(clipboardText).toBe('# ading\n\nte*xt* ');

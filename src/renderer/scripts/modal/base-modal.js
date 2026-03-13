@@ -21,19 +21,19 @@ export class BaseModal {
     this.dialog = null;
 
     /** @type {boolean} */
-    this._built = false;
+    this.built = false;
 
     /**
      * Resolve function for the current open() promise.
      * @type {function(*): void}
      */
-    this._resolve = () => {};
+    this.resolve = () => {};
 
     /**
      * The element that had focus before the modal opened.
      * @type {HTMLElement|null}
      */
-    this._previousFocus = null;
+    this.previousFocus = null;
   }
 
   // ──────────────────────────────────────────────
@@ -45,8 +45,8 @@ export class BaseModal {
    * @abstract
    * @returns {string}
    */
-  get _prefix() {
-    throw new Error('Subclass must implement get _prefix()');
+  get prefix() {
+    throw new Error('Subclass must implement get prefix()');
   }
 
   /**
@@ -54,8 +54,8 @@ export class BaseModal {
    * @abstract
    * @returns {string}
    */
-  get _ariaLabel() {
-    throw new Error('Subclass must implement get _ariaLabel()');
+  get ariaLabel() {
+    throw new Error('Subclass must implement get ariaLabel()');
   }
 
   /**
@@ -65,8 +65,8 @@ export class BaseModal {
    * @abstract
    * @returns {string}
    */
-  _getTemplate() {
-    throw new Error('Subclass must implement _getTemplate()');
+  getTemplate() {
+    throw new Error('Subclass must implement getTemplate()');
   }
 
   /**
@@ -76,17 +76,17 @@ export class BaseModal {
    *
    * The default implementation is a no-op.
    */
-  _afterBuild() {}
+  afterBuild() {}
 
   /**
    * Populate the dialog fields from `existing` data and configure the
    * heading / button text for insert-vs-edit mode.
    *
    * @abstract
-   * @param {*} _existing - Modal-specific data (may be null/undefined).
+   * @param {*} existing - Modal-specific data (may be null/undefined).
    */
-  _populateFields(_existing) {
-    throw new Error('Subclass must implement _populateFields()');
+  populateFields(existing) {
+    throw new Error('Subclass must implement populateFields()');
   }
 
   /**
@@ -94,22 +94,22 @@ export class BaseModal {
    * opens.
    *
    * @abstract
-   * @param {*} _existing - The same value passed to `open()`.
+   * @param {*} existing - The same value passed to `open()`.
    * @returns {HTMLElement}
    */
-  _getFocusTarget(_existing) {
-    throw new Error('Subclass must implement _getFocusTarget()');
+  getFocusTarget(existing) {
+    throw new Error('Subclass must implement getFocusTarget()');
   }
 
   /**
    * Validate the form, gather the result data, and call
-   * `this._closeWithResult(data)`.  If validation fails the method
-   * should return without calling `_closeWithResult`.
+   * `this.closeWithResult(data)`.  If validation fails the method
+   * should return without calling `closeWithResult`.
    *
    * @abstract
    */
-  _submit() {
-    throw new Error('Subclass must implement _submit()');
+  submit() {
+    throw new Error('Subclass must implement submit()');
   }
 
   // ──────────────────────────────────────────────
@@ -119,25 +119,25 @@ export class BaseModal {
   /**
    * Lazily builds the dialog DOM the first time it is needed.
    */
-  _build() {
-    if (this._built) return;
-    this._built = true;
+  build() {
+    if (this.built) return;
+    this.built = true;
 
     const dialog = document.createElement('dialog');
-    dialog.className = `${this._prefix}-dialog`;
-    dialog.setAttribute('aria-label', this._ariaLabel);
-    dialog.innerHTML = this._getTemplate();
+    dialog.className = `${this.prefix}-dialog`;
+    dialog.setAttribute('aria-label', this.ariaLabel);
+    dialog.innerHTML = this.getTemplate();
 
-    const p = this._prefix;
+    const p = this.prefix;
 
     // Close on × or Cancel
     const closeBtn = dialog.querySelector(`.${p}-dialog-close`);
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => this._cancel());
+      closeBtn.addEventListener('click', () => this.cancel());
     }
     const cancelBtn = dialog.querySelector(`.${p}-btn--cancel`);
     if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => this._cancel());
+      cancelBtn.addEventListener('click', () => this.cancel());
     }
 
     // Submit handler
@@ -145,7 +145,7 @@ export class BaseModal {
     if (form) {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        this._submit();
+        this.submit();
       });
     }
 
@@ -161,7 +161,7 @@ export class BaseModal {
     });
     dialog.addEventListener('click', (e) => {
       if (e.target === dialog && mouseDownTarget === dialog) {
-        this._cancel();
+        this.cancel();
       }
       mouseDownTarget = null;
     });
@@ -169,13 +169,13 @@ export class BaseModal {
     // Close on Escape key
     dialog.addEventListener('cancel', (e) => {
       e.preventDefault();
-      this._cancel();
+      this.cancel();
     });
 
     document.body.appendChild(dialog);
     this.dialog = dialog;
 
-    this._afterBuild();
+    this.afterBuild();
   }
 
   /**
@@ -186,54 +186,54 @@ export class BaseModal {
    * @returns {Promise<*>} Resolves with result data, or `null` if cancelled.
    */
   open(existing) {
-    this._build();
+    this.build();
     if (!this.dialog || this.dialog.open) return Promise.resolve(null);
 
-    this._populateFields(existing);
+    this.populateFields(existing);
 
-    this._previousFocus = /** @type {HTMLElement|null} */ (document.activeElement);
+    this.previousFocus = /** @type {HTMLElement|null} */ (document.activeElement);
     this.dialog.showModal();
 
-    const target = this._getFocusTarget(existing);
+    const target = this.getFocusTarget(existing);
     if (target) target.focus();
 
     return new Promise((resolve) => {
-      this._resolve = resolve;
+      this.resolve = resolve;
     });
   }
 
   /**
    * Closes the modal without submitting.
    */
-  _cancel() {
+  cancel() {
     if (this.dialog?.open) {
       this.dialog.close();
     }
-    this._restoreFocus();
-    this._resolve(null);
+    this.restoreFocus();
+    this.resolve(null);
   }
 
   /**
    * Closes the modal and resolves the promise with `data`.
-   * Subclasses call this from their `_submit()` implementation.
+   * Subclasses call this from their `submit()` implementation.
    *
    * @param {*} data
    */
-  _closeWithResult(data) {
+  closeWithResult(data) {
     if (this.dialog?.open) {
       this.dialog.close();
     }
-    this._restoreFocus();
-    this._resolve(data);
+    this.restoreFocus();
+    this.resolve(data);
   }
 
   /**
    * Restores focus to the element that was active before the modal opened.
    */
-  _restoreFocus() {
-    if (this._previousFocus && typeof this._previousFocus.focus === 'function') {
-      this._previousFocus.focus();
-      this._previousFocus = null;
+  restoreFocus() {
+    if (this.previousFocus && typeof this.previousFocus.focus === 'function') {
+      this.previousFocus.focus();
+      this.previousFocus = null;
     }
   }
 
@@ -242,7 +242,7 @@ export class BaseModal {
    * @param {string} id
    * @returns {HTMLInputElement}
    */
-  _getInput(id) {
+  getInput(id) {
     return /** @type {HTMLInputElement} */ (this.dialog?.querySelector(`#${id}`));
   }
 
@@ -250,17 +250,17 @@ export class BaseModal {
    * Returns the heading `<h2>` element inside the dialog header.
    * @returns {Element|null}
    */
-  _getHeading() {
-    return this.dialog?.querySelector(`.${this._prefix}-dialog-header h2`) ?? null;
+  getHeading() {
+    return this.dialog?.querySelector(`.${this.prefix}-dialog-header h2`) ?? null;
   }
 
   /**
    * Returns the primary action button (Insert / Update).
    * @returns {HTMLButtonElement|null}
    */
-  _getInsertBtn() {
+  getInsertBtn() {
     return /** @type {HTMLButtonElement|null} */ (
-      this.dialog?.querySelector(`.${this._prefix}-btn--insert`) ?? null
+      this.dialog?.querySelector(`.${this.prefix}-btn--insert`) ?? null
     );
   }
 }

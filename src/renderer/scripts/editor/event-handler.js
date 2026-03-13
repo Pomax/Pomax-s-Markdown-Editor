@@ -24,27 +24,27 @@ export class EventHandler {
      * re-renders the node before the click event fires.
      * @type {HTMLElement|null}
      */
-    this._mouseDownAnchor = null;
+    this.mouseDownAnchor = null;
 
     /**
      * Stashed language-tag span from mousedown, in case selectionchange
      * re-renders the code block before the click event fires.
      * @type {HTMLElement|null}
      */
-    this._mouseDownLanguageTag = null;
+    this.mouseDownLanguageTag = null;
 
     /**
      * Lazily-created modal for editing code-block language tags.
      * @type {CodeLanguageModal|null}
      */
-    this._codeLanguageModal = null;
+    this.codeLanguageModal = null;
 
     /**
      * Set to true when the editor loses focus to a modal dialog,
      * so handleFocus can restore the caret when the modal closes.
      * @type {boolean}
      */
-    this._blurredByModal = false;
+    this.blurredByModal = false;
   }
 
   /**
@@ -57,12 +57,12 @@ export class EventHandler {
   handleMouseDown(event) {
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
-    this.editor._editorInteractionPending = true;
+    this.editor.editorInteractionPending = true;
 
-    this._mouseDownAnchor =
+    this.mouseDownAnchor =
       event.target instanceof HTMLElement && event.target.tagName === 'A' ? event.target : null;
 
-    this._mouseDownLanguageTag =
+    this.mouseDownLanguageTag =
       event.target instanceof HTMLElement && event.target.classList.contains('md-code-language-tag')
         ? event.target
         : null;
@@ -80,7 +80,7 @@ export class EventHandler {
     // If the click landed on the phantom paragraph (the view-only
     // element after a trailing code block), promote it to a real
     // tree node so the cursor can be placed there.
-    this.editor._promotePhantomParagraph();
+    this.editor.promotePhantomParagraph();
 
     // In writing view, clicking a language tag span opens the language
     // editing modal so the user can set or change the code fence language.
@@ -96,8 +96,8 @@ export class EventHandler {
         (event.target instanceof HTMLElement &&
           event.target.classList.contains('md-code-language-tag') &&
           event.target) ||
-        this._mouseDownLanguageTag;
-      this._mouseDownLanguageTag = null;
+        this.mouseDownLanguageTag;
+      this.mouseDownLanguageTag = null;
       if (langTag) {
         event.preventDefault();
         // Resolve the code-block node from the tag's ancestor
@@ -109,7 +109,7 @@ export class EventHandler {
         const nodeId = codeBlockEl?.dataset?.nodeId;
         const node = nodeId ? this.editor.syntaxTree?.findNodeById(nodeId) : null;
         if (node?.type === 'code-block') {
-          this._openCodeLanguageModal(node);
+          this.openCodeLanguageModal(node);
         }
         return;
       }
@@ -158,8 +158,8 @@ export class EventHandler {
     if (this.editor.viewMode === 'writing') {
       const anchor =
         (event.target instanceof HTMLElement && event.target.tagName === 'A' && event.target) ||
-        this._mouseDownAnchor;
-      this._mouseDownAnchor = null;
+        this.mouseDownAnchor;
+      this.mouseDownAnchor = null;
       if (anchor) {
         event.preventDefault();
         const node = this.editor.getCurrentBlockNode();
@@ -180,12 +180,12 @@ export class EventHandler {
     // trigger a re-render.
     const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
     const newBlockId = this.editor.resolveBlockId(newNodeId);
-    const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+    const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
 
     // Finalize source-edit mode for code-blocks on click away.
     if (oldBlockId && oldBlockId !== newBlockId) {
       const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-      if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+      if (oldNode?.type === 'code-block' && oldNode.sourceEditText !== null) {
         const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
         if (hints) {
           this.editor.renderNodes(hints);
@@ -196,10 +196,10 @@ export class EventHandler {
     if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
       const nodesToUpdate = [newBlockId];
       if (oldBlockId) nodesToUpdate.push(oldBlockId);
-      this.editor._lastRenderedNodeId = newNodeId;
+      this.editor.lastRenderedNodeId = newNodeId;
       this.editor.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
     } else {
-      this.editor._lastRenderedNodeId = newNodeId;
+      this.editor.lastRenderedNodeId = newNodeId;
     }
   }
 
@@ -263,7 +263,7 @@ export class EventHandler {
       // Use the Electron webUtils bridge to get the real filesystem path.
       const filePath = window.electronAPI?.getPathForFile(file) ?? file.name;
 
-      await this._insertDroppedImage(filePath, file.name);
+      await this.insertDroppedImage(filePath, file.name);
     }
 
     this.editor.recordAndRender(before);
@@ -277,7 +277,7 @@ export class EventHandler {
    * @param {string} filePath - Absolute path to the image file
    * @param {string} fileName - The file name (used as fallback alt text)
    */
-  async _insertDroppedImage(filePath, fileName) {
+  async insertDroppedImage(filePath, fileName) {
     if (!this.editor.syntaxTree) return;
 
     const currentNode = this.editor.getCurrentBlockNode();
@@ -340,12 +340,12 @@ export class EventHandler {
     // Suppress selectionchange during placement — the DOM→tree
     // round-trip in syncCursorFromDOM is lossy and would overwrite
     // the preserved offset with a slightly different value.
-    if (this._blurredByModal) {
-      this._blurredByModal = false;
+    if (this.blurredByModal) {
+      this.blurredByModal = false;
       if (this.editor.syntaxTree?.treeCursor) {
-        this.editor._isRendering = true;
+        this.editor.isRendering = true;
         this.editor.placeCursor();
-        this.editor._isRendering = false;
+        this.editor.isRendering = false;
       }
     }
   }
@@ -359,7 +359,7 @@ export class EventHandler {
     // can be seamlessly restored when the modal closes.
     const related = /** @type {HTMLElement|null} */ (event.relatedTarget);
     if (related?.closest?.('dialog')) {
-      this._blurredByModal = true;
+      this.blurredByModal = true;
       return;
     }
 
@@ -375,7 +375,7 @@ export class EventHandler {
 
   /** Handles selection change events. */
   handleSelectionChange() {
-    if (this.editor._isRendering) return;
+    if (this.editor.isRendering) return;
     if (document.activeElement === this.editor.container) {
       // If the selection is inside the phantom paragraph (no tree
       // node), skip all cursor syncing — handleClick will promote
@@ -397,8 +397,8 @@ export class EventHandler {
       // (mousedown or keydown on the editor container).  External
       // events — toolbar clicks, ToC navigation, menu actions —
       // must never invalidate the tree's selection.
-      const fromEditor = this.editor._editorInteractionPending;
-      this.editor._editorInteractionPending = false;
+      const fromEditor = this.editor.editorInteractionPending;
+      this.editor.editorInteractionPending = false;
 
       this.editor.syncCursorFromDOM({ preserveRange: !fromEditor });
       this.editor.selectionManager.updateFromDOM();
@@ -416,7 +416,7 @@ export class EventHandler {
       // trigger a re-render.
       const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
       const newBlockId = this.editor.resolveBlockId(newNodeId);
-      const oldBlockId = this.editor.resolveBlockId(this.editor._lastRenderedNodeId);
+      const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
 
       // ── Finalize source-edit mode for code-blocks ──
       // When the cursor moves to a different block and the previous
@@ -424,7 +424,7 @@ export class EventHandler {
       // back into tree properties (fenceCount, language, content).
       if (oldBlockId && oldBlockId !== newBlockId) {
         const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-        if (oldNode?.type === 'code-block' && oldNode._sourceEditText !== null) {
+        if (oldNode?.type === 'code-block' && oldNode.sourceEditText !== null) {
           const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
           if (hints) {
             this.editor.renderNodes(hints);
@@ -435,7 +435,7 @@ export class EventHandler {
       if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
         const nodesToUpdate = [newBlockId];
         if (oldBlockId) nodesToUpdate.push(oldBlockId);
-        this.editor._lastRenderedNodeId = newNodeId;
+        this.editor.lastRenderedNodeId = newNodeId;
         this.editor.renderNodes({ updated: nodesToUpdate });
         this.editor.placeCursor();
 
@@ -443,9 +443,9 @@ export class EventHandler {
         // focus to a different node, the re-render above destroyed the
         // <a> so the browser will never fire a click event.  Open the
         // link modal now instead.
-        if (this._mouseDownAnchor) {
-          const anchor = /** @type {HTMLAnchorElement} */ (this._mouseDownAnchor);
-          this._mouseDownAnchor = null;
+        if (this.mouseDownAnchor) {
+          const anchor = /** @type {HTMLAnchorElement} */ (this.mouseDownAnchor);
+          this.mouseDownAnchor = null;
           const node = this.editor.getCurrentBlockNode();
           if (node) {
             this.editor.linkHelper.openLinkModalForNode(node, anchor);
@@ -454,15 +454,15 @@ export class EventHandler {
 
         // Same pattern for language-tag spans: the re-render
         // destroyed the span so the browser won't fire click.
-        if (this._mouseDownLanguageTag) {
-          this._mouseDownLanguageTag = null;
+        if (this.mouseDownLanguageTag) {
+          this.mouseDownLanguageTag = null;
           const node = this.editor.getCurrentBlockNode();
           if (node?.type === 'code-block') {
-            this._openCodeLanguageModal(node);
+            this.openCodeLanguageModal(node);
           }
         }
       } else {
-        this.editor._lastRenderedNodeId = newNodeId;
+        this.editor.lastRenderedNodeId = newNodeId;
       }
     }
   }
@@ -473,9 +473,9 @@ export class EventHandler {
    *
    * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
    */
-  async _openCodeLanguageModal(node) {
-    if (!this._codeLanguageModal) {
-      this._codeLanguageModal = new CodeLanguageModal();
+  async openCodeLanguageModal(node) {
+    if (!this.codeLanguageModal) {
+      this.codeLanguageModal = new CodeLanguageModal();
     }
 
     const attrs =
@@ -494,7 +494,7 @@ export class EventHandler {
       : null;
     const savedRange = this.editor.treeRange ? { ...this.editor.treeRange } : null;
 
-    const result = await this._codeLanguageModal.open({
+    const result = await this.codeLanguageModal.open({
       language: currentLanguage,
     });
     if (!result) {
@@ -522,14 +522,14 @@ export class EventHandler {
     this.editor.treeRange = savedRange;
 
     // Rebuild the DOM selection from the restored tree state.
-    this.editor._isRendering = true;
+    this.editor.isRendering = true;
     if (savedRange) {
       this.editor.placeSelection();
     } else if (savedCursor) {
       this.editor.placeCursor();
     }
     queueMicrotask(() => {
-      this.editor._isRendering = false;
+      this.editor.isRendering = false;
     });
   }
 }

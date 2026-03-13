@@ -23,7 +23,7 @@ export class RangeOperations {
      * 0 = no select-all active, 1 = node, 2 = parent group, 3 = document.
      * @type {number}
      */
-    this._selectAllLevel = 0;
+    this.selectAllLevel = 0;
   }
 
   /**
@@ -31,7 +31,7 @@ export class RangeOperations {
    * moves, content changes, or any non-select-all action occurs.
    */
   resetSelectAllLevel() {
-    this._selectAllLevel = 0;
+    this.selectAllLevel = 0;
   }
 
   /**
@@ -45,7 +45,7 @@ export class RangeOperations {
    * @param {string} endId
    * @returns {SyntaxNode[]}
    */
-  _getNodesBetween(siblings, startId, endId) {
+  getNodesBetween(siblings, startId, endId) {
     const result = [];
     let collecting = false;
     for (const node of siblings) {
@@ -150,29 +150,29 @@ export class RangeOperations {
     const node = this.editor.getCurrentBlockNode();
     if (!node) return;
 
-    this._selectAllLevel++;
+    this.selectAllLevel++;
 
     // Determine whether this node has a "content parent" group.
-    const hasParentGroup = this._hasContentParent(node);
+    const hasParentGroup = this.hasContentParent(node);
 
     // Level 1 → select the current node
-    if (this._selectAllLevel === 1) {
-      this._selectNode(node);
+    if (this.selectAllLevel === 1) {
+      this.selectNode(node);
       return;
     }
 
     // Level 2 → select parent group (if any), otherwise document
-    if (this._selectAllLevel === 2) {
+    if (this.selectAllLevel === 2) {
       if (hasParentGroup) {
-        this._selectContentParent(node);
+        this.selectContentParent(node);
         return;
       }
       // No parent group — fall through to document selection
     }
 
     // Level 3 (or 2 when no parent) → select entire document
-    this._selectAllLevel = hasParentGroup ? 3 : 2;
-    this._selectDocument();
+    this.selectAllLevel = hasParentGroup ? 3 : 2;
+    this.selectDocument();
   }
 
   /**
@@ -181,7 +181,7 @@ export class RangeOperations {
    * @param {SyntaxNode} node
    * @returns {boolean}
    */
-  _hasContentParent(node) {
+  hasContentParent(node) {
     // List items belong to a contiguous list run
     if (node.type === 'list-item') return true;
     // Nodes inside an html-block container (e.g., children of <details>)
@@ -194,7 +194,7 @@ export class RangeOperations {
    * For table cells in writing mode, selects only the cell content.
    * @param {SyntaxNode} node
    */
-  _selectNode(node) {
+  selectNode(node) {
     // ── Table cell: select just the cell content ──
     if (
       node.type === 'table' &&
@@ -253,12 +253,12 @@ export class RangeOperations {
    * - html-block children: selects all children of the html-block parent.
    * @param {SyntaxNode} node
    */
-  _selectContentParent(node) {
+  selectContentParent(node) {
     if (node.type === 'list-item') {
       const siblings = this.editor.getSiblings(node);
-      const run = this.editor._getContiguousListRun(siblings, node);
+      const run = this.editor.getContiguousListRun(siblings, node);
       if (run.length > 0) {
-        this._selectNodeRange(run[0], run[run.length - 1]);
+        this.selectNodeRange(run[0], run[run.length - 1]);
         return;
       }
     }
@@ -266,7 +266,7 @@ export class RangeOperations {
     if (node.parent && node.parent.type === 'html-block') {
       const children = node.parent.children;
       if (children.length > 0) {
-        this._selectNodeRange(children[0], children[children.length - 1]);
+        this.selectNodeRange(children[0], children[children.length - 1]);
         return;
       }
     }
@@ -275,14 +275,14 @@ export class RangeOperations {
   /**
    * Selects the entire document content (final cycling level).
    */
-  _selectDocument() {
+  selectDocument() {
     const children = this.editor.syntaxTree?.children;
     if (!children || children.length === 0) return;
 
     // Find the first and last leaf nodes that have DOM elements
-    const first = this._firstLeaf(children[0]);
-    const last = this._lastLeaf(children[children.length - 1]);
-    this._selectNodeRange(first, last);
+    const first = this.firstLeaf(children[0]);
+    const last = this.lastLeaf(children[children.length - 1]);
+    this.selectNodeRange(first, last);
   }
 
   /**
@@ -291,7 +291,7 @@ export class RangeOperations {
    * @param {SyntaxNode} node
    * @returns {SyntaxNode}
    */
-  _firstLeaf(node) {
+  firstLeaf(node) {
     let current = node;
     // Only descend into block-level children (html-block containers).
     // Inline children (text, bold, etc.) are not rendered as separate
@@ -307,7 +307,7 @@ export class RangeOperations {
    * @param {SyntaxNode} node
    * @returns {SyntaxNode}
    */
-  _lastLeaf(node) {
+  lastLeaf(node) {
     let current = node;
     while (current.type === 'html-block' && current.children.length > 0) {
       current = current.children[current.children.length - 1];
@@ -321,7 +321,7 @@ export class RangeOperations {
    * @param {SyntaxNode} firstNode
    * @param {SyntaxNode} lastNode
    */
-  _selectNodeRange(firstNode, lastNode) {
+  selectNodeRange(firstNode, lastNode) {
     const firstEl = this.editor.container.querySelector(`[data-node-id="${firstNode.id}"]`);
     const lastEl = this.editor.container.querySelector(`[data-node-id="${lastNode.id}"]`);
     if (!firstEl || !lastEl) return;

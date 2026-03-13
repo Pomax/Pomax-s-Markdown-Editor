@@ -126,7 +126,7 @@ export class Editor {
     this.container.dataset.viewMode = 'writing';
 
     /** @type {boolean} */
-    this._hasUnsavedChanges = false;
+    this.hasUnsavedChanges = false;
 
     /** @type {string|null} */
     this.currentFilePath = null;
@@ -141,7 +141,7 @@ export class Editor {
      * Whether we are currently rendering (used to suppress input events).
      * @type {boolean}
      */
-    this._isRendering = false;
+    this.isRendering = false;
 
     /**
      * Set by mousedown / keydown on the editor container to signal that
@@ -150,7 +150,7 @@ export class Editor {
      * whether a collapsed selection should clear treeRange.
      * @type {boolean}
      */
-    this._editorInteractionPending = false;
+    this.editorInteractionPending = false;
 
     /**
      * Non-collapsed selection range mapped to tree coordinates.
@@ -167,14 +167,14 @@ export class Editor {
      * decision is made.
      * @type {string|null}
      */
-    this._lastRenderedNodeId = null;
+    this.lastRenderedNodeId = null;
 
     /**
      * Bound event handlers, keyed by event name.
      * Stored so they can be detached/reattached when swapping containers.
      * @type {Record<string, EventListener>}
      */
-    this._boundHandlers = {};
+    this.boundHandlers = {};
   }
 
   // ──────────────────────────────────────────────
@@ -187,7 +187,7 @@ export class Editor {
    * @param {string} text
    * @returns {SyntaxNode|null}
    */
-  _reparseLine(text) {
+  reparseLine(text) {
     return this.parser.parse(text).children[0] ?? null;
   }
 
@@ -197,13 +197,13 @@ export class Editor {
    * @param {string} combined - The full markdown string to parse.
    * @returns {SyntaxNode[]}
    */
-  _parseMultiLine(combined) {
+  parseMultiLine(combined) {
     return [...this.parser.parse(combined).children];
   }
 
   /**
    * Finalizes source-edit mode for a code-block node.  The raw text
-   * stored in `_sourceEditText` is reparsed through the DFA parser.
+   * stored in `sourceEditText` is reparsed through the DFA parser.
    *
    * - If the result is still a single code-block, the node's `content`
    *   and `attributes` are updated in place.
@@ -219,7 +219,7 @@ export class Editor {
     const text = node.exitSourceEditMode();
     if (text === null) return null;
 
-    const parsed = this._parseMultiLine(text);
+    const parsed = this.parseMultiLine(text);
 
     if (parsed.length === 1 && parsed[0].type === 'code-block') {
       // Still a valid code block — update attributes in place.
@@ -245,7 +245,7 @@ export class Editor {
     node.type = first.type;
     node.content = first.content;
     node.attributes = first.attributes;
-    node._sourceEditText = null;
+    node.sourceEditText = null;
 
     const addedIds = [];
     for (let j = 1; j < parsed.length; j++) {
@@ -289,7 +289,7 @@ export class Editor {
   setupEventListeners() {
     // Store bound handlers so they can be removed/reattached
     // when swapping to a different container element.
-    this._boundHandlers = {
+    this.boundHandlers = {
       keydown: /** @type {EventListener} */ (
         this.inputHandler.handleKeyDown.bind(this.inputHandler)
       ),
@@ -316,7 +316,7 @@ export class Editor {
       ),
     };
 
-    this._attachContainerListeners();
+    this.attachContainerListeners();
 
     document.addEventListener(
       'selectionchange',
@@ -327,8 +327,8 @@ export class Editor {
   /**
    * Attaches the stored event handlers to the current container.
    */
-  _attachContainerListeners() {
-    for (const [event, handler] of Object.entries(this._boundHandlers)) {
+  attachContainerListeners() {
+    for (const [event, handler] of Object.entries(this.boundHandlers)) {
       this.container.addEventListener(event, handler);
     }
   }
@@ -336,8 +336,8 @@ export class Editor {
   /**
    * Detaches the stored event handlers from the current container.
    */
-  _detachContainerListeners() {
-    for (const [event, handler] of Object.entries(this._boundHandlers)) {
+  detachContainerListeners() {
+    for (const [event, handler] of Object.entries(this.boundHandlers)) {
       this.container.removeEventListener(event, handler);
     }
   }
@@ -348,9 +348,9 @@ export class Editor {
    * @param {HTMLElement} newContainer
    */
   swapContainer(newContainer) {
-    this._detachContainerListeners();
+    this.detachContainerListeners();
     this.container = newContainer;
-    this._attachContainerListeners();
+    this.attachContainerListeners();
   }
 
   // ──────────────────────────────────────────────
@@ -465,7 +465,7 @@ export class Editor {
    *
    * @returns {boolean} `true` if a phantom was promoted.
    */
-  _promotePhantomParagraph() {
+  promotePhantomParagraph() {
     const phantom = this.container.querySelector('.md-phantom-paragraph');
     if (!phantom) return false;
 
@@ -518,12 +518,12 @@ export class Editor {
   fullRender() {
     if (!this.syntaxTree) return;
 
-    this._isRendering = true;
+    this.isRendering = true;
     try {
       const renderer = this.viewMode === 'source' ? this.sourceRenderer : this.writingRenderer;
       renderer.fullRender(this.syntaxTree, this.container);
     } finally {
-      this._isRendering = false;
+      this.isRendering = false;
     }
     document.dispatchEvent(new CustomEvent('editor:renderComplete'));
   }
@@ -539,11 +539,11 @@ export class Editor {
 
     const renderer = this.viewMode === 'writing' ? this.writingRenderer : this.sourceRenderer;
 
-    this._isRendering = true;
+    this.isRendering = true;
     try {
       renderer.renderNodes(this.container, hints);
     } finally {
-      this._isRendering = false;
+      this.isRendering = false;
     }
     document.dispatchEvent(new CustomEvent('editor:renderComplete'));
   }
@@ -553,10 +553,10 @@ export class Editor {
    */
   fullRenderAndPlaceCursor() {
     this.fullRender();
-    this._lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
-    this._isRendering = true;
+    this.lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
+    this.isRendering = true;
     this.placeCursor();
-    this._isRendering = false;
+    this.isRendering = false;
   }
 
   /**
@@ -565,9 +565,9 @@ export class Editor {
    */
   renderNodesAndPlaceCursor(hints) {
     this.renderNodes(hints);
-    this._isRendering = true;
+    this.isRendering = true;
     this.placeCursor();
-    this._isRendering = false;
+    this.isRendering = false;
   }
 
   // ──────────────────────────────────────────────
@@ -666,7 +666,7 @@ export class Editor {
   recordAndRender(before, hints) {
     if (!this.syntaxTree) return;
 
-    const addedPara = this._ensureTrailingParagraph();
+    const addedPara = this.ensureTrailingParagraph();
     if (addedPara && hints) {
       if (!hints.added) hints.added = [];
       hints.added.push(addedPara.id);
@@ -691,7 +691,7 @@ export class Editor {
    * `</details>` block, so we append an empty paragraph whenever the last
    * top-level node is a container html-block.
    */
-  _ensureTrailingParagraph() {
+  ensureTrailingParagraph() {
     if (!this.syntaxTree) return null;
     const children = this.syntaxTree.children;
     if (children.length === 0) return null;
@@ -727,7 +727,7 @@ export class Editor {
     // Ensure the document doesn't end with a container html-block
     // (the user would have no way to place the cursor after it in
     // writing view).
-    this._ensureTrailingParagraph();
+    this.ensureTrailingParagraph();
 
     const first = this.syntaxTree.children[0];
     this.syntaxTree.treeCursor = { nodeId: first.id, offset: 0 };
@@ -788,9 +788,9 @@ export class Editor {
     if (this.syntaxTree) {
       const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
       for (const child of this.syntaxTree.children) {
-        if (child.type === 'code-block' && child._sourceEditText !== null) {
+        if (child.type === 'code-block' && child.sourceEditText !== null) {
           // Source → writing: convert the offset from
-          // _sourceEditText-relative to content-relative by
+          // sourceEditText-relative to content-relative by
           // subtracting the opening-fence preamble length.
           if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
             const attrs =
@@ -809,7 +809,7 @@ export class Editor {
     }
 
     // Writing → source: if the cursor is on a code-block, convert
-    // the content-relative offset to _sourceEditText-relative by
+    // the content-relative offset to sourceEditText-relative by
     // adding the opening-fence preamble length.
     if (mode === 'source' && this.syntaxTree?.treeCursor) {
       const cursorBlockId =
@@ -1123,7 +1123,7 @@ export class Editor {
 
     // Multi-node selection: convert each node in the range to a list item.
     if (this.treeRange && this.treeRange.startNodeId !== this.treeRange.endNodeId) {
-      const nodes = this._getNodesInRange(this.treeRange.startNodeId, this.treeRange.endNodeId);
+      const nodes = this.getNodesInRange(this.treeRange.startNodeId, this.treeRange.endNodeId);
 
       // Detect nodes that live inside html-block containers.
       // Converting them requires dissolving their parent wrapper.
@@ -1209,7 +1209,7 @@ export class Editor {
     // contiguous run of list items (the "list").
     if (currentNode.type === 'list-item') {
       const siblings = this.getSiblings(currentNode);
-      const run = this._getContiguousListRun(siblings, currentNode);
+      const run = this.getContiguousListRun(siblings, currentNode);
       const currentKind = getListKind(currentNode);
 
       if (currentKind === kind) {
@@ -1267,7 +1267,7 @@ export class Editor {
    * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
    * @returns {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]}
    */
-  _getContiguousListRun(siblings, node) {
+  getContiguousListRun(siblings, node) {
     const idx = siblings.indexOf(node);
     let start = idx;
     let end = idx;
@@ -1315,7 +1315,7 @@ export class Editor {
    * @param {string} endId
    * @returns {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]}
    */
-  _getNodesInRange(startId, endId) {
+  getNodesInRange(startId, endId) {
     if (!this.syntaxTree) return [];
 
     /**
@@ -1417,19 +1417,11 @@ export class Editor {
    * @param {boolean} hasChanges
    */
   setUnsavedChanges(hasChanges) {
-    this._hasUnsavedChanges = hasChanges;
+    this.hasUnsavedChanges = hasChanges;
     if (window.electronAPI) {
       window.electronAPI.setUnsavedChanges(hasChanges);
     }
     this.updateWindowTitle();
-  }
-
-  /**
-   * Gets whether there are unsaved changes.
-   * @returns {boolean}
-   */
-  hasUnsavedChanges() {
-    return this._hasUnsavedChanges;
   }
 
   /**
@@ -1438,14 +1430,14 @@ export class Editor {
    */
   updateWindowTitle() {
     const fileName = this.currentFilePath ? this.currentFilePath.split(/[\\/]/).pop() : 'Untitled';
-    const modified = this._hasUnsavedChanges ? ' •' : '';
+    const modified = this.hasUnsavedChanges ? ' •' : '';
     document.title = `${fileName}${modified} - Markdown Editor`;
 
     document.dispatchEvent(
       new CustomEvent('editor:fileStateChanged', {
         detail: {
           filePath: this.currentFilePath,
-          modified: this._hasUnsavedChanges,
+          modified: this.hasUnsavedChanges,
         },
       }),
     );

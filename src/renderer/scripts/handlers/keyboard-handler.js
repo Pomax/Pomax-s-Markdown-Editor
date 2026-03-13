@@ -28,7 +28,7 @@ export class KeyboardHandler {
     this.shortcuts = this.getShortcuts();
 
     /** @type {((event: KeyboardEvent) => void)|null} */
-    this._keydownHandler = null;
+    this.keydownHandler = null;
   }
 
   /**
@@ -65,19 +65,19 @@ export class KeyboardHandler {
    * Initializes the keyboard handler.
    */
   initialize() {
-    this._keydownHandler = /** @type {(event: KeyboardEvent) => void} */ (
+    this.keydownHandler = /** @type {(event: KeyboardEvent) => void} */ (
       this.handleKeyDown.bind(this)
     );
-    document.addEventListener('keydown', this._keydownHandler);
+    document.addEventListener('keydown', this.keydownHandler);
   }
 
   /**
    * Cleans up event listeners.
    */
   destroy() {
-    if (this._keydownHandler) {
-      document.removeEventListener('keydown', this._keydownHandler);
-      this._keydownHandler = null;
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
+      this.keydownHandler = null;
     }
   }
 

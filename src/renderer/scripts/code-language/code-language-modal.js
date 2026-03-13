@@ -18,15 +18,15 @@ import { BaseModal } from '../modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class CodeLanguageModal extends BaseModal {
-  get _prefix() {
+  get prefix() {
     return 'code-language';
   }
 
-  get _ariaLabel() {
+  get ariaLabel() {
     return 'Edit Code Language';
   }
 
-  _getTemplate() {
+  getTemplate() {
     return `
             <form method="dialog" class="code-language-form">
                 <header class="code-language-dialog-header">
@@ -50,10 +50,10 @@ export class CodeLanguageModal extends BaseModal {
   /**
    * @param {Partial<CodeLanguageData>} [existing]
    */
-  _populateFields(existing) {
-    const input = this._getInput('code-language-input');
-    const heading = this._getHeading();
-    const btn = this._getInsertBtn();
+  populateFields(existing) {
+    const input = this.getInput('code-language-input');
+    const heading = this.getHeading();
+    const btn = this.getInsertBtn();
 
     if (existing?.language) {
       input.value = existing.language;
@@ -67,16 +67,16 @@ export class CodeLanguageModal extends BaseModal {
   }
 
   /**
-   * @param {Partial<CodeLanguageData>} [_existing]
+   * @param {Partial<CodeLanguageData>} [existing]
    * @returns {HTMLElement}
    */
-  _getFocusTarget(_existing) {
-    return this._getInput('code-language-input');
+  getFocusTarget(existing) {
+    return this.getInput('code-language-input');
   }
 
-  _submit() {
-    const language = this._getInput('code-language-input').value.trim();
+  submit() {
+    const language = this.getInput('code-language-input').value.trim();
     // Allow empty string — this clears the language tag.
-    this._closeWithResult({ language });
+    this.closeWithResult({ language });
   }
 }

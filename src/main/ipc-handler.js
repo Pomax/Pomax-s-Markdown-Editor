@@ -33,7 +33,7 @@ export class IPCHandler {
    * state survives ungraceful exits.
    * @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}[]} files
    */
-  _persistOpenFiles(files) {
+  persistOpenFiles(files) {
     const entries = files
       .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
       .map(
@@ -187,7 +187,7 @@ export class IPCHandler {
       return { success: true };
     });
 
-    ipcMain.handle('view:openFilesChanged', async (_event, files) => {
+    ipcMain.handle('view:openFilesChanged', async (event, files) => {
       if (this.menuBuilder) {
         this.menuBuilder.openFiles = files ?? [];
         this.menuBuilder.refreshMenu();
@@ -200,7 +200,7 @@ export class IPCHandler {
       }
       // Eagerly persist the open-files list so the state survives
       // ungraceful exits (SIGINT, SIGKILL, crashes).
-      this._persistOpenFiles(fileList);
+      this.persistOpenFiles(fileList);
       return { success: true };
     });
   }
@@ -266,11 +266,11 @@ export class IPCHandler {
       return { success: true, settings: settings.getAll() };
     });
 
-    ipcMain.handle('settings:get', async (_event, key) => {
+    ipcMain.handle('settings:get', async (event, key) => {
       return { success: true, value: settings.get(key) };
     });
 
-    ipcMain.handle('settings:set', async (_event, key, value) => {
+    ipcMain.handle('settings:set', async (event, key, value) => {
       settings.set(key, value);
       return { success: true };
     });
@@ -305,7 +305,7 @@ export class IPCHandler {
       return { success: true, filePath: result.filePaths[0] };
     });
 
-    ipcMain.handle('image:rename', async (_event, oldPath, newName) => {
+    ipcMain.handle('image:rename', async (event, oldPath, newName) => {
       try {
         const dir = path.dirname(oldPath);
         const newPath = path.join(dir, newName);
@@ -334,7 +334,7 @@ export class IPCHandler {
    * Registers path-related IPC handlers.
    */
   registerPathHandlers() {
-    ipcMain.handle('path:toRelative', (_event, imagePath, documentPath) => {
+    ipcMain.handle('path:toRelative', (event, imagePath, documentPath) => {
       if (!imagePath || !documentPath) return imagePath;
 
       // Normalise the image path: strip file:/// prefix, decode

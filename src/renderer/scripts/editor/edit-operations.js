@@ -53,7 +53,7 @@ export class EditOperations {
    * @param {{ before: string, hints: { updated?: string[], added?: string[], removed?: string[] } }} result
    *     The result object from `deleteSelectedRange()`, mutated in place.
    */
-  _cleanupEmptyNodeAfterDelete(result) {
+  cleanupEmptyNodeAfterDelete(result) {
     const node = this.editor.getCurrentBlockNode();
     if (!node || !this.editor.syntaxTree) return;
 
@@ -203,11 +203,11 @@ export class EditOperations {
     // to avoid misidentifying code lines as headings, lists, etc.
     if (node.type === 'code-block') {
       // In source view, edits target the full markdown text
-      // (fences + language + content) stored in _sourceEditText.
-      if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
-        const srcLeft = node._sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
-        const srcRight = node._sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
-        node._sourceEditText = srcLeft + text + srcRight;
+      // (fences + language + content) stored in sourceEditText.
+      if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+        const srcLeft = node.sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
+        const srcRight = node.sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
+        node.sourceEditText = srcLeft + text + srcRight;
         this.editor.syntaxTree.treeCursor = {
           nodeId: node.id,
           offset: srcLeft.length + text.length,
@@ -239,7 +239,7 @@ export class EditOperations {
       const combined = mdPrefix + normalizedContent;
 
       // Parse into nodes via the currently active parser.
-      const parsedNodes = this.editor._parseMultiLine(combined);
+      const parsedNodes = this.editor.parseMultiLine(combined);
 
       if (parsedNodes.length === 0) {
         // Edge case: everything was blank lines — empty paragraph
@@ -290,7 +290,7 @@ export class EditOperations {
     let newOffset;
     const wasBareText = !!node.attributes.bareText;
     const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-    const parsed = this.editor._reparseLine(fullLine);
+    const parsed = this.editor.reparseLine(fullLine);
 
     if (parsed) {
       // Suppress code-block fence conversion during typing — the
@@ -355,7 +355,7 @@ export class EditOperations {
     if (this.editor.treeRange) {
       const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
       if (rangeResult) {
-        this._cleanupEmptyNodeAfterDelete(rangeResult);
+        this.cleanupEmptyNodeAfterDelete(rangeResult);
         this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
         return;
       }
@@ -426,14 +426,14 @@ export class EditOperations {
 
       // Code-block content is raw code — skip re-parsing.
       if (node.type === 'code-block') {
-        // In source view, backspace targets _sourceEditText.
-        if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
-          const srcLeft = node._sourceEditText.substring(
+        // In source view, backspace targets sourceEditText.
+        if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+          const srcLeft = node.sourceEditText.substring(
             0,
             this.editor.syntaxTree.treeCursor.offset - 1,
           );
-          const srcRight = node._sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
-          node._sourceEditText = srcLeft + srcRight;
+          const srcRight = node.sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
+          node.sourceEditText = srcLeft + srcRight;
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
         } else {
           node.content = newContent;
@@ -447,7 +447,7 @@ export class EditOperations {
       let newOffset;
       const wasBareText = !!node.attributes.bareText;
       const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-      const parsed = this.editor._reparseLine(fullLine);
+      const parsed = this.editor.reparseLine(fullLine);
 
       if (parsed) {
         node.type = parsed.type;
@@ -476,7 +476,7 @@ export class EditOperations {
       // Cursor is at the start of the node.
 
       // Code-block at offset 0: in source view the full text is in
-      // _sourceEditText so offset 0 means the very start of the
+      // sourceEditText so offset 0 means the very start of the
       // opening fence — there is nothing before it to merge into
       // while still preserving the code-block structure, so this
       // is a no-op (consistent with html-block boundary behaviour).
@@ -488,7 +488,7 @@ export class EditOperations {
           // the opening fence.  Finalize to reparse the text as
           // normal content and fall through to the standard
           // backspace-at-offset-0 logic (merge with previous).
-          const firstLine = (node._sourceEditText ?? '').split('\n')[0];
+          const firstLine = (node.sourceEditText ?? '').split('\n')[0];
           if (firstLine.includes('`')) {
             // Still has backticks — no-op.
             this.editor.recordAndRender(before, renderHints);
@@ -506,7 +506,7 @@ export class EditOperations {
           node.type = 'paragraph';
           node.content = '';
           node.attributes = {};
-          node._sourceEditText = null;
+          node.sourceEditText = null;
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
           this.editor.recordAndRender(before, { updated: [node.id] });
           return;
@@ -597,7 +597,7 @@ export class EditOperations {
     if (this.editor.treeRange) {
       const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
       if (rangeResult) {
-        this._cleanupEmptyNodeAfterDelete(rangeResult);
+        this.cleanupEmptyNodeAfterDelete(rangeResult);
         this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
         return;
       }
@@ -662,8 +662,8 @@ export class EditOperations {
     // For code-blocks in source-edit mode, the effective length is
     // the full source text, not just node.content.
     const effectiveLength =
-      node.type === 'code-block' && node._sourceEditText !== null
-        ? node._sourceEditText.length
+      node.type === 'code-block' && node.sourceEditText !== null
+        ? node.sourceEditText.length
         : node.content.length;
 
     if (this.editor.syntaxTree.treeCursor.offset < effectiveLength) {
@@ -675,15 +675,15 @@ export class EditOperations {
 
       // Code-block content is raw code — skip re-parsing.
       if (node.type === 'code-block') {
-        if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
-          const srcLeft = node._sourceEditText.substring(
+        if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+          const srcLeft = node.sourceEditText.substring(
             0,
             this.editor.syntaxTree.treeCursor.offset,
           );
-          const srcRight = node._sourceEditText.substring(
+          const srcRight = node.sourceEditText.substring(
             this.editor.syntaxTree.treeCursor.offset + 1,
           );
-          node._sourceEditText = srcLeft + srcRight;
+          node.sourceEditText = srcLeft + srcRight;
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
         } else {
           node.content = newContent;
@@ -697,7 +697,7 @@ export class EditOperations {
       let newOffset;
       const wasBareText = !!node.attributes.bareText;
       const fullLine = this.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-      const parsed = this.editor._reparseLine(fullLine);
+      const parsed = this.editor.reparseLine(fullLine);
 
       if (parsed) {
         node.type = parsed.type;
@@ -725,7 +725,7 @@ export class EditOperations {
       // Cursor is at the end — merge with the next node.
       // If this is a code-block in source-edit mode, finalize it
       // first so the tree is consistent before merging.
-      if (node.type === 'code-block' && node._sourceEditText !== null) {
+      if (node.type === 'code-block' && node.sourceEditText !== null) {
         this.editor.finalizeCodeBlockSourceEdit(node);
       }
 
@@ -857,10 +857,10 @@ export class EditOperations {
 
     // ── Enter inside a code block → insert newline ──
     if (node.type === 'code-block') {
-      if (this.editor.viewMode === 'source' && node._sourceEditText !== null) {
-        const srcLeft = node._sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
-        const srcRight = node._sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
-        node._sourceEditText = `${srcLeft}\n${srcRight}`;
+      if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+        const srcLeft = node.sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
+        const srcRight = node.sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
+        node.sourceEditText = `${srcLeft}\n${srcRight}`;
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length + 1 };
       } else {
         const left = node.content.substring(0, this.editor.syntaxTree.treeCursor.offset);

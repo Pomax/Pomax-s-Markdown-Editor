@@ -169,7 +169,7 @@ function createWindow() {
     }
 
     // Ask the renderer to flush cursor/state data for all tabs,
-    // then persist it.  The renderer's _notifyOpenFiles() sends an
+    // then persist it.  The renderer's notifyOpenFiles() sends an
     // IPC that updates menuBuilder.openFiles synchronously, so by
     // the time executeJavaScript resolves we have fresh data.
     try {

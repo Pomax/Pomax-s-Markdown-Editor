@@ -23,15 +23,15 @@ import { BaseModal } from '../modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class ImageModal extends BaseModal {
-  get _prefix() {
+  get prefix() {
     return 'image';
   }
 
-  get _ariaLabel() {
+  get ariaLabel() {
     return 'Insert Image';
   }
 
-  _getTemplate() {
+  getTemplate() {
     return `
             <form method="dialog" class="image-form">
                 <header class="image-dialog-header">
@@ -74,21 +74,21 @@ export class ImageModal extends BaseModal {
         `;
   }
 
-  _afterBuild() {
+  afterBuild() {
     if (!this.dialog) return;
 
     // Browse button
     const browseBtn = this.dialog.querySelector('.image-browse-btn');
     if (browseBtn) {
-      browseBtn.addEventListener('click', () => this._browse());
+      browseBtn.addEventListener('click', () => this.browse());
     }
 
     // Image preview on src change
     const srcInput = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#image-src'));
     if (srcInput) {
       srcInput.addEventListener('input', () => {
-        this._updatePreview();
-        this._updateRename();
+        this.updatePreview();
+        this.updateRename();
       });
     }
   }
@@ -96,18 +96,18 @@ export class ImageModal extends BaseModal {
   /**
    * @param {Partial<ImageData>} [existing]
    */
-  _populateFields(existing) {
-    const srcInput = this._getInput('image-src');
-    const renameInput = this._getInput('image-rename');
-    const altInput = this._getInput('image-alt');
-    const hrefInput = this._getInput('image-href');
-    const styleInput = this._getInput('image-style');
-    const insertBtn = this._getInsertBtn();
-    const heading = this._getHeading();
+  populateFields(existing) {
+    const srcInput = this.getInput('image-src');
+    const renameInput = this.getInput('image-rename');
+    const altInput = this.getInput('image-alt');
+    const hrefInput = this.getInput('image-href');
+    const styleInput = this.getInput('image-style');
+    const insertBtn = this.getInsertBtn();
+    const heading = this.getHeading();
 
     if (existing?.src || existing?.alt || existing?.href) {
       srcInput.value = existing.src ?? '';
-      renameInput.value = this._extractFilename(existing.src ?? '');
+      renameInput.value = this.extractFilename(existing.src ?? '');
       altInput.value = existing.alt ?? '';
       hrefInput.value = existing.href ?? '';
       styleInput.value = existing.style ?? '';
@@ -123,52 +123,52 @@ export class ImageModal extends BaseModal {
       if (heading) heading.textContent = 'Insert Image';
     }
 
-    this._updatePreview();
+    this.updatePreview();
   }
 
   /**
    * @returns {HTMLElement}
    */
-  _getFocusTarget() {
-    return this._getInput('image-src');
+  getFocusTarget() {
+    return this.getInput('image-src');
   }
 
-  _submit() {
-    const src = this._getInput('image-src').value.trim();
-    const rename = this._getInput('image-rename').value.trim();
-    const alt = this._getInput('image-alt').value.trim();
-    const href = this._getInput('image-href').value.trim();
-    const style = this._getInput('image-style').value.trim();
+  submit() {
+    const src = this.getInput('image-src').value.trim();
+    const rename = this.getInput('image-rename').value.trim();
+    const alt = this.getInput('image-alt').value.trim();
+    const href = this.getInput('image-href').value.trim();
+    const style = this.getInput('image-style').value.trim();
 
     if (!src) {
-      this._getInput('image-src').focus();
+      this.getInput('image-src').focus();
       return;
     }
 
-    this._closeWithResult({ alt, src, href, style, rename });
+    this.closeWithResult({ alt, src, href, style, rename });
   }
 
   /**
    * Opens a file dialog to browse for an image.
    */
-  async _browse() {
+  async browse() {
     if (!window.electronAPI) return;
 
     const result = await window.electronAPI.browseForImage();
     if (result.success && result.filePath) {
-      this._getInput('image-src').value = result.filePath;
-      this._updateRename();
-      this._updatePreview();
+      this.getInput('image-src').value = result.filePath;
+      this.updateRename();
+      this.updatePreview();
     }
   }
 
   /**
    * Updates the image preview.
    */
-  _updatePreview() {
+  updatePreview() {
     if (!this.dialog) return;
 
-    const src = this._getInput('image-src').value.trim();
+    const src = this.getInput('image-src').value.trim();
     const previewContainer = this.dialog.querySelector('#image-preview-container');
     const previewImg = /** @type {HTMLImageElement} */ (
       this.dialog.querySelector('#image-preview')
@@ -178,7 +178,7 @@ export class ImageModal extends BaseModal {
 
     if (src) {
       previewImg.src = src;
-      previewImg.alt = this._getInput('image-alt').value.trim() || 'Preview';
+      previewImg.alt = this.getInput('image-alt').value.trim() || 'Preview';
       previewContainer.classList.add('visible');
 
       previewImg.onerror = () => {
@@ -195,10 +195,10 @@ export class ImageModal extends BaseModal {
   /**
    * Updates the rename field with the filename from the current src value.
    */
-  _updateRename() {
+  updateRename() {
     if (!this.dialog) return;
-    const src = this._getInput('image-src').value.trim();
-    this._getInput('image-rename').value = this._extractFilename(src);
+    const src = this.getInput('image-src').value.trim();
+    this.getInput('image-rename').value = this.extractFilename(src);
   }
 
   /**
@@ -206,7 +206,7 @@ export class ImageModal extends BaseModal {
    * @param {string} src - Image source path or URL
    * @returns {string} The filename portion, or empty string if none
    */
-  _extractFilename(src) {
+  extractFilename(src) {
     if (!src) return '';
     // Strip query string and fragment
     const clean = src.split('?')[0].split('#')[0];

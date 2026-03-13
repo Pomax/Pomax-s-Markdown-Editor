@@ -8,7 +8,7 @@ window.electronAPI.onFileOpened(async (markdown, fileDir) => {
     base = document.createElement('base');
     document.head.appendChild(base);
   }
-  base.href = fileDir.replaceAll('\\', '/') + '/';
+  base.href = `${fileDir.replaceAll('\\', '/')}/`;
 
   const tree = await parse(markdown);
   const dom = await tree.toDOM();

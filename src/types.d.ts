@@ -64,7 +64,7 @@ interface NodeAttributes {
     closingTag?: string;
     bareText?: boolean;
     /** Runtime-only toggle for fake details collapse state (not serialised). */
-    _detailsOpen?: boolean;
+    detailsOpen?: boolean;
 }
 
 declare global {

@@ -50,10 +50,10 @@ export class ClipboardHandler {
     if (!this.editor.treeRange || !this.editor.syntaxTree) return '';
 
     if (this.editor.viewMode === 'writing') {
-      return this._getSelectedMarkdownWriting();
+      return this.getSelectedMarkdownWriting();
     }
 
-    return this._getSelectedMarkdownSource();
+    return this.getSelectedMarkdownSource();
   }
 
   // ── Source-view copy (existing behaviour, extracted) ────────────
@@ -62,7 +62,7 @@ export class ClipboardHandler {
    * Source-view copy: raw content substrings joined with blank lines.
    * @returns {string}
    */
-  _getSelectedMarkdownSource() {
+  getSelectedMarkdownSource() {
     const { startNodeId, startOffset, endNodeId, endOffset } =
       /** @type {import('./editor.js').TreeRange} */ (this.editor.treeRange);
     const tree = /** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxTree} */ (
@@ -102,7 +102,7 @@ export class ClipboardHandler {
    * tags, and re-applying block-level prefixes.
    * @returns {string}
    */
-  _getSelectedMarkdownWriting() {
+  getSelectedMarkdownWriting() {
     const { startNodeId, startOffset, endNodeId, endOffset } =
       /** @type {import('./editor.js').TreeRange} */ (this.editor.treeRange);
     const tree = /** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxTree} */ (
@@ -116,12 +116,12 @@ export class ClipboardHandler {
     // Same node — trim content, fix tags, apply prefix.
     if (startNodeId === endNodeId) {
       const slice = startNode.content.substring(startOffset, endOffset);
-      const fixed = ClipboardHandler._fixHtmlTags(slice);
-      return ClipboardHandler._nodeToPartialMarkdown(startNode, fixed);
+      const fixed = ClipboardHandler.fixHtmlTags(slice);
+      return ClipboardHandler.nodeToPartialMarkdown(startNode, fixed);
     }
 
     // Cross-node: walk all block nodes in document order.
-    const nodes = this.editor._getNodesInRange(startNodeId, endNodeId);
+    const nodes = this.editor.getNodesInRange(startNodeId, endNodeId);
     if (nodes.length === 0) return '';
 
     const parts = [];
@@ -131,13 +131,13 @@ export class ClipboardHandler {
         // First node: take from startOffset to end of content.
         const slice = node.content.substring(startOffset);
         parts.push(
-          ClipboardHandler._nodeToPartialMarkdown(node, ClipboardHandler._fixHtmlTags(slice)),
+          ClipboardHandler.nodeToPartialMarkdown(node, ClipboardHandler.fixHtmlTags(slice)),
         );
       } else if (node.id === endNodeId) {
         // Last node: take from start of content to endOffset.
         const slice = node.content.substring(0, endOffset);
         parts.push(
-          ClipboardHandler._nodeToPartialMarkdown(node, ClipboardHandler._fixHtmlTags(slice)),
+          ClipboardHandler.nodeToPartialMarkdown(node, ClipboardHandler.fixHtmlTags(slice)),
         );
       } else {
         // Intermediate node: full markdown.
@@ -158,7 +158,7 @@ export class ClipboardHandler {
    * @param {string} content — trimmed / repaired content
    * @returns {string}
    */
-  static _nodeToPartialMarkdown(node, content) {
+  static nodeToPartialMarkdown(node, content) {
     switch (node.type) {
       case 'heading1':
         return `# ${content}`;
@@ -221,7 +221,7 @@ export class ClipboardHandler {
    * @param {string} slice — a raw substring of a node's content
    * @returns {string}
    */
-  static _fixHtmlTags(slice) {
+  static fixHtmlTags(slice) {
     /** @type {string[]} */
     const openStack = [];
     /** @type {string[]} */

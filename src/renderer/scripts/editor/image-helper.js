@@ -23,7 +23,7 @@ export class ImageHelper {
      * Lazily-created image modal for click-to-edit in writing mode.
      * @type {ImageModal|null}
      */
-    this._imageModal = null;
+    this.imageModal = null;
   }
 
   /**
@@ -142,10 +142,10 @@ export class ImageHelper {
    * @returns {ImageModal}
    */
   getImageModal() {
-    if (!this._imageModal) {
-      this._imageModal = new ImageModal();
+    if (!this.imageModal) {
+      this.imageModal = new ImageModal();
     }
-    return this._imageModal;
+    return this.imageModal;
   }
 
   /**
@@ -171,14 +171,14 @@ export class ImageHelper {
 
     // Handle file rename if the filename changed
     if (result.rename && window.electronAPI) {
-      const originalFilename = this._extractFilename(src);
+      const originalFilename = this.extractFilename(src);
       if (result.rename !== originalFilename) {
         const renameResult = await window.electronAPI.renameImage(
-          this._resolveImagePath(src),
+          this.resolveImagePath(src),
           result.rename,
         );
         if (renameResult.success && renameResult.newPath) {
-          src = this._replaceFilename(src, result.rename);
+          src = this.replaceFilename(src, result.rename);
         }
       }
     }
@@ -210,7 +210,7 @@ export class ImageHelper {
    * @param {string} src
    * @returns {string}
    */
-  _extractFilename(src) {
+  extractFilename(src) {
     if (!src) return '';
     const clean = src.split('?')[0].split('#')[0];
     const parts = clean.split(/[/\\]/);
@@ -223,7 +223,7 @@ export class ImageHelper {
    * @param {string} newName - New filename
    * @returns {string}
    */
-  _replaceFilename(src, newName) {
+  replaceFilename(src, newName) {
     const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
     if (lastSlash === -1) return newName;
     return src.substring(0, lastSlash + 1) + newName;
@@ -235,7 +235,7 @@ export class ImageHelper {
    * @param {string} src
    * @returns {string}
    */
-  _resolveImagePath(src) {
+  resolveImagePath(src) {
     let resolved = src;
     if (resolved.startsWith('file:///')) {
       resolved = resolved.slice(8);

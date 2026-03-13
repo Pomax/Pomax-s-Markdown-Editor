@@ -95,15 +95,15 @@ export class WordCountModal {
     this.dialog = null;
 
     /** @type {boolean} */
-    this._built = false;
+    this.built = false;
   }
 
   /**
    * Lazily builds the dialog DOM the first time it is needed.
    */
-  _build() {
-    if (this._built) return;
-    this._built = true;
+  build() {
+    if (this.built) return;
+    this.built = true;
 
     const dialog = document.createElement('dialog');
     dialog.className = 'word-count-dialog';
@@ -149,7 +149,7 @@ export class WordCountModal {
    * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxTree | null} syntaxTree
    */
   open(syntaxTree) {
-    this._build();
+    this.build();
     if (!this.dialog) return;
 
     const { total, excludingCode } = getWordCounts(syntaxTree);

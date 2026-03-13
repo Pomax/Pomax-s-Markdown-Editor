@@ -185,10 +185,10 @@ test.describe('Paste in source view', () => {
     // don't produce false positives.
     await page.evaluate(() => {
       const editor = /** @type {any} */ (window).__editor;
-      editor._pasteTestFullRenderCount = 0;
+      editor.pasteTestFullRenderCount = 0;
       const origFullRender = editor.fullRender.bind(editor);
       editor.fullRender = (/** @type {any[]} */ ...args) => {
-        editor._pasteTestFullRenderCount++;
+        editor.pasteTestFullRenderCount++;
         return origFullRender(...args);
       };
     });
@@ -198,7 +198,7 @@ test.describe('Paste in source view', () => {
     await page.waitForTimeout(200);
 
     const count = await page.evaluate(
-      () => /** @type {any} */ (window).__editor._pasteTestFullRenderCount,
+      () => /** @type {any} */ (window).__editor.pasteTestFullRenderCount,
     );
     expect(count).toBe(0);
 
@@ -294,10 +294,10 @@ test.describe('Paste in writing view', () => {
     // don't produce false positives.
     await page.evaluate(() => {
       const editor = /** @type {any} */ (window).__editor;
-      editor._pasteTestFullRenderCount = 0;
+      editor.pasteTestFullRenderCount = 0;
       const origFullRender = editor.fullRender.bind(editor);
       editor.fullRender = (/** @type {any[]} */ ...args) => {
-        editor._pasteTestFullRenderCount++;
+        editor.pasteTestFullRenderCount++;
         return origFullRender(...args);
       };
     });
@@ -307,7 +307,7 @@ test.describe('Paste in writing view', () => {
     await page.waitForTimeout(200);
 
     const count = await page.evaluate(
-      () => /** @type {any} */ (window).__editor._pasteTestFullRenderCount,
+      () => /** @type {any} */ (window).__editor.pasteTestFullRenderCount,
     );
     expect(count).toBe(0);
 

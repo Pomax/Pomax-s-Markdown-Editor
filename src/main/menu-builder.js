@@ -25,7 +25,7 @@ export class MenuBuilder {
     this.fileManager = fileManager;
 
     /** @type {boolean} Whether the context-menu listener has been registered */
-    this._contextMenuRegistered = false;
+    this.contextMenuRegistered = false;
 
     /**
      * List of currently open files, sent from the renderer.
@@ -33,7 +33,7 @@ export class MenuBuilder {
      */
     this.openFiles = [];
 
-    this._registerContextMenu();
+    this.registerContextMenu();
   }
 
   /**
@@ -345,7 +345,7 @@ export class MenuBuilder {
     this.window.webContents.reloadIgnoringCache();
 
     this.window.webContents.once('did-finish-load', () => {
-      this._restoreOpenFiles();
+      this.restoreOpenFiles();
     });
   }
 
@@ -354,7 +354,7 @@ export class MenuBuilder {
    * them into the freshly reloaded renderer — the same flow that runs
    * on a normal app launch.
    */
-  async _restoreOpenFiles() {
+  async restoreOpenFiles() {
     if (!this.window) return;
 
     const openFiles = settings.get('openFiles', null);
@@ -500,7 +500,7 @@ export class MenuBuilder {
     const docDir = path.dirname(this.fileManager.currentFilePath);
 
     // ── 4. Find and gather images ──
-    const result = await this._gatherImages(markdown, docDir);
+    const result = await this.gatherImages(markdown, docDir);
 
     if (result.changedCount === 0) {
       await dialog.showMessageBox(this.window, {
@@ -541,7 +541,7 @@ export class MenuBuilder {
    * @param {string} docDir  - The directory the document lives in
    * @returns {Promise<{updatedMarkdown: string, changedCount: number, details: string[]}>}
    */
-  async _gatherImages(markdown, docDir) {
+  async gatherImages(markdown, docDir) {
     // Match both ![alt](src) and [![alt](src)](href) image syntaxes.
     // We only care about the image source (the inner `src`).
     const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
@@ -611,15 +611,15 @@ export class MenuBuilder {
       let counter = 2;
       const ext = path.extname(baseName);
       const stem = path.basename(baseName, ext);
-      while (await this._fileExists(destPath)) {
+      while (await this.fileExists(destPath)) {
         // If it's the exact same file (same size), reuse it
-        if (await this._filesMatch(srcPath, destPath)) break;
+        if (await this.filesMatch(srcPath, destPath)) break;
         destPath = path.join(docDir, `${stem}-${counter}${ext}`);
         counter++;
       }
 
       try {
-        if (!(await this._fileExists(destPath)) || !(await this._filesMatch(srcPath, destPath))) {
+        if (!(await this.fileExists(destPath)) || !(await this.filesMatch(srcPath, destPath))) {
           await fs.copyFile(srcPath, destPath);
         }
 
@@ -641,7 +641,7 @@ export class MenuBuilder {
    * @param {string} filePath
    * @returns {Promise<boolean>}
    */
-  async _fileExists(filePath) {
+  async fileExists(filePath) {
     try {
       await fs.access(filePath);
       return true;
@@ -656,7 +656,7 @@ export class MenuBuilder {
    * @param {string} fileB
    * @returns {Promise<boolean>}
    */
-  async _filesMatch(fileA, fileB) {
+  async filesMatch(fileA, fileB) {
     try {
       const [statA, statB] = await Promise.all([fs.stat(fileA), fs.stat(fileB)]);
       return statA.size === statB.size;
@@ -669,13 +669,13 @@ export class MenuBuilder {
    * Registers the right-click context menu on the renderer's
    * webContents.  Always active — not gated behind DevTools.
    */
-  _registerContextMenu() {
-    if (!this.window || this._contextMenuRegistered) return;
-    this._contextMenuRegistered = true;
+  registerContextMenu() {
+    if (!this.window || this.contextMenuRegistered) return;
+    this.contextMenuRegistered = true;
 
     const wc = this.window.webContents;
 
-    wc.on('context-menu', (_event, params) => {
+    wc.on('context-menu', (event, params) => {
       const menu = Menu.buildFromTemplate([
         { role: 'copy' },
         { role: 'cut' },

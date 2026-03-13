@@ -59,7 +59,7 @@ export class SourceRenderer {
     // Append a phantom paragraph after a trailing code block so the
     // user has somewhere to place the cursor.  This element is not
     // backed by a tree node — it is promoted on first interaction.
-    this._ensurePhantomParagraph(container, syntaxTree);
+    this.ensurePhantomParagraph(container, syntaxTree);
 
     // Attempt to restore selection (simplified)
     if (savedRange) {
@@ -77,12 +77,12 @@ export class SourceRenderer {
    * when the last tree node is a code block.  The phantom is a
    * presentation-only DOM element — it is not backed by a tree node.
    * When the user interacts with it (clicks, types), it is promoted to
-   * a real SyntaxNode by {@link Editor#_promotePhantomParagraph}.
+   * a real SyntaxNode by {@link Editor#promotePhantomParagraph}.
    *
    * @param {HTMLElement} container
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} tree
    */
-  _ensurePhantomParagraph(container, tree) {
+  ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector('.md-phantom-paragraph');
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
@@ -121,7 +121,7 @@ export class SourceRenderer {
 
     // 2. Re-render existing nodes in-place.
     for (const nodeId of updated) {
-      this._replaceNodeElement(container, tree, nodeId);
+      this.replaceNodeElement(container, tree, nodeId);
     }
 
     // 3. Insert DOM elements for newly added nodes.
@@ -147,14 +147,14 @@ export class SourceRenderer {
       // No previous sibling — if inside an html-block, re-render
       // the parent instead; otherwise prepend to the container.
       if (node.parent && node.parent.type === 'html-block') {
-        this._replaceNodeElement(container, tree, node.parent.id);
+        this.replaceNodeElement(container, tree, node.parent.id);
       } else {
         container.prepend(element);
       }
     }
 
     // Refresh the phantom paragraph after incremental updates.
-    this._ensurePhantomParagraph(container, tree);
+    this.ensurePhantomParagraph(container, tree);
   }
 
   /**
@@ -169,7 +169,7 @@ export class SourceRenderer {
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} tree
    * @param {string} nodeId
    */
-  _replaceNodeElement(container, tree, nodeId) {
+  replaceNodeElement(container, tree, nodeId) {
     const node = tree.findNodeById(nodeId);
     if (!node) return;
 
@@ -311,7 +311,7 @@ export class SourceRenderer {
    *
    * The node enters "source edit mode" (see
    * {@link SyntaxNode#enterSourceEditMode}) which stores the full
-   * markdown text in `_sourceEditText`.  All subsequent keystrokes
+   * markdown text in `sourceEditText`.  All subsequent keystrokes
    * operate on that string.  When the cursor leaves the node (or the
    * view mode switches), the text is reparsed back into tree properties.
    *
@@ -328,7 +328,7 @@ export class SourceRenderer {
     codeContent.className = 'md-code-content md-content';
     // Append an extra newline so trailing empty lines have visual
     // height (same reason as the old per-section render).
-    codeContent.textContent = `${node._sourceEditText}\n`;
+    codeContent.textContent = `${node.sourceEditText}\n`;
     element.appendChild(codeContent);
 
     return element;

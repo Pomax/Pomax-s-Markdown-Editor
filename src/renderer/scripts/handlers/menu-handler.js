@@ -214,10 +214,10 @@ export class MenuHandler {
    * Handles opening the Preferences modal.
    */
   handlePreferences() {
-    if (!this._preferencesModal) {
-      this._preferencesModal = new PreferencesModal();
+    if (!this.preferencesModal) {
+      this.preferencesModal = new PreferencesModal();
     }
-    this._preferencesModal.open();
+    this.preferencesModal.open();
   }
 
   /**
@@ -240,9 +240,9 @@ export class MenuHandler {
    * Handles opening the Word Count modal.
    */
   handleWordCount() {
-    if (!this._wordCountModal) {
-      this._wordCountModal = new WordCountModal();
+    if (!this.wordCountModal) {
+      this.wordCountModal = new WordCountModal();
     }
-    this._wordCountModal.open(this.editor.syntaxTree);
+    this.wordCountModal.open(this.editor.syntaxTree);
   }
 }

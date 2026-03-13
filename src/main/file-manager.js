@@ -37,7 +37,7 @@ export class FileManager {
      */
     this.recentFiles = [];
 
-    this._loadRecentFiles();
+    this.loadRecentFiles();
   }
 
   /**
@@ -211,7 +211,7 @@ export class FileManager {
       this.recentFiles = this.recentFiles.slice(0, MAX_RECENT_FILES);
     }
 
-    this._saveRecentFiles();
+    this.saveRecentFiles();
   }
 
   /**
@@ -227,7 +227,7 @@ export class FileManager {
    */
   clearRecentFiles() {
     this.recentFiles = [];
-    this._saveRecentFiles();
+    this.saveRecentFiles();
   }
 
   /**
@@ -252,7 +252,7 @@ export class FileManager {
       const error = /** @type {Error} */ (err);
       // Remove from recents if the file no longer exists
       this.recentFiles = this.recentFiles.filter((f) => f !== filePath);
-      this._saveRecentFiles();
+      this.saveRecentFiles();
       return {
         success: false,
         message: `Failed to load file: ${error.message}`,
@@ -262,9 +262,8 @@ export class FileManager {
 
   /**
    * Loads the recent files list from the settings database.
-   * @private
    */
-  _loadRecentFiles() {
+  loadRecentFiles() {
     try {
       const stored = settings.get('recentFiles', []);
       if (Array.isArray(stored)) {
@@ -279,7 +278,10 @@ export class FileManager {
    * Saves the recent files list to the settings database.
    * @private
    */
-  _saveRecentFiles() {
+  /**
+   * Saves the recent files list to the settings database.
+   */
+  saveRecentFiles() {
     try {
       settings.set('recentFiles', this.recentFiles);
     } catch {

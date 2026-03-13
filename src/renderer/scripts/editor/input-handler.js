@@ -28,14 +28,14 @@ export class InputHandler {
    * @param {InputEvent} event
    */
   handleBeforeInput(event) {
-    if (this.editor._isRendering) {
+    if (this.editor.isRendering) {
       event.preventDefault();
       return;
     }
 
     // If the cursor is inside the phantom paragraph, promote it
     // to a real tree node before processing any input.
-    if (this.editor._promotePhantomParagraph()) {
+    if (this.editor.promotePhantomParagraph()) {
       // For paste we still need to continue; for other input types
       // the keydown handler already drove the edit, so prevent.
       if (event.inputType !== 'insertFromPaste') {
@@ -62,7 +62,7 @@ export class InputHandler {
       if (this.editor.treeRange) {
         const rangeResult = this.editor.rangeOperations.deleteSelectedRange();
         if (rangeResult) {
-          this.editor.editOperations._cleanupEmptyNodeAfterDelete(rangeResult);
+          this.editor.editOperations.cleanupEmptyNodeAfterDelete(rangeResult);
           this.editor.recordAndRender(rangeResult.before, rangeResult.hints);
         }
       }
@@ -82,7 +82,7 @@ export class InputHandler {
   handleKeyDown(event) {
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
-    this.editor._editorInteractionPending = true;
+    this.editor.editorInteractionPending = true;
 
     // If the cursor is inside the phantom paragraph (the view-only
     // element after a trailing code block), promote it to a real
@@ -91,7 +91,7 @@ export class InputHandler {
       event.key.length === 1 &&
       !event.ctrlKey &&
       !event.metaKey &&
-      this.editor._promotePhantomParagraph()
+      this.editor.promotePhantomParagraph()
     ) {
       // The phantom was promoted and cursor placed.  Now let the
       // normal insertTextAtCursor path handle the character.
@@ -135,7 +135,7 @@ export class InputHandler {
       event.preventDefault();
       // If the cursor is inside the phantom paragraph, promoting it
       // is all we need — an empty real paragraph already exists.
-      if (this.editor._promotePhantomParagraph()) return;
+      if (this.editor.promotePhantomParagraph()) return;
       this.editor.editOperations.handleEnterKey();
       return;
     }

@@ -23,7 +23,7 @@ export class LinkHelper {
      * Lazily-created link modal for click-to-edit in writing mode.
      * @type {LinkModal|null}
      */
-    this._linkModal = null;
+    this.linkModal = null;
   }
 
   /**
@@ -35,8 +35,8 @@ export class LinkHelper {
    * @param {HTMLAnchorElement} anchor - The clicked `<a>` element
    */
   async openLinkModalForNode(node, anchor) {
-    if (!this._linkModal) {
-      this._linkModal = new LinkModal();
+    if (!this.linkModal) {
+      this.linkModal = new LinkModal();
     }
 
     const clickedUrl = anchor.getAttribute('href') ?? '';
@@ -57,7 +57,7 @@ export class LinkHelper {
 
     if (!oldMarkdown) return;
 
-    const result = await this._linkModal.open({ text: oldText, url: clickedUrl });
+    const result = await this.linkModal.open({ text: oldText, url: clickedUrl });
     if (!result) return;
 
     if (!this.editor.syntaxTree) return;

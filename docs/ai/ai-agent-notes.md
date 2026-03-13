@@ -46,6 +46,10 @@ this **before** doing any work.
   make sure that `main` is up to date with respect to the origin.
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
+- **Never** use `_` as a naming prefix to mean "private". That is not
+  how JavaScript works. However, using `_` as prefix for unused but
+  required function arguments is allowed as the underscore is not use
+  to signify some kind of ownership or privacy.
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
   terminal invocation must be a single command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
@@ -283,7 +287,7 @@ html-block (type: 'html-block', tagName: 'details')
         div.md-line.md-paragraph
   ```
 
-- Collapse/expand state is stored as `node.attributes._detailsOpen`
+- Collapse/expand state is stored as `node.attributes.detailsOpen`
   (runtime-only — not serialized to markdown).
 - Default open/closed state is controlled by a user preference
   (`detailsClosed` setting in the Content preferences section).

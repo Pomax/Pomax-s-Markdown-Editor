@@ -18,15 +18,15 @@ import { BaseModal } from '../modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class LinkModal extends BaseModal {
-  get _prefix() {
+  get prefix() {
     return 'link';
   }
 
-  get _ariaLabel() {
+  get ariaLabel() {
     return 'Edit Link';
   }
 
-  _getTemplate() {
+  getTemplate() {
     return `
             <form method="dialog" class="link-form">
                 <header class="link-dialog-header">
@@ -54,11 +54,11 @@ export class LinkModal extends BaseModal {
   /**
    * @param {Partial<LinkData>} [existing]
    */
-  _populateFields(existing) {
-    const textInput = this._getInput('link-text');
-    const urlInput = this._getInput('link-url');
-    const insertBtn = this._getInsertBtn();
-    const heading = this._getHeading();
+  populateFields(existing) {
+    const textInput = this.getInput('link-text');
+    const urlInput = this.getInput('link-url');
+    const insertBtn = this.getInsertBtn();
+    const heading = this.getHeading();
 
     if (existing?.text || existing?.url) {
       textInput.value = existing.text ?? '';
@@ -77,22 +77,20 @@ export class LinkModal extends BaseModal {
    * @param {Partial<LinkData>} [existing]
    * @returns {HTMLElement}
    */
-  _getFocusTarget(existing) {
+  getFocusTarget(existing) {
     // Focus the URL input when editing (text is usually fine), text input when inserting
-    return existing?.text || existing?.url
-      ? this._getInput('link-url')
-      : this._getInput('link-text');
+    return existing?.text || existing?.url ? this.getInput('link-url') : this.getInput('link-text');
   }
 
-  _submit() {
-    const text = this._getInput('link-text').value.trim();
-    const url = this._getInput('link-url').value.trim();
+  submit() {
+    const text = this.getInput('link-text').value.trim();
+    const url = this.getInput('link-url').value.trim();
 
     if (!url) {
-      this._getInput('link-url').focus();
+      this.getInput('link-url').focus();
       return;
     }
 
-    this._closeWithResult({ text: text || url, url });
+    this.closeWithResult({ text: text || url, url });
   }
 }

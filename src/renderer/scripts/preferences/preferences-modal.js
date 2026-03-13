@@ -63,24 +63,24 @@ export class PreferencesModal {
     this.dialog = null;
 
     /** @type {boolean} */
-    this._built = false;
+    this.built = false;
 
     /** @type {boolean} */
-    this._linkTopBottom = false;
+    this.linkTopBottom = false;
 
     /** @type {boolean} */
-    this._linkLeftRight = false;
+    this.linkLeftRight = false;
 
     /** @type {boolean} */
-    this._linkAll = false;
+    this.linkAll = false;
   }
 
   /**
    * Lazily builds the dialog DOM the first time it is needed.
    */
-  _build() {
-    if (this._built) return;
-    this._built = true;
+  build() {
+    if (this.built) return;
+    this.built = true;
 
     const dialog = document.createElement('dialog');
     dialog.className = 'preferences-dialog';
@@ -260,7 +260,7 @@ export class PreferencesModal {
     if (form) {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        this._save();
+        this.save();
       });
     }
 
@@ -277,19 +277,19 @@ export class PreferencesModal {
     });
 
     // Wire up link toggles
-    this._setupLinkToggles(dialog);
+    this.setupLinkToggles(dialog);
 
     // Wire up margin input syncing
-    this._setupMarginInputs(dialog);
+    this.setupMarginInputs(dialog);
 
     // Wire up color input syncing
-    this._setupColorInputs(dialog);
+    this.setupColorInputs(dialog);
 
     // Wire up page-width toggle
-    this._setupPageWidth(dialog);
+    this.setupPageWidth(dialog);
 
     // Wire up sidebar navigation links
-    this._setupNavLinks(dialog);
+    this.setupNavLinks(dialog);
 
     document.body.appendChild(dialog);
     this.dialog = dialog;
@@ -299,61 +299,61 @@ export class PreferencesModal {
    * Sets up the link-toggle checkboxes so they interact correctly.
    * @param {HTMLDialogElement} dialog
    */
-  _setupLinkToggles(dialog) {
+  setupLinkToggles(dialog) {
     const linkTB = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-top-bottom'));
     const linkLR = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-left-right'));
     const linkAll = /** @type {HTMLInputElement} */ (dialog.querySelector('#link-all'));
 
     linkTB.addEventListener('change', () => {
-      this._linkTopBottom = linkTB.checked;
+      this.linkTopBottom = linkTB.checked;
       if (linkTB.checked) {
-        this._syncValue(dialog, 'margin-top', 'margin-bottom');
+        this.syncValue(dialog, 'margin-top', 'margin-bottom');
       }
       // If both TB and LR are on, turn on All
       if (linkTB.checked && linkLR.checked) {
         linkAll.checked = true;
-        this._linkAll = true;
-        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+        this.linkAll = true;
+        this.syncAllToValue(dialog, this.getInput(dialog, 'margin-top').value);
       }
       if (!linkTB.checked && linkAll.checked) {
         linkAll.checked = false;
-        this._linkAll = false;
+        this.linkAll = false;
       }
-      this._updateDisabledState(dialog);
+      this.updateDisabledState(dialog);
     });
 
     linkLR.addEventListener('change', () => {
-      this._linkLeftRight = linkLR.checked;
+      this.linkLeftRight = linkLR.checked;
       if (linkLR.checked) {
-        this._syncValue(dialog, 'margin-left', 'margin-right');
+        this.syncValue(dialog, 'margin-left', 'margin-right');
       }
       if (linkTB.checked && linkLR.checked) {
         linkAll.checked = true;
-        this._linkAll = true;
-        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+        this.linkAll = true;
+        this.syncAllToValue(dialog, this.getInput(dialog, 'margin-top').value);
       }
       if (!linkLR.checked && linkAll.checked) {
         linkAll.checked = false;
-        this._linkAll = false;
+        this.linkAll = false;
       }
-      this._updateDisabledState(dialog);
+      this.updateDisabledState(dialog);
     });
 
     linkAll.addEventListener('change', () => {
-      this._linkAll = linkAll.checked;
+      this.linkAll = linkAll.checked;
       if (linkAll.checked) {
         linkTB.checked = true;
         linkLR.checked = true;
-        this._linkTopBottom = true;
-        this._linkLeftRight = true;
-        this._syncAllToValue(dialog, this._getInput(dialog, 'margin-top').value);
+        this.linkTopBottom = true;
+        this.linkLeftRight = true;
+        this.syncAllToValue(dialog, this.getInput(dialog, 'margin-top').value);
       } else {
         linkTB.checked = false;
         linkLR.checked = false;
-        this._linkTopBottom = false;
-        this._linkLeftRight = false;
+        this.linkTopBottom = false;
+        this.linkLeftRight = false;
       }
-      this._updateDisabledState(dialog);
+      this.updateDisabledState(dialog);
     });
   }
 
@@ -361,11 +361,11 @@ export class PreferencesModal {
    * Sets up input event listeners on margin fields for linked syncing.
    * @param {HTMLDialogElement} dialog
    */
-  _setupMarginInputs(dialog) {
+  setupMarginInputs(dialog) {
     const ids = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'];
     for (const id of ids) {
-      this._getInput(dialog, id).addEventListener('input', () => {
-        this._handleMarginInput(dialog, id);
+      this.getInput(dialog, id).addEventListener('input', () => {
+        this.handleMarginInput(dialog, id);
       });
     }
   }
@@ -374,22 +374,22 @@ export class PreferencesModal {
    * Sets up color picker ↔ hex text input syncing.
    * @param {HTMLDialogElement} dialog
    */
-  _setupColorInputs(dialog) {
+  setupColorInputs(dialog) {
     const pairs = [
       { picker: 'color-page-bg', hex: 'color-page-bg-hex' },
       { picker: 'color-page-text', hex: 'color-page-text-hex' },
     ];
 
     for (const { picker, hex } of pairs) {
-      const pickerEl = this._getInput(dialog, picker);
-      const hexEl = this._getInput(dialog, hex);
+      const pickerEl = this.getInput(dialog, picker);
+      const hexEl = this.getInput(dialog, hex);
 
       pickerEl.addEventListener('input', () => {
         hexEl.value = pickerEl.value;
       });
 
       hexEl.addEventListener('input', () => {
-        const expanded = this._expandHex(hexEl.value);
+        const expanded = this.expandHex(hexEl.value);
         if (expanded) {
           pickerEl.value = expanded;
         }
@@ -401,7 +401,7 @@ export class PreferencesModal {
    * Sets up the page-width fixed-toggle so the custom row shows/hides.
    * @param {HTMLDialogElement} dialog
    */
-  _setupPageWidth(dialog) {
+  setupPageWidth(dialog) {
     const fixedCb = /** @type {HTMLInputElement} */ (dialog.querySelector('#page-width-fixed'));
     const customRow = dialog.querySelector('#page-width-custom');
 
@@ -418,7 +418,7 @@ export class PreferencesModal {
    * Also observes scroll position to update the active link automatically.
    * @param {HTMLDialogElement} dialog
    */
-  _setupNavLinks(dialog) {
+  setupNavLinks(dialog) {
     const links = dialog.querySelectorAll('.preferences-nav-link');
     const body = dialog.querySelector('.preferences-body');
     if (!body) return;
@@ -442,7 +442,7 @@ export class PreferencesModal {
 
     // Observe scroll to highlight whichever section is currently visible
     body.addEventListener('scroll', () => {
-      this._updateActiveNavLink(dialog);
+      this.updateActiveNavLink(dialog);
     });
   }
 
@@ -451,7 +451,7 @@ export class PreferencesModal {
    * top of the scrollable body.
    * @param {HTMLDialogElement} dialog
    */
-  _updateActiveNavLink(dialog) {
+  updateActiveNavLink(dialog) {
     const body = dialog.querySelector('.preferences-body');
     if (!body) return;
 
@@ -486,14 +486,14 @@ export class PreferencesModal {
    * right follows left). When "link all" is on, only top is editable.
    * @param {HTMLDialogElement} dialog
    */
-  _updateDisabledState(dialog) {
-    const bottomInput = this._getInput(dialog, 'margin-bottom');
-    const rightInput = this._getInput(dialog, 'margin-right');
-    const leftInput = this._getInput(dialog, 'margin-left');
+  updateDisabledState(dialog) {
+    const bottomInput = this.getInput(dialog, 'margin-bottom');
+    const rightInput = this.getInput(dialog, 'margin-right');
+    const leftInput = this.getInput(dialog, 'margin-left');
 
-    bottomInput.disabled = this._linkTopBottom || this._linkAll;
-    rightInput.disabled = this._linkLeftRight || this._linkAll;
-    leftInput.disabled = this._linkAll;
+    bottomInput.disabled = this.linkTopBottom || this.linkAll;
+    rightInput.disabled = this.linkLeftRight || this.linkAll;
+    leftInput.disabled = this.linkAll;
   }
 
   /**
@@ -501,22 +501,22 @@ export class PreferencesModal {
    * @param {HTMLDialogElement} dialog
    * @param {string} changedId
    */
-  _handleMarginInput(dialog, changedId) {
-    const value = this._getInput(dialog, changedId).value;
+  handleMarginInput(dialog, changedId) {
+    const value = this.getInput(dialog, changedId).value;
 
-    if (this._linkAll) {
-      this._syncAllToValue(dialog, value);
+    if (this.linkAll) {
+      this.syncAllToValue(dialog, value);
       return;
     }
 
-    if (this._linkTopBottom && (changedId === 'margin-top' || changedId === 'margin-bottom')) {
+    if (this.linkTopBottom && (changedId === 'margin-top' || changedId === 'margin-bottom')) {
       const other = changedId === 'margin-top' ? 'margin-bottom' : 'margin-top';
-      this._getInput(dialog, other).value = value;
+      this.getInput(dialog, other).value = value;
     }
 
-    if (this._linkLeftRight && (changedId === 'margin-left' || changedId === 'margin-right')) {
+    if (this.linkLeftRight && (changedId === 'margin-left' || changedId === 'margin-right')) {
       const other = changedId === 'margin-left' ? 'margin-right' : 'margin-left';
-      this._getInput(dialog, other).value = value;
+      this.getInput(dialog, other).value = value;
     }
   }
 
@@ -526,8 +526,8 @@ export class PreferencesModal {
    * @param {string} sourceId
    * @param {string} targetId
    */
-  _syncValue(dialog, sourceId, targetId) {
-    this._getInput(dialog, targetId).value = this._getInput(dialog, sourceId).value;
+  syncValue(dialog, sourceId, targetId) {
+    this.getInput(dialog, targetId).value = this.getInput(dialog, sourceId).value;
   }
 
   /**
@@ -535,9 +535,9 @@ export class PreferencesModal {
    * @param {HTMLDialogElement} dialog
    * @param {string} value
    */
-  _syncAllToValue(dialog, value) {
+  syncAllToValue(dialog, value) {
     for (const id of ['margin-top', 'margin-right', 'margin-bottom', 'margin-left']) {
-      this._getInput(dialog, id).value = value;
+      this.getInput(dialog, id).value = value;
     }
   }
 
@@ -547,7 +547,7 @@ export class PreferencesModal {
    * @param {string} id
    * @returns {HTMLInputElement}
    */
-  _getInput(dialog, id) {
+  getInput(dialog, id) {
     return /** @type {HTMLInputElement} */ (dialog.querySelector(`#${id}`));
   }
 
@@ -558,7 +558,7 @@ export class PreferencesModal {
    * @param {string} value
    * @returns {string|null}
    */
-  _expandHex(value) {
+  expandHex(value) {
     if (/^#[0-9a-f]{6}$/i.test(value)) {
       return value.toLowerCase();
     }
@@ -573,23 +573,23 @@ export class PreferencesModal {
    * Opens the preferences modal, loading current values from the database.
    */
   async open() {
-    this._build();
+    this.build();
     if (!this.dialog || this.dialog.open) return;
 
     // Load saved default view setting
-    const defaultView = await this._loadDefaultView();
+    const defaultView = await this.loadDefaultView();
     const viewSelect = /** @type {HTMLSelectElement} */ (
       this.dialog.querySelector('#default-view-select')
     );
     viewSelect.value = defaultView;
 
     // Load saved page-width setting
-    const pageWidth = await this._loadPageWidth();
+    const pageWidth = await this.loadPageWidth();
     const fixedCb = /** @type {HTMLInputElement} */ (
       this.dialog.querySelector('#page-width-fixed')
     );
     fixedCb.checked = pageWidth.useFixed;
-    this._getInput(this.dialog, 'page-width-value').value = String(pageWidth.width);
+    this.getInput(this.dialog, 'page-width-value').value = String(pageWidth.width);
     const unitSelect = /** @type {HTMLSelectElement} */ (
       this.dialog.querySelector('#page-width-unit')
     );
@@ -600,17 +600,17 @@ export class PreferencesModal {
     }
 
     // Load saved margins (fall back to CSS defaults)
-    const margins = await this._loadMargins();
+    const margins = await this.loadMargins();
 
-    this._getInput(this.dialog, 'margin-top').value = String(margins.top);
-    this._getInput(this.dialog, 'margin-right').value = String(margins.right);
-    this._getInput(this.dialog, 'margin-bottom').value = String(margins.bottom);
-    this._getInput(this.dialog, 'margin-left').value = String(margins.left);
+    this.getInput(this.dialog, 'margin-top').value = String(margins.top);
+    this.getInput(this.dialog, 'margin-right').value = String(margins.right);
+    this.getInput(this.dialog, 'margin-bottom').value = String(margins.bottom);
+    this.getInput(this.dialog, 'margin-left').value = String(margins.left);
 
     // Reset link toggles
-    this._linkTopBottom = false;
-    this._linkLeftRight = false;
-    this._linkAll = false;
+    this.linkTopBottom = false;
+    this.linkLeftRight = false;
+    this.linkAll = false;
     const linkTB = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-top-bottom'));
     const linkLR = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-left-right'));
     const linkAllEl = /** @type {HTMLInputElement} */ (this.dialog.querySelector('#link-all'));
@@ -619,37 +619,37 @@ export class PreferencesModal {
     linkAllEl.checked = false;
 
     // Reset disabled state on all inputs
-    this._updateDisabledState(this.dialog);
+    this.updateDisabledState(this.dialog);
 
     // Load saved colors
-    const colors = await this._loadColors();
-    this._getInput(this.dialog, 'color-page-bg').value = colors.pageBg;
-    this._getInput(this.dialog, 'color-page-bg-hex').value = colors.pageBg;
-    this._getInput(this.dialog, 'color-page-text').value = colors.pageText;
-    this._getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
+    const colors = await this.loadColors();
+    this.getInput(this.dialog, 'color-page-bg').value = colors.pageBg;
+    this.getInput(this.dialog, 'color-page-bg-hex').value = colors.pageBg;
+    this.getInput(this.dialog, 'color-page-text').value = colors.pageText;
+    this.getInput(this.dialog, 'color-page-text-hex').value = colors.pageText;
 
     // Load TOC settings
-    const tocVisible = await this._loadTocVisible();
+    const tocVisible = await this.loadTocVisible();
     const tocVisibleCb = /** @type {HTMLInputElement} */ (
       this.dialog.querySelector('#toc-visible')
     );
     tocVisibleCb.checked = tocVisible;
 
-    const tocPosition = await this._loadTocPosition();
+    const tocPosition = await this.loadTocPosition();
     const tocPositionSelect = /** @type {HTMLSelectElement} */ (
       this.dialog.querySelector('#toc-position-select')
     );
     tocPositionSelect.value = tocPosition;
 
     // Load image handling settings
-    const ensureLocalPaths = await this._loadEnsureLocalPaths();
+    const ensureLocalPaths = await this.loadEnsureLocalPaths();
     const ensureLocalPathsCb = /** @type {HTMLInputElement} */ (
       this.dialog.querySelector('#ensure-local-paths')
     );
     ensureLocalPathsCb.checked = ensureLocalPaths;
 
     // Load content settings
-    const detailsClosed = await this._loadDetailsClosed();
+    const detailsClosed = await this.loadDetailsClosed();
     const detailsClosedCb = /** @type {HTMLInputElement} */ (
       this.dialog.querySelector('#details-closed')
     );
@@ -671,7 +671,7 @@ export class PreferencesModal {
    * Loads the default view mode from the settings database.
    * @returns {Promise<import('../editor/editor.js').ViewMode>}
    */
-  async _loadDefaultView() {
+  async loadDefaultView() {
     if (!window.electronAPI) return DEFAULT_VIEW_MODE;
 
     try {
@@ -690,7 +690,7 @@ export class PreferencesModal {
    * Loads the current page-width setting from the settings database.
    * @returns {Promise<{ useFixed: boolean, width: number, unit: 'px' | 'mm' }>}
    */
-  async _loadPageWidth() {
+  async loadPageWidth() {
     if (!window.electronAPI) return { ...DEFAULT_PAGE_WIDTH };
 
     try {
@@ -713,7 +713,7 @@ export class PreferencesModal {
    * Loads the current margin values from the settings database.
    * @returns {Promise<{ top: number, right: number, bottom: number, left: number }>}
    */
-  async _loadMargins() {
+  async loadMargins() {
     if (!window.electronAPI) return { ...DEFAULT_MARGINS };
 
     try {
@@ -737,7 +737,7 @@ export class PreferencesModal {
    * Loads the current color values from the settings database.
    * @returns {Promise<{ pageBg: string, pageText: string }>}
    */
-  async _loadColors() {
+  async loadColors() {
     if (!window.electronAPI) return { ...DEFAULT_COLORS };
 
     try {
@@ -759,7 +759,7 @@ export class PreferencesModal {
    * Loads the TOC visibility setting from the settings database.
    * @returns {Promise<boolean>}
    */
-  async _loadTocVisible() {
+  async loadTocVisible() {
     if (!window.electronAPI) return DEFAULT_TOC_VISIBLE;
 
     try {
@@ -778,7 +778,7 @@ export class PreferencesModal {
    * Loads the TOC position setting from the settings database.
    * @returns {Promise<import('../toc/toc.js').TocPosition>}
    */
-  async _loadTocPosition() {
+  async loadTocPosition() {
     if (!window.electronAPI) return DEFAULT_TOC_POSITION;
 
     try {
@@ -797,7 +797,7 @@ export class PreferencesModal {
    * Loads the "ensure local paths" setting from the settings database.
    * @returns {Promise<boolean>}
    */
-  async _loadEnsureLocalPaths() {
+  async loadEnsureLocalPaths() {
     if (!window.electronAPI) return DEFAULT_ENSURE_LOCAL_PATHS;
 
     try {
@@ -816,7 +816,7 @@ export class PreferencesModal {
    * Loads the details-closed setting from the settings database.
    * @returns {Promise<boolean>}
    */
-  async _loadDetailsClosed() {
+  async loadDetailsClosed() {
     if (!window.electronAPI) return DEFAULT_DETAILS_CLOSED;
 
     try {
@@ -834,7 +834,7 @@ export class PreferencesModal {
   /**
    * Saves the current form values to the settings store and applies them.
    */
-  async _save() {
+  async save() {
     if (!this.dialog) return;
 
     const viewSelect = /** @type {HTMLSelectElement} */ (
@@ -848,17 +848,17 @@ export class PreferencesModal {
     const unitSelect = /** @type {HTMLSelectElement} */ (
       this.dialog.querySelector('#page-width-unit')
     );
-    const rawWidth = Number(this._getInput(this.dialog, 'page-width-value').value);
+    const rawWidth = Number(this.getInput(this.dialog, 'page-width-value').value);
     const pageWidth = {
       useFixed: fixedCb.checked,
       width: Number.isNaN(rawWidth) ? DEFAULT_PAGE_WIDTH.width : rawWidth,
       unit: /** @type {'px' | 'mm'} */ (unitSelect.value),
     };
 
-    const rawTop = Number(this._getInput(this.dialog, 'margin-top').value);
-    const rawRight = Number(this._getInput(this.dialog, 'margin-right').value);
-    const rawBottom = Number(this._getInput(this.dialog, 'margin-bottom').value);
-    const rawLeft = Number(this._getInput(this.dialog, 'margin-left').value);
+    const rawTop = Number(this.getInput(this.dialog, 'margin-top').value);
+    const rawRight = Number(this.getInput(this.dialog, 'margin-right').value);
+    const rawBottom = Number(this.getInput(this.dialog, 'margin-bottom').value);
+    const rawLeft = Number(this.getInput(this.dialog, 'margin-left').value);
 
     const margins = {
       top: Number.isNaN(rawTop) ? DEFAULT_MARGINS.top : rawTop,
@@ -868,8 +868,8 @@ export class PreferencesModal {
     };
 
     const colors = {
-      pageBg: this._getInput(this.dialog, 'color-page-bg').value || DEFAULT_COLORS.pageBg,
-      pageText: this._getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
+      pageBg: this.getInput(this.dialog, 'color-page-bg').value || DEFAULT_COLORS.pageBg,
+      pageText: this.getInput(this.dialog, 'color-page-text').value || DEFAULT_COLORS.pageText,
     };
 
     const tocVisibleCb = /** @type {HTMLInputElement} */ (

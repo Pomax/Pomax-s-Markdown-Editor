@@ -115,7 +115,7 @@ export class WritingRenderer {
     // Append a phantom paragraph after a trailing code block so the
     // user has somewhere to place the cursor.  This element is not
     // backed by a tree node — it is promoted on first interaction.
-    this._ensurePhantomParagraph(container, syntaxTree);
+    this.ensurePhantomParagraph(container, syntaxTree);
   }
 
   /**
@@ -143,7 +143,7 @@ export class WritingRenderer {
     // 2. Re-render existing nodes in-place.
     for (const nodeId of updated) {
       const isFocused = nodeId === currentNodeId;
-      this._replaceNodeElement(container, tree, nodeId, isFocused);
+      this.replaceNodeElement(container, tree, nodeId, isFocused);
     }
 
     // 3. Insert DOM elements for newly added nodes.
@@ -154,7 +154,7 @@ export class WritingRenderer {
       const isFocused = nodeId === currentNodeId;
       const siblings = node.parent ? node.parent.children : tree.children;
       const idx = siblings.indexOf(node);
-      const visualNumber = this._computeVisualNumber(tree, node);
+      const visualNumber = this.computeVisualNumber(tree, node);
       const element = this.renderNode(node, isFocused, visualNumber);
       if (!element) continue;
 
@@ -172,14 +172,14 @@ export class WritingRenderer {
       // the parent instead; otherwise prepend to the container.
       if (node.parent && node.parent.type === 'html-block') {
         const parentFocused = node.parent.id === currentNodeId;
-        this._replaceNodeElement(container, tree, node.parent.id, parentFocused);
+        this.replaceNodeElement(container, tree, node.parent.id, parentFocused);
       } else {
         container.prepend(element);
       }
     }
 
     // Refresh the phantom paragraph after incremental updates.
-    this._ensurePhantomParagraph(container, tree);
+    this.ensurePhantomParagraph(container, tree);
   }
 
   /**
@@ -190,7 +190,7 @@ export class WritingRenderer {
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
    * @returns {number|undefined}
    */
-  _computeVisualNumber(tree, node) {
+  computeVisualNumber(tree, node) {
     if (node.type !== 'list-item' || !node.attributes.ordered) return undefined;
     const children = tree.children;
     const indent = node.attributes.indent || 0;
@@ -216,12 +216,12 @@ export class WritingRenderer {
    * when the last tree node is a code block.  The phantom is a
    * presentation-only DOM element — it is not backed by a tree node.
    * When the user interacts with it (clicks, types), it is promoted to
-   * a real SyntaxNode by {@link Editor#_promotePhantomParagraph}.
+   * a real SyntaxNode by {@link Editor#promotePhantomParagraph}.
    *
    * @param {HTMLElement} container
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} tree
    */
-  _ensurePhantomParagraph(container, tree) {
+  ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector('.md-phantom-paragraph');
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
@@ -247,14 +247,14 @@ export class WritingRenderer {
    * @param {string} nodeId
    * @param {boolean} isFocused
    */
-  _replaceNodeElement(container, tree, nodeId, isFocused) {
+  replaceNodeElement(container, tree, nodeId, isFocused) {
     const node = tree.findNodeById(nodeId);
     if (!node) return;
 
     const existing = container.querySelector(`[data-node-id="${nodeId}"]`);
     if (!existing) return;
 
-    const visualNumber = this._computeVisualNumber(tree, node);
+    const visualNumber = this.computeVisualNumber(tree, node);
     const updated = this.renderNode(node, isFocused, visualNumber);
     if (updated) {
       existing.replaceWith(updated);
@@ -702,10 +702,10 @@ export class WritingRenderer {
 
     // Check runtime toggle state stored on the node; fall back to the
     // user preference on first render.
-    if (node.attributes._detailsOpen === undefined) {
-      node.attributes._detailsOpen = defaultOpen;
+    if (node.attributes.detailsOpen === undefined) {
+      node.attributes.detailsOpen = defaultOpen;
     }
-    const isOpen = !!node.attributes._detailsOpen;
+    const isOpen = !!node.attributes.detailsOpen;
 
     const container = document.createElement('div');
     container.className = 'md-html-container md-details';
@@ -754,7 +754,7 @@ export class WritingRenderer {
       });
       triangle.addEventListener('click', (e) => {
         e.stopPropagation();
-        node.attributes._detailsOpen = !node.attributes._detailsOpen;
+        node.attributes.detailsOpen = !node.attributes.detailsOpen;
         this.editor.renderNodes({ updated: [node.id] });
         this.editor.placeCursor();
       });

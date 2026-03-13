@@ -134,7 +134,7 @@ export class TabBar {
    */
   initialize() {
     this.container.addEventListener('click', (e) => {
-      this._handleClick(e);
+      this.handleClick(e);
     });
   }
 
@@ -219,7 +219,7 @@ export class TabBar {
     this.container.innerHTML = '';
     for (const tab of this.tabs) {
       const displayLabel = labels.get(tab.id) ?? tab.label;
-      const button = this._createTabElement(tab, displayLabel);
+      const button = this.createTabElement(tab, displayLabel);
       this.container.appendChild(button);
     }
   }
@@ -230,7 +230,7 @@ export class TabBar {
    * @param {string} displayLabel - The disambiguated label to show
    * @returns {HTMLButtonElement}
    */
-  _createTabElement(tab, displayLabel) {
+  createTabElement(tab, displayLabel) {
     const button = document.createElement('button');
     button.className = 'tab-button';
     button.dataset.tabId = tab.id;
@@ -257,7 +257,7 @@ export class TabBar {
    * Handles click events on the tab bar via delegation.
    * @param {MouseEvent} e
    */
-  _handleClick(e) {
+  handleClick(e) {
     const target = /** @type {HTMLElement} */ (e.target);
 
     // Check for close button click

@@ -33,20 +33,20 @@ export class TableOfContents {
     this.editor = editor;
 
     /** @type {boolean} */
-    this._visible = true;
+    this.visible = true;
 
     /** @type {TocPosition} */
-    this._position = 'left';
+    this.position = 'left';
 
     /**
      * Maps every tree node ID to the ID of the h1–h3 heading whose
      * section it belongs to.  Rebuilt on every `refresh()`.
      * @type {Map<string, string>}
      */
-    this._nodeToHeadingId = new Map();
+    this.nodeToHeadingId = new Map();
 
     /** @type {((e: Event) => void) | null} */
-    this._scrollHandler = null;
+    this.scrollHandler = null;
 
     /**
      * When non-null, the ToC link for this heading ID stays highlighted
@@ -54,14 +54,14 @@ export class TableOfContents {
      * link and cleared on the next user-initiated scroll.
      * @type {string|null}
      */
-    this._lockedHeadingId = null;
+    this.lockedHeadingId = null;
 
     /**
-     * True while a programmatic scroll (from _scrollToHeading) is in
+     * True while a programmatic scroll (from scrollToHeading) is in
      * progress so we can distinguish it from a user scroll.
      * @type {boolean}
      */
-    this._programmaticScroll = false;
+    this.programmaticScroll = false;
   }
 
   /**
@@ -73,12 +73,12 @@ export class TableOfContents {
       '<div class="toc-resize-handle"></div>' +
       '<h3 class="toc-title">Table of Contents</h3><nav class="toc-nav"></nav>';
 
-    this._initResizeHandle();
+    this.initResizeHandle();
 
     // Observe child-list changes on the editor container so we can
     // refresh the TOC whenever the document is re-rendered.
-    this._observer = new MutationObserver(() => this.refresh());
-    this._observer.observe(this.editor.container, {
+    this.observer = new MutationObserver(() => this.refresh());
+    this.observer.observe(this.editor.container, {
       childList: true,
       subtree: true,
       characterData: true,
@@ -88,14 +88,14 @@ export class TableOfContents {
     // highlight the ToC heading whose section is most visible.
     const scrollContainer = this.editor.container.parentElement;
     if (scrollContainer) {
-      this._scrollHandler = () => {
-        if (this._programmaticScroll) return;
+      this.scrollHandler = () => {
+        if (this.programmaticScroll) return;
         // User scrolled — clear the locked heading so normal
         // scroll-based highlighting resumes.
-        this._lockedHeadingId = null;
-        this._updateActiveHeading();
+        this.lockedHeadingId = null;
+        this.updateActiveHeading();
       };
-      scrollContainer.addEventListener('scroll', this._scrollHandler, { passive: true });
+      scrollContainer.addEventListener('scroll', this.scrollHandler, { passive: true });
     }
 
     this.refresh();
@@ -106,9 +106,9 @@ export class TableOfContents {
    * Call this after swapping the editor container (e.g. on tab switch).
    */
   reobserve() {
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer.observe(this.editor.container, {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer.observe(this.editor.container, {
         childList: true,
         subtree: true,
         characterData: true,
@@ -124,19 +124,19 @@ export class TableOfContents {
     const nav = this.container.querySelector('.toc-nav');
     if (!nav) return;
 
-    const headings = this._extractHeadings();
+    const headings = this.extractHeadings();
 
     if (headings.length === 0) {
       nav.innerHTML = '<p class="toc-empty">No headings</p>';
       return;
     }
 
-    this._buildNodeToHeadingMap(headings);
+    this.buildNodeToHeadingMap(headings);
 
-    const list = this._buildNestedList(headings);
+    const list = this.buildNestedList(headings);
     nav.replaceChildren(list);
 
-    this._updateActiveHeading();
+    this.updateActiveHeading();
   }
 
   /**
@@ -144,13 +144,13 @@ export class TableOfContents {
    * headings with their node IDs and plain-text content.
    * @returns {TocHeading[]}
    */
-  _extractHeadings() {
+  extractHeadings() {
     const tree = this.editor.syntaxTree;
     if (!tree) return [];
 
     /** @type {TocHeading[]} */
     const headings = [];
-    this._collectHeadings(tree.children, headings);
+    this.collectHeadings(tree.children, headings);
     return headings;
   }
 
@@ -161,9 +161,9 @@ export class TableOfContents {
    * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} nodes
    * @param {TocHeading[]} headings
    */
-  _collectHeadings(nodes, headings) {
+  collectHeadings(nodes, headings) {
     for (const node of nodes) {
-      const level = this._headingLevel(node.type);
+      const level = this.headingLevel(node.type);
       if (level >= 1 && level <= 3) {
         headings.push({
           id: node.id,
@@ -173,7 +173,7 @@ export class TableOfContents {
       }
       // Recurse into container nodes
       if (node.children.length > 0) {
-        this._collectHeadings(node.children, headings);
+        this.collectHeadings(node.children, headings);
       }
     }
   }
@@ -184,7 +184,7 @@ export class TableOfContents {
    * @param {string} type
    * @returns {number}
    */
-  _headingLevel(type) {
+  headingLevel(type) {
     const match = /^heading(\d)$/.exec(type);
     return match ? Number(match[1]) : 0;
   }
@@ -194,10 +194,10 @@ export class TableOfContents {
    * the ID of the most recent h1–h3 heading that precedes it.  Nodes
    * that appear before the first heading are mapped to `''` (no heading).
    * @param {TocHeading[]} headings - The heading list produced by
-   *   `_extractHeadings()` (used to build a fast heading-ID set).
+   *   `extractHeadings()` (used to build a fast heading-ID set).
    */
-  _buildNodeToHeadingMap(headings) {
-    this._nodeToHeadingId.clear();
+  buildNodeToHeadingMap(headings) {
+    this.nodeToHeadingId.clear();
     const headingIds = new Set(headings.map((h) => h.id));
     const tree = this.editor.syntaxTree;
     if (!tree) return;
@@ -213,7 +213,7 @@ export class TableOfContents {
         if (headingIds.has(node.id)) {
           currentHeadingId = node.id;
         }
-        this._nodeToHeadingId.set(node.id, currentHeadingId);
+        this.nodeToHeadingId.set(node.id, currentHeadingId);
         if (node.children.length > 0) {
           walk(node.children);
         }
@@ -227,10 +227,10 @@ export class TableOfContents {
    * area in the scroll container and applies the `toc-active` CSS class
    * to the corresponding ToC link.
    */
-  _updateActiveHeading() {
+  updateActiveHeading() {
     // If a heading was locked by a ToC click, keep it highlighted.
-    if (this._lockedHeadingId) {
-      this._setActiveLink(this._lockedHeadingId);
+    if (this.lockedHeadingId) {
+      this.setActiveLink(this.lockedHeadingId);
       return;
     }
 
@@ -250,7 +250,7 @@ export class TableOfContents {
       const nodeId = el.dataset.nodeId;
       if (!nodeId) continue;
 
-      const headingId = this._nodeToHeadingId.get(nodeId);
+      const headingId = this.nodeToHeadingId.get(nodeId);
       if (headingId === undefined) continue;
 
       const rect = el.getBoundingClientRect();
@@ -272,7 +272,7 @@ export class TableOfContents {
       }
     }
 
-    this._setActiveLink(bestId);
+    this.setActiveLink(bestId);
   }
 
   /**
@@ -281,7 +281,7 @@ export class TableOfContents {
    * sidebar so the active link is centred.
    * @param {string} headingId
    */
-  _setActiveLink(headingId) {
+  setActiveLink(headingId) {
     const links = this.container.querySelectorAll('.toc-link');
     for (const link of links) {
       const a = /** @type {HTMLElement} */ (link);
@@ -306,7 +306,7 @@ export class TableOfContents {
    * @param {TocHeading[]} headings
    * @returns {HTMLUListElement}
    */
-  _buildNestedList(headings) {
+  buildNestedList(headings) {
     const root = document.createElement('ul');
     root.className = 'toc-list';
 
@@ -333,11 +333,11 @@ export class TableOfContents {
       // Prevent mousedown from stealing focus away from the editor.
       // Without this, clicking a TOC link fires the editor's
       // handleBlur (which clears treeCursor and re-renders) before
-      // _scrollToHeading runs, disrupting the scroll.
+      // scrollToHeading runs, disrupting the scroll.
       link.addEventListener('mousedown', (e) => e.preventDefault());
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        this._scrollToHeading(heading.id);
+        this.scrollToHeading(heading.id);
       });
 
       li.appendChild(link);
@@ -351,7 +351,7 @@ export class TableOfContents {
     }
 
     // Remove any empty trailing <ul> elements that were never populated
-    this._pruneEmptyLists(root);
+    this.pruneEmptyLists(root);
 
     return root;
   }
@@ -360,7 +360,7 @@ export class TableOfContents {
    * Recursively removes empty `<ul>` elements from the tree.
    * @param {HTMLElement} el
    */
-  _pruneEmptyLists(el) {
+  pruneEmptyLists(el) {
     const lists = el.querySelectorAll('ul');
     for (let i = lists.length - 1; i >= 0; i--) {
       const ul = lists[i];
@@ -376,7 +376,7 @@ export class TableOfContents {
    * cursor at the start of that heading.
    * @param {string} nodeId
    */
-  _scrollToHeading(nodeId) {
+  scrollToHeading(nodeId) {
     // Move the editor cursor to the target heading.  Only re-render
     // the previously-focused node and the new target — there is no
     // reason to rebuild the entire DOM.
@@ -387,18 +387,18 @@ export class TableOfContents {
     const updated = [nodeId];
     if (oldNodeId && oldNodeId !== nodeId) updated.push(oldNodeId);
     this.editor.renderNodesAndPlaceCursor({ updated });
-    this.editor._lastRenderedNodeId = nodeId;
+    this.editor.lastRenderedNodeId = nodeId;
 
     // Lock the ToC highlight to the clicked heading until the
     // user scrolls the document themselves.
-    this._lockedHeadingId = nodeId;
-    this._setActiveLink(nodeId);
+    this.lockedHeadingId = nodeId;
+    this.setActiveLink(nodeId);
 
     // Defer the scroll to the next animation frame so it runs
     // *after* any browser-initiated scroll-into-view triggered by
     // the selection change above.  This guarantees our scroll
     // position wins.
-    this._programmaticScroll = true;
+    this.programmaticScroll = true;
     requestAnimationFrame(() => {
       const target = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!target) return;
@@ -416,7 +416,7 @@ export class TableOfContents {
       // Clear the programmatic-scroll flag after the browser has
       // finished processing the scroll.
       requestAnimationFrame(() => {
-        this._programmaticScroll = false;
+        this.programmaticScroll = false;
       });
     });
   }
@@ -426,7 +426,7 @@ export class TableOfContents {
    * @param {boolean} visible
    */
   setVisible(visible) {
-    this._visible = visible;
+    this.visible = visible;
     this.container.classList.toggle('hidden', !visible);
   }
 
@@ -435,7 +435,7 @@ export class TableOfContents {
    * @returns {boolean}
    */
   isVisible() {
-    return this._visible;
+    return this.visible;
   }
 
   /**
@@ -443,7 +443,7 @@ export class TableOfContents {
    * @param {TocPosition} position
    */
   setPosition(position) {
-    this._position = position;
+    this.position = position;
     const wrapper = this.container.parentElement;
     if (wrapper) {
       wrapper.classList.toggle('toc-position-left', position === 'left');
@@ -456,7 +456,7 @@ export class TableOfContents {
    * @returns {TocPosition}
    */
   getPosition() {
-    return this._position;
+    return this.position;
   }
 
   /**
@@ -480,7 +480,7 @@ export class TableOfContents {
    * Sets up the drag-to-resize handle on the sidebar edge adjacent to the
    * editor.
    */
-  _initResizeHandle() {
+  initResizeHandle() {
     const handle = this.container.querySelector('.toc-resize-handle');
     if (!handle) return;
 
@@ -495,7 +495,7 @@ export class TableOfContents {
       const containerRect = this.container.getBoundingClientRect();
       let newWidth;
 
-      if (this._position === 'right') {
+      if (this.position === 'right') {
         // Sidebar on the right: drag the left edge
         newWidth = containerRect.right - e.clientX;
       } else {
@@ -516,7 +516,7 @@ export class TableOfContents {
       document.removeEventListener('mouseup', onMouseUp);
 
       // Persist the final width
-      this._persistWidth();
+      this.persistWidth();
     };
 
     handle.addEventListener('mousedown', (e) => {
@@ -533,7 +533,7 @@ export class TableOfContents {
   /**
    * Saves the current sidebar width to the settings database.
    */
-  async _persistWidth() {
+  async persistWidth() {
     if (!window.electronAPI) return;
     const width = this.getWidth();
     try {
@@ -547,16 +547,16 @@ export class TableOfContents {
    * Tears down the observer and scroll listener.
    */
   destroy() {
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer = null;
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
     }
-    if (this._scrollHandler) {
+    if (this.scrollHandler) {
       const scrollContainer = this.editor.container.parentElement;
       if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', this._scrollHandler);
+        scrollContainer.removeEventListener('scroll', this.scrollHandler);
       }
-      this._scrollHandler = null;
+      this.scrollHandler = null;
     }
   }
 }
