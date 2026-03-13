@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
+import { BrowserWindow, Menu, app, dialog, ipcMain, screen } from 'electron';
 import { FileManager } from './file-manager.js';
 import { IPCHandler } from './ipc-handler.js';
 import { MenuBuilder } from './menu-builder.js';
@@ -34,7 +34,10 @@ let menuBuilder;
 let boundsDebounce = null;
 
 /**
- * Saves the current window bounds and maximized state to the database.
+ * Saves the current window bounds as screen-relative ratios so that the
+ * window position translates correctly across monitors of different sizes
+ * (e.g. switching from a large desktop to a small remote-desktop session).
+ *
  * Called on move/resize (debounced) and before close.
  */
 function saveWindowBounds() {
@@ -45,9 +48,13 @@ function saveWindowBounds() {
   // non-maximized size/position for the next launch.
   const bounds = isMaximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
 
+  // Use the work area of the display the window is currently on.
+  const display = screen.getDisplayMatching(bounds);
+  const work = display.workArea;
+
   settings.set('windowBounds', {
-    x: bounds.x,
-    y: bounds.y,
+    xRatio: (bounds.x - work.x) / work.width,
+    yRatio: (bounds.y - work.y) / work.height,
     width: bounds.width,
     height: bounds.height,
     isMaximized,
@@ -105,13 +112,31 @@ function createWindow() {
   const defaultWidth = 800;
   const defaultHeight = Math.round(defaultWidth * Math.SQRT2);
 
-  // Load saved window bounds from settings
+  // Load saved window bounds (stored as screen-relative ratios) and
+  // convert them back to absolute pixels for the current display.
   const saved = settings.get('windowBounds');
+  const work = screen.getPrimaryDisplay().workArea;
+
+  const restoredWidth = saved?.width ?? defaultWidth;
+  const restoredHeight = saved?.height ?? defaultHeight;
+  /** @type {number|undefined} */
+  let restoredX;
+  /** @type {number|undefined} */
+  let restoredY;
+
+  if (saved?.xRatio != null && saved?.yRatio != null) {
+    restoredX = Math.round(saved.xRatio * work.width) + work.x;
+    restoredY = Math.round(saved.yRatio * work.height) + work.y;
+
+    // Clamp so the window is never completely off-screen.
+    restoredX = Math.max(work.x, Math.min(restoredX, work.x + work.width - restoredWidth));
+    restoredY = Math.max(work.y, Math.min(restoredY, work.y + work.height - restoredHeight));
+  }
 
   /** @type {Electron.BrowserWindowConstructorOptions} */
   const windowOptions = {
-    width: saved?.width ?? defaultWidth,
-    height: saved?.height ?? defaultHeight,
+    width: restoredWidth,
+    height: restoredHeight,
     minWidth: 600,
     minHeight: 848,
     webPreferences: {
@@ -126,9 +151,9 @@ function createWindow() {
   };
 
   // Only set position if we have saved values (otherwise let the OS decide)
-  if (saved?.x != null && saved?.y != null) {
-    windowOptions.x = saved.x;
-    windowOptions.y = saved.y;
+  if (restoredX != null && restoredY != null) {
+    windowOptions.x = restoredX;
+    windowOptions.y = restoredY;
   }
 
   mainWindow = new BrowserWindow(windowOptions);
