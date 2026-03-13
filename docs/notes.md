@@ -66,7 +66,7 @@ pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
 
 ### Tab switching vs. session restore
 
-When the user **switches tabs**, the DOM container and syntax tree are preserved in `_documentStates` — nothing changes. The only action needed is placing the browser selection. **Do NOT re-render or re-parse anything on tab switch.** The `_restoreState` method restores `treeRange` (text selection) from the saved state, sets `editor._isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render. If a `treeRange` exists, `placeSelection()` is called to restore the full selection; otherwise `placeCursor()` places a collapsed caret.
+When the user **switches tabs**, the DOM container and syntax tree are preserved in `documentStates` — nothing changes. The only action needed is placing the browser selection. **Do NOT re-render or re-parse anything on tab switch.** The `restoreState` method restores `treeRange` (text selection) from the saved state, sets `editor.isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render. If a `treeRange` exists, `placeSelection()` is called to restore the full selection; otherwise `placeCursor()` places a collapsed caret.
 
 When the app **relaunches** (session restore), the DOM is rebuilt from scratch, so `fullRenderAndPlaceCursor()` is correct there.
 
@@ -118,7 +118,7 @@ syntaxTree.treeCursor = {
 ```
 
 - `nodeId` — the id of the SyntaxNode that has focus. When the cursor is inside inline formatting (bold, italic, etc.) in writing mode, this points to the **inline child** node. Otherwise it points to the block-level node.
-- `blockNodeId` — the id of the enclosing block-level node. Only set when `nodeId` is an inline child (set by `_mapDOMPositionToTree`). When absent, `nodeId` is itself the block node.
+- `blockNodeId` — the id of the enclosing block-level node. Only set when `nodeId` is an inline child (set by `mapDOMPositionToTree`). When absent, `nodeId` is itself the block node.
 - `offset` — character offset within the **block node's** raw `content` string (always relative to the block, never to the inline child).
 - `tagPart` — `'opening'` or `'closing'` when the cursor is on an
   HTML tag line in source view.
@@ -129,7 +129,7 @@ syntaxTree.treeCursor = {
 - `getCurrentNode()` — resolves `treeCursor.nodeId` to a SyntaxNode (may be inline).
 - `getCurrentBlockNode()` — resolves `blockNodeId ?? nodeId` to the block-level SyntaxNode. **All editing operations must use this** because they work on the block node's `content` string.
 - `getBlockNodeId()` — returns `blockNodeId ?? nodeId` as a string.
-- `resolveBlockId(nodeId)` — resolves any node ID (inline or block) to its block parent's ID via `node.getBlockParent().id`. Used by `EventHandler` when comparing the current node against `_lastRenderedNodeId` to decide whether a re-render is needed.
+- `resolveBlockId(nodeId)` — resolves any node ID (inline or block) to its block parent's ID via `node.getBlockParent().id`. Used by `EventHandler` when comparing the current node against `lastRenderedNodeId` to decide whether a re-render is needed.
 
 **Rule of thumb:** code that _reads_ the cursor to detect formatting uses `getCurrentNode()` (to see the inline node); code that _mutates_ content or checks block type uses `getCurrentBlockNode()`.
 
@@ -145,7 +145,7 @@ Checklist items are regular `list-item` nodes distinguished by `attributes.check
 - **Enter key**: pressing Enter inside a checklist item creates a new item with `checked: false` (not inherited from the parent item's state).
 - **`toggleList(kind)`**: converts between the three list kinds. When switching to `'checklist'`, sets `checked = false`; when switching away, deletes `checked`.
 - **Multi-select across html-block boundaries**: `toggleList` is `async`. When `treeRange` spans nodes that include html-block containers, a `dialog:confirm` prompt asks the user whether to lift the children out of the html-block. On cancel, the operation aborts and the selection is preserved. The `dialog:confirm` IPC channel is registered in `ipc-handler.js` → `registerDialogHandlers()` and exposed via `window.electronAPI.confirmDialog(message)` in `preload.cjs`.
-- **`_getNodesInRange()`**: recursively enters html-block children so that all leaf nodes within the range are collected, not just the html-block wrapper.
+- **`getNodesInRange()`**: recursively enters html-block children so that all leaf nodes within the range are collected, not just the html-block wrapper.
 
 ### HTML block model (details/summary)
 
@@ -206,7 +206,7 @@ code that opens a modal from within the editor must:
    and after any `recordAndRender` call.
 3. Call `placeSelection()` (if there was a range) or `placeCursor()` (if
    collapsed) to rebuild the DOM selection from the restored tree state.
-4. Set `_isRendering = true` around the placement call and clear it via
+4. Set `isRendering = true` around the placement call and clear it via
    `queueMicrotask` to suppress the async `selectionchange` that the
    placement itself triggers.
 
@@ -261,14 +261,14 @@ TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
 
 - Populated by `syncCursorFromDOM()` when the DOM selection is non-collapsed.
 - `null` when the selection is collapsed (i.e., just a caret).
-- Used by `deleteSelectedRange()`, `_getSelectedMarkdown()`, and all input
+- Used by `deleteSelectedRange()`, `getSelectedMarkdown()`, and all input
   handlers that must respect an active selection.
 
-**Selection preservation (`_editorInteractionPending`)**:
+**Selection preservation (`editorInteractionPending`)**:
 
-The syntax tree owns the selection — external UI interactions (toolbar clicks, dialog focus, tab-bar clicks) must **never** clear `treeRange`. This is enforced by an `_editorInteractionPending` flag on the `Editor` instance:
+The syntax tree owns the selection — external UI interactions (toolbar clicks, dialog focus, tab-bar clicks) must **never** clear `treeRange`. This is enforced by an `editorInteractionPending` flag on the `Editor` instance:
 
-1. `handleMouseDown` (on the editor container) and `handleKeyDown` set `_editorInteractionPending = true`.
+1. `handleMouseDown` (on the editor container) and `handleKeyDown` set `editorInteractionPending = true`.
 2. `handleSelectionChange` reads the flag, clears it, and passes `{ preserveRange: !fromEditor }` to `syncCursorFromDOM()`.
 3. When `preserveRange` is `true` and the DOM selection is collapsed, `syncCursorFromDOM` **does not** null `treeRange` — the existing range from step 1 is preserved intact.
 
@@ -276,7 +276,7 @@ This means toolbar buttons with `mousedown preventDefault` (which prevent the ed
 
 **`placeSelection()`**:
 
-Rebuilds the DOM selection from `editor.treeRange`. Called by `setViewMode()` after a full render so the user's selection survives a view-mode switch. Delegates to `cursorManager.placeSelection()`, which uses `_resolveOffsetInDOM(nodeId, offset)` to map tree coordinates back to DOM text-node positions.
+Rebuilds the DOM selection from `editor.treeRange`. Called by `setViewMode()` after a full render so the user's selection survives a view-mode switch. Delegates to `cursorManager.placeSelection()`, which uses `resolveOffsetInDOM(nodeId, offset)` to map tree coordinates back to DOM text-node positions.
 
 ### `deleteSelectedRange()`
 
@@ -305,7 +305,7 @@ not the entire document.
 - `handleCut` then calls `deleteSelectedRange()` to remove selected content.
 - Paste goes through `insertTextAtCursor` which handles range deletion first.
 
-### `_mapDOMPositionToTree(domNode, domOffset)`
+### `mapDOMPositionToTree(domNode, domOffset)`
 
 Extracted helper that maps a single DOM position (node + offset) to tree
 coordinates `{ nodeId, blockNodeId, offset }`. Called twice by `syncCursorFromDOM()` for

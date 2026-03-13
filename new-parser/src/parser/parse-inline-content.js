@@ -7,7 +7,7 @@
  */
 
 import { tokenizeInline } from './inline-tokenizer.js';
-import { SyntaxNode } from '../../syntax-tree/src/syntax-tree.js';
+import { SyntaxNode } from '../syntax-tree/index.js';
 
 // ── Token-type maps ─────────────────────────────────────────────────
 

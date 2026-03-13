@@ -13,7 +13,7 @@
  */
 
 import { DFAParser } from './src/parser/dfa-parser.js';
-import { SyntaxNode, SyntaxTree } from './src/syntax-tree/syntax-tree.js';
+import { SyntaxTree } from './src/syntax-tree/index.js';
 
 const parser = new DFAParser();
 

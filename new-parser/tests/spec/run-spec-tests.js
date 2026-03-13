@@ -23,7 +23,7 @@ import { dirname } from "node:path";
 import { JSDOM } from "jsdom";
 
 import { Parser } from "../../index.js";
-import { serializeTree } from "../../src/formats/serialize-tree.js";
+import { renderTreeToText } from "../../src/formats/index.js";
 
 
 /**
@@ -137,7 +137,7 @@ for (const file of specFiles) {
       const { markdown, syntaxTree, html } = testCase;
       it(`case ${i + 1}`, async () => {
         const tree = await Parser.parse(markdown);
-        assert.equal(serializeTree(tree), syntaxTree, "syntax tree mismatch");
+        assert.equal(renderTreeToText(tree), syntaxTree, "syntax tree mismatch");
 
         const roundTrip = tree.toMarkdown();
         assert.equal(roundTrip, markdown, "toMarkdown() round-trip mismatch");

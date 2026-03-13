@@ -8,7 +8,7 @@
  */
 
 import { tokenize } from './dfa-tokenizer.js';
-import { SyntaxNode, SyntaxTree } from '../syntax-tree/syntax-tree.js';
+import { SyntaxNode, SyntaxTree } from '../syntax-tree/index.js';
 import { parseInlineContent } from './parse-inline-content.js';
 
 /**
