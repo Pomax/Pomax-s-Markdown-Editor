@@ -5,7 +5,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
-import { SyntaxNode } from '../parser/syntax-tree.js';
+import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
 
 /**
  * Handles selection-range operations on the syntax tree.

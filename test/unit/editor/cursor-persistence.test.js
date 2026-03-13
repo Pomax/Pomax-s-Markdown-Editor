@@ -9,11 +9,11 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { SyntaxNode, SyntaxTree } from '../../../old-parser/parser/syntax-tree.js';
 import {
   absoluteOffsetToCursor,
   cursorToAbsoluteOffset,
 } from '../../../src/renderer/scripts/editor/cursor-persistence.js';
-import { SyntaxNode, SyntaxTree } from '../../../src/renderer/scripts/parser/syntax-tree.js';
 
 /**
  * Mirrors Editor.getPrefixLength for use in tests.

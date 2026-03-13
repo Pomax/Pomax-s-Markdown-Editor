@@ -5,8 +5,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
 import { ImageModal } from '../image/image-modal.js';
-import { SyntaxNode } from '../parser/syntax-tree.js';
 
 /**
  * Manages image-related operations for the editor.

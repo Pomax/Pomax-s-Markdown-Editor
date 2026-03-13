@@ -1,0 +1,484 @@
+/**
+ * Editor styles for the Markdown Editor.
+ * Contains styles for the main editing area and markdown elements.
+ */
+
+/* Main editor element */
+.editor {
+    width: 100%;
+    max-width: var(--page-max-width);
+    min-height: calc(var(--page-max-width) * 1.414); /* A4 aspect ratio */
+    background: var(--page-bg);
+    padding: var(--page-padding-top) var(--page-padding-right) var(--page-padding-bottom) var(--page-padding-left);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height);
+    color: var(--page-text);
+    caret-color: var(--color-primary);
+}
+
+.editor:focus {
+    outline: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.editor.focused {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+
+/* ========== Page resize handles ========== */
+
+.editor-resize-handle {
+    position: fixed;
+    width: 6px;
+    cursor: ew-resize;
+    z-index: 10;
+    /* Invisible by default; highlighted on hover/drag */
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle.dragging {
+    background: var(--color-primary);
+    opacity: 0.3;
+    border-radius: 3px;
+}
+
+/* Line styling */
+.md-line {
+    margin-bottom: var(--spacing-sm);
+    min-height: 1.6em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.md-line:last-child {
+    margin-bottom: 0;
+}
+
+/* Syntax markers (visible in source view) */
+.md-syntax {
+    color: var(--color-syntax);
+    font-family: var(--font-family-mono);
+}
+
+/* ========== Headings ========== */
+.md-heading1,
+.md-heading2,
+.md-heading3,
+.md-heading4,
+.md-heading5,
+.md-heading6 {
+    font-weight: bold;
+    color: var(--color-heading);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.md-heading1 {
+    font-size: 2em;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: var(--spacing-xs);
+}
+
+.md-heading2 {
+    font-size: 1.75em;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-xs);
+}
+
+.md-heading3 {
+    font-size: 1.5em;
+}
+
+.md-heading4 {
+    font-size: 1.25em;
+}
+
+.md-heading5 {
+    font-size: 1.1em;
+}
+
+.md-heading6 {
+    font-size: 1em;
+    color: var(--color-text-secondary);
+}
+
+.md-heading-marker {
+    color: var(--color-syntax);
+    font-weight: normal;
+}
+
+/* ========== Paragraph ========== */
+.md-paragraph {
+    margin: calc(var(--spacing-md) / 2) 0;
+}
+
+/* ========== Blockquote ========== */
+.md-blockquote {
+    border-left: 4px solid var(--color-border);
+    padding-left: var(--spacing-md);
+    color: var(--color-blockquote);
+    font-style: italic;
+    margin: var(--spacing-md) 0;
+}
+
+.md-blockquote-marker {
+    color: var(--color-syntax);
+}
+
+/* ========== Code ========== */
+.md-code-block {
+    background-color: var(--color-code-bg);
+    border-radius: 4px;
+    padding: 0;
+    margin: 0;
+    overflow-x: auto;
+    position: relative;
+
+    &.tall .md-code-language-tag--bottom {
+        display: block;
+    }
+}
+
+.writing-view .md-code-language-tag {
+    position: absolute;
+    right: 0.5em;
+    font-family: var(--font-family-mono);
+    font-size: 0.75em;
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+    cursor: pointer;
+    user-select: none;
+    padding: 0 0.25em;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.writing-view .md-code-language-tag:hover {
+    opacity: 1;
+    background-color: var(--color-bg-secondary);
+}
+
+.writing-view .md-code-language-tag--top {
+    top: 0.25em;
+}
+
+.writing-view .md-code-language-tag--bottom {
+    bottom: 0.25em;
+    display: none;
+}
+
+.writing-view .md-code-language-tag--empty {
+    opacity: 0.35;
+    font-style: italic;
+}
+
+.writing-view .md-code-language-tag--empty:hover {
+    opacity: 0.8;
+}
+
+.md-code-fence {
+    color: var(--color-syntax);
+    font-family: var(--font-family-mono);
+    font-size: 0.9em;
+}
+
+.md-code-content {
+    font-family: var(--font-family-mono);
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.md-code-content code {
+    background: none;
+    padding: 0;
+}
+
+/* ========== Code Syntax Highlighting ========== */
+.sh-keyword    { color: var(--sh-keyword); font-weight: 600; }
+.sh-string     { color: var(--sh-string); }
+.sh-comment    { color: var(--sh-comment); font-style: italic; }
+.sh-number     { color: var(--sh-number); }
+.sh-operator   { color: var(--sh-operator); }
+.sh-punctuation { color: var(--sh-punctuation); }
+.sh-function   { color: var(--sh-function); }
+.sh-type       { color: var(--sh-type); }
+.sh-constant   { color: var(--sh-constant); }
+.sh-attribute  { color: var(--sh-attribute); }
+.sh-tag        { color: var(--sh-tag); font-weight: 600; }
+
+/* Inline code */
+.md-inline.md-code {
+    background-color: var(--color-code-bg);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-family: var(--font-family-mono);
+    font-size: 0.9em;
+}
+
+/* ========== Lists ========== */
+.md-list-item {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Space at list boundaries: between a non-list element and the first/last
+   list item so lists don't run into surrounding paragraphs. */
+.md-line:not(.md-list-item) + .md-list-item {
+    margin-top: var(--spacing-sm);
+}
+
+.md-list-item + .md-line:not(.md-list-item) {
+    margin-top: var(--spacing-sm);
+}
+
+.md-list-marker {
+    color: var(--color-syntax);
+    font-family: var(--font-family-mono);
+}
+
+/* ========== Checklist ========== */
+.md-checklist-item {
+    position: relative;
+}
+
+.md-checklist-checkbox-wrapper {
+    position: absolute;
+    left: -1.4em;
+    top: 50%;
+    transform: translateY(-50%);
+    user-select: none;
+}
+
+.md-checklist-checkbox {
+    cursor: pointer;
+    margin: 0;
+}
+
+/* ========== Horizontal Rule ========== */
+.md-horizontal-rule {
+    border: none;
+    height: 2px;
+    background-color: var(--color-border);
+    margin: var(--spacing-lg) 0;
+}
+
+.md-horizontal-rule hr {
+    border: none;
+    height: 2px;
+    background-color: var(--color-border);
+}
+
+/* ========== Tables ========== */
+.md-table {
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+    width: 100%;
+}
+
+.md-table th,
+.md-table td {
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+}
+
+.md-table th {
+    background-color: var(--color-bg-secondary);
+    font-weight: bold;
+}
+
+.md-table-row {
+    font-family: var(--font-family-mono);
+    font-size: 0.9em;
+}
+
+/* ========== Inline Formatting ========== */
+.md-inline.md-bold {
+    font-weight: bold;
+}
+
+.md-inline.md-italic {
+    font-style: italic;
+}
+
+.md-inline.md-strikethrough {
+    text-decoration: line-through;
+}
+
+.md-inline.md-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* ========== View Modes ========== */
+/* Source view specific styles */
+.source-view .md-code-block {
+    background-color: unset;
+    margin: 0.25em;
+    background: #3331;
+}
+
+.source-view .md-syntax {
+    display: inline;
+}
+
+/* Writing view specific styles */
+.writing-view .md-syntax {
+    display: none;
+}
+
+.writing-view .md-focused .md-syntax {
+    display: inline;
+    color: var(--color-syntax);
+}
+
+.writing-view .md-line.md-focused {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-radius: 4px;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+/* List items set their own margin-left via inline styles; the generic
+   focused-line offsets must not interfere. */
+.writing-view .md-list-item.md-focused {
+    margin-left: unset;
+    padding-left: unset;
+    margin-right: unset;
+    padding-right: unset;
+}
+
+/* Placeholder for empty content */
+.writing-placeholder::before {
+    content: 'Start typing...';
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* ========== HTML block containers ========== */
+
+/* ── Fake details/summary disclosure widget ── */
+.md-details {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0;
+    margin: var(--spacing-xs) 0;
+}
+
+/* Summary row: disclosure triangle + summary content */
+.md-details-summary {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+    background: color-mix(in srgb, var(--color-border) 30%, transparent);
+    border-radius: 6px 6px 0 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* When collapsed, the summary gets bottom-radius too */
+.md-details:not(.md-details--open) .md-details-summary {
+    border-radius: 6px;
+}
+
+/* When open, separate summary from body */
+.md-details--open .md-details-summary {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Clickable disclosure triangle */
+.md-details-triangle {
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    font-size: 0.65em;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    padding: 2px;
+}
+
+.md-details-triangle:hover {
+    color: var(--color-text);
+}
+
+/* Summary content fills remaining space */
+.md-details-summary-content {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.md-details-summary-content .md-line {
+    margin-bottom: 0;
+}
+
+/* Collapsible body */
+.md-details-body {
+    overflow: hidden;
+}
+
+.md-details:not(.md-details--open) .md-details-body {
+    display: none;
+}
+
+.md-details-body > .md-line {
+    padding: 0 var(--spacing-md);
+    margin-bottom: 0;
+}
+
+.md-details-body > .md-line:first-child {
+    padding-top: var(--spacing-sm);
+}
+
+.md-details-body > .md-line:last-child {
+    padding-bottom: var(--spacing-sm);
+}
+
+/* ========== Content within elements ========== */
+.md-content {
+    display: inline;
+}
+
+/* Links */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Strong/Bold */
+strong {
+    font-weight: bold;
+}
+
+/* Emphasis/Italic */
+em {
+    font-style: italic;
+}
+
+/* Deleted/Strikethrough */
+del {
+    text-decoration: line-through;
+}
+
+/* Code */
+code {
+    background-color: var(--color-code-bg);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-family: var(--font-family-mono);
+    font-size: 0.9em;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+}

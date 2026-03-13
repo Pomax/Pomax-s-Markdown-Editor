@@ -5,8 +5,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
 import { CodeLanguageModal } from '../code-language/code-language-modal.js';
-import { SyntaxNode } from '../parser/syntax-tree.js';
 
 /**
  * Handles non-editing DOM events for the editor.
@@ -471,16 +471,17 @@ export class EventHandler {
    * Opens the code-language modal for a code-block node and applies
    * the result when the user submits.
    *
-   * @param {import('../parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
    */
   async _openCodeLanguageModal(node) {
     if (!this._codeLanguageModal) {
       this._codeLanguageModal = new CodeLanguageModal();
     }
 
-    const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-      node.attributes
-    );
+    const attrs =
+      /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
+        node.attributes
+      );
     const currentLanguage = attrs.language || '';
 
     // Save both the cursor and any active selection *before* the

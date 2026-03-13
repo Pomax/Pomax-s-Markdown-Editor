@@ -1,0 +1,101 @@
+/**
+ * Word count dialog styles.
+ */
+
+/* Dialog backdrop */
+.word-count-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+/* Dialog box */
+.word-count-dialog {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0;
+    width: min(320px, 90vw);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    overflow: hidden;
+}
+
+/* Header */
+.word-count-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.word-count-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.word-count-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: 4px;
+}
+
+.word-count-close:hover {
+    color: var(--color-text);
+    background: var(--color-hover);
+}
+
+/* Body */
+.word-count-body {
+    padding: var(--spacing-lg);
+}
+
+.word-count-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.word-count-table td {
+    padding: var(--spacing-sm) 0;
+}
+
+.word-count-label {
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+}
+
+.word-count-value {
+    text-align: right;
+    font-size: 1.125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Footer */
+.word-count-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.word-count-ok {
+    padding: var(--spacing-xs) var(--spacing-lg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.word-count-ok:hover {
+    background: var(--color-hover);
+}

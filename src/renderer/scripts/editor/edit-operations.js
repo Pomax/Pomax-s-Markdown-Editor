@@ -8,7 +8,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
-import { SyntaxNode } from '../parser/syntax-tree.js';
+import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
 
 /**
  * Node types that should be removed when left empty after a
@@ -896,7 +896,7 @@ export class EditOperations {
       // Split: current item keeps text before cursor,
       // new item gets text after cursor.
       node.content = contentBefore;
-      /** @type {import('../parser/syntax-tree.js').NodeAttributes} */
+      /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */
       const newAttrs = {
         ordered: node.attributes.ordered,
         indent: node.attributes.indent || 0,

@@ -8,7 +8,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { DFAParser } from '../src/renderer/scripts/parser/dfa-parser.js';
+import { DFAParser } from '../old-parser/parser/dfa-parser.js';
 
 const args = process.argv.slice(2);
 

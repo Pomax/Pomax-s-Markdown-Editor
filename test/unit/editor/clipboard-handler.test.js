@@ -4,8 +4,8 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { SyntaxNode } from '../../../old-parser/parser/syntax-tree.js';
 import { ClipboardHandler } from '../../../src/renderer/scripts/editor/clipboard-handler.js';
-import { SyntaxNode } from '../../../src/renderer/scripts/parser/syntax-tree.js';
 
 // ── _fixHtmlTags ───────────────────────────────────────────────────
 

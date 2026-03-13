@@ -13,8 +13,8 @@
 
 /// <reference path="../../../types.d.ts" />
 
-import { DFAParser } from '../parser/dfa-parser.js';
-import { SyntaxNode, SyntaxTree } from '../parser/syntax-tree.js';
+import { DFAParser } from '../../../../old-parser/parser/dfa-parser.js';
+import { SyntaxNode, SyntaxTree } from '../../../../old-parser/parser/syntax-tree.js';
 import { ClipboardHandler } from './clipboard-handler.js';
 import { CursorManager } from './cursor-manager.js';
 import { EditOperations } from './edit-operations.js';
@@ -581,7 +581,7 @@ export class Editor {
    *
    * @param {string} type
    * @param {string} content
-   * @param {import('../parser/syntax-tree.js').NodeAttributes} attributes
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} attributes
    * @returns {string}
    */
   buildMarkdownLine(type, content, attributes) {
@@ -625,7 +625,7 @@ export class Editor {
    * E.g. heading1 → 2 (`# `), heading2 → 3 (`## `), paragraph → 0.
    *
    * @param {string} type
-   * @param {import('../parser/syntax-tree.js').NodeAttributes} [attributes]
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} [attributes]
    * @returns {number}
    */
   getPrefixLength(type, attributes) {
@@ -793,9 +793,10 @@ export class Editor {
           // _sourceEditText-relative to content-relative by
           // subtracting the opening-fence preamble length.
           if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
-            const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-              child.attributes
-            );
+            const attrs =
+              /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
+                child.attributes
+              );
             const preamble = (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
             this.syntaxTree.treeCursor = {
               nodeId: child.id,
@@ -815,9 +816,10 @@ export class Editor {
         this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
       const node = this.syntaxTree.findNodeById(cursorBlockId);
       if (node?.type === 'code-block') {
-        const attrs = /** @type {import('../parser/syntax-tree.js').NodeAttributes} */ (
-          node.attributes
-        );
+        const attrs =
+          /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
+            node.attributes
+          );
         const preamble = (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
         this.syntaxTree.treeCursor = {
           nodeId: node.id,
@@ -1082,7 +1084,7 @@ export class Editor {
 
     /**
      * Returns the list kind for a list-item node.
-     * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+     * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} n
      * @returns {'unordered' | 'ordered' | 'checklist'}
      */
     const getListKind = (n) => {
@@ -1092,7 +1094,7 @@ export class Editor {
 
     /**
      * Applies list-item attributes for a given kind.
-     * @param {import('../parser/syntax-tree.js').SyntaxNode} n
+     * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} n
      * @param {'unordered' | 'ordered' | 'checklist'} k
      * @param {number} [num]
      */
@@ -1136,7 +1138,7 @@ export class Editor {
         const tagNames = [...htmlBlockParents]
           .map(
             (p) =>
-              `<${/** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
+              `<${/** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
           )
           .join(', ');
         const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({
@@ -1151,7 +1153,10 @@ export class Editor {
         if (!result || result.response !== 0) return;
 
         for (const htmlBlock of htmlBlockParents) {
-          const parent = /** @type {import('../parser/syntax-tree.js').SyntaxNode} */ (htmlBlock);
+          const parent =
+            /** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} */ (
+              htmlBlock
+            );
           const treeChildren = this.syntaxTree.children;
           const idx = treeChildren.indexOf(parent);
           if (idx === -1) continue;
@@ -1258,9 +1263,9 @@ export class Editor {
    * Returns the contiguous run of `list-item` nodes surrounding `node`
    * within the given sibling list.
    *
-   * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
-   * @param {import('../parser/syntax-tree.js').SyntaxNode} node
-   * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} siblings
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @returns {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]}
    */
   _getContiguousListRun(siblings, node) {
     const idx = siblings.indexOf(node);
@@ -1276,7 +1281,7 @@ export class Editor {
    * `nearIndex` so they are sequential starting from 1.  Returns the
    * IDs of every node whose number was changed (for render hints).
    *
-   * @param {import('../parser/syntax-tree.js').SyntaxNode[]} siblings
+   * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} siblings
    * @param {number} nearIndex - Index of a node in or adjacent to the run
    * @returns {string[]} IDs of nodes that were renumbered
    */
@@ -1308,7 +1313,7 @@ export class Editor {
    *
    * @param {string} startId
    * @param {string} endId
-   * @returns {import('../parser/syntax-tree.js').SyntaxNode[]}
+   * @returns {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]}
    */
   _getNodesInRange(startId, endId) {
     if (!this.syntaxTree) return [];
@@ -1316,9 +1321,9 @@ export class Editor {
     /**
      * Walks children (recursing into html-block containers) and
      * collects all leaf block nodes between startId and endId.
-     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} children
+     * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} children
      * @param {{collecting: boolean, done: boolean}} state
-     * @param {import('../parser/syntax-tree.js').SyntaxNode[]} result
+     * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} result
      */
     const walk = (children, state, result) => {
       for (const child of children) {
@@ -1338,7 +1343,7 @@ export class Editor {
     };
 
     const state = { collecting: false, done: false };
-    /** @type {import('../parser/syntax-tree.js').SyntaxNode[]} */
+    /** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} */
     const result = [];
     walk(this.syntaxTree.children, state, result);
     return result;

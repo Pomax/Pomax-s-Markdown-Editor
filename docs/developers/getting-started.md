@@ -115,9 +115,9 @@ markdown-editor/
 | `src/main/api-registry.js` | External scripting API |
 | `src/renderer/scripts/app.js` | Renderer entry point, wires everything together |
 | `src/renderer/scripts/editor/editor.js` | Core editor class (coordinator) |
-| `src/renderer/scripts/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
-| `src/renderer/scripts/parser/dfa-parser.js` | Markdown → syntax tree |
-| `src/renderer/scripts/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
+| `old-parser/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
+| `old-parser/parser/dfa-parser.js` | Markdown → syntax tree |
+| `old-parser/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
 | `src/types.d.ts` | Global TypeScript type declarations |
 
 ## Running Tests
@@ -218,9 +218,9 @@ Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.ym
 
 ### Adding a New Markdown Element
 
-1. Add block dispatch case in `DFAParser._parseBlock()` in `src/renderer/scripts/parser/dfa-parser.js`
+1. Add block dispatch case in `DFAParser._parseBlock()` in `old-parser/parser/dfa-parser.js`
 2. Add sub-parser method in `DFAParser`
-3. Add `toMarkdown()` case in `SyntaxNode` (`src/renderer/scripts/parser/syntax-tree.js`)
+3. Add `toMarkdown()` case in `SyntaxNode` (`old-parser/parser/syntax-tree.js`)
 4. Add rendering in both `SourceRenderer` and `WritingRenderer`
 5. Add tests for parser and rendering
 6. Update documentation

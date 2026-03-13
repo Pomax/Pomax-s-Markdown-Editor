@@ -4,7 +4,7 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { SyntaxNode, SyntaxTree } from '../../../src/renderer/scripts/parser/syntax-tree.js';
+import { SyntaxNode, SyntaxTree } from '../../../old-parser/parser/syntax-tree.js';
 
 describe('SyntaxNode', () => {
   describe('constructor', () => {

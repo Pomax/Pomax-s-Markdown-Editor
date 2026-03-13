@@ -7,8 +7,8 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { DFAParser } from '../../../src/renderer/scripts/parser/dfa-parser.js';
-import { tokenize } from '../../../src/renderer/scripts/parser/dfa-tokenizer.js';
+import { DFAParser } from '../../../old-parser/parser/dfa-parser.js';
+import { tokenize } from '../../../old-parser/parser/dfa-tokenizer.js';
 
 // ── Tokenizer tests ─────────────────────────────────────────────────
 

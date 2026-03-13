@@ -25,7 +25,7 @@ import { Toolbar } from './toolbar/toolbar.js';
  * @property {import('./editor/editor.js').TreeCursor|null} cursor - Cursor position
  * @property {number} cursorOffset - Absolute character offset in markdown source
  * @property {number} contentHash - CRC32 hash of the markdown content
- * @property {import('./parser/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
+ * @property {import('../../../old-parser/parser/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
  * @property {import('./editor/editor.js').TreeRange|null} treeRange - Active text selection range
  * @property {number} scrollTop - Scroll position of the scroll container
  * @property {string|null} tocActiveHeadingId - The active ToC heading node ID

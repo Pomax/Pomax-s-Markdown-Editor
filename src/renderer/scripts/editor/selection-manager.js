@@ -25,7 +25,7 @@ export class SelectionManager {
     /** @type {SelectionState|null} */
     this.currentSelection = null;
 
-    /** @type {import('../parser/syntax-tree.js').SyntaxNode|null} */
+    /** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode|null} */
     this.currentNode = null;
   }
 
@@ -154,7 +154,7 @@ export class SelectionManager {
 
   /**
    * Gets the current syntax tree node at the cursor.
-   * @returns {import('../parser/syntax-tree.js').SyntaxNode|null}
+   * @returns {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode|null}
    */
   getCurrentNode() {
     return this.currentNode;

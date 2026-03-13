@@ -13,6 +13,7 @@ import { clickInEditor } from '../../test-utils.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const RENDERER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'renderer');
+const OLD_PARSER_DIR = path.join(__dirname, '..', '..', '..', '..', 'old-parser');
 
 /** @type {Record<string, string>} */
 const CONTENT_TYPES = {
@@ -31,12 +32,21 @@ test.beforeAll(async () => {
   server = createServer(async (req, res) => {
     let urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
     if (urlPath === '/') urlPath = '/index.html';
-    const filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
-
-    if (!filePath.startsWith(RENDERER_DIR)) {
-      res.writeHead(403);
-      res.end('Forbidden');
-      return;
+    let filePath;
+    if (urlPath.startsWith('/old-parser/')) {
+      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice('/old-parser'.length)));
+      if (!filePath.startsWith(OLD_PARSER_DIR)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+    } else {
+      filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
+      if (!filePath.startsWith(RENDERER_DIR)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
     }
 
     try {

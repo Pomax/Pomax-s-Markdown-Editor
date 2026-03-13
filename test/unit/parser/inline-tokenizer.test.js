@@ -10,7 +10,7 @@ import {
   buildInlineTree,
   findMatchedTokenIndices,
   tokenizeInline,
-} from '../../../src/renderer/scripts/parser/inline-tokenizer.js';
+} from '../../../old-parser/parser/inline-tokenizer.js';
 
 // ── tokenizeInline ──────────────────────────────────────────────────
 

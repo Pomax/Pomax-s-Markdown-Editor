@@ -371,7 +371,7 @@ export class SearchBar {
 
     /**
      * Recursively walks nodes and appends their text to the map.
-     * @param {import('../../scripts/parser/syntax-tree.js').SyntaxNode[]} nodes
+     * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} nodes
      * @param {boolean} isFirst - Whether we need to prepend a separator
      */
     const walk = (nodes, isFirst) => {
