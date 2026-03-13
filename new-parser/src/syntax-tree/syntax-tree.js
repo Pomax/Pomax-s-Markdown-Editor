@@ -4,6 +4,7 @@
  */
 
 import { SyntaxNode } from "./syntax-node.js";
+import { CursorManager } from "../cursor-manager.js";
 import {
   renderTreeToDOM,
   renderTreeToMarkdown,
@@ -39,6 +40,12 @@ export class SyntaxTree {
      * @type {SyntaxNode[]}
      */
     this.children = [];
+
+    /**
+     * Cursor and selection state for this tree.
+     * @type {CursorManager}
+     */
+    this.cursor = new CursorManager(this);
   }
 
   /**
