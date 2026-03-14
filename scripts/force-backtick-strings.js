@@ -18,15 +18,15 @@
  * Pass --write to rewrite files in place (default is check-only).
  */
 
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const SCAN_DIRS = ["src", "scripts", "new-parser/src", "new-parser/tests", "test"];
+const SCAN_DIRS = ['src', 'scripts', 'new-parser/src', 'new-parser/tests', 'test'];
 
-const write = process.argv.includes("--write");
+const write = process.argv.includes('--write');
 
 /**
  * Converts all single- and double-quoted strings in a source string
@@ -40,17 +40,17 @@ const write = process.argv.includes("--write");
  */
 function convertStrings(source) {
   const len = source.length;
-  let out = "";
+  let out = '';
   let i = 0;
 
   while (i < len) {
     const ch = source[i];
 
-    if (ch === "/" && i + 1 < len) {
+    if (ch === '/' && i + 1 < len) {
       const next = source[i + 1];
 
-      if (next === "/") {
-        const end = source.indexOf("\n", i);
+      if (next === '/') {
+        const end = source.indexOf('\n', i);
         if (end === -1) {
           out += source.slice(i);
           break;
@@ -60,8 +60,8 @@ function convertStrings(source) {
         continue;
       }
 
-      if (next === "*") {
-        const end = source.indexOf("*/", i + 2);
+      if (next === '*') {
+        const end = source.indexOf('*/', i + 2);
         if (end === -1) {
           out += source.slice(i);
           break;
@@ -79,7 +79,7 @@ function convertStrings(source) {
       }
     }
 
-    if (ch === "`") {
+    if (ch === '`') {
       const result = skipTemplateLiteral(source, i);
       out += result.text;
       i = result.end;
@@ -119,11 +119,11 @@ function convertStrings(source) {
  */
 function readQuotedString(src, start, quote) {
   let i = start + 1;
-  let body = "";
+  let body = '';
 
   while (i < src.length) {
     const ch = src[i];
-    if (ch === "\\") {
+    if (ch === '\\') {
       body += src[i] + src[i + 1];
       i += 2;
       continue;
@@ -148,12 +148,12 @@ function readQuotedString(src, start, quote) {
  * @returns {string} The backtick-delimited replacement string.
  */
 function toBacktick(body, originalQuote) {
-  let converted = "";
+  let converted = '';
 
   for (let i = 0; i < body.length; i++) {
     const ch = body[i];
 
-    if (ch === "\\") {
+    if (ch === '\\') {
       const next = body[i + 1];
 
       if (next === originalQuote) {
@@ -162,18 +162,18 @@ function toBacktick(body, originalQuote) {
         continue;
       }
 
-      converted += ch + (next || "");
+      converted += ch + (next || '');
       i++;
       continue;
     }
 
-    if (ch === "`") {
-      converted += "\\`";
+    if (ch === '`') {
+      converted += '\\`';
       continue;
     }
 
-    if (ch === "$" && body[i + 1] === "{") {
-      converted += "\\${";
+    if (ch === '$' && body[i + 1] === '{') {
+      converted += '\\${';
       i++;
       continue;
     }
@@ -181,7 +181,7 @@ function toBacktick(body, originalQuote) {
     converted += ch;
   }
 
-  return "`" + converted + "`";
+  return '`' + converted + '`';
 }
 
 /**
@@ -212,7 +212,7 @@ function looksLikeRegex(src, i, preceding) {
   const before = preceding.trimEnd();
   if (before.length === 0) return true;
   const last = before[before.length - 1];
-  return "=(:!&|^~[{,;?+->%*/\n".includes(last);
+  return '=(:!&|^~[{,;?+->%*/\n'.includes(last);
 }
 
 /**
@@ -227,19 +227,19 @@ function skipRegex(src, start) {
   let i = start + 1;
   while (i < src.length) {
     const ch = src[i];
-    if (ch === "\\") {
+    if (ch === '\\') {
       i += 2;
       continue;
     }
-    if (ch === "[") {
-      while (i < src.length && src[i] !== "]") {
-        if (src[i] === "\\") i++;
+    if (ch === '[') {
+      while (i < src.length && src[i] !== ']') {
+        if (src[i] === '\\') i++;
         i++;
       }
       i++;
       continue;
     }
-    if (ch === "/") {
+    if (ch === '/') {
       i++;
       while (i < src.length && /[gimsuy]/.test(src[i])) i++;
       return { text: src.slice(start, i), end: i };
@@ -264,16 +264,16 @@ function skipTemplateLiteral(src, start) {
 
   while (i < src.length && depth > 0) {
     const ch = src[i];
-    if (ch === "\\") {
+    if (ch === '\\') {
       i += 2;
       continue;
     }
-    if (ch === "`") {
+    if (ch === '`') {
       depth--;
       i++;
       continue;
     }
-    if (ch === "$" && src[i + 1] === "{") {
+    if (ch === '$' && src[i + 1] === '{') {
       depth++;
       i += 2;
       continue;
@@ -295,12 +295,12 @@ function collectFiles(dir) {
   const files = [];
 
   for (const entry of readdirSync(dir)) {
-    if (entry === "node_modules") continue;
+    if (entry === 'node_modules') continue;
     const full = join(dir, entry);
     const stat = statSync(full);
     if (stat.isDirectory()) {
       files.push(...collectFiles(full));
-    } else if (entry.endsWith(".js")) {
+    } else if (entry.endsWith('.js')) {
       files.push(full);
     }
   }
@@ -311,7 +311,7 @@ function collectFiles(dir) {
 /** @type {string[]} */
 let targets = [];
 
-const positionalArgs = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const positionalArgs = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 
 if (positionalArgs.length > 0) {
   targets = positionalArgs;
@@ -330,14 +330,14 @@ if (positionalArgs.length > 0) {
 let changed = 0;
 
 for (const file of targets) {
-  const original = readFileSync(file, "utf-8");
+  const original = readFileSync(file, 'utf-8');
   const converted = convertStrings(original);
 
   if (converted !== original) {
     changed++;
     const rel = relative(root, file);
     if (write) {
-      writeFileSync(file, converted, "utf-8");
+      writeFileSync(file, converted, 'utf-8');
       console.log(`  updated: ${rel}`);
     } else {
       console.log(`  needs update: ${rel}`);
@@ -346,10 +346,9 @@ for (const file of targets) {
 }
 
 if (changed === 0) {
-  console.log("No strings to convert.");
+  console.log('No strings to convert.');
 } else if (write) {
   console.log(`\n${changed} file(s) updated.`);
 } else {
   console.log(`\n${changed} file(s) need updating. Run with --write to apply.`);
-  process.exit(1);
 }

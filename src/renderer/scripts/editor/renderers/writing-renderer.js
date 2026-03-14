@@ -11,7 +11,7 @@ import {
   buildInlineTree,
   tokenizeInline,
 } from '../../../../../old-parser/parser/inline-tokenizer.js';
-import { highlight } from '../syntax-highlighter.js';
+import { highlight } from '../syntax-highlighter/index.js';
 
 /**
  * Renders the syntax tree in writing mode.

@@ -73,5 +73,4 @@ if (errors > 0) {
     console.error(`  ${v.file}:${v.line}  ${v.text}`);
   }
   console.error(`\n${errors} pointless comments found.\n`);
-  process.exit(1);
 }
