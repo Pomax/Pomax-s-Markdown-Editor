@@ -14,104 +14,104 @@ import { SyntaxNode, SyntaxTree } from './syntax-tree.js';
 
 /** @type {Set<string>} */
 const HTML_BLOCK_TAGS = new Set([
-  'address',
-  'article',
-  'aside',
-  'base',
-  'basefont',
-  'blockquote',
-  'body',
-  'caption',
-  'center',
-  'col',
-  'colgroup',
-  'dd',
-  'details',
-  'dialog',
-  'dir',
-  'div',
-  'dl',
-  'dt',
-  'fieldset',
-  'figcaption',
-  'figure',
-  'footer',
-  'form',
-  'frame',
-  'frameset',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'head',
-  'header',
-  'hr',
-  'html',
-  'iframe',
-  'legend',
-  'li',
-  'link',
-  'main',
-  'menu',
-  'menuitem',
-  'nav',
-  'noframes',
-  'ol',
-  'optgroup',
-  'option',
-  'p',
-  'param',
-  'search',
-  'script',
-  'section',
-  'source',
-  'style',
-  'summary',
-  'table',
-  'tbody',
-  'td',
-  'tfoot',
-  'th',
-  'thead',
-  'title',
-  'tr',
-  'track',
-  'ul',
+  `address`,
+  `article`,
+  `aside`,
+  `base`,
+  `basefont`,
+  `blockquote`,
+  `body`,
+  `caption`,
+  `center`,
+  `col`,
+  `colgroup`,
+  `dd`,
+  `details`,
+  `dialog`,
+  `dir`,
+  `div`,
+  `dl`,
+  `dt`,
+  `fieldset`,
+  `figcaption`,
+  `figure`,
+  `footer`,
+  `form`,
+  `frame`,
+  `frameset`,
+  `h1`,
+  `h2`,
+  `h3`,
+  `h4`,
+  `h5`,
+  `h6`,
+  `head`,
+  `header`,
+  `hr`,
+  `html`,
+  `iframe`,
+  `legend`,
+  `li`,
+  `link`,
+  `main`,
+  `menu`,
+  `menuitem`,
+  `nav`,
+  `noframes`,
+  `ol`,
+  `optgroup`,
+  `option`,
+  `p`,
+  `param`,
+  `search`,
+  `script`,
+  `section`,
+  `source`,
+  `style`,
+  `summary`,
+  `table`,
+  `tbody`,
+  `td`,
+  `tfoot`,
+  `th`,
+  `thead`,
+  `title`,
+  `tr`,
+  `track`,
+  `ul`,
 ]);
 
 // ── Void HTML elements (never have a closing tag) ───────────────────
 
 /** @type {Set<string>} */
 const VOID_HTML_ELEMENTS = new Set([
-  'area',
-  'base',
-  'basefont',
-  'br',
-  'col',
-  'embed',
-  'frame',
-  'hr',
-  'img',
-  'input',
-  'link',
-  'meta',
-  'param',
-  'source',
-  'track',
-  'wbr',
+  `area`,
+  `base`,
+  `basefont`,
+  `br`,
+  `col`,
+  `embed`,
+  `frame`,
+  `hr`,
+  `img`,
+  `input`,
+  `link`,
+  `meta`,
+  `param`,
+  `source`,
+  `track`,
+  `wbr`,
 ]);
 
 // ── Raw content HTML tags (body is not markdown) ────────────────────
 
 /** @type {Set<string>} */
-const RAW_CONTENT_TAGS = new Set(['script', 'style', 'textarea']);
+const RAW_CONTENT_TAGS = new Set([`script`, `style`, `textarea`]);
 
 // ── Inline-only HTML tags (never treated as block-level) ────────────
 
 /** @type {Set<string>} */
-const INLINE_ONLY_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mark', 'u', 'b', 'i']);
+const INLINE_ONLY_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
 // ── Helper: count newlines in a string ──────────────────────────────
 
@@ -122,7 +122,7 @@ const INLINE_ONLY_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mar
 function countNewlines(s) {
   let n = 0;
   for (let i = 0; i < s.length; i++) {
-    if (s[i] === '\n') n++;
+    if (s[i] === `\n`) n++;
   }
   return n;
 }
@@ -143,9 +143,9 @@ export class DFAParser {
     const tree = new SyntaxTree();
     const ctx = { tokens, pos: 0, line: 0 };
 
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
       // Skip blank lines between blocks
-      if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
         ctx.line++;
         ctx.pos++;
         continue;
@@ -173,7 +173,7 @@ export class DFAParser {
     const tok = ctx.tokens[ctx.pos];
 
     // Heading: one or more HASH at start of line, followed by a space
-    if (tok.type === 'HASH') {
+    if (tok.type === `HASH`) {
       const saved = ctx.pos;
       const node = this._parseHeading(ctx);
       if (node) return node;
@@ -182,9 +182,9 @@ export class DFAParser {
 
     // Code fence: three or more BACKTICK tokens
     if (
-      tok.type === 'BACKTICK' &&
-      this._lookType(ctx, 1) === 'BACKTICK' &&
-      this._lookType(ctx, 2) === 'BACKTICK'
+      tok.type === `BACKTICK` &&
+      this._lookType(ctx, 1) === `BACKTICK` &&
+      this._lookType(ctx, 2) === `BACKTICK`
     ) {
       const saved = ctx.pos;
       const node = this._parseCodeBlock(ctx);
@@ -193,7 +193,7 @@ export class DFAParser {
     }
 
     // Blockquote: GT at start
-    if (tok.type === 'GT') {
+    if (tok.type === `GT`) {
       return this._parseBlockquote(ctx);
     }
 
@@ -213,30 +213,30 @@ export class DFAParser {
     }
 
     // HTML img tag: <img ...> (possibly indented)
-    if (tok.type === 'LT' && this._isHtmlImgTag(ctx)) {
+    if (tok.type === `LT` && this._isHtmlImgTag(ctx)) {
       return this._parseHtmlImage(ctx);
     }
-    if ((tok.type === 'SPACE' || tok.type === 'TAB') && this._isIndentedHtmlImgTag(ctx)) {
+    if ((tok.type === `SPACE` || tok.type === `TAB`) && this._isIndentedHtmlImgTag(ctx)) {
       this._skipWhitespace(ctx);
       return this._parseHtmlImage(ctx);
     }
 
     // HTML block: <tagname...> (possibly indented)
-    if (tok.type === 'LT' && this._isHtmlBlockStart(ctx)) {
+    if (tok.type === `LT` && this._isHtmlBlockStart(ctx)) {
       return this._parseHtmlBlock(ctx);
     }
-    if ((tok.type === 'SPACE' || tok.type === 'TAB') && this._isIndentedHtmlBlockStart(ctx)) {
+    if ((tok.type === `SPACE` || tok.type === `TAB`) && this._isIndentedHtmlBlockStart(ctx)) {
       this._skipWhitespace(ctx);
       return this._parseHtmlBlock(ctx);
     }
 
     // Table: starts with PIPE
-    if (tok.type === 'PIPE') {
+    if (tok.type === `PIPE`) {
       return this._parseTable(ctx);
     }
 
     // Linked image: [![alt](src)](href)
-    if (tok.type === 'LBRACKET' && this._lookType(ctx, 1) === 'BANG') {
+    if (tok.type === `LBRACKET` && this._lookType(ctx, 1) === `BANG`) {
       const saved = ctx.pos;
       const node = this._tryParseLinkedImage(ctx);
       if (node) return node;
@@ -244,7 +244,7 @@ export class DFAParser {
     }
 
     // Image: ![alt](src)
-    if (tok.type === 'BANG' && this._lookType(ctx, 1) === 'LBRACKET') {
+    if (tok.type === `BANG` && this._lookType(ctx, 1) === `LBRACKET`) {
       const saved = ctx.pos;
       const node = this._tryParseImage(ctx);
       if (node) return node;
@@ -266,20 +266,20 @@ export class DFAParser {
     let level = 0;
 
     // Count hashes
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'HASH') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `HASH`) {
       level++;
       ctx.pos++;
     }
 
     // A space after the hashes is required for a valid heading
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'SPACE') {
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `SPACE`) {
       return null;
     }
 
     if (level > 6) level = 6;
 
     // Skip all spaces after hashes
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
       ctx.pos++;
     }
 
@@ -305,18 +305,18 @@ export class DFAParser {
     let fenceCount = 0;
     while (
       ctx.pos + fenceCount < ctx.tokens.length &&
-      ctx.tokens[ctx.pos + fenceCount].type === 'BACKTICK'
+      ctx.tokens[ctx.pos + fenceCount].type === `BACKTICK`
     ) {
       fenceCount++;
     }
     ctx.pos += fenceCount;
 
     // Collect language identifier (until NEWLINE or EOF)
-    let language = '';
+    let language = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       language += ctx.tokens[ctx.pos].value;
       ctx.pos++;
@@ -324,21 +324,21 @@ export class DFAParser {
     language = language.trim();
 
     // The opening fence MUST be followed by a NEWLINE — EOF is not valid
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'NEWLINE') {
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `NEWLINE`) {
       return null;
     }
     ctx.line++;
     ctx.pos++;
 
     // Collect body until closing fence (exact same backtick count at start of line)
-    let content = '';
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+    let content = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
       // Check for closing fence: exactly fenceCount backticks
       let closingCount = 0;
       const closeStart = ctx.pos;
       while (
         ctx.pos + closingCount < ctx.tokens.length &&
-        ctx.tokens[ctx.pos + closingCount].type === 'BACKTICK'
+        ctx.tokens[ctx.pos + closingCount].type === `BACKTICK`
       ) {
         closingCount++;
       }
@@ -348,10 +348,10 @@ export class DFAParser {
         let validClose = true;
         while (
           afterFence < ctx.tokens.length &&
-          ctx.tokens[afterFence].type !== 'NEWLINE' &&
-          ctx.tokens[afterFence].type !== 'EOF'
+          ctx.tokens[afterFence].type !== `NEWLINE` &&
+          ctx.tokens[afterFence].type !== `EOF`
         ) {
-          if (ctx.tokens[afterFence].type !== 'SPACE') {
+          if (ctx.tokens[afterFence].type !== `SPACE`) {
             validClose = false;
           }
           afterFence++;
@@ -360,7 +360,7 @@ export class DFAParser {
           // Closing fence found — skip the backticks and trailing content
           ctx.pos = afterFence;
           // Skip the newline after closing fence
-          if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+          if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
             ctx.line++;
             ctx.pos++;
           }
@@ -369,8 +369,8 @@ export class DFAParser {
       }
 
       // Not a closing fence — consume as content
-      if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
-        content += '\n';
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        content += `\n`;
         ctx.line++;
       } else {
         content += ctx.tokens[ctx.pos].value;
@@ -379,11 +379,11 @@ export class DFAParser {
     }
 
     // Remove trailing newline from content if present
-    if (content.endsWith('\n')) {
+    if (content.endsWith(`\n`)) {
       content = content.slice(0, -1);
     }
 
-    const node = new SyntaxNode('code-block', content);
+    const node = new SyntaxNode(`code-block`, content);
     node.attributes = { language, fenceCount };
     node.startLine = startLine;
     node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
@@ -400,18 +400,18 @@ export class DFAParser {
     const startLine = ctx.line;
     const contentLines = [];
 
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'GT') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
       // Skip GT
       ctx.pos++;
       // Skip optional space after >
-      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
         ctx.pos++;
       }
       // Collect to end of line
       contentLines.push(this._consumeToEndOfLine(ctx));
     }
 
-    const node = new SyntaxNode('blockquote', contentLines.join('\n'));
+    const node = new SyntaxNode(`blockquote`, contentLines.join(`\n`));
     node.startLine = startLine;
     node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
     return node;
@@ -430,18 +430,18 @@ export class DFAParser {
     // Skip leading spaces
     while (
       i < ctx.tokens.length &&
-      (ctx.tokens[i].type === 'SPACE' || ctx.tokens[i].type === 'TAB')
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
     ) {
       i++;
     }
     // Must be DASH, STAR, or PLUS
     if (i >= ctx.tokens.length) return false;
     const t = ctx.tokens[i].type;
-    if (t !== 'DASH' && t !== 'STAR' && t !== 'PLUS') return false;
+    if (t !== `DASH` && t !== `STAR` && t !== `PLUS`) return false;
     // Followed by SPACE
     i++;
     if (i >= ctx.tokens.length) return false;
-    return ctx.tokens[i].type === 'SPACE';
+    return ctx.tokens[i].type === `SPACE`;
   }
 
   /**
@@ -455,9 +455,9 @@ export class DFAParser {
     let spaces = 0;
     while (
       ctx.pos < ctx.tokens.length &&
-      (ctx.tokens[ctx.pos].type === 'SPACE' || ctx.tokens[ctx.pos].type === 'TAB')
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
     ) {
-      spaces += ctx.tokens[ctx.pos].type === 'TAB' ? 2 : 1;
+      spaces += ctx.tokens[ctx.pos].type === `TAB` ? 2 : 1;
       ctx.pos++;
     }
     const indent = Math.floor(spaces / 2);
@@ -465,20 +465,20 @@ export class DFAParser {
     // Skip the marker (DASH/STAR/PLUS)
     ctx.pos++;
     // Skip the SPACE after marker
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
       ctx.pos++;
     }
 
     const content = this._consumeToEndOfLine(ctx);
 
-    const node = new SyntaxNode('list-item', content);
+    const node = new SyntaxNode(`list-item`, content);
     node.attributes = { ordered: false, indent };
 
     // Detect checklist syntax: [ ] or [x]/[X] at the start of content
-    if (content.startsWith('[ ] ')) {
+    if (content.startsWith(`[ ] `)) {
       node.attributes.checked = false;
       node.content = content.slice(4);
-    } else if (content.startsWith('[x] ') || content.startsWith('[X] ')) {
+    } else if (content.startsWith(`[x] `) || content.startsWith(`[X] `)) {
       node.attributes.checked = true;
       node.content = content.slice(4);
     }
@@ -499,20 +499,20 @@ export class DFAParser {
     // Skip leading spaces
     while (
       i < ctx.tokens.length &&
-      (ctx.tokens[i].type === 'SPACE' || ctx.tokens[i].type === 'TAB')
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
     ) {
       i++;
     }
     // Must have at least one DIGIT
-    if (i >= ctx.tokens.length || ctx.tokens[i].type !== 'DIGIT') return false;
-    while (i < ctx.tokens.length && ctx.tokens[i].type === 'DIGIT') {
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `DIGIT`) return false;
+    while (i < ctx.tokens.length && ctx.tokens[i].type === `DIGIT`) {
       i++;
     }
     // Then DOT
-    if (i >= ctx.tokens.length || ctx.tokens[i].type !== 'DOT') return false;
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `DOT`) return false;
     i++;
     // Then SPACE
-    if (i >= ctx.tokens.length || ctx.tokens[i].type !== 'SPACE') return false;
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `SPACE`) return false;
     return true;
   }
 
@@ -527,16 +527,16 @@ export class DFAParser {
     let spaces = 0;
     while (
       ctx.pos < ctx.tokens.length &&
-      (ctx.tokens[ctx.pos].type === 'SPACE' || ctx.tokens[ctx.pos].type === 'TAB')
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
     ) {
-      spaces += ctx.tokens[ctx.pos].type === 'TAB' ? 2 : 1;
+      spaces += ctx.tokens[ctx.pos].type === `TAB` ? 2 : 1;
       ctx.pos++;
     }
     const indent = Math.floor(spaces / 2);
 
     // Collect digit chars for the number
-    let numStr = '';
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'DIGIT') {
+    let numStr = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `DIGIT`) {
       numStr += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
@@ -545,13 +545,13 @@ export class DFAParser {
     // Skip DOT
     ctx.pos++;
     // Skip SPACE
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
       ctx.pos++;
     }
 
     const content = this._consumeToEndOfLine(ctx);
 
-    const node = new SyntaxNode('list-item', content);
+    const node = new SyntaxNode(`list-item`, content);
     node.attributes = { ordered: true, number, indent };
     node.startLine = startLine;
     node.endLine = startLine;
@@ -569,7 +569,7 @@ export class DFAParser {
    */
   _isHorizontalRule(ctx) {
     const t = ctx.tokens[ctx.pos].type;
-    if (t !== 'DASH' && t !== 'STAR' && t !== 'UNDERSCORE') return false;
+    if (t !== `DASH` && t !== `STAR` && t !== `UNDERSCORE`) return false;
 
     let i = ctx.pos;
     let count = 0;
@@ -580,10 +580,10 @@ export class DFAParser {
     if (count < 3) return false;
 
     // Only spaces allowed after the run, then NEWLINE (not EOF)
-    while (i < ctx.tokens.length && ctx.tokens[i].type === 'SPACE') {
+    while (i < ctx.tokens.length && ctx.tokens[i].type === `SPACE`) {
       i++;
     }
-    return i < ctx.tokens.length && ctx.tokens[i].type === 'NEWLINE';
+    return i < ctx.tokens.length && ctx.tokens[i].type === `NEWLINE`;
   }
 
   /**
@@ -596,7 +596,7 @@ export class DFAParser {
     // Consume all the markers and trailing spaces
     this._consumeToEndOfLine(ctx);
 
-    const node = new SyntaxNode('horizontal-rule', '');
+    const node = new SyntaxNode(`horizontal-rule`, ``);
     node.startLine = startLine;
     node.endLine = startLine;
     return node;
@@ -613,58 +613,58 @@ export class DFAParser {
     const startLine = ctx.line;
 
     // Expect BANG LBRACKET
-    if (ctx.tokens[ctx.pos].type !== 'BANG') return null;
+    if (ctx.tokens[ctx.pos].type !== `BANG`) return null;
     ctx.pos++;
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'LBRACKET') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
     ctx.pos++;
 
     // Collect alt text until RBRACKET
-    let alt = '';
+    let alt = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'RBRACKET' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `RBRACKET` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       alt += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RBRACKET') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
     ctx.pos++; // skip ]
 
     // Expect LPAREN
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'LPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
     ctx.pos++;
 
     // Collect src until RPAREN
-    let src = '';
+    let src = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'RPAREN' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       src += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
     ctx.pos++; // skip )
 
     // Must be end of line for a block-level image
     if (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       return null;
     }
     // Skip newline
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
-    const node = new SyntaxNode('image', alt);
+    const node = new SyntaxNode(`image`, alt);
     node.attributes = { alt, url: src };
     node.startLine = startLine;
     node.endLine = startLine;
@@ -680,79 +680,79 @@ export class DFAParser {
     const startLine = ctx.line;
 
     // Expect [ ! [
-    if (ctx.tokens[ctx.pos].type !== 'LBRACKET') return null;
+    if (ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
     ctx.pos++;
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'BANG') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `BANG`) return null;
     ctx.pos++;
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'LBRACKET') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
     ctx.pos++;
 
     // Collect alt until ]
-    let alt = '';
+    let alt = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'RBRACKET' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `RBRACKET` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       alt += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RBRACKET') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
     ctx.pos++; // ]
 
     // Expect (
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'LPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
     ctx.pos++;
 
     // Collect src until )
-    let src = '';
+    let src = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'RPAREN' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       src += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
     ctx.pos++; // )
 
     // Expect ] (
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RBRACKET') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
     ctx.pos++;
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'LPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
     ctx.pos++;
 
     // Collect href until )
-    let href = '';
+    let href = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'RPAREN' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       href += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== 'RPAREN') return null;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
     ctx.pos++; // )
 
     // Must be end of line for block-level
     if (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       return null;
     }
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
-    const node = new SyntaxNode('image', alt);
+    const node = new SyntaxNode(`image`, alt);
     node.attributes = { alt, url: src, href };
     node.startLine = startLine;
     node.endLine = startLine;
@@ -770,7 +770,7 @@ export class DFAParser {
     // LT then "img" (case-insensitive)
     const after = this._peekTextAfterLT(ctx);
     if (!after) return false;
-    return after.toLowerCase() === 'img';
+    return after.toLowerCase() === `img`;
   }
 
   /**
@@ -781,14 +781,14 @@ export class DFAParser {
     const startLine = ctx.line;
 
     // Consume everything until GT (the closing >)
-    let raw = '';
+    let raw = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       raw += ctx.tokens[ctx.pos].value;
-      if (ctx.tokens[ctx.pos].type === 'GT' && raw.length > 1) {
+      if (ctx.tokens[ctx.pos].type === `GT` && raw.length > 1) {
         ctx.pos++;
         break;
       }
@@ -796,17 +796,17 @@ export class DFAParser {
     }
 
     // Skip newline
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
     // Extract attributes by scanning the raw string character by character
-    const src = this._extractAttr(raw, 'src');
-    const alt = this._extractAttr(raw, 'alt');
-    const style = this._extractAttr(raw, 'style');
+    const src = this._extractAttr(raw, `src`);
+    const alt = this._extractAttr(raw, `alt`);
+    const style = this._extractAttr(raw, `style`);
 
-    const node = new SyntaxNode('image', alt);
+    const node = new SyntaxNode(`image`, alt);
     node.attributes = { alt, url: src };
     if (style) {
       node.attributes.style = style;
@@ -830,38 +830,38 @@ export class DFAParser {
 
     while (i < lower.length) {
       const idx = lower.indexOf(search, i);
-      if (idx === -1) return '';
+      if (idx === -1) return ``;
 
       // Check this is actually an attribute name boundary
       let j = idx + search.length;
 
       // Skip whitespace around =
-      while (j < lower.length && (lower[j] === ' ' || lower[j] === '\t')) j++;
-      if (j >= lower.length || lower[j] !== '=') {
+      while (j < lower.length && (lower[j] === ` ` || lower[j] === `\t`)) j++;
+      if (j >= lower.length || lower[j] !== `=`) {
         i = idx + 1;
         continue;
       }
       j++; // skip =
-      while (j < lower.length && (lower[j] === ' ' || lower[j] === '\t')) j++;
+      while (j < lower.length && (lower[j] === ` ` || lower[j] === `\t`)) j++;
 
       // Expect quote
-      if (j >= lower.length) return '';
+      if (j >= lower.length) return ``;
       const quote = raw[j];
-      if (quote !== '"' && quote !== "'") {
+      if (quote !== `"` && quote !== `'`) {
         i = idx + 1;
         continue;
       }
       j++; // skip opening quote
 
       // Collect until closing quote
-      let value = '';
+      let value = ``;
       while (j < raw.length && raw[j] !== quote) {
         value += raw[j];
         j++;
       }
       return value;
     }
-    return '';
+    return ``;
   }
 
   // ── HTML block ──────────────────────────────────────────────
@@ -891,12 +891,12 @@ export class DFAParser {
     let i = ctx.pos;
     while (
       i < ctx.tokens.length &&
-      (ctx.tokens[i].type === 'SPACE' || ctx.tokens[i].type === 'TAB')
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
     ) {
       i++;
     }
     if (i >= ctx.tokens.length || i === ctx.pos) return false;
-    if (ctx.tokens[i].type !== 'LT') return false;
+    if (ctx.tokens[i].type !== `LT`) return false;
     // HTML comments: <!-- ... -->
     if (this._isHtmlCommentStart({ tokens: ctx.tokens, pos: i })) return true;
     const result = this._peekTagName(ctx.tokens, i + 1);
@@ -917,15 +917,15 @@ export class DFAParser {
     let i = ctx.pos;
     while (
       i < ctx.tokens.length &&
-      (ctx.tokens[i].type === 'SPACE' || ctx.tokens[i].type === 'TAB')
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
     ) {
       i++;
     }
     if (i >= ctx.tokens.length || i === ctx.pos) return false;
-    if (ctx.tokens[i].type !== 'LT') return false;
+    if (ctx.tokens[i].type !== `LT`) return false;
     const next = i + 1;
-    if (next >= ctx.tokens.length || ctx.tokens[next].type !== 'TEXT') return false;
-    return ctx.tokens[next].value.toLowerCase() === 'img';
+    if (next >= ctx.tokens.length || ctx.tokens[next].type !== `TEXT`) return false;
+    return ctx.tokens[next].value.toLowerCase() === `img`;
   }
 
   /**
@@ -935,7 +935,7 @@ export class DFAParser {
   _skipWhitespace(ctx) {
     while (
       ctx.pos < ctx.tokens.length &&
-      (ctx.tokens[ctx.pos].type === 'SPACE' || ctx.tokens[ctx.pos].type === 'TAB')
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
     ) {
       ctx.pos++;
     }
@@ -951,14 +951,14 @@ export class DFAParser {
    * @returns {{name: string, count: number}|null}
    */
   _peekTagName(tokens, startIndex) {
-    if (startIndex >= tokens.length || tokens[startIndex].type !== 'TEXT') {
+    if (startIndex >= tokens.length || tokens[startIndex].type !== `TEXT`) {
       return null;
     }
     let name = tokens[startIndex].value;
     let count = 1;
     let i = startIndex + 1;
     // Collect alternating DASH TEXT sequences
-    while (i + 1 < tokens.length && tokens[i].type === 'DASH' && tokens[i + 1].type === 'TEXT') {
+    while (i + 1 < tokens.length && tokens[i].type === `DASH` && tokens[i + 1].type === `TEXT`) {
       name += `-${tokens[i + 1].value}`;
       count += 2;
       i += 2;
@@ -975,7 +975,7 @@ export class DFAParser {
    * @returns {boolean}
    */
   _isValidCustomElement(name) {
-    const parts = name.split('-');
+    const parts = name.split(`-`);
     if (parts.length < 2) return false;
     for (const part of parts) {
       if (part.length === 0) return false;
@@ -1004,8 +1004,8 @@ export class DFAParser {
     let j = ctx.pos + 1;
     while (j < ctx.tokens.length) {
       const t = ctx.tokens[j].type;
-      if (t === 'GT') return true;
-      if (t === 'NEWLINE' || t === 'EOF') return false;
+      if (t === `GT`) return true;
+      if (t === `NEWLINE` || t === `EOF`) return false;
       j++;
     }
     return false;
@@ -1022,10 +1022,10 @@ export class DFAParser {
     const p = ctx.pos;
     return (
       p + 3 < t.length &&
-      t[p].type === 'LT' &&
-      t[p + 1].type === 'BANG' &&
-      t[p + 2].type === 'DASH' &&
-      t[p + 3].type === 'DASH'
+      t[p].type === `LT` &&
+      t[p + 1].type === `BANG` &&
+      t[p + 2].type === `DASH` &&
+      t[p + 3].type === `DASH`
     );
   }
 
@@ -1038,21 +1038,21 @@ export class DFAParser {
    * @returns {SyntaxNode}
    */
   _parseHtmlComment(ctx, startLine) {
-    let text = '';
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+    let text = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
       // Look for closing sequence: DASH DASH GT
       if (
-        ctx.tokens[ctx.pos].type === 'DASH' &&
+        ctx.tokens[ctx.pos].type === `DASH` &&
         ctx.pos + 2 < ctx.tokens.length &&
-        ctx.tokens[ctx.pos + 1].type === 'DASH' &&
-        ctx.tokens[ctx.pos + 2].type === 'GT'
+        ctx.tokens[ctx.pos + 1].type === `DASH` &&
+        ctx.tokens[ctx.pos + 2].type === `GT`
       ) {
-        text += '-->';
+        text += `-->`;
         ctx.pos += 3;
         break;
       }
-      if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
-        text += '\n';
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        text += `\n`;
         ctx.line++;
       } else {
         text += ctx.tokens[ctx.pos].value;
@@ -1063,16 +1063,16 @@ export class DFAParser {
     const endLine = ctx.line;
 
     // Skip trailing newline
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode(`html-block`, ``);
     node.attributes = {
-      tagName: '!--',
+      tagName: `!--`,
       openingTag: text,
-      closingTag: '',
+      closingTag: ``,
     };
     node.startLine = startLine;
     node.endLine = endLine;
@@ -1087,7 +1087,7 @@ export class DFAParser {
    * @returns {string|null}
    */
   _peekTextAfterLT(ctx) {
-    if (ctx.tokens[ctx.pos].type !== 'LT') return null;
+    if (ctx.tokens[ctx.pos].type !== `LT`) return null;
     const result = this._peekTagName(ctx.tokens, ctx.pos + 1);
     if (!result) return null;
     return result.name;
@@ -1109,38 +1109,38 @@ export class DFAParser {
     }
 
     // Consume the opening tag line (everything up to and including the first >)
-    let openingTag = '';
+    let openingTag = ``;
     const tagName = this._peekTextAfterLT(ctx);
-    const lowerTagName = tagName ? tagName.toLowerCase() : '';
+    const lowerTagName = tagName ? tagName.toLowerCase() : ``;
 
     // Read the entire opening tag up to GT
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'GT' &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `GT` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       openingTag += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
     // Include the GT
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'GT') {
-      openingTag += '>';
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
+      openingTag += `>`;
       ctx.pos++;
     }
 
     // ── Void elements: no body, no closing tag ──────────────
     if (VOID_HTML_ELEMENTS.has(lowerTagName)) {
       // Skip trailing newline
-      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
         ctx.line++;
         ctx.pos++;
       }
-      const node = new SyntaxNode('html-block', '');
+      const node = new SyntaxNode(`html-block`, ``);
       node.attributes = {
         tagName: lowerTagName,
         openingTag,
-        closingTag: '',
+        closingTag: ``,
       };
       node.startLine = startLine;
       node.endLine = startLine;
@@ -1150,20 +1150,20 @@ export class DFAParser {
     // ── Raw content tags: body is stored verbatim ───────────
     if (RAW_CONTENT_TAGS.has(lowerTagName)) {
       // Skip newline after opening tag
-      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
         ctx.line++;
         ctx.pos++;
       }
 
-      let rawBody = '';
-      let closingTag = '';
-      while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+      let rawBody = ``;
+      let closingTag = ``;
+      while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
         if (this._isClosingTag(ctx, lowerTagName)) {
           closingTag = this._consumeClosingTag(ctx);
           break;
         }
-        if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
-          rawBody += '\n';
+        if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+          rawBody += `\n`;
           ctx.line++;
         } else {
           rawBody += ctx.tokens[ctx.pos].value;
@@ -1171,17 +1171,17 @@ export class DFAParser {
         ctx.pos++;
       }
       // Strip leading/trailing newlines
-      while (rawBody.startsWith('\n')) rawBody = rawBody.slice(1);
-      while (rawBody.endsWith('\n')) rawBody = rawBody.slice(0, -1);
+      while (rawBody.startsWith(`\n`)) rawBody = rawBody.slice(1);
+      while (rawBody.endsWith(`\n`)) rawBody = rawBody.slice(0, -1);
 
       const endLine = ctx.line;
 
-      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
         ctx.line++;
         ctx.pos++;
       }
 
-      const node = new SyntaxNode('html-block', '');
+      const node = new SyntaxNode(`html-block`, ``);
       node.attributes = {
         tagName: lowerTagName,
         openingTag,
@@ -1201,24 +1201,24 @@ export class DFAParser {
     }
 
     // Skip newline after opening tag
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
     // Collect body content until we find the closing tag </tagname>
-    let bodyMarkdown = '';
-    let closingTag = '';
+    let bodyMarkdown = ``;
+    let closingTag = ``;
 
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
       // Check for closing tag: LT FSLASH TEXT(tagname) GT
       if (this._isClosingTag(ctx, lowerTagName)) {
         closingTag = this._consumeClosingTag(ctx);
         break;
       }
 
-      if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
-        bodyMarkdown += '\n';
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        bodyMarkdown += `\n`;
         ctx.line++;
       } else {
         bodyMarkdown += ctx.tokens[ctx.pos].value;
@@ -1227,19 +1227,19 @@ export class DFAParser {
     }
 
     // Remove leading/trailing newlines from body
-    while (bodyMarkdown.startsWith('\n')) bodyMarkdown = bodyMarkdown.slice(1);
-    while (bodyMarkdown.endsWith('\n')) bodyMarkdown = bodyMarkdown.slice(0, -1);
+    while (bodyMarkdown.startsWith(`\n`)) bodyMarkdown = bodyMarkdown.slice(1);
+    while (bodyMarkdown.endsWith(`\n`)) bodyMarkdown = bodyMarkdown.slice(0, -1);
 
     const endLine = ctx.line;
 
     // Skip newline after closing tag
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
     // Create the container node
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode(`html-block`, ``);
     node.attributes = {
       tagName: lowerTagName,
       openingTag,
@@ -1278,13 +1278,13 @@ export class DFAParser {
     const savedLine = ctx.line;
 
     // Collect content until NEWLINE or EOF, looking for </tagname>
-    let content = '';
+    let content = ``;
     let closingFound = false;
 
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       // Check for closing tag
       if (this._isClosingTag(ctx, tagName)) {
@@ -1307,13 +1307,13 @@ export class DFAParser {
     this._consumeClosingTag(ctx);
 
     // Skip newline
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
 
     // Build the node structure matching the existing parser's output
-    const node = new SyntaxNode('html-block', '');
+    const node = new SyntaxNode(`html-block`, ``);
     node.attributes = {
       tagName,
       openingTag,
@@ -1322,7 +1322,7 @@ export class DFAParser {
     node.startLine = startLine;
     node.endLine = startLine;
 
-    const child = new SyntaxNode('paragraph', content.trim());
+    const child = new SyntaxNode(`paragraph`, content.trim());
     child.attributes = { bareText: true };
     child.startLine = startLine;
     child.endLine = startLine;
@@ -1340,15 +1340,15 @@ export class DFAParser {
    */
   _isClosingTag(ctx, tagName) {
     const i = ctx.pos;
-    if (i >= ctx.tokens.length || ctx.tokens[i].type !== 'LT') return false;
-    if (i + 1 >= ctx.tokens.length || ctx.tokens[i + 1].type !== 'FSLASH') return false;
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `LT`) return false;
+    if (i + 1 >= ctx.tokens.length || ctx.tokens[i + 1].type !== `FSLASH`) return false;
     const result = this._peekTagName(ctx.tokens, i + 2);
     if (!result) return false;
     if (result.name.toLowerCase() !== tagName) return false;
     // Check for optional space then GT
     let j = i + 2 + result.count;
-    while (j < ctx.tokens.length && ctx.tokens[j].type === 'SPACE') j++;
-    if (j >= ctx.tokens.length || ctx.tokens[j].type !== 'GT') return false;
+    while (j < ctx.tokens.length && ctx.tokens[j].type === `SPACE`) j++;
+    if (j >= ctx.tokens.length || ctx.tokens[j].type !== `GT`) return false;
     return true;
   }
 
@@ -1358,7 +1358,7 @@ export class DFAParser {
    * @returns {string}
    */
   _consumeClosingTag(ctx) {
-    let tag = '';
+    let tag = ``;
     // LT
     tag += ctx.tokens[ctx.pos].value;
     ctx.pos++;
@@ -1374,12 +1374,12 @@ export class DFAParser {
       }
     }
     // Optional spaces
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'SPACE') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
       tag += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
     // GT
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'GT') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
       tag += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
@@ -1410,16 +1410,16 @@ export class DFAParser {
     const lines = [];
 
     // Collect lines that start with PIPE or look like separator rows
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
       // Check if this line starts with PIPE
-      if (ctx.tokens[ctx.pos].type !== 'PIPE') break;
+      if (ctx.tokens[ctx.pos].type !== `PIPE`) break;
 
       // Collect entire line
-      let line = '';
+      let line = ``;
       while (
         ctx.pos < ctx.tokens.length &&
-        ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-        ctx.tokens[ctx.pos].type !== 'EOF'
+        ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+        ctx.tokens[ctx.pos].type !== `EOF`
       ) {
         line += ctx.tokens[ctx.pos].value;
         ctx.pos++;
@@ -1427,14 +1427,14 @@ export class DFAParser {
       lines.push(line);
 
       // Skip newline
-      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
         ctx.line++;
         ctx.pos++;
       }
     }
 
-    const content = lines.join('\n');
-    const node = new SyntaxNode('table', content);
+    const content = lines.join(`\n`);
+    const node = new SyntaxNode(`table`, content);
     node.startLine = startLine;
     node.endLine = startLine + lines.length - 1;
     return node;
@@ -1448,11 +1448,11 @@ export class DFAParser {
    */
   _parseParagraph(ctx) {
     const startLine = ctx.line;
-    let content = '';
+    let content = ``;
     let consecutiveNewlines = 0;
 
-    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== 'EOF') {
-      if (ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
         consecutiveNewlines++;
         ctx.line++;
         ctx.pos++;
@@ -1468,7 +1468,7 @@ export class DFAParser {
         }
 
         // Continuation line — add the newline to content
-        content += '\n';
+        content += `\n`;
         continue;
       }
 
@@ -1478,11 +1478,11 @@ export class DFAParser {
     }
 
     // Trim trailing newlines from content
-    while (content.endsWith('\n')) {
+    while (content.endsWith(`\n`)) {
       content = content.slice(0, -1);
     }
 
-    const node = new SyntaxNode('paragraph', content);
+    const node = new SyntaxNode(`paragraph`, content);
     node.startLine = startLine;
     node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
     return node;
@@ -1498,7 +1498,7 @@ export class DFAParser {
    */
   _lookType(ctx, offset) {
     const i = ctx.pos + offset;
-    if (i >= ctx.tokens.length) return 'EOF';
+    if (i >= ctx.tokens.length) return `EOF`;
     return ctx.tokens[i].type;
   }
 
@@ -1509,17 +1509,17 @@ export class DFAParser {
    * @returns {string}
    */
   _consumeToEndOfLine(ctx) {
-    let text = '';
+    let text = ``;
     while (
       ctx.pos < ctx.tokens.length &&
-      ctx.tokens[ctx.pos].type !== 'NEWLINE' &&
-      ctx.tokens[ctx.pos].type !== 'EOF'
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
     ) {
       text += ctx.tokens[ctx.pos].value;
       ctx.pos++;
     }
     // Skip the newline
-    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === 'NEWLINE') {
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
       ctx.line++;
       ctx.pos++;
     }
@@ -1533,24 +1533,24 @@ export class DFAParser {
    * @returns {boolean}
    */
   _isBlockStart(ctx) {
-    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type === 'EOF') return true;
-    if (ctx.tokens[ctx.pos].type === 'NEWLINE') return true;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type === `EOF`) return true;
+    if (ctx.tokens[ctx.pos].type === `NEWLINE`) return true;
 
     const t = ctx.tokens[ctx.pos].type;
 
     // Heading
-    if (t === 'HASH') return true;
+    if (t === `HASH`) return true;
 
     // Code fence (three or more backticks)
     if (
-      t === 'BACKTICK' &&
-      this._lookType(ctx, 1) === 'BACKTICK' &&
-      this._lookType(ctx, 2) === 'BACKTICK'
+      t === `BACKTICK` &&
+      this._lookType(ctx, 1) === `BACKTICK` &&
+      this._lookType(ctx, 2) === `BACKTICK`
     )
       return true;
 
     // Blockquote
-    if (t === 'GT') return true;
+    if (t === `GT`) return true;
 
     // List items
     if (this._isUnorderedListStart(ctx)) return true;
@@ -1560,16 +1560,16 @@ export class DFAParser {
     if (this._isHorizontalRule(ctx)) return true;
 
     // HTML block
-    if (t === 'LT' && (this._isHtmlBlockStart(ctx) || this._isHtmlImgTag(ctx))) return true;
+    if (t === `LT` && (this._isHtmlBlockStart(ctx) || this._isHtmlImgTag(ctx))) return true;
 
     // Table
-    if (t === 'PIPE') return true;
+    if (t === `PIPE`) return true;
 
     // Image
-    if (t === 'BANG' && this._lookType(ctx, 1) === 'LBRACKET') return true;
+    if (t === `BANG` && this._lookType(ctx, 1) === `LBRACKET`) return true;
 
     // Linked image
-    if (t === 'LBRACKET' && this._lookType(ctx, 1) === 'BANG') return true;
+    if (t === `LBRACKET` && this._lookType(ctx, 1) === `BANG`) return true;
 
     return false;
   }

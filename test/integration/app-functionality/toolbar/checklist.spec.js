@@ -36,157 +36,157 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('source view renders checklist prefix for unchecked item', async () => {
-  await loadContent(page, '- [ ] Unchecked task\n');
+test(`source view renders checklist prefix for unchecked item`, async () => {
+  await loadContent(page, `- [ ] Unchecked task\n`);
   await setSourceView(page);
 
-  const line = page.locator('#editor .md-line').first();
+  const line = page.locator(`#editor .md-line`).first();
   const text = await line.textContent();
   expect(text).toMatch(/^- \[ \] Unchecked task/);
 });
 
-test('source view renders checklist prefix for checked item', async () => {
-  await loadContent(page, '- [x] Checked task\n');
+test(`source view renders checklist prefix for checked item`, async () => {
+  await loadContent(page, `- [x] Checked task\n`);
   await setSourceView(page);
 
-  const line = page.locator('#editor .md-line').first();
+  const line = page.locator(`#editor .md-line`).first();
   const text = await line.textContent();
   expect(text).toMatch(/^- \[x\] Checked task/);
 });
 
-test('writing view renders checkbox for checklist item', async () => {
-  await loadContent(page, '- [ ] My task\n');
+test(`writing view renders checkbox for checklist item`, async () => {
+  await loadContent(page, `- [ ] My task\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator('#editor .md-checklist-checkbox');
+  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
   await expect(checkbox).toBeVisible();
   await expect(checkbox).not.toBeChecked();
 });
 
-test('writing view renders checked checkbox for checked checklist item', async () => {
-  await loadContent(page, '- [x] Done task\n');
+test(`writing view renders checked checkbox for checked checklist item`, async () => {
+  await loadContent(page, `- [x] Done task\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator('#editor .md-checklist-checkbox');
+  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
   await expect(checkbox).toBeVisible();
   await expect(checkbox).toBeChecked();
 });
 
-test('clicking checklist button converts paragraph to checklist item', async () => {
-  await loadContent(page, 'A simple paragraph\n');
+test(`clicking checklist button converts paragraph to checklist item`, async () => {
+  await loadContent(page, `A simple paragraph\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'A simple paragraph' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `A simple paragraph` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- \[ \] A simple paragraph/);
 });
 
-test('clicking checklist button on checklist item toggles back to paragraph', async () => {
-  await loadContent(page, '- [ ] Task item\n');
+test(`clicking checklist button on checklist item toggles back to paragraph`, async () => {
+  await loadContent(page, `- [ ] Task item\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Task item' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Task item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
-  expect(text).toBe('Task item');
+  expect(text).toBe(`Task item`);
 });
 
-test('clicking bullet button on checklist item switches to bullet list', async () => {
-  await loadContent(page, '- [ ] Checklist item\n');
+test(`clicking bullet button on checklist item switches to bullet list`, async () => {
+  await loadContent(page, `- [ ] Checklist item\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Checklist item' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Checklist item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="unordered-list"]').click();
+  await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- Checklist item/);
   // Should NOT have checkbox chars
   expect(text).not.toMatch(/\[[ x]\]/);
 });
 
-test('clicking ordered button on checklist item switches to ordered list', async () => {
-  await loadContent(page, '- [ ] Checklist item\n');
+test(`clicking ordered button on checklist item switches to ordered list`, async () => {
+  await loadContent(page, `- [ ] Checklist item\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Checklist item' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Checklist item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="ordered-list"]').click();
+  await page.locator(`.toolbar-button[data-button-id="ordered-list"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^1\. Checklist item/);
 });
 
-test('clicking checklist button on bullet list switches to checklist', async () => {
-  await loadContent(page, '- Bullet item\n');
+test(`clicking checklist button on bullet list switches to checklist`, async () => {
+  await loadContent(page, `- Bullet item\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Bullet item' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Bullet item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- \[ \] Bullet item/);
 });
 
-test('clicking checklist button on ordered list switches to checklist', async () => {
-  await loadContent(page, '1. Ordered item\n');
+test(`clicking checklist button on ordered list switches to checklist`, async () => {
+  await loadContent(page, `1. Ordered item\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Ordered item' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Ordered item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- \[ \] Ordered item/);
 });
 
-test('clicking checkbox in writing view toggles checked state', async () => {
-  await loadContent(page, '- [ ] Toggle me\n');
+test(`clicking checkbox in writing view toggles checked state`, async () => {
+  await loadContent(page, `- [ ] Toggle me\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator('#editor .md-checklist-checkbox');
+  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
   await expect(checkbox).not.toBeChecked();
 
   // Use mousedown guard approach: get bounding box and use mouse steps
@@ -205,56 +205,56 @@ test('clicking checkbox in writing view toggles checked state', async () => {
   await page.waitForTimeout(200);
 
   // Verify checked state changed
-  const checkboxAfter = page.locator('#editor .md-checklist-checkbox');
+  const checkboxAfter = page.locator(`#editor .md-checklist-checkbox`);
   await expect(checkboxAfter).toBeChecked();
 
   // Verify markdown roundtrip
   await setSourceView(page);
-  const source = page.locator('#editor .md-line').first();
+  const source = page.locator(`#editor .md-line`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- \[x\] Toggle me/);
 });
 
-test('Enter key in checklist item creates new unchecked checklist item', async () => {
-  await loadContent(page, '- [x] First task\n');
+test(`Enter key in checklist item creates new unchecked checklist item`, async () => {
+  await loadContent(page, `- [x] First task\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'First task' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `First task` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
   // Move to end of line and press Enter
-  await page.keyboard.press('End');
+  await page.keyboard.press(`End`);
   await page.waitForTimeout(100);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
-  await page.keyboard.type('Second task', { delay: 30 });
+  await page.keyboard.type(`Second task`, { delay: 30 });
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const lines = page.locator('#editor .md-line');
+  const lines = page.locator(`#editor .md-line`);
   const firstText = await lines.nth(0).textContent();
   const secondText = await lines.nth(1).textContent();
   expect(firstText).toMatch(/^- \[x\] First task/);
   expect(secondText).toMatch(/^- \[ \] Second task/);
 });
 
-test('Enter on empty checklist item exits to paragraph', async () => {
-  await loadContent(page, '- [ ] Task\n- [ ] \n');
+test(`Enter on empty checklist item exits to paragraph`, async () => {
+  await loadContent(page, `- [ ] Task\n- [ ] \n`);
   await setWritingView(page);
 
   // Click the second (empty) checklist item
-  const lines = page.locator('#editor .md-line.md-list-item');
+  const lines = page.locator(`#editor .md-line.md-list-item`);
   await lines.nth(1).click();
   await page.waitForTimeout(200);
 
-  await page.keyboard.press('Enter');
+  await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const allLines = page.locator('#editor .md-line');
+  const allLines = page.locator(`#editor .md-line`);
   const firstText = await allLines.nth(0).textContent();
   const secondText = await allLines.nth(1).textContent();
   expect(firstText).toMatch(/^- \[ \] Task/);
@@ -262,20 +262,20 @@ test('Enter on empty checklist item exits to paragraph', async () => {
   expect(secondText).not.toMatch(/^- /);
 });
 
-test('switching entire contiguous checklist run to bullet via toolbar', async () => {
-  await loadContent(page, '- [ ] Task A\n- [x] Task B\n- [ ] Task C\n');
+test(`switching entire contiguous checklist run to bullet via toolbar`, async () => {
+  await loadContent(page, `- [ ] Task A\n- [x] Task B\n- [ ] Task C\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line', { hasText: 'Task B' }).first();
+  const line = page.locator(`#editor .md-line`, { hasText: `Task B` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
-  await page.locator('.toolbar-button[data-button-id="unordered-list"]').click();
+  await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
   await setSourceView(page);
 
-  const lines = page.locator('#editor .md-line');
+  const lines = page.locator(`#editor .md-line`);
   for (let i = 0; i < 3; i++) {
     const text = await lines.nth(i).textContent();
     expect(text).toMatch(/^- Task [ABC]/);
@@ -283,13 +283,13 @@ test('switching entire contiguous checklist run to bullet via toolbar', async ()
   }
 });
 
-test('writing view does not show bullet marker for checklist items', async () => {
-  await loadContent(page, '- [ ] No bullet\n');
+test(`writing view does not show bullet marker for checklist items`, async () => {
+  await loadContent(page, `- [ ] No bullet\n`);
   await setWritingView(page);
 
-  const line = page.locator('#editor .md-line').first();
+  const line = page.locator(`#editor .md-line`).first();
   const style = await line.evaluate((el) => window.getComputedStyle(el).listStyleType);
-  expect(style).toBe('none');
+  expect(style).toBe(`none`);
 });
 
 /**
@@ -308,7 +308,7 @@ test('writing view does not show bullet marker for checklist items', async () =>
  */
 async function setCrossNodeSelection(p, startText, startOff, endText, endOff) {
   // Click the start node to ensure the editor is focused and active on it.
-  const startLine = p.locator('#editor .md-line', { hasText: startText }).first();
+  const startLine = p.locator(`#editor .md-line`, { hasText: startText }).first();
   await startLine.click();
   await p.waitForTimeout(200);
 
@@ -316,7 +316,7 @@ async function setCrossNodeSelection(p, startText, startOff, endText, endOff) {
   await p.evaluate(
     ({ sText, sOff, eText, eOff }) => {
       const editor = /** @type {any} */ (window).__editor;
-      if (!editor) throw new Error('editor not found');
+      if (!editor) throw new Error(`editor not found`);
       const container = editor.container;
 
       /**
@@ -326,10 +326,10 @@ async function setCrossNodeSelection(p, startText, startOff, endText, endOff) {
        * @param {number} offset
        */
       function resolve(text, offset) {
-        for (const el of container.querySelectorAll('.md-line[data-node-id]')) {
+        for (const el of container.querySelectorAll(`.md-line[data-node-id]`)) {
           if (el.textContent?.includes(text)) {
-            const nodeId = el.getAttribute('data-node-id');
-            const contentEl = el.querySelector('.md-content') ?? el;
+            const nodeId = el.getAttribute(`data-node-id`);
+            const contentEl = el.querySelector(`.md-content`) ?? el;
             const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT);
             let remaining = offset;
             let tn = walker.nextNode();
@@ -379,11 +379,10 @@ async function setCrossNodeSelection(p, startText, startOff, endText, endOff) {
   await p.waitForTimeout(100);
 }
 
-test('multi-select across html-block converts all nodes to checklist after confirm', async () => {
+test(`multi-select across html-block converts all nodes to checklist after confirm`, async () => {
   // nested.md: heading, paragraph, <div>( paragraph, h2 )</div>, paragraph
   // Selecting from "with some..." through "...doc again" should yield 5 items.
-  const md =
-    '# This is a title\n\nwith some text\n\n<div>\n\ninner paragraph\n\n## inner heading\n\n</div>\n\nAnd then the main doc again.\n';
+  const md = `# This is a title\n\nwith some text\n\n<div>\n\ninner paragraph\n\n## inner heading\n\n</div>\n\nAnd then the main doc again.\n`;
 
   await loadContent(page, md);
   await setWritingView(page);
@@ -395,22 +394,22 @@ test('multi-select across html-block converts all nodes to checklist after confi
 
   // Programmatically set cross-node selection (drag doesn't work reliably
   // in writing mode — re-renders destroy the DOM selection mid-drag).
-  await setCrossNodeSelection(page, 'with some text', 0, 'main doc again', 28);
+  await setCrossNodeSelection(page, `with some text`, 0, `main doc again`, 28);
 
   // Click checklist button
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(300);
 
   // Switch to source view to verify
   await setSourceView(page);
 
-  const lines = page.locator('#editor .md-line');
+  const lines = page.locator(`#editor .md-line`);
   const lineCount = await lines.count();
 
   // Collect all lines that are checklist items
   const checklistLines = [];
   for (let i = 0; i < lineCount; i++) {
-    const text = (await lines.nth(i).textContent()) ?? '';
+    const text = (await lines.nth(i).textContent()) ?? ``;
     if (text.match(/^- \[[ x]\] /)) {
       checklistLines.push(text);
     }
@@ -428,8 +427,8 @@ test('multi-select across html-block converts all nodes to checklist after confi
   expect(checklistLines[3]).toMatch(/main doc again/);
 });
 
-test('multi-select across html-block aborts on cancel', async () => {
-  const md = '# Title\n\nparagraph one\n\n<div>\n\ninner text\n\n</div>\n\nparagraph two\n';
+test(`multi-select across html-block aborts on cancel`, async () => {
+  const md = `# Title\n\nparagraph one\n\n<div>\n\ninner text\n\n</div>\n\nparagraph two\n`;
 
   await loadContent(page, md);
   await setWritingView(page);
@@ -440,16 +439,16 @@ test('multi-select across html-block aborts on cancel', async () => {
   });
 
   // Programmatically set cross-node selection.
-  await setCrossNodeSelection(page, 'paragraph one', 0, 'paragraph two', 13);
+  await setCrossNodeSelection(page, `paragraph one`, 0, `paragraph two`, 13);
 
   // Click checklist button
-  await page.locator('.toolbar-button[data-button-id="checklist"]').click();
+  await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(300);
 
   // Switch to source view — nothing should have changed
   await setSourceView(page);
 
-  const lines = page.locator('#editor .md-line');
+  const lines = page.locator(`#editor .md-line`);
   const allText = [];
   const lineCount = await lines.count();
   for (let i = 0; i < lineCount; i++) {

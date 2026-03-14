@@ -29,7 +29,7 @@ export class TableManager {
    */
   getTableCellText(node, row, col) {
     const data = TableModal.parseTableContent(node.content);
-    return data.cells[row]?.[col] ?? '';
+    return data.cells[row]?.[col] ?? ``;
   }
 
   /**
@@ -64,7 +64,7 @@ export class TableManager {
    */
   tableAddRow(node) {
     const data = TableModal.parseTableContent(node.content);
-    const newRow = Array.from({ length: data.columns }, () => '');
+    const newRow = Array.from({ length: data.columns }, () => ``);
     data.cells.push(newRow);
     data.rows++;
     node.content = this.buildTableMarkdown(data);
@@ -89,7 +89,7 @@ export class TableManager {
     while (el && el !== nodeElement) {
       if (el.nodeType === Node.ELEMENT_NODE) {
         const tag = /** @type {HTMLElement} */ (el).tagName;
-        if (tag === 'TH' || tag === 'TD') {
+        if (tag === `TH` || tag === `TD`) {
           cell = /** @type {HTMLElement} */ (el);
           break;
         }
@@ -107,8 +107,8 @@ export class TableManager {
 
     // Determine row index (header row = 0, body rows = 1+)
     let cellRow = 0;
-    const tbody = nodeElement.querySelector('tbody');
-    if (cell.tagName === 'TH') {
+    const tbody = nodeElement.querySelector(`tbody`);
+    if (cell.tagName === `TH`) {
       cellRow = 0;
     } else if (tbody) {
       const bodyRow = /** @type {HTMLTableRowElement} */ (cell.parentNode);
@@ -141,13 +141,13 @@ export class TableManager {
     /** @type {HTMLTableCellElement|null} */
     let cell = null;
     if (row === 0) {
-      const thead = nodeElement.querySelector('thead');
+      const thead = nodeElement.querySelector(`thead`);
       if (thead) {
-        const headerRow = thead.querySelector('tr');
+        const headerRow = thead.querySelector(`tr`);
         cell = headerRow?.cells[col] ?? null;
       }
     } else {
-      const tbody = nodeElement.querySelector('tbody');
+      const tbody = nodeElement.querySelector(`tbody`);
       if (tbody) {
         const bodyRow = tbody.rows[row - 1];
         cell = bodyRow?.cells[col] ?? null;
@@ -214,22 +214,22 @@ export class TableManager {
       const paddedCells = [];
 
       for (let c = 0; c < columns; c++) {
-        paddedCells.push(` ${row[c] ?? ''} `);
+        paddedCells.push(` ${row[c] ?? ``} `);
       }
 
-      lines.push(`|${paddedCells.join('|')}|`);
+      lines.push(`|${paddedCells.join(`|`)}|`);
 
       // After the header row, insert the separator line
       if (r === 0) {
         const sep = [];
         for (let c = 0; c < columns; c++) {
-          sep.push('---');
+          sep.push(`---`);
         }
-        lines.push(`| ${sep.join(' | ')} |`);
+        lines.push(`| ${sep.join(` | `)} |`);
       }
     }
 
-    return lines.join('\n');
+    return lines.join(`\n`);
   }
 
   /**

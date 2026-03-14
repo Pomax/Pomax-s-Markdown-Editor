@@ -39,16 +39,16 @@ export class ToolbarButton {
    * @returns {HTMLButtonElement}
    */
   createElement() {
-    const button = document.createElement('button');
-    button.className = 'toolbar-button';
-    button.type = 'button';
+    const button = document.createElement(`button`);
+    button.className = `toolbar-button`;
+    button.type = `button`;
     button.title = this.config.label;
-    button.setAttribute('aria-label', this.config.label);
+    button.setAttribute(`aria-label`, this.config.label);
     button.dataset.buttonId = this.config.id;
 
     // Create icon/label content
-    const content = document.createElement('span');
-    content.className = 'toolbar-button-content';
+    const content = document.createElement(`span`);
+    content.className = `toolbar-button-content`;
     const svg = icons[this.config.id];
     if (svg) {
       content.innerHTML = svg;
@@ -61,10 +61,10 @@ export class ToolbarButton {
     // Without this, clicking a toolbar button fires the editor's
     // handleBlur (which clears treeCursor) before the click handler
     // runs, so the toolbar can no longer tell which node was active.
-    button.addEventListener('mousedown', (e) => e.preventDefault());
+    button.addEventListener(`mousedown`, (e) => e.preventDefault());
 
     // Add click handler
-    button.addEventListener('click', this.handleClick.bind(this));
+    button.addEventListener(`click`, this.handleClick.bind(this));
 
     return button;
   }
@@ -89,7 +89,7 @@ export class ToolbarButton {
   setEnabled(enabled) {
     this.isEnabled = enabled;
     this.element.disabled = !enabled;
-    this.element.classList.toggle('disabled', !enabled);
+    this.element.classList.toggle(`disabled`, !enabled);
   }
 
   /**
@@ -98,8 +98,8 @@ export class ToolbarButton {
    */
   setActive(active) {
     this.isActive = active;
-    this.element.classList.toggle('active', active);
-    this.element.setAttribute('aria-pressed', active.toString());
+    this.element.classList.toggle(`active`, active);
+    this.element.setAttribute(`aria-pressed`, active.toString());
   }
 
   /**
@@ -107,7 +107,7 @@ export class ToolbarButton {
    * @param {string} icon
    */
   setIcon(icon) {
-    const content = this.element.querySelector('.toolbar-button-content');
+    const content = this.element.querySelector(`.toolbar-button-content`);
     if (content) {
       const svg = icons[icon];
       if (svg) {
@@ -124,6 +124,6 @@ export class ToolbarButton {
    */
   setLabel(label) {
     this.element.title = label;
-    this.element.setAttribute('aria-label', label);
+    this.element.setAttribute(`aria-label`, label);
   }
 }

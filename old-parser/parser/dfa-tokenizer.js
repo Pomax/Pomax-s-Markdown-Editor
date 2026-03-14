@@ -32,50 +32,50 @@
  */
 function charType(ch) {
   switch (ch) {
-    case '\n':
-      return 'NEWLINE';
-    case '#':
-      return 'HASH';
-    case ' ':
-      return 'SPACE';
-    case '\t':
-      return 'TAB';
-    case '>':
-      return 'GT';
-    case '-':
-      return 'DASH';
-    case '*':
-      return 'STAR';
-    case '_':
-      return 'UNDERSCORE';
-    case '~':
-      return 'TILDE';
-    case '`':
-      return 'BACKTICK';
-    case '|':
-      return 'PIPE';
-    case '!':
-      return 'BANG';
-    case '[':
-      return 'LBRACKET';
-    case ']':
-      return 'RBRACKET';
-    case '(':
-      return 'LPAREN';
-    case ')':
-      return 'RPAREN';
-    case '<':
-      return 'LT';
-    case '/':
-      return 'FSLASH';
-    case '.':
-      return 'DOT';
-    case '+':
-      return 'PLUS';
-    case ':':
-      return 'COLON';
+    case `\n`:
+      return `NEWLINE`;
+    case `#`:
+      return `HASH`;
+    case ` `:
+      return `SPACE`;
+    case `\t`:
+      return `TAB`;
+    case `>`:
+      return `GT`;
+    case `-`:
+      return `DASH`;
+    case `*`:
+      return `STAR`;
+    case `_`:
+      return `UNDERSCORE`;
+    case `~`:
+      return `TILDE`;
+    case `\``:
+      return `BACKTICK`;
+    case `|`:
+      return `PIPE`;
+    case `!`:
+      return `BANG`;
+    case `[`:
+      return `LBRACKET`;
+    case `]`:
+      return `RBRACKET`;
+    case `(`:
+      return `LPAREN`;
+    case `)`:
+      return `RPAREN`;
+    case `<`:
+      return `LT`;
+    case `/`:
+      return `FSLASH`;
+    case `.`:
+      return `DOT`;
+    case `+`:
+      return `PLUS`;
+    case `:`:
+      return `COLON`;
     default:
-      if (ch >= '0' && ch <= '9') return 'DIGIT';
+      if (ch >= `0` && ch <= `9`) return `DIGIT`;
       return null;
   }
 }
@@ -92,12 +92,12 @@ export function tokenize(input) {
   /** @type {DFAToken[]} */
   const tokens = [];
   let i = 0;
-  let textBuf = '';
+  let textBuf = ``;
 
   function flushText() {
     if (textBuf.length > 0) {
-      tokens.push({ type: 'TEXT', value: textBuf });
-      textBuf = '';
+      tokens.push({ type: `TEXT`, value: textBuf });
+      textBuf = ``;
     }
   }
 
@@ -117,7 +117,7 @@ export function tokenize(input) {
   }
 
   flushText();
-  tokens.push({ type: 'EOF', value: '' });
+  tokens.push({ type: `EOF`, value: `` });
 
   return tokens;
 }

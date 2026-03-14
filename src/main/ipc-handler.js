@@ -55,7 +55,7 @@ export class IPCHandler {
     // untouched so a previous session's state isn't wiped before a
     // restore can occur.  The graceful close handler still cleans up.
     if (entries.length > 0) {
-      settings.set('openFiles', entries);
+      settings.set(`openFiles`, entries);
     }
   }
 
@@ -81,24 +81,24 @@ export class IPCHandler {
    * Registers file-related IPC handlers.
    */
   registerFileHandlers() {
-    ipcMain.handle('file:new', async () => {
+    ipcMain.handle(`file:new`, async () => {
       const result = this.fileManager.newDocument();
-      this.broadcastToRenderers('document:reset');
+      this.broadcastToRenderers(`document:reset`);
       return result;
     });
 
-    ipcMain.handle('file:load', async () => {
+    ipcMain.handle(`file:load`, async () => {
       const window = BrowserWindow.getFocusedWindow();
       if (!window) {
-        return { success: false, message: 'No active window' };
+        return { success: false, message: `No active window` };
       }
       return this.fileManager.load(window);
     });
 
-    ipcMain.handle('file:save', async (event, content) => {
+    ipcMain.handle(`file:save`, async (event, content) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (!window) {
-        return { success: false, message: 'No active window' };
+        return { success: false, message: `No active window` };
       }
       const result = await this.fileManager.save(window, content);
       if (result.success && this.menuBuilder) {
@@ -107,10 +107,10 @@ export class IPCHandler {
       return result;
     });
 
-    ipcMain.handle('file:saveAs', async (event, content) => {
+    ipcMain.handle(`file:saveAs`, async (event, content) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (!window) {
-        return { success: false, message: 'No active window' };
+        return { success: false, message: `No active window` };
       }
       const result = await this.fileManager.saveAs(window, content);
       if (result.success && this.menuBuilder) {
@@ -119,29 +119,29 @@ export class IPCHandler {
       return result;
     });
 
-    ipcMain.handle('file:setUnsavedChanges', async (event, hasChanges) => {
+    ipcMain.handle(`file:setUnsavedChanges`, async (event, hasChanges) => {
       this.hasUnsavedChanges = hasChanges;
       this.fileManager.setUnsavedChanges(hasChanges);
     });
 
-    ipcMain.handle('file:confirmClose', async (event) => {
+    ipcMain.handle(`file:confirmClose`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (!window) {
-        return { action: 'cancel' };
+        return { action: `cancel` };
       }
       const result = await dialog.showMessageBox(window, {
-        type: 'warning',
-        buttons: ['Save', 'Save As...', 'Discard', 'Cancel'],
+        type: `warning`,
+        buttons: [`Save`, `Save As...`, `Discard`, `Cancel`],
         defaultId: 0,
         cancelId: 3,
-        title: 'Unsaved Changes',
-        message: 'You have unsaved changes. What would you like to do?',
+        title: `Unsaved Changes`,
+        message: `You have unsaved changes. What would you like to do?`,
       });
-      const actions = ['save', 'saveAs', 'discard', 'cancel'];
+      const actions = [`save`, `saveAs`, `discard`, `cancel`];
       return { action: actions[result.response] };
     });
 
-    ipcMain.handle('file:getRecentFiles', async () => {
+    ipcMain.handle(`file:getRecentFiles`, async () => {
       return { success: true, files: this.fileManager.getRecentFiles() };
     });
   }
@@ -150,18 +150,18 @@ export class IPCHandler {
    * Registers document-related IPC handlers.
    */
   registerDocumentHandlers() {
-    ipcMain.handle('document:undo', async (event) => {
+    ipcMain.handle(`document:undo`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'edit:undo');
+        window.webContents.send(`menu:action`, `edit:undo`);
       }
       return { success: true };
     });
 
-    ipcMain.handle('document:redo', async (event) => {
+    ipcMain.handle(`document:redo`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'edit:redo');
+        window.webContents.send(`menu:action`, `edit:redo`);
       }
       return { success: true };
     });
@@ -171,23 +171,23 @@ export class IPCHandler {
    * Registers view-related IPC handlers.
    */
   registerViewHandlers() {
-    ipcMain.handle('view:source', async (event) => {
+    ipcMain.handle(`view:source`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'view:source');
+        window.webContents.send(`menu:action`, `view:source`);
       }
       return { success: true };
     });
 
-    ipcMain.handle('view:writing', async (event) => {
+    ipcMain.handle(`view:writing`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'view:writing');
+        window.webContents.send(`menu:action`, `view:writing`);
       }
       return { success: true };
     });
 
-    ipcMain.handle('view:openFilesChanged', async (event, files) => {
+    ipcMain.handle(`view:openFilesChanged`, async (event, files) => {
       if (this.menuBuilder) {
         this.menuBuilder.openFiles = files ?? [];
         this.menuBuilder.refreshMenu();
@@ -209,18 +209,18 @@ export class IPCHandler {
    * Registers element-related IPC handlers.
    */
   registerElementHandlers() {
-    ipcMain.handle('element:changeType', async (event, elementType) => {
+    ipcMain.handle(`element:changeType`, async (event, elementType) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'element:changeType', elementType);
+        window.webContents.send(`menu:action`, `element:changeType`, elementType);
       }
       return { success: true };
     });
 
-    ipcMain.handle('element:format', async (event, format) => {
+    ipcMain.handle(`element:format`, async (event, format) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
-        window.webContents.send('menu:action', 'element:format', format);
+        window.webContents.send(`menu:action`, `element:format`, format);
       }
       return { success: true };
     });
@@ -230,15 +230,15 @@ export class IPCHandler {
    * Registers dialog-related IPC handlers.
    */
   registerDialogHandlers() {
-    ipcMain.handle('dialog:confirm', async (event, options) => {
+    ipcMain.handle(`dialog:confirm`, async (event, options) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (!window) return { response: 1 };
       const result = await dialog.showMessageBox(window, {
-        type: options.type ?? 'warning',
-        title: options.title ?? 'Confirm',
-        message: options.message ?? '',
+        type: options.type ?? `warning`,
+        title: options.title ?? `Confirm`,
+        message: options.message ?? ``,
         detail: options.detail ?? undefined,
-        buttons: options.buttons ?? ['OK', 'Cancel'],
+        buttons: options.buttons ?? [`OK`, `Cancel`],
         defaultId: options.defaultId ?? 0,
         cancelId: options.cancelId ?? 1,
       });
@@ -250,7 +250,7 @@ export class IPCHandler {
    * Registers application-level IPC handlers (reload, etc.).
    */
   registerAppHandlers() {
-    ipcMain.handle('app:reload', async () => {
+    ipcMain.handle(`app:reload`, async () => {
       if (this.menuBuilder) {
         await this.menuBuilder.handleReload();
       }
@@ -262,15 +262,15 @@ export class IPCHandler {
    * Registers settings-related IPC handlers.
    */
   registerSettingsHandlers() {
-    ipcMain.handle('settings:getAll', async () => {
+    ipcMain.handle(`settings:getAll`, async () => {
       return { success: true, settings: settings.getAll() };
     });
 
-    ipcMain.handle('settings:get', async (event, key) => {
+    ipcMain.handle(`settings:get`, async (event, key) => {
       return { success: true, value: settings.get(key) };
     });
 
-    ipcMain.handle('settings:set', async (event, key, value) => {
+    ipcMain.handle(`settings:set`, async (event, key, value) => {
       settings.set(key, value);
       return { success: true };
     });
@@ -280,22 +280,22 @@ export class IPCHandler {
    * Registers image-related IPC handlers.
    */
   registerImageHandlers() {
-    ipcMain.handle('image:browse', async (event) => {
+    ipcMain.handle(`image:browse`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (!window) {
         return { success: false };
       }
 
       const result = await dialog.showOpenDialog(window, {
-        title: 'Select Image',
+        title: `Select Image`,
         filters: [
           {
-            name: 'Images',
-            extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'],
+            name: `Images`,
+            extensions: [`png`, `jpg`, `jpeg`, `gif`, `svg`, `webp`, `bmp`, `ico`],
           },
-          { name: 'All Files', extensions: ['*'] },
+          { name: `All Files`, extensions: [`*`] },
         ],
-        properties: ['openFile'],
+        properties: [`openFile`],
       });
 
       if (result.canceled || result.filePaths.length === 0) {
@@ -305,7 +305,7 @@ export class IPCHandler {
       return { success: true, filePath: result.filePaths[0] };
     });
 
-    ipcMain.handle('image:rename', async (event, oldPath, newName) => {
+    ipcMain.handle(`image:rename`, async (event, oldPath, newName) => {
       try {
         const dir = path.dirname(oldPath);
         const newPath = path.join(dir, newName);
@@ -334,12 +334,12 @@ export class IPCHandler {
    * Registers path-related IPC handlers.
    */
   registerPathHandlers() {
-    ipcMain.handle('path:toRelative', (event, imagePath, documentPath) => {
+    ipcMain.handle(`path:toRelative`, (event, imagePath, documentPath) => {
       if (!imagePath || !documentPath) return imagePath;
 
       // Normalise the image path: strip file:/// prefix, decode
       let absImage = imagePath;
-      if (absImage.startsWith('file:///')) {
+      if (absImage.startsWith(`file:///`)) {
         absImage = decodeURIComponent(absImage.slice(8));
       }
 
@@ -349,12 +349,12 @@ export class IPCHandler {
 
       // Check whether the image sits at or below the document directory
       const rel = path.relative(docDir, resolved);
-      if (rel.startsWith('..') || path.isAbsolute(rel)) {
+      if (rel.startsWith(`..`) || path.isAbsolute(rel)) {
         return imagePath;
       }
 
       // Return a POSIX-style relative path prefixed with ./
-      return `./${rel.replace(/\\/g, '/')}`;
+      return `./${rel.replace(/\\/g, `/`)}`;
     });
   }
 
@@ -362,11 +362,11 @@ export class IPCHandler {
    * Registers external API handlers for scripting.
    */
   registerAPIHandlers() {
-    ipcMain.handle('api:execute', async (event, command, params) => {
+    ipcMain.handle(`api:execute`, async (event, command, params) => {
       return this.apiRegistry.executeCommand(command, params, event.sender);
     });
 
-    ipcMain.handle('api:commands', async () => {
+    ipcMain.handle(`api:commands`, async () => {
       return this.apiRegistry.getCommandList();
     });
   }

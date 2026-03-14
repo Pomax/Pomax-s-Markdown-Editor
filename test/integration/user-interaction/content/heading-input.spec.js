@@ -12,14 +12,14 @@ import { clickInEditor } from '../../test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const RENDERER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'renderer');
-const OLD_PARSER_DIR = path.join(__dirname, '..', '..', '..', '..', 'old-parser');
+const RENDERER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `src`, `renderer`);
+const OLD_PARSER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `old-parser`);
 
 /** @type {Record<string, string>} */
 const CONTENT_TYPES = {
-  '.html': 'text/html',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
+  '.html': `text/html`,
+  '.js': `application/javascript`,
+  '.css': `text/css`,
 };
 
 /** @type {import('node:http').Server} */
@@ -30,21 +30,21 @@ let baseURL;
 
 test.beforeAll(async () => {
   server = createServer(async (req, res) => {
-    let urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
-    if (urlPath === '/') urlPath = '/index.html';
+    let urlPath = new URL(req.url ?? `/`, `http://localhost`).pathname;
+    if (urlPath === `/`) urlPath = `/index.html`;
     let filePath;
-    if (urlPath.startsWith('/old-parser/')) {
-      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice('/old-parser'.length)));
+    if (urlPath.startsWith(`/old-parser/`)) {
+      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice(`/old-parser`.length)));
       if (!filePath.startsWith(OLD_PARSER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     } else {
       filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
       if (!filePath.startsWith(RENDERER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     }
@@ -53,12 +53,12 @@ test.beforeAll(async () => {
       const content = await readFile(filePath);
       const ext = path.extname(filePath);
       res.writeHead(200, {
-        'Content-Type': CONTENT_TYPES[ext] || 'application/octet-stream',
+        'Content-Type': CONTENT_TYPES[ext] || `application/octet-stream`,
       });
       res.end(content);
     } catch {
       res.writeHead(404);
-      res.end('Not Found');
+      res.end(`Not Found`);
     }
   });
 
@@ -73,27 +73,27 @@ test.afterAll(async () => {
   }
 });
 
-test('typing "# main" letter by letter creates a heading with correct content', async ({
+test(`typing "# main" letter by letter creates a heading with correct content`, async ({
   page,
 }) => {
   await page.goto(baseURL);
 
   // Wait for the editor to initialize and render its first line
-  await page.waitForSelector('#editor .md-line');
+  await page.waitForSelector(`#editor .md-line`);
 
-  const editor = page.locator('#editor');
+  const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
 
   // Type each character individually to simulate real user input
-  for (const char of ['#', ' ', 'm', 'a', 'i', 'n']) {
+  for (const char of [`#`, ` `, `m`, `a`, `i`, `n`]) {
     await page.keyboard.type(char);
   }
 
   // The editor should now contain a heading1 element
-  const headingLine = editor.locator('.md-heading1');
+  const headingLine = editor.locator(`.md-heading1`);
   await expect(headingLine).toBeVisible();
 
   // The heading content span should contain "main"
-  const contentSpan = headingLine.locator('.md-content');
-  await expect(contentSpan).toHaveText('main');
+  const contentSpan = headingLine.locator(`.md-content`);
+  await expect(contentSpan).toHaveText(`main`);
 });

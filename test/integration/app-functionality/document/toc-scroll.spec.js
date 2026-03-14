@@ -12,14 +12,14 @@ import { expect, test } from '@playwright/test';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const RENDERER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'renderer');
-const OLD_PARSER_DIR = path.join(__dirname, '..', '..', '..', '..', 'old-parser');
+const RENDERER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `src`, `renderer`);
+const OLD_PARSER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `old-parser`);
 
 /** @type {Record<string, string>} */
 const CONTENT_TYPES = {
-  '.html': 'text/html',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
+  '.html': `text/html`,
+  '.js': `application/javascript`,
+  '.css': `text/css`,
 };
 
 /** @type {import('node:http').Server} */
@@ -30,21 +30,21 @@ let baseURL;
 
 test.beforeAll(async () => {
   server = createServer(async (req, res) => {
-    let urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
-    if (urlPath === '/') urlPath = '/index.html';
+    let urlPath = new URL(req.url ?? `/`, `http://localhost`).pathname;
+    if (urlPath === `/`) urlPath = `/index.html`;
     let filePath;
-    if (urlPath.startsWith('/old-parser/')) {
-      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice('/old-parser'.length)));
+    if (urlPath.startsWith(`/old-parser/`)) {
+      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice(`/old-parser`.length)));
       if (!filePath.startsWith(OLD_PARSER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     } else {
       filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
       if (!filePath.startsWith(RENDERER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     }
@@ -53,12 +53,12 @@ test.beforeAll(async () => {
       const content = await readFile(filePath);
       const ext = path.extname(filePath);
       res.writeHead(200, {
-        'Content-Type': CONTENT_TYPES[ext] || 'application/octet-stream',
+        'Content-Type': CONTENT_TYPES[ext] || `application/octet-stream`,
       });
       res.end(content);
     } catch {
       res.writeHead(404);
-      res.end('Not Found');
+      res.end(`Not Found`);
     }
   });
 
@@ -73,27 +73,27 @@ test.afterAll(async () => {
   }
 });
 
-test('clicking a TOC link scrolls the heading to the top of the editor container', async ({
+test(`clicking a TOC link scrolls the heading to the top of the editor container`, async ({
   page,
 }) => {
   await page.goto(baseURL);
-  await page.waitForSelector('#editor .md-line');
+  await page.waitForSelector(`#editor .md-line`);
 
   // Build a document with enough content to force scrolling:
   // An h1, many paragraphs, then an h2 that will be off-screen.
-  const lines = ['# First Heading'];
+  const lines = [`# First Heading`];
   for (let i = 0; i < 60; i++) lines.push(`Paragraph line ${i + 1}`);
-  lines.push('## Second Heading');
+  lines.push(`## Second Heading`);
   for (let i = 0; i < 60; i++) lines.push(`More content ${i + 1}`);
 
-  await page.evaluate((md) => window.editorAPI?.setContent(md), lines.join('\n'));
-  await page.waitForSelector('#editor .md-line');
+  await page.evaluate((md) => window.editorAPI?.setContent(md), lines.join(`\n`));
+  await page.waitForSelector(`#editor .md-line`);
 
   // Wait for the TOC to pick up the headings
-  await page.waitForSelector('#toc-sidebar .toc-link');
+  await page.waitForSelector(`#toc-sidebar .toc-link`);
 
   // Find the TOC link for "Second Heading"
-  const tocLink = page.locator('#toc-sidebar .toc-link', { hasText: 'Second Heading' });
+  const tocLink = page.locator(`#toc-sidebar .toc-link`, { hasText: `Second Heading` });
   await expect(tocLink).toBeVisible();
 
   // Click the TOC link
@@ -106,8 +106,8 @@ test('clicking a TOC link scrolls the heading to the top of the editor container
   // We measure the heading's top relative to the container's top:
   // it should be ≈ 0 (within a tolerance for browser scroll adjustments).
   const offset = await page.evaluate(() => {
-    const container = document.getElementById('editor-container');
-    const heading = document.querySelector('.md-heading2');
+    const container = document.getElementById(`editor-container`);
+    const heading = document.querySelector(`.md-heading2`);
     if (!container || !heading) return null;
     const containerRect = container.getBoundingClientRect();
     const headingRect = heading.getBoundingClientRect();

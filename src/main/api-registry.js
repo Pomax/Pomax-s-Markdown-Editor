@@ -46,7 +46,7 @@ export class APIRegistry {
      * API version.
      * @type {string}
      */
-    this.version = '1.0.0';
+    this.version = `1.0.0`;
 
     this.registerBuiltInCommands();
   }
@@ -57,298 +57,297 @@ export class APIRegistry {
   registerBuiltInCommands() {
     // File commands
     this.registerCommand({
-      name: 'file.new',
-      description: 'Creates a new empty document',
-      category: 'file',
+      name: `file.new`,
+      description: `Creates a new empty document`,
+      category: `file`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'file:new');
+        webContents.send(`api:external`, `file:new`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'file.load',
-      description: 'Opens a file dialog to load a markdown file',
-      category: 'file',
+      name: `file.load`,
+      description: `Opens a file dialog to load a markdown file`,
+      category: `file`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'file:load');
+        webContents.send(`api:external`, `file:load`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'file.save',
-      description: 'Saves the current document',
-      category: 'file',
+      name: `file.save`,
+      description: `Saves the current document`,
+      category: `file`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'file:save');
+        webContents.send(`api:external`, `file:save`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'file.saveAs',
-      description: 'Opens a save dialog to save the document with a new name',
-      category: 'file',
+      name: `file.saveAs`,
+      description: `Opens a save dialog to save the document with a new name`,
+      category: `file`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'file:saveAs');
+        webContents.send(`api:external`, `file:saveAs`);
         return { success: true };
       },
     });
 
     // Document commands
     this.registerCommand({
-      name: 'document.undo',
-      description: 'Undoes the last action',
-      category: 'document',
+      name: `document.undo`,
+      description: `Undoes the last action`,
+      category: `document`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'edit:undo');
+        webContents.send(`api:external`, `edit:undo`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'document.redo',
-      description: 'Redoes the last undone action',
-      category: 'document',
+      name: `document.redo`,
+      description: `Redoes the last undone action`,
+      category: `document`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'edit:redo');
+        webContents.send(`api:external`, `edit:redo`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'document.getContent',
-      description: 'Gets the current document content as markdown',
-      category: 'document',
+      name: `document.getContent`,
+      description: `Gets the current document content as markdown`,
+      category: `document`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'document:getContent');
+        webContents.send(`api:external`, `document:getContent`);
         return { success: true, pending: true };
       },
     });
 
     this.registerCommand({
-      name: 'document.setContent',
-      description: 'Sets the document content from markdown',
-      category: 'document',
+      name: `document.setContent`,
+      description: `Sets the document content from markdown`,
+      category: `document`,
       params: {
         content: {
-          type: 'string',
-          description: 'The markdown content to set',
+          type: `string`,
+          description: `The markdown content to set`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'document:setContent', params.content);
+        webContents.send(`api:external`, `document:setContent`, params.content);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'document.insertText',
-      description: 'Inserts text at the current cursor position',
-      category: 'document',
+      name: `document.insertText`,
+      description: `Inserts text at the current cursor position`,
+      category: `document`,
       params: {
         text: {
-          type: 'string',
-          description: 'The text to insert',
+          type: `string`,
+          description: `The text to insert`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'document:insertText', params.text);
+        webContents.send(`api:external`, `document:insertText`, params.text);
         return { success: true };
       },
     });
 
     // View commands
     this.registerCommand({
-      name: 'view.setMode',
-      description: 'Sets the view mode',
-      category: 'view',
+      name: `view.setMode`,
+      description: `Sets the view mode`,
+      category: `view`,
       params: {
         mode: {
-          type: 'string',
-          description: 'The view mode: "source" or "writing"',
+          type: `string`,
+          description: `The view mode: "source" or "writing"`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        const action = params.mode === 'source' ? 'view:source' : 'view:writing';
-        webContents.send('api:external', action);
+        const action = params.mode === `source` ? `view:source` : `view:writing`;
+        webContents.send(`api:external`, action);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'view.getMode',
-      description: 'Gets the current view mode',
-      category: 'view',
+      name: `view.getMode`,
+      description: `Gets the current view mode`,
+      category: `view`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'view:getMode');
+        webContents.send(`api:external`, `view:getMode`);
         return { success: true, pending: true };
       },
     });
 
     // Element commands
     this.registerCommand({
-      name: 'element.changeType',
-      description: 'Changes the type of the current element',
-      category: 'element',
+      name: `element.changeType`,
+      description: `Changes the type of the current element`,
+      category: `element`,
       params: {
         type: {
-          type: 'string',
-          description: 'The new element type (heading1-6, paragraph, blockquote, code, list, etc.)',
+          type: `string`,
+          description: `The new element type (heading1-6, paragraph, blockquote, code, list, etc.)`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'element:changeType', params.type);
+        webContents.send(`api:external`, `element:changeType`, params.type);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'element.applyFormat',
-      description: 'Applies inline formatting to the current selection',
-      category: 'element',
+      name: `element.applyFormat`,
+      description: `Applies inline formatting to the current selection`,
+      category: `element`,
       params: {
         format: {
-          type: 'string',
-          description: 'The format to apply (bold, italic, code, strikethrough, link)',
+          type: `string`,
+          description: `The format to apply (bold, italic, code, strikethrough, link)`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'element:format', params.format);
+        webContents.send(`api:external`, `element:format`, params.format);
         return { success: true };
       },
     });
 
     // Cursor commands
     this.registerCommand({
-      name: 'cursor.getPosition',
-      description: 'Gets the current cursor position',
-      category: 'cursor',
+      name: `cursor.getPosition`,
+      description: `Gets the current cursor position`,
+      category: `cursor`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'cursor:getPosition');
+        webContents.send(`api:external`, `cursor:getPosition`);
         return { success: true, pending: true };
       },
     });
 
     this.registerCommand({
-      name: 'cursor.setPosition',
-      description: 'Sets the cursor position',
-      category: 'cursor',
+      name: `cursor.setPosition`,
+      description: `Sets the cursor position`,
+      category: `cursor`,
       params: {
         line: {
-          type: 'number',
-          description: 'The line number (0-based)',
+          type: `number`,
+          description: `The line number (0-based)`,
           required: true,
         },
         column: {
-          type: 'number',
-          description: 'The column number (0-based)',
+          type: `number`,
+          description: `The column number (0-based)`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'cursor:setPosition', params.line, params.column);
+        webContents.send(`api:external`, `cursor:setPosition`, params.line, params.column);
         return { success: true };
       },
     });
 
     // Selection commands
     this.registerCommand({
-      name: 'selection.get',
-      description: 'Gets the current selection',
-      category: 'selection',
+      name: `selection.get`,
+      description: `Gets the current selection`,
+      category: `selection`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'selection:get');
+        webContents.send(`api:external`, `selection:get`);
         return { success: true, pending: true };
       },
     });
 
     this.registerCommand({
-      name: 'selection.set',
-      description: 'Sets the selection range',
-      category: 'selection',
+      name: `selection.set`,
+      description: `Sets the selection range`,
+      category: `selection`,
       params: {
         startLine: {
-          type: 'number',
-          description: 'The start line (0-based)',
+          type: `number`,
+          description: `The start line (0-based)`,
           required: true,
         },
         startColumn: {
-          type: 'number',
-          description: 'The start column (0-based)',
+          type: `number`,
+          description: `The start column (0-based)`,
           required: true,
         },
         endLine: {
-          type: 'number',
-          description: 'The end line (0-based)',
+          type: `number`,
+          description: `The end line (0-based)`,
           required: true,
         },
         endColumn: {
-          type: 'number',
-          description: 'The end column (0-based)',
+          type: `number`,
+          description: `The end column (0-based)`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'selection:set', params);
+        webContents.send(`api:external`, `selection:set`, params);
         return { success: true };
       },
     });
 
     // Application commands
     this.registerCommand({
-      name: 'app.reload',
-      description:
-        'Reloads the application UI while preserving document content, cursor position, and file association',
-      category: 'app',
+      name: `app.reload`,
+      description: `Reloads the application UI while preserving document content, cursor position, and file association`,
+      category: `app`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'app:reload');
+        webContents.send(`api:external`, `app:reload`);
         return { success: true };
       },
     });
 
     this.registerCommand({
-      name: 'file.getRecentFiles',
-      description: 'Gets the list of recently opened file paths (most recent first)',
-      category: 'file',
+      name: `file.getRecentFiles`,
+      description: `Gets the list of recently opened file paths (most recent first)`,
+      category: `file`,
       params: {},
       handler: async (params, webContents) => {
-        webContents.send('api:external', 'file:getRecentFiles');
+        webContents.send(`api:external`, `file:getRecentFiles`);
         return { success: true };
       },
     });
 
     // Image commands
     this.registerCommand({
-      name: 'image.rename',
-      description: 'Renames an image file on disk',
-      category: 'image',
+      name: `image.rename`,
+      description: `Renames an image file on disk`,
+      category: `image`,
       params: {
         oldPath: {
-          type: 'string',
-          description: 'The current absolute file path of the image',
+          type: `string`,
+          description: `The current absolute file path of the image`,
           required: true,
         },
         newName: {
-          type: 'string',
-          description: 'The new filename (not a full path)',
+          type: `string`,
+          description: `The new filename (not a full path)`,
           required: true,
         },
       },

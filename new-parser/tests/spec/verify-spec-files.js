@@ -13,12 +13,12 @@ import { join, resolve } from 'node:path';
 
 const dir = process.argv[2];
 if (!dir) {
-    console.log('Usage: node verify-spec-files.js <spec-files-directory>');
+    console.log(`Usage: node verify-spec-files.js <spec-files-directory>`);
     process.exit(1);
 }
 
 const specDir = resolve(dir);
-const files = readdirSync(specDir).filter((f) => f.endsWith('.md'));
+const files = readdirSync(specDir).filter((f) => f.endsWith(`.md`));
 
 if (files.length === 0) {
     console.log(`No .md files found in ${specDir}`);
@@ -29,7 +29,7 @@ let failures = 0;
 
 for (const file of files) {
     const filePath = join(specDir, file);
-    const content = readFileSync(filePath, 'utf-8');
+    const content = readFileSync(filePath, `utf-8`);
     const errors = validateSpecFile(content);
     if (errors.length > 0) {
         failures++;
@@ -51,17 +51,17 @@ if (failures > 0) {
  * @returns {string[]} Array of error messages (empty if valid).
  */
 function validateSpecFile(content) {
-    let input = content.replace(/\r\n/g, '\n');
+    let input = content.replace(/\r\n/g, `\n`);
 
     // Must start with a title heading.
-    if (!input.startsWith('# ')) {
-        return ['File must start with a "# title" heading.'];
+    if (!input.startsWith(`# `)) {
+        return [`File must start with a "# title" heading.`];
     }
 
     // Find the first "# markdown" heading and discard everything before the #.
-    const pos = input.indexOf('\n# markdown');
+    const pos = input.indexOf(`\n# markdown`);
     if (pos === -1) {
-        return ['No "# markdown" heading found.'];
+        return [`No "# markdown" heading found.`];
     }
     input = input.substring(pos + 1);
 
@@ -89,7 +89,7 @@ function validateSpecFile(content) {
             return errors;
         }
 
-        const expected = ['# markdown', '# syntax tree', '# html'];
+        const expected = [`# markdown`, `# syntax tree`, `# html`];
         for (let i = 0; i < 3; i++) {
             if (headings[i] !== expected[i]) {
                 errors.push(`Test case ${caseNum}: section ${i + 1} heading is "${headings[i]}", expected "${expected[i]}".`);
@@ -98,9 +98,9 @@ function validateSpecFile(content) {
 
         // Look for --- separator for next test case.
         input = input.trim();
-        if (input.startsWith('---')) {
-            const nlPos = input.indexOf('\n');
-            input = nlPos === -1 ? '' : input.substring(nlPos + 1);
+        if (input.startsWith(`---`)) {
+            const nlPos = input.indexOf(`\n`);
+            input = nlPos === -1 ? `` : input.substring(nlPos + 1);
         }
 
         caseNum++;

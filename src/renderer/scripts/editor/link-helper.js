@@ -39,14 +39,14 @@ export class LinkHelper {
       this.linkModal = new LinkModal();
     }
 
-    const clickedUrl = anchor.getAttribute('href') ?? '';
+    const clickedUrl = anchor.getAttribute(`href`) ?? ``;
 
     // Find the link in the raw markdown by matching the URL, which is
     // more reliable than anchor.textContent (the latter loses nested
     // formatting like **bold**).
     const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
-    let oldMarkdown = '';
-    let oldText = '';
+    let oldMarkdown = ``;
+    let oldText = ``;
     for (const match of node.content.matchAll(linkRe)) {
       if (match[2] === clickedUrl) {
         oldMarkdown = match[0];

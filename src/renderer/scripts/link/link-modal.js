@@ -19,11 +19,11 @@ import { BaseModal } from '../modal/base-modal.js';
  */
 export class LinkModal extends BaseModal {
   get prefix() {
-    return 'link';
+    return `link`;
   }
 
   get ariaLabel() {
-    return 'Edit Link';
+    return `Edit Link`;
   }
 
   getTemplate() {
@@ -55,21 +55,21 @@ export class LinkModal extends BaseModal {
    * @param {Partial<LinkData>} [existing]
    */
   populateFields(existing) {
-    const textInput = this.getInput('link-text');
-    const urlInput = this.getInput('link-url');
+    const textInput = this.getInput(`link-text`);
+    const urlInput = this.getInput(`link-url`);
     const insertBtn = this.getInsertBtn();
     const heading = this.getHeading();
 
     if (existing?.text || existing?.url) {
-      textInput.value = existing.text ?? '';
-      urlInput.value = existing.url ?? '';
-      if (insertBtn) insertBtn.textContent = 'Update';
-      if (heading) heading.textContent = 'Edit Link';
+      textInput.value = existing.text ?? ``;
+      urlInput.value = existing.url ?? ``;
+      if (insertBtn) insertBtn.textContent = `Update`;
+      if (heading) heading.textContent = `Edit Link`;
     } else {
-      textInput.value = '';
-      urlInput.value = '';
-      if (insertBtn) insertBtn.textContent = 'Insert';
-      if (heading) heading.textContent = 'Insert Link';
+      textInput.value = ``;
+      urlInput.value = ``;
+      if (insertBtn) insertBtn.textContent = `Insert`;
+      if (heading) heading.textContent = `Insert Link`;
     }
   }
 
@@ -79,15 +79,15 @@ export class LinkModal extends BaseModal {
    */
   getFocusTarget(existing) {
     // Focus the URL input when editing (text is usually fine), text input when inserting
-    return existing?.text || existing?.url ? this.getInput('link-url') : this.getInput('link-text');
+    return existing?.text || existing?.url ? this.getInput(`link-url`) : this.getInput(`link-text`);
   }
 
   submit() {
-    const text = this.getInput('link-text').value.trim();
-    const url = this.getInput('link-url').value.trim();
+    const text = this.getInput(`link-text`).value.trim();
+    const url = this.getInput(`link-url`).value.trim();
 
     if (!url) {
-      this.getInput('link-url').focus();
+      this.getInput(`link-url`).focus();
       return;
     }
 

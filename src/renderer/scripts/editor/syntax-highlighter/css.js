@@ -12,7 +12,7 @@ const CSS_PROPERTY = /[\w-]+(?=\s*:)/y;
 const CSS_UNIT =
   /\b\d[\d.]*(?:px|em|rem|%|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc|s|ms|deg|rad|turn|fr)\b/y;
 
-const KEYWORDS = new Set(['important', 'inherit', 'initial', 'unset', 'revert', 'auto', 'none']);
+const KEYWORDS = new Set([`important`, `inherit`, `initial`, `unset`, `revert`, `auto`, `none`]);
 
 export const definition = defineLang({
   comments: [BLOCK_COMMENT],
@@ -20,7 +20,7 @@ export const definition = defineLang({
   keywords: KEYWORDS,
   constants: new Set(),
   extraBefore: CSS_AT_RULE,
-  extraBeforeType: 'keyword',
+  extraBeforeType: `keyword`,
 });
 
-export const aliases = ['css', 'scss', 'less'];
+export const aliases = [`css`, `scss`, `less`];

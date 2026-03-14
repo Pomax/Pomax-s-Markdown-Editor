@@ -26,8 +26,8 @@ import {
   setWritingView,
 } from '../../test-utils.js';
 
-const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
-const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
+const fixturePath = path.join(projectRoot, `test`, `fixtures`, `bold-button.md`);
+const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -51,16 +51,16 @@ test.afterAll(async () => {
  * @param {string} word
  * @param {'first'|'middle'|'last'} which
  */
-async function dblclickWord(pg, lineLocator, word, which = 'first') {
+async function dblclickWord(pg, lineLocator, word, which = `first`) {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -100,7 +100,7 @@ async function dblclickWord(pg, lineLocator, word, which = 'first') {
  * @param {import('@playwright/test').Page} pg
  */
 async function clickSubscriptButton(pg) {
-  await pg.locator('[data-button-id="subscript"]').click();
+  await pg.locator(`[data-button-id="subscript"]`).click();
   await pg.waitForTimeout(200);
 }
 
@@ -111,97 +111,97 @@ async function clickSubscriptButton(pg) {
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator('#editor .md-line').nth(index).innerText();
+  return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
 // ─── Subscript first word, paragraph 1 ──────────────────────────────
 
-test.describe('Subscript first word, paragraph 1', () => {
-  test('subscript first word produces correct markdown', async () => {
+test.describe(`Subscript first word, paragraph 1`, () => {
+  test(`subscript first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickSubscriptButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('<sub>text1</sub> text1 text1');
+    expect(line).toBe(`<sub>text1</sub> text1 text1`);
   });
 });
 
 // ─── Subscript middle word, paragraph 1 ─────────────────────────────
 
-test.describe('Subscript middle word, paragraph 1', () => {
-  test('subscript middle word produces correct markdown', async () => {
+test.describe(`Subscript middle word, paragraph 1`, () => {
+  test(`subscript middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickSubscriptButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 <sub>text1</sub> text1');
+    expect(line).toBe(`text1 <sub>text1</sub> text1`);
   });
 });
 
 // ─── Subscript first word, paragraph 2 ──────────────────────────────
 
-test.describe('Subscript first word, paragraph 2', () => {
-  test('subscript first word of second paragraph produces correct markdown', async () => {
+test.describe(`Subscript first word, paragraph 2`, () => {
+  test(`subscript first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'first');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `first`);
     await clickSubscriptButton(page);
 
     await setSourceView(page);
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('<sub>text2</sub> text2 text2');
+    expect(line1).toBe(`<sub>text2</sub> text2 text2`);
   });
 });
 
 // ─── Subscript middle word, paragraph 2 ─────────────────────────────
 
-test.describe('Subscript middle word, paragraph 2', () => {
-  test('subscript middle word of second paragraph produces correct markdown', async () => {
+test.describe(`Subscript middle word, paragraph 2`, () => {
+  test(`subscript middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'middle');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickSubscriptButton(page);
 
     await setSourceView(page);
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('text2 <sub>text2</sub> text2');
+    expect(line1).toBe(`text2 <sub>text2</sub> text2`);
   });
 });
 
 // ─── Cursor position after subscript ────────────────────────────────
 
-test.describe('Cursor position after subscript', () => {
-  test('cursor is at end of subscripted middle word', async () => {
+test.describe(`Cursor position after subscript`, () => {
+  test(`cursor is at end of subscripted middle word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickSubscriptButton(page);
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest('.md-line');
+      const line = range.startContainer.parentElement?.closest(`.md-line`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -233,16 +233,16 @@ test.describe('Cursor position after subscript', () => {
  * @param {string} word
  * @param {'first'|'middle'|'last'} which
  */
-async function clickInsideWord(pg, lineLocator, word, which = 'first') {
+async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -277,17 +277,17 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
   await pg.waitForTimeout(200);
 }
 
-test.describe('Collapsed cursor — subscript word under caret', () => {
-  test('clicking subscript with cursor on a plain word applies subscript', async () => {
+test.describe(`Collapsed cursor — subscript word under caret`, () => {
+  test(`clicking subscript with cursor on a plain word applies subscript`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await clickInsideWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickSubscriptButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 <sub>text1</sub> text1');
+    expect(line).toBe(`text1 <sub>text1</sub> text1`);
   });
 });

@@ -13,14 +13,14 @@ import { clickInEditor } from '../../test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const RENDERER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'renderer');
-const OLD_PARSER_DIR = path.join(__dirname, '..', '..', '..', '..', 'old-parser');
+const RENDERER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `src`, `renderer`);
+const OLD_PARSER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `old-parser`);
 
 /** @type {Record<string, string>} */
 const CONTENT_TYPES = {
-  '.html': 'text/html',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
+  '.html': `text/html`,
+  '.js': `application/javascript`,
+  '.css': `text/css`,
 };
 
 /** @type {import('node:http').Server} */
@@ -31,21 +31,21 @@ let baseURL;
 
 test.beforeAll(async () => {
   server = createServer(async (req, res) => {
-    let urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
-    if (urlPath === '/') urlPath = '/index.html';
+    let urlPath = new URL(req.url ?? `/`, `http://localhost`).pathname;
+    if (urlPath === `/`) urlPath = `/index.html`;
     let filePath;
-    if (urlPath.startsWith('/old-parser/')) {
-      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice('/old-parser'.length)));
+    if (urlPath.startsWith(`/old-parser/`)) {
+      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice(`/old-parser`.length)));
       if (!filePath.startsWith(OLD_PARSER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     } else {
       filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
       if (!filePath.startsWith(RENDERER_DIR)) {
         res.writeHead(403);
-        res.end('Forbidden');
+        res.end(`Forbidden`);
         return;
       }
     }
@@ -54,12 +54,12 @@ test.beforeAll(async () => {
       const content = await readFile(filePath);
       const ext = path.extname(filePath);
       res.writeHead(200, {
-        'Content-Type': CONTENT_TYPES[ext] || 'application/octet-stream',
+        'Content-Type': CONTENT_TYPES[ext] || `application/octet-stream`,
       });
       res.end(content);
     } catch {
       res.writeHead(404);
-      res.end('Not Found');
+      res.end(`Not Found`);
     }
   });
 
@@ -74,13 +74,13 @@ test.afterAll(async () => {
   }
 });
 
-test('editor page height grows when content exceeds initial min-height', async ({ page }) => {
+test(`editor page height grows when content exceeds initial min-height`, async ({ page }) => {
   await page.goto(baseURL);
 
   // Wait for the editor to initialize
-  await page.waitForSelector('#editor .md-line');
+  await page.waitForSelector(`#editor .md-line`);
 
-  const editor = page.locator('#editor');
+  const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
 
   // Measure the initial height of the editor (should be the A4 min-height)
@@ -92,7 +92,7 @@ test('editor page height grows when content exceeds initial min-height', async (
   const lineCount = 80;
   for (let i = 0; i < lineCount; i++) {
     await page.keyboard.type(`Line ${i + 1}`);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press(`Enter`);
   }
 
   // The editor height should now be greater than the initial min-height

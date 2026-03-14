@@ -16,11 +16,11 @@ import { SyntaxNode } from '../syntax-tree/index.js';
  * @type {Record<string, string>}
  */
 const CLOSE_TYPE_FOR = {
-    'bold-open': 'bold-close',
-    'italic-open': 'italic-close',
-    'bold-italic-open': 'bold-italic-close',
-    'strikethrough-open': 'strikethrough-close',
-    'link-open': 'link-close',
+    'bold-open': `bold-close`,
+    'italic-open': `italic-close`,
+    'bold-italic-open': `bold-italic-close`,
+    'strikethrough-open': `strikethrough-close`,
+    'link-open': `link-close`,
 };
 
 /**
@@ -28,11 +28,11 @@ const CLOSE_TYPE_FOR = {
  * @type {Record<string, string>}
  */
 const NODE_TYPE_FOR = {
-    'bold-open': 'bold',
-    'italic-open': 'italic',
-    'bold-italic-open': 'bold-italic',
-    'strikethrough-open': 'strikethrough',
-    'link-open': 'link',
+    'bold-open': `bold`,
+    'italic-open': `italic`,
+    'bold-italic-open': `bold-italic`,
+    'strikethrough-open': `strikethrough`,
+    'link-open': `link`,
 };
 
 // ── Parser ──────────────────────────────────────────────────────────
@@ -63,20 +63,20 @@ export function parseInlineContent(content) {
     for (const token of tokens) {
         const current = stack[stack.length - 1];
 
-        if (token.type === 'text') {
-            current.push(new SyntaxNode('text', token.raw));
+        if (token.type === `text`) {
+            current.push(new SyntaxNode(`text`, token.raw));
             continue;
         }
 
-        if (token.type === 'code') {
-            current.push(new SyntaxNode('inline-code', token.content));
+        if (token.type === `code`) {
+            current.push(new SyntaxNode(`inline-code`, token.content));
             continue;
         }
 
-        if (token.type === 'image') {
-            const img = new SyntaxNode('inline-image', '');
-            img.attributes.alt = token.alt ?? '';
-            img.attributes.src = token.src ?? '';
+        if (token.type === `image`) {
+            const img = new SyntaxNode(`inline-image`, ``);
+            img.attributes.alt = token.alt ?? ``;
+            img.attributes.src = token.src ?? ``;
             current.push(img);
             continue;
         }
@@ -95,44 +95,44 @@ export function parseInlineContent(content) {
 
         // ── Markdown close tokens ───────────────────────────────
         if (
-            token.type === 'bold-close' ||
-            token.type === 'italic-close' ||
-            token.type === 'bold-italic-close' ||
-            token.type === 'strikethrough-close'
+            token.type === `bold-close` ||
+            token.type === `italic-close` ||
+            token.type === `bold-italic-close` ||
+            token.type === `strikethrough-close`
         ) {
             const idx = findMatchingOpen(openStack, token.type);
             if (idx !== -1) {
                 collapseStack(stack, openStack, idx);
                 const meta = openStack.pop();
                 const children = stack.pop();
-                const node = new SyntaxNode(meta.type, '');
+                const node = new SyntaxNode(meta.type, ``);
                 for (const child of children) node.appendChild(child);
                 stack[stack.length - 1].push(node);
             } else {
-                current.push(new SyntaxNode('text', token.raw));
+                current.push(new SyntaxNode(`text`, token.raw));
             }
             continue;
         }
 
-        if (token.type === 'link-close') {
-            const idx = findMatchingOpen(openStack, 'link-close');
+        if (token.type === `link-close`) {
+            const idx = findMatchingOpen(openStack, `link-close`);
             if (idx !== -1) {
                 collapseStack(stack, openStack, idx);
                 openStack.pop();
                 const children = stack.pop();
-                const node = new SyntaxNode('link', '');
-                node.attributes.href = token.href ?? '';
+                const node = new SyntaxNode(`link`, ``);
+                node.attributes.href = token.href ?? ``;
                 for (const child of children) node.appendChild(child);
                 stack[stack.length - 1].push(node);
             } else {
-                current.push(new SyntaxNode('text', token.raw));
+                current.push(new SyntaxNode(`text`, token.raw));
             }
             continue;
         }
 
         // ── HTML void/self-closing tags ─────────────────────────
-        if (token.type === 'html-void') {
-            const node = new SyntaxNode('html-element', '');
+        if (token.type === `html-void`) {
+            const node = new SyntaxNode(`html-element`, ``);
             node.tagName = /** @type {string} */ (token.tag);
             Object.assign(node.attributes, token.attrs || {});
             current.push(node);
@@ -140,7 +140,7 @@ export function parseInlineContent(content) {
         }
 
         // ── HTML open tags ──────────────────────────────────────
-        if (token.type === 'html-open') {
+        if (token.type === `html-open`) {
             const tag = /** @type {string} */ (token.tag);
             openStack.push({
                 type: tag,
@@ -154,7 +154,7 @@ export function parseInlineContent(content) {
         }
 
         // ── HTML close tags ─────────────────────────────────────
-        if (token.type === 'html-close') {
+        if (token.type === `html-close`) {
             const tag = /** @type {string} */ (token.tag);
             const closeKey = `html-close:${tag}`;
             const idx = findMatchingOpen(openStack, closeKey);
@@ -162,13 +162,13 @@ export function parseInlineContent(content) {
                 collapseStack(stack, openStack, idx);
                 const meta = openStack.pop();
                 const children = stack.pop();
-                const node = new SyntaxNode('html-element', '');
+                const node = new SyntaxNode(`html-element`, ``);
                 node.tagName = meta.tag;
                 Object.assign(node.attributes, meta.attrs || {});
                 for (const child of children) node.appendChild(child);
                 stack[stack.length - 1].push(node);
             } else {
-                current.push(new SyntaxNode('text', token.raw));
+                current.push(new SyntaxNode(`text`, token.raw));
             }
         }
     }
@@ -178,7 +178,7 @@ export function parseInlineContent(content) {
         const meta = openStack.pop();
         const children = stack.pop();
         const parent = stack[stack.length - 1];
-        parent.push(new SyntaxNode('text', meta.raw));
+        parent.push(new SyntaxNode(`text`, meta.raw));
         for (const child of children) {
             parent.push(child);
         }
@@ -212,7 +212,7 @@ function collapseStack(stack, openStack, targetIdx) {
         const meta = openStack.pop();
         const children = stack.pop();
         const parent = stack[stack.length - 1];
-        parent.push(new SyntaxNode('text', meta.raw));
+        parent.push(new SyntaxNode(`text`, meta.raw));
         for (const child of children) {
             parent.push(child);
         }

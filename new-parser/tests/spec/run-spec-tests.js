@@ -50,10 +50,10 @@ function stripWhitespaceNodes(node) {
   const toRemove = [];
   for (const child of node.childNodes) {
     if (child.nodeType === 3) {
-      if (child.textContent.trim() === '') {
+      if (child.textContent.trim() === ``) {
         toRemove.push(child);
-      } else if (child.textContent.includes('\n')) {
-        child.textContent = child.textContent.replace(/^\s*\n\s*/, '').replace(/\s*\n\s*$/, '');
+      } else if (child.textContent.includes(`\n`)) {
+        child.textContent = child.textContent.replace(/^\s*\n\s*/, ``).replace(/\s*\n\s*$/, ``);
       }
     } else if (child.nodeType === 1) {
       stripWhitespaceNodes(child);
@@ -63,7 +63,7 @@ function stripWhitespaceNodes(node) {
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
-const specDir = join(here, "spec-files");
+const specDir = join(here, `spec-files`);
 
 // ── Bidirectional-link verification ─────────────────────────────────
 
@@ -115,9 +115,9 @@ function verifyBidirectionalLinks(tree, dom) {
 const filterFile = process.argv[2] || null;
 const filterCase = process.argv[3] ? Number(process.argv[3]) : null;
 
-let specFiles = readdirSync(specDir).filter((f) => f.endsWith(".md"));
+let specFiles = readdirSync(specDir).filter((f) => f.endsWith(`.md`));
 if (filterFile) {
-  const target = filterFile.endsWith(".md") ? filterFile : `${filterFile}.md`;
+  const target = filterFile.endsWith(`.md`) ? filterFile : `${filterFile}.md`;
   specFiles = specFiles.filter((f) => f === target);
   if (specFiles.length === 0) {
     console.log(`No spec file found matching "${filterFile}".`);
@@ -127,25 +127,25 @@ if (filterFile) {
 
 for (const file of specFiles) {
   const filePath = join(specDir, file);
-  const content = readFileSync(filePath, "utf-8");
+  const content = readFileSync(filePath, `utf-8`);
   const title = extractTitle(content);
   const testCases = extractTestCases(content);
 
-  describe(`${basename(file, ".md")}: ${title}`, () => {
+  describe(`${basename(file, `.md`)}: ${title}`, () => {
     testCases.forEach((testCase, i) => {
       if (filterCase !== null && i + 1 !== filterCase) return;
       const { markdown, syntaxTree, html } = testCase;
       it(`case ${i + 1}`, async () => {
         const tree = await Parser.parse(markdown);
-        assert.equal(renderTreeToText(tree), syntaxTree, "syntax tree mismatch");
+        assert.equal(renderTreeToText(tree), syntaxTree, `syntax tree mismatch`);
 
         const roundTrip = tree.toMarkdown();
-        assert.equal(roundTrip, markdown, "toMarkdown() round-trip mismatch");
+        assert.equal(roundTrip, markdown, `toMarkdown() round-trip mismatch`);
 
         const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`);
         const domDoc = dom.window.document;
         const domTree = tree.toDOM(domDoc);
-        assert.equal(domTree.outerHTML.trim(), `<div>${normalizeHTML(html)}</div>`, "toHTML() mismatch");
+        assert.equal(domTree.outerHTML.trim(), `<div>${normalizeHTML(html)}</div>`, `toHTML() mismatch`);
         verifyBidirectionalLinks(tree, domTree);
       });
     });
@@ -159,7 +159,7 @@ for (const file of specFiles) {
  */
 function extractTitle(content) {
   const match = content.match(/^# (.+)$/m);
-  return match ? match[1].trim() : "(untitled)";
+  return match ? match[1].trim() : `(untitled)`;
 }
 
 /**
@@ -170,10 +170,10 @@ function extractTitle(content) {
  * @returns {{ markdown: string, syntaxTree: string, html: string }[]}
  */
 function extractTestCases(content) {
-  let input = content.replace(/\r\n/g, "\n");
+  let input = content.replace(/\r\n/g, `\n`);
 
   // Find the first "# markdown" and discard everything before the #.
-  const pos = input.indexOf("\n# markdown");
+  const pos = input.indexOf(`\n# markdown`);
   if (pos === -1) return [];
   input = input.substring(pos + 1);
 
@@ -181,13 +181,13 @@ function extractTestCases(content) {
   // then optionally a --- separator before the next case.
   const blockPattern = /^# [^\n]+\n\n(`{3,})\n([\s\S]*?)\1[ \t]*(?:\n|$)/;
   const cases = [];
-  const keys = ["markdown", "syntaxTree", "html"];
+  const keys = [`markdown`, `syntaxTree`, `html`];
 
   while (input.length > 0) {
     input = input.trim();
     if (input.length === 0) break;
 
-    const result = { markdown: "", syntaxTree: "", html: "" };
+    const result = { markdown: ``, syntaxTree: ``, html: `` };
     for (const key of keys) {
       input = input.trim();
       const match = input.match(blockPattern);
@@ -199,9 +199,9 @@ function extractTestCases(content) {
 
     // Skip --- separator if present.
     input = input.trim();
-    if (input.startsWith("---")) {
-      const nlPos = input.indexOf("\n");
-      input = nlPos === -1 ? "" : input.substring(nlPos + 1);
+    if (input.startsWith(`---`)) {
+      const nlPos = input.indexOf(`\n`);
+      input = nlPos === -1 ? `` : input.substring(nlPos + 1);
     }
   }
 

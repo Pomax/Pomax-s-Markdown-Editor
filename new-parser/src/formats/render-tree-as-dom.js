@@ -33,63 +33,63 @@ function link(node, domNode) {
 
 function inlineChildToDOM(doc, child) {
     switch (child.type) {
-        case 'text':
+        case `text`:
             return doc.createTextNode(child.content);
 
-        case 'inline-code': {
-            const code = doc.createElement('code');
+        case `inline-code`: {
+            const code = doc.createElement(`code`);
             link(child, code);
             code.textContent = child.content;
             return code;
         }
 
-        case 'inline-image': {
-            const img = doc.createElement('img');
+        case `inline-image`: {
+            const img = doc.createElement(`img`);
             link(child, img);
-            img.setAttribute('src', child.attributes.src ?? '');
-            img.setAttribute('alt', child.attributes.alt ?? '');
+            img.setAttribute(`src`, child.attributes.src ?? ``);
+            img.setAttribute(`alt`, child.attributes.alt ?? ``);
             return img;
         }
 
-        case 'bold': {
-            const el = doc.createElement('strong');
+        case `bold`: {
+            const el = doc.createElement(`strong`);
             link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
-        case 'italic': {
-            const el = doc.createElement('em');
+        case `italic`: {
+            const el = doc.createElement(`em`);
             link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
-        case 'bold-italic': {
-            const strong = doc.createElement('strong');
+        case `bold-italic`: {
+            const strong = doc.createElement(`strong`);
             link(child, strong);
-            const em = doc.createElement('em');
+            const em = doc.createElement(`em`);
             appendInlineChildrenToDOM(doc, child.children, em);
             strong.appendChild(em);
             return strong;
         }
 
-        case 'strikethrough': {
-            const el = doc.createElement('del');
+        case `strikethrough`: {
+            const el = doc.createElement(`del`);
             link(child, el);
             appendInlineChildrenToDOM(doc, child.children, el);
             return el;
         }
 
-        case 'link': {
-            const a = doc.createElement('a');
+        case `link`: {
+            const a = doc.createElement(`a`);
             link(child, a);
-            a.setAttribute('href', child.attributes.href ?? '');
+            a.setAttribute(`href`, child.attributes.href ?? ``);
             appendInlineChildrenToDOM(doc, child.children, a);
             return a;
         }
 
-        case 'html-element': {
+        case `html-element`: {
             const el = doc.createElement(child.tagName);
             link(child, el);
             for (const [attr, value] of Object.entries(child.attributes)) {
@@ -119,7 +119,7 @@ function inlineChildToDOM(doc, child) {
  * @returns {Element}
  */
 export function renderTreeToDOM(doc, tree) {
-    const container = doc.createElement('div');
+    const container = doc.createElement(`div`);
     renderBlockChildrenToDOM(doc, tree.children, container);
     return container;
 }
@@ -148,12 +148,12 @@ function renderBlockChildrenToDOM(doc, children, container) {
  */
 export function renderNodeToDOM(doc, node) {
     switch (node.type) {
-        case 'heading1':
-        case 'heading2':
-        case 'heading3':
-        case 'heading4':
-        case 'heading5':
-        case 'heading6': {
+        case `heading1`:
+        case `heading2`:
+        case `heading3`:
+        case `heading4`:
+        case `heading5`:
+        case `heading6`: {
             const level = node.type.charAt(node.type.length - 1);
             const el = doc.createElement(`h${level}`);
             link(node, el);
@@ -161,38 +161,38 @@ export function renderNodeToDOM(doc, node) {
             return el;
         }
 
-        case 'paragraph': {
-            const el = doc.createElement('p');
+        case `paragraph`: {
+            const el = doc.createElement(`p`);
             link(node, el);
             appendInlineChildrenToDOM(doc, node.children, el);
             return el;
         }
 
-        case 'blockquote': {
-            const el = doc.createElement('blockquote');
+        case `blockquote`: {
+            const el = doc.createElement(`blockquote`);
             link(node, el);
             appendInlineChildrenToDOM(doc, node.children, el);
             return el;
         }
 
-        case 'code-block': {
-            const pre = doc.createElement('pre');
+        case `code-block`: {
+            const pre = doc.createElement(`pre`);
             link(node, pre);
-            const code = doc.createElement('code');
+            const code = doc.createElement(`code`);
             if (node.attributes.language) {
-                code.setAttribute('class', `language-${node.attributes.language}`);
+                code.setAttribute(`class`, `language-${node.attributes.language}`);
             }
             code.textContent = node.children.length > 0 ? node.children[0].content : node.content;
             pre.appendChild(code);
             return pre;
         }
 
-        case 'list': {
+        case `list`: {
             const isOrdered = node.attributes.ordered;
-            const listEl = doc.createElement(isOrdered ? 'ol' : 'ul');
+            const listEl = doc.createElement(isOrdered ? `ol` : `ul`);
             link(node, listEl);
             if (isOrdered && node.attributes.number > 1) {
-                listEl.setAttribute('start', String(node.attributes.number));
+                listEl.setAttribute(`start`, String(node.attributes.number));
             }
             for (const child of node.children) {
                 listEl.appendChild(renderNodeToDOM(doc, child));
@@ -200,58 +200,58 @@ export function renderNodeToDOM(doc, node) {
             return listEl;
         }
 
-        case 'list-item': {
-            const li = doc.createElement('li');
+        case `list-item`: {
+            const li = doc.createElement(`li`);
             link(node, li);
-            if (typeof node.attributes.checked === 'boolean') {
-                const checkbox = doc.createElement('input');
-                checkbox.setAttribute('type', 'checkbox');
+            if (typeof node.attributes.checked === `boolean`) {
+                const checkbox = doc.createElement(`input`);
+                checkbox.setAttribute(`type`, `checkbox`);
                 if (node.attributes.checked) {
-                    checkbox.setAttribute('checked', '');
+                    checkbox.setAttribute(`checked`, ``);
                 }
                 li.appendChild(checkbox);
-                li.appendChild(doc.createTextNode(' '));
+                li.appendChild(doc.createTextNode(` `));
             }
             // Append inline children (text, bold, etc.) but not nested lists
-            const inlineChildren = node.children.filter((c) => c.type !== 'list');
+            const inlineChildren = node.children.filter((c) => c.type !== `list`);
             appendInlineChildrenToDOM(doc, inlineChildren, li);
             // Append nested list children
             for (const child of node.children) {
-                if (child.type === 'list') {
+                if (child.type === `list`) {
                     li.appendChild(renderNodeToDOM(doc, child));
                 }
             }
             return li;
         }
 
-        case 'horizontal-rule': {
-            const hr = doc.createElement('hr');
+        case `horizontal-rule`: {
+            const hr = doc.createElement(`hr`);
             link(node, hr);
             return hr;
         }
 
-        case 'image': {
-            const alt = node.attributes.alt ?? node.content ?? '';
-            const src = node.attributes.url ?? '';
-            const style = node.attributes.style ?? '';
+        case `image`: {
+            const alt = node.attributes.alt ?? node.content ?? ``;
+            const src = node.attributes.url ?? ``;
+            const style = node.attributes.style ?? ``;
 
-            const figure = doc.createElement('figure');
+            const figure = doc.createElement(`figure`);
             link(node, figure);
 
             if (alt) {
-                const figcaption = doc.createElement('figcaption');
+                const figcaption = doc.createElement(`figcaption`);
                 figcaption.textContent = alt;
                 figure.appendChild(figcaption);
             }
 
-            const img = doc.createElement('img');
-            img.setAttribute('src', src);
-            img.setAttribute('alt', alt);
-            if (style) img.setAttribute('style', style);
+            const img = doc.createElement(`img`);
+            img.setAttribute(`src`, src);
+            img.setAttribute(`alt`, alt);
+            if (style) img.setAttribute(`style`, style);
 
             if (node.attributes.href) {
-                const a = doc.createElement('a');
-                a.setAttribute('href', node.attributes.href);
+                const a = doc.createElement(`a`);
+                a.setAttribute(`href`, node.attributes.href);
                 a.appendChild(img);
                 figure.appendChild(a);
             } else {
@@ -261,19 +261,19 @@ export function renderNodeToDOM(doc, node) {
             return figure;
         }
 
-        case 'table': {
-            const table = doc.createElement('table');
+        case `table`: {
+            const table = doc.createElement(`table`);
             link(node, table);
 
-            const thead = doc.createElement('thead');
-            const tbody = doc.createElement('tbody');
+            const thead = doc.createElement(`thead`);
+            const tbody = doc.createElement(`tbody`);
 
             for (const child of node.children) {
-                const tr = doc.createElement('tr');
+                const tr = doc.createElement(`tr`);
                 link(child, tr);
-                const isHeader = child.type === 'header';
+                const isHeader = child.type === `header`;
                 for (const cell of child.children) {
-                    const el = doc.createElement(isHeader ? 'th' : 'td');
+                    const el = doc.createElement(isHeader ? `th` : `td`);
                     link(cell, el);
                     appendInlineChildrenToDOM(doc, cell.children, el);
                     tr.appendChild(el);
@@ -295,13 +295,13 @@ export function renderNodeToDOM(doc, node) {
             return table;
         }
 
-        case 'html-element': {
-            const tagName = node.tagName || 'div';
+        case `html-element`: {
+            const tagName = node.tagName || `div`;
             const el = doc.createElement(tagName);
             link(node, el);
 
             if (node.runtime.openingTag) {
-                const temp = doc.createElement('div');
+                const temp = doc.createElement(`div`);
                 temp.innerHTML = node.runtime.openingTag;
                 const sourceEl = temp.firstElementChild;
                 if (sourceEl) {
@@ -314,7 +314,7 @@ export function renderNodeToDOM(doc, node) {
             if (
                 node.children.length === 1 &&
                 node.children[0].attributes.bareText &&
-                node.children[0].type === 'paragraph'
+                node.children[0].type === `paragraph`
             ) {
                 appendInlineChildrenToDOM(doc, node.children[0].children, el);
             } else {
@@ -325,7 +325,7 @@ export function renderNodeToDOM(doc, node) {
         }
 
         default: {
-            const el = doc.createElement('div');
+            const el = doc.createElement(`div`);
             link(node, el);
             el.textContent = node.content;
             return el;

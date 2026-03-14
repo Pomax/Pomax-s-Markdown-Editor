@@ -14,7 +14,7 @@ import { app } from 'electron';
 export class SettingsManager {
   constructor() {
     /** @type {string} */
-    this.dbPath = path.join(app.getPath('userData'), 'settings.db');
+    this.dbPath = path.join(app.getPath(`userData`), `settings.db`);
 
     /** @type {ReturnType<typeof Database>|null} */
     this.db = null;
@@ -29,7 +29,7 @@ export class SettingsManager {
     this.db = db;
 
     // Enable WAL mode for better concurrent read performance
-    db.pragma('journal_mode = WAL');
+    db.pragma(`journal_mode = WAL`);
 
     db.exec(`
 			CREATE TABLE IF NOT EXISTS settings (
@@ -50,7 +50,7 @@ export class SettingsManager {
 
     const db = /** @type {ReturnType<typeof Database>} */ (this.db);
     const row = /** @type {{ value: string } | undefined} */ (
-      db.prepare('SELECT value FROM settings WHERE key = ?').get(key)
+      db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key)
     );
     if (!row) return defaultValue;
 
@@ -72,7 +72,7 @@ export class SettingsManager {
     const db = /** @type {ReturnType<typeof Database>} */ (this.db);
     const serialized = JSON.stringify(value);
     db.prepare(
-      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      `INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
     ).run(key, serialized);
   }
 
@@ -85,7 +85,7 @@ export class SettingsManager {
     if (!this.db) this.initialize();
 
     const db = /** @type {ReturnType<typeof Database>} */ (this.db);
-    const result = db.prepare('DELETE FROM settings WHERE key = ?').run(key);
+    const result = db.prepare(`DELETE FROM settings WHERE key = ?`).run(key);
     return result.changes > 0;
   }
 
@@ -98,7 +98,7 @@ export class SettingsManager {
 
     const db = /** @type {ReturnType<typeof Database>} */ (this.db);
     const rows = /** @type {{ key: string, value: string }[]} */ (
-      db.prepare('SELECT key, value FROM settings').all()
+      db.prepare(`SELECT key, value FROM settings`).all()
     );
     /** @type {Object<string, *>} */
     const result = {};

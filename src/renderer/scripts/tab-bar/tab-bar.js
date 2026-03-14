@@ -18,8 +18,8 @@
  * @returns {string}
  */
 function getFileName(filePath) {
-  if (!filePath) return 'Untitled';
-  return filePath.split(/[\\/]/).pop() ?? 'Untitled';
+  if (!filePath) return `Untitled`;
+  return filePath.split(/[\\/]/).pop() ?? `Untitled`;
 }
 
 /**
@@ -72,17 +72,17 @@ export function getDisambiguatedLabels(tabs) {
       const maxDepth = segments.length - 1;
 
       while (depth < maxDepth) {
-        const suffix = segments.slice(segments.length - 1 - depth, segments.length - 1).join('/');
+        const suffix = segments.slice(segments.length - 1 - depth, segments.length - 1).join(`/`);
         const isUnique = segmentsList.every(
           (other, j) =>
-            j === i || other.slice(other.length - 1 - depth, other.length - 1).join('/') !== suffix,
+            j === i || other.slice(other.length - 1 - depth, other.length - 1).join(`/`) !== suffix,
         );
         if (isUnique) break;
         depth++;
       }
 
       if (maxDepth > 0) {
-        const suffix = segments.slice(segments.length - 1 - depth, segments.length - 1).join('/');
+        const suffix = segments.slice(segments.length - 1 - depth, segments.length - 1).join(`/`);
         labels.set(group[i].id, `${name} — ${suffix}`);
       } else {
         labels.set(group[i].id, name);
@@ -98,10 +98,10 @@ export function getDisambiguatedLabels(tabs) {
  * @returns {HTMLButtonElement}
  */
 function createCloseButton() {
-  const btn = document.createElement('button');
-  btn.className = 'tab-close';
-  btn.setAttribute('aria-label', 'Close tab');
-  btn.textContent = '×';
+  const btn = document.createElement(`button`);
+  btn.className = `tab-close`;
+  btn.setAttribute(`aria-label`, `Close tab`);
+  btn.textContent = `×`;
   return btn;
 }
 
@@ -133,7 +133,7 @@ export class TabBar {
    * Initializes the tab bar with event delegation.
    */
   initialize() {
-    this.container.addEventListener('click', (e) => {
+    this.container.addEventListener(`click`, (e) => {
       this.handleClick(e);
     });
   }
@@ -216,7 +216,7 @@ export class TabBar {
    */
   render() {
     const labels = getDisambiguatedLabels(this.tabs);
-    this.container.innerHTML = '';
+    this.container.innerHTML = ``;
     for (const tab of this.tabs) {
       const displayLabel = labels.get(tab.id) ?? tab.label;
       const button = this.createTabElement(tab, displayLabel);
@@ -231,19 +231,19 @@ export class TabBar {
    * @returns {HTMLButtonElement}
    */
   createTabElement(tab, displayLabel) {
-    const button = document.createElement('button');
-    button.className = 'tab-button';
+    const button = document.createElement(`button`);
+    button.className = `tab-button`;
     button.dataset.tabId = tab.id;
-    button.title = tab.filePath ?? 'Untitled';
-    if (tab.active) button.classList.add('active');
-    if (tab.modified) button.classList.add('modified');
+    button.title = tab.filePath ?? `Untitled`;
+    if (tab.active) button.classList.add(`active`);
+    if (tab.modified) button.classList.add(`modified`);
 
-    const dot = document.createElement('span');
-    dot.className = 'tab-modified';
+    const dot = document.createElement(`span`);
+    dot.className = `tab-modified`;
     button.appendChild(dot);
 
-    const label = document.createElement('span');
-    label.className = 'tab-label';
+    const label = document.createElement(`span`);
+    label.className = `tab-label`;
     label.textContent = displayLabel;
     button.appendChild(label);
 
@@ -261,8 +261,8 @@ export class TabBar {
     const target = /** @type {HTMLElement} */ (e.target);
 
     // Check for close button click
-    if (target.classList.contains('tab-close')) {
-      const tabButton = target.closest('.tab-button');
+    if (target.classList.contains(`tab-close`)) {
+      const tabButton = target.closest(`.tab-button`);
       const tabId = /** @type {HTMLElement} */ (tabButton)?.dataset.tabId;
       if (tabId && this.onTabClose) {
         this.onTabClose(tabId);
@@ -271,7 +271,7 @@ export class TabBar {
     }
 
     // Check for tab button click
-    const tabButton = target.closest('.tab-button');
+    const tabButton = target.closest(`.tab-button`);
     if (tabButton) {
       const tabId = /** @type {HTMLElement} */ (tabButton).dataset.tabId;
       if (tabId && tabId !== this.activeTabId && this.onTabSelect) {

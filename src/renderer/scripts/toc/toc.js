@@ -36,7 +36,7 @@ export class TableOfContents {
     this.visible = true;
 
     /** @type {TocPosition} */
-    this.position = 'left';
+    this.position = `left`;
 
     /**
      * Maps every tree node ID to the ID of the h1–h3 heading whose
@@ -70,8 +70,8 @@ export class TableOfContents {
    */
   initialize() {
     this.container.innerHTML =
-      '<div class="toc-resize-handle"></div>' +
-      '<h3 class="toc-title">Table of Contents</h3><nav class="toc-nav"></nav>';
+      `<div class="toc-resize-handle"></div>` +
+      `<h3 class="toc-title">Table of Contents</h3><nav class="toc-nav"></nav>`;
 
     this.initResizeHandle();
 
@@ -95,7 +95,7 @@ export class TableOfContents {
         this.lockedHeadingId = null;
         this.updateActiveHeading();
       };
-      scrollContainer.addEventListener('scroll', this.scrollHandler, { passive: true });
+      scrollContainer.addEventListener(`scroll`, this.scrollHandler, { passive: true });
     }
 
     this.refresh();
@@ -121,13 +121,13 @@ export class TableOfContents {
    * Extracts h1–h3 headings from the syntax tree and re-renders the TOC.
    */
   refresh() {
-    const nav = this.container.querySelector('.toc-nav');
+    const nav = this.container.querySelector(`.toc-nav`);
     if (!nav) return;
 
     const headings = this.extractHeadings();
 
     if (headings.length === 0) {
-      nav.innerHTML = '<p class="toc-empty">No headings</p>';
+      nav.innerHTML = `<p class="toc-empty">No headings</p>`;
       return;
     }
 
@@ -168,7 +168,7 @@ export class TableOfContents {
         headings.push({
           id: node.id,
           level,
-          text: node.content || '(empty)',
+          text: node.content || `(empty)`,
         });
       }
       // Recurse into container nodes
@@ -203,7 +203,7 @@ export class TableOfContents {
     if (!tree) return;
 
     /** @type {string} */
-    let currentHeadingId = '';
+    let currentHeadingId = ``;
 
     /**
      * @param {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} nodes
@@ -263,7 +263,7 @@ export class TableOfContents {
     }
 
     // Find the heading with the most visible pixels.
-    let bestId = '';
+    let bestId = ``;
     let bestPixels = 0;
     for (const [id, px] of visiblePixels) {
       if (px > bestPixels) {
@@ -282,11 +282,11 @@ export class TableOfContents {
    * @param {string} headingId
    */
   setActiveLink(headingId) {
-    const links = this.container.querySelectorAll('.toc-link');
+    const links = this.container.querySelectorAll(`.toc-link`);
     for (const link of links) {
       const a = /** @type {HTMLElement} */ (link);
       const isActive = a.dataset.nodeId === headingId;
-      a.classList.toggle('toc-active', isActive);
+      a.classList.toggle(`toc-active`, isActive);
       if (isActive) {
         // Scroll the ToC sidebar so the active link is centered
         // vertically within the visible area.
@@ -307,8 +307,8 @@ export class TableOfContents {
    * @returns {HTMLUListElement}
    */
   buildNestedList(headings) {
-    const root = document.createElement('ul');
-    root.className = 'toc-list';
+    const root = document.createElement(`ul`);
+    root.className = `toc-list`;
 
     /** @type {{ list: HTMLUListElement, level: number }[]} */
     const stack = [{ list: root, level: 0 }];
@@ -322,20 +322,20 @@ export class TableOfContents {
 
       const parent = stack[stack.length - 1].list;
 
-      const li = document.createElement('li');
+      const li = document.createElement(`li`);
       li.className = `toc-item toc-level-${heading.level}`;
 
-      const link = document.createElement('a');
-      link.className = 'toc-link';
-      link.href = '#';
+      const link = document.createElement(`a`);
+      link.className = `toc-link`;
+      link.href = `#`;
       link.textContent = heading.text;
       link.dataset.nodeId = heading.id;
       // Prevent mousedown from stealing focus away from the editor.
       // Without this, clicking a TOC link fires the editor's
       // handleBlur (which clears treeCursor and re-renders) before
       // scrollToHeading runs, disrupting the scroll.
-      link.addEventListener('mousedown', (e) => e.preventDefault());
-      link.addEventListener('click', (e) => {
+      link.addEventListener(`mousedown`, (e) => e.preventDefault());
+      link.addEventListener(`click`, (e) => {
         e.preventDefault();
         this.scrollToHeading(heading.id);
       });
@@ -344,8 +344,8 @@ export class TableOfContents {
       parent.appendChild(li);
 
       // Push a new nesting context for potential children
-      const subList = document.createElement('ul');
-      subList.className = 'toc-list';
+      const subList = document.createElement(`ul`);
+      subList.className = `toc-list`;
       li.appendChild(subList);
       stack.push({ list: subList, level: heading.level });
     }
@@ -361,7 +361,7 @@ export class TableOfContents {
    * @param {HTMLElement} el
    */
   pruneEmptyLists(el) {
-    const lists = el.querySelectorAll('ul');
+    const lists = el.querySelectorAll(`ul`);
     for (let i = lists.length - 1; i >= 0; i--) {
       const ul = lists[i];
       if (ul.children.length === 0) {
@@ -409,7 +409,7 @@ export class TableOfContents {
         const headingRect = target.getBoundingClientRect();
         scrollContainer.scrollTo({
           top: scrollContainer.scrollTop + (headingRect.top - containerRect.top),
-          behavior: 'instant',
+          behavior: `instant`,
         });
       }
 
@@ -427,7 +427,7 @@ export class TableOfContents {
    */
   setVisible(visible) {
     this.visible = visible;
-    this.container.classList.toggle('hidden', !visible);
+    this.container.classList.toggle(`hidden`, !visible);
   }
 
   /**
@@ -446,8 +446,8 @@ export class TableOfContents {
     this.position = position;
     const wrapper = this.container.parentElement;
     if (wrapper) {
-      wrapper.classList.toggle('toc-position-left', position === 'left');
-      wrapper.classList.toggle('toc-position-right', position === 'right');
+      wrapper.classList.toggle(`toc-position-left`, position === `left`);
+      wrapper.classList.toggle(`toc-position-right`, position === `right`);
     }
   }
 
@@ -465,7 +465,7 @@ export class TableOfContents {
    */
   setWidth(width) {
     const clamped = Math.max(120, Math.min(400, width));
-    document.documentElement.style.setProperty('--toc-width', `${clamped}px`);
+    document.documentElement.style.setProperty(`--toc-width`, `${clamped}px`);
   }
 
   /**
@@ -481,7 +481,7 @@ export class TableOfContents {
    * editor.
    */
   initResizeHandle() {
-    const handle = this.container.querySelector('.toc-resize-handle');
+    const handle = this.container.querySelector(`.toc-resize-handle`);
     if (!handle) return;
 
     /** @type {boolean} */
@@ -495,7 +495,7 @@ export class TableOfContents {
       const containerRect = this.container.getBoundingClientRect();
       let newWidth;
 
-      if (this.position === 'right') {
+      if (this.position === `right`) {
         // Sidebar on the right: drag the left edge
         newWidth = containerRect.right - e.clientX;
       } else {
@@ -509,24 +509,24 @@ export class TableOfContents {
     const onMouseUp = () => {
       if (!dragging) return;
       dragging = false;
-      handle.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      handle.classList.remove(`dragging`);
+      document.body.style.cursor = ``;
+      document.body.style.userSelect = ``;
+      document.removeEventListener(`mousemove`, onMouseMove);
+      document.removeEventListener(`mouseup`, onMouseUp);
 
       // Persist the final width
       this.persistWidth();
     };
 
-    handle.addEventListener('mousedown', (e) => {
+    handle.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       dragging = true;
-      handle.classList.add('dragging');
-      document.body.style.cursor = 'ew-resize';
-      document.body.style.userSelect = 'none';
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      handle.classList.add(`dragging`);
+      document.body.style.cursor = `ew-resize`;
+      document.body.style.userSelect = `none`;
+      document.addEventListener(`mousemove`, onMouseMove);
+      document.addEventListener(`mouseup`, onMouseUp);
     });
   }
 
@@ -537,7 +537,7 @@ export class TableOfContents {
     if (!window.electronAPI) return;
     const width = this.getWidth();
     try {
-      await window.electronAPI.setSetting('tocWidth', width);
+      await window.electronAPI.setSetting(`tocWidth`, width);
     } catch {
       // Non-critical — ignore
     }
@@ -554,7 +554,7 @@ export class TableOfContents {
     if (this.scrollHandler) {
       const scrollContainer = this.editor.container.parentElement;
       if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', this.scrollHandler);
+        scrollContainer.removeEventListener(`scroll`, this.scrollHandler);
       }
       this.scrollHandler = null;
     }

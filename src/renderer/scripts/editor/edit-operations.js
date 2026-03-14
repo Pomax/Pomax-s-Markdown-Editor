@@ -16,18 +16,18 @@ import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
  * @type {Set<string>}
  */
 const REMOVABLE_WHEN_EMPTY = new Set([
-  'paragraph',
-  'heading1',
-  'heading2',
-  'heading3',
-  'heading4',
-  'heading5',
-  'heading6',
-  'blockquote',
-  'list-item',
-  'code-block',
-  'table',
-  'html-block',
+  `paragraph`,
+  `heading1`,
+  `heading2`,
+  `heading3`,
+  `heading4`,
+  `heading5`,
+  `heading6`,
+  `blockquote`,
+  `list-item`,
+  `code-block`,
+  `table`,
+  `html-block`,
 ]);
 
 /**
@@ -61,15 +61,15 @@ export class EditOperations {
     if (!REMOVABLE_WHEN_EMPTY.has(node.type)) return;
 
     // Check if the node is truly empty.
-    if (node.content !== '') return;
+    if (node.content !== ``) return;
     // For tables, content is '' but rows may still have data — skip.
-    if (node.type === 'table') return;
+    if (node.type === `table`) return;
     // For html-blocks with children, skip unless all children are gone.
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    if (node.type === `html-block` && node.children.length > 0) return;
 
     const siblings = this.editor.getSiblings(node);
     const idx = siblings.indexOf(node);
-    const wasListItem = node.type === 'list-item';
+    const wasListItem = node.type === `list-item`;
 
     // Remove the empty node from the tree.
     siblings.splice(idx, 1);
@@ -96,7 +96,7 @@ export class EditOperations {
 
     // If document is now empty, insert a fresh paragraph.
     if (this.editor.syntaxTree.children.length === 0) {
-      const fresh = new SyntaxNode('paragraph', '');
+      const fresh = new SyntaxNode(`paragraph`, ``);
       this.editor.syntaxTree.children.push(fresh);
       if (!result.hints.added) result.hints.added = [];
       result.hints.added.push(fresh.id);
@@ -149,11 +149,11 @@ export class EditOperations {
 
     // When the cursor is on an html-block tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === `html-block` && this.editor.syntaxTree.treeCursor.tagPart) {
       const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
       const attr =
-        this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-      const old = node.attributes[attr] || '';
+        this.editor.syntaxTree.treeCursor.tagPart === `opening` ? `openingTag` : `closingTag`;
+      const old = node.attributes[attr] || ``;
       const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
       const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
       node.attributes[attr] = left + text + right;
@@ -167,12 +167,12 @@ export class EditOperations {
     }
 
     // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    if (node.type === `html-block` && node.children.length > 0) return;
 
     const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
 
     if (
-      node.type === 'table' &&
+      node.type === `table` &&
       this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
       this.editor.syntaxTree.treeCursor.cellCol !== undefined
     ) {
@@ -200,10 +200,10 @@ export class EditOperations {
 
     // Code-block content is raw code, not markdown — skip re-parsing
     // to avoid misidentifying code lines as headings, lists, etc.
-    if (node.type === 'code-block') {
+    if (node.type === `code-block`) {
       // In source view, edits target the full markdown text
       // (fences + language + content) stored in sourceEditText.
-      if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+      if (this.editor.viewMode === `source` && node.sourceEditText !== null) {
         const srcLeft = node.sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
         const srcRight = node.sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
         node.sourceEditText = srcLeft + text + srcRight;
@@ -228,11 +228,11 @@ export class EditOperations {
     // prefix + left half, the pasted text, and the right half, then
     // re-parse all resulting lines as separate nodes.
     // Normalize Windows \r\n to \n before checking.
-    const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    if (normalizedText.includes('\n')) {
+    const normalizedText = text.replace(/\r\n/g, `\n`).replace(/\r/g, `\n`);
+    if (normalizedText.includes(`\n`)) {
       const prefixLen = this.editor.getPrefixLength(oldType, node.attributes);
       const mdPrefix = this.editor
-        .buildMarkdownLine(oldType, '', node.attributes)
+        .buildMarkdownLine(oldType, ``, node.attributes)
         .substring(0, prefixLen);
       const normalizedContent = left + normalizedText + right;
       const combined = mdPrefix + normalizedContent;
@@ -242,8 +242,8 @@ export class EditOperations {
 
       if (parsedNodes.length === 0) {
         // Edge case: everything was blank lines — empty paragraph
-        node.type = 'paragraph';
-        node.content = '';
+        node.type = `paragraph`;
+        node.content = ``;
         node.attributes = {};
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         this.editor.recordAndRender(before, { updated: [node.id] });
@@ -294,14 +294,14 @@ export class EditOperations {
     if (parsed) {
       // Suppress code-block fence conversion during typing — the
       // fence pattern (```) is converted on Enter instead.
-      if (parsed.type === 'code-block' && oldType !== 'code-block') {
+      if (parsed.type === `code-block` && oldType !== `code-block`) {
         node.content = newContent;
         // Suppress image/linked-image block conversion during typing —
         // the inline tokenizer handles ![alt](src) within paragraphs.
       } else if (
-        (parsed.type === 'image' || parsed.type === 'linked-image') &&
-        oldType !== 'image' &&
-        oldType !== 'linked-image'
+        (parsed.type === `image` || parsed.type === `linked-image`) &&
+        oldType !== `image` &&
+        oldType !== `linked-image`
       ) {
         node.content = newContent;
       } else {
@@ -365,12 +365,12 @@ export class EditOperations {
 
     // When the cursor is on an html-block tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === `html-block` && this.editor.syntaxTree.treeCursor.tagPart) {
       if (this.editor.syntaxTree.treeCursor.offset > 0) {
         const before = this.editor.syntaxTree.toMarkdown();
         const attr =
-          this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-        const old = node.attributes[attr] || '';
+          this.editor.syntaxTree.treeCursor.tagPart === `opening` ? `openingTag` : `closingTag`;
+        const old = node.attributes[attr] || ``;
         const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset - 1);
         const right = old.substring(this.editor.syntaxTree.treeCursor.offset);
         node.attributes[attr] = left + right;
@@ -385,11 +385,11 @@ export class EditOperations {
     }
 
     // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    if (node.type === `html-block` && node.children.length > 0) return;
 
     // ── Table cell backspace ──
     if (
-      node.type === 'table' &&
+      node.type === `table` &&
       this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
       this.editor.syntaxTree.treeCursor.cellCol !== undefined
     ) {
@@ -424,9 +424,9 @@ export class EditOperations {
       const oldType = node.type;
 
       // Code-block content is raw code — skip re-parsing.
-      if (node.type === 'code-block') {
+      if (node.type === `code-block`) {
         // In source view, backspace targets sourceEditText.
-        if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+        if (this.editor.viewMode === `source` && node.sourceEditText !== null) {
           const srcLeft = node.sourceEditText.substring(
             0,
             this.editor.syntaxTree.treeCursor.offset - 1,
@@ -480,15 +480,15 @@ export class EditOperations {
       // while still preserving the code-block structure, so this
       // is a no-op (consistent with html-block boundary behaviour).
       // In writing view with empty content, convert to paragraph.
-      if (node.type === 'code-block') {
-        if (this.editor.viewMode === 'source') {
+      if (node.type === `code-block`) {
+        if (this.editor.viewMode === `source`) {
           // If the first line of the source edit text no longer
           // contains any backticks, the user has fully removed
           // the opening fence.  Finalize to reparse the text as
           // normal content and fall through to the standard
           // backspace-at-offset-0 logic (merge with previous).
-          const firstLine = (node.sourceEditText ?? '').split('\n')[0];
-          if (firstLine.includes('`')) {
+          const firstLine = (node.sourceEditText ?? ``).split(`\n`)[0];
+          if (firstLine.includes(`\``)) {
             // Still has backticks — no-op.
             this.editor.recordAndRender(before, renderHints);
             return;
@@ -501,9 +501,9 @@ export class EditOperations {
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
           // Fall through to the offset-0 logic below.
         }
-        if (node.content === '') {
-          node.type = 'paragraph';
-          node.content = '';
+        if (node.content === ``) {
+          node.type = `paragraph`;
+          node.content = ``;
           node.attributes = {};
           node.sourceEditText = null;
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
@@ -514,10 +514,10 @@ export class EditOperations {
 
       // If this is a heading (or blockquote, list-item, etc.) with an
       // empty content, convert it back to an empty paragraph.
-      if (node.type !== 'paragraph' && node.content === '') {
-        const wasListItem = node.type === 'list-item';
-        node.type = 'paragraph';
-        node.content = '';
+      if (node.type !== `paragraph` && node.content === ``) {
+        const wasListItem = node.type === `list-item`;
+        node.type = `paragraph`;
+        node.content = ``;
         node.attributes = {};
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         if (wasListItem) {
@@ -528,11 +528,11 @@ export class EditOperations {
             renderHints = { updated: [node.id, ...renumbered] };
           }
         }
-      } else if (node.type !== 'paragraph') {
+      } else if (node.type !== `paragraph`) {
         // Non-paragraph with content and cursor at start: demote to paragraph,
         // keeping the content.
-        const wasListItem = node.type === 'list-item';
-        node.type = 'paragraph';
+        const wasListItem = node.type === `list-item`;
+        node.type = `paragraph`;
         node.attributes = {};
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         if (wasListItem) {
@@ -550,9 +550,9 @@ export class EditOperations {
         if (idx > 0) {
           const prev = siblings[idx - 1];
 
-          if (prev.type === 'html-block' && prev.children.length > 0) {
+          if (prev.type === `html-block` && prev.children.length > 0) {
             // Previous sibling is a container html-block.
-            if (this.editor.viewMode === 'source') {
+            if (this.editor.viewMode === `source`) {
               // In source view the container boundary is
               // structural — backspace is a no-op.
             } else {
@@ -607,10 +607,10 @@ export class EditOperations {
 
     // When the cursor is on an html-block tag line (source view), edit
     // the openingTag / closingTag attribute directly.
-    if (node.type === 'html-block' && this.editor.syntaxTree.treeCursor.tagPart) {
+    if (node.type === `html-block` && this.editor.syntaxTree.treeCursor.tagPart) {
       const attr =
-        this.editor.syntaxTree.treeCursor.tagPart === 'opening' ? 'openingTag' : 'closingTag';
-      const old = node.attributes[attr] || '';
+        this.editor.syntaxTree.treeCursor.tagPart === `opening` ? `openingTag` : `closingTag`;
+      const old = node.attributes[attr] || ``;
       if (this.editor.syntaxTree.treeCursor.offset < old.length) {
         const before = this.editor.syntaxTree.toMarkdown();
         const left = old.substring(0, this.editor.syntaxTree.treeCursor.offset);
@@ -627,11 +627,11 @@ export class EditOperations {
     }
 
     // html-block containers without tagPart are structural (writing view).
-    if (node.type === 'html-block' && node.children.length > 0) return;
+    if (node.type === `html-block` && node.children.length > 0) return;
 
     // ── Table cell delete ──
     if (
-      node.type === 'table' &&
+      node.type === `table` &&
       this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
       this.editor.syntaxTree.treeCursor.cellCol !== undefined
     ) {
@@ -661,7 +661,7 @@ export class EditOperations {
     // For code-blocks in source-edit mode, the effective length is
     // the full source text, not just node.content.
     const effectiveLength =
-      node.type === 'code-block' && node.sourceEditText !== null
+      node.type === `code-block` && node.sourceEditText !== null
         ? node.sourceEditText.length
         : node.content.length;
 
@@ -673,8 +673,8 @@ export class EditOperations {
       const oldType = node.type;
 
       // Code-block content is raw code — skip re-parsing.
-      if (node.type === 'code-block') {
-        if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+      if (node.type === `code-block`) {
+        if (this.editor.viewMode === `source` && node.sourceEditText !== null) {
           const srcLeft = node.sourceEditText.substring(
             0,
             this.editor.syntaxTree.treeCursor.offset,
@@ -724,7 +724,7 @@ export class EditOperations {
       // Cursor is at the end — merge with the next node.
       // If this is a code-block in source-edit mode, finalize it
       // first so the tree is consistent before merging.
-      if (node.type === 'code-block' && node.sourceEditText !== null) {
+      if (node.type === `code-block` && node.sourceEditText !== null) {
         this.editor.finalizeCodeBlockSourceEdit(node);
       }
 
@@ -733,9 +733,9 @@ export class EditOperations {
       if (idx < siblings.length - 1) {
         const next = siblings[idx + 1];
 
-        if (next.type === 'html-block' && next.children.length > 0) {
+        if (next.type === `html-block` && next.children.length > 0) {
           // Next sibling is a container html-block.
-          if (this.editor.viewMode === 'source') {
+          if (this.editor.viewMode === `source`) {
             // In source view the container boundary is
             // structural — delete is a no-op.
           } else {
@@ -797,14 +797,14 @@ export class EditOperations {
 
     // html-block tag lines and containers are not splittable.
     if (
-      node.type === 'html-block' &&
+      node.type === `html-block` &&
       (this.editor.syntaxTree.treeCursor.tagPart || node.children.length > 0)
     ) {
       return;
     }
 
     // ── Enter inside a table → move to next row, same column ──
-    if (node.type === 'table' && this.editor.syntaxTree.treeCursor.cellRow !== undefined) {
+    if (node.type === `table` && this.editor.syntaxTree.treeCursor.cellRow !== undefined) {
       const { cellRow, cellCol } = this.editor.syntaxTree.treeCursor;
       const { totalRows } = this.editor.tableManager.getTableDimensions(node);
       if (cellRow < totalRows - 1) {
@@ -825,13 +825,13 @@ export class EditOperations {
     // ── Early conversion: ```lang + Enter → code block ──
     // Walk the content character by character: 3+ backticks, optional
     // word chars (language), nothing else.  Enter supplies the newline.
-    if (node.type === 'paragraph') {
+    if (node.type === `paragraph`) {
       const text = node.content;
       let i = 0;
-      while (i < text.length && text[i] === '`') i++;
+      while (i < text.length && text[i] === `\``) i++;
       if (i >= 3) {
         const fenceCount = i;
-        let language = '';
+        let language = ``;
         let valid = true;
         while (i < text.length) {
           const ch = text[i];
@@ -844,8 +844,8 @@ export class EditOperations {
           i++;
         }
         if (valid) {
-          node.type = 'code-block';
-          node.content = '';
+          node.type = `code-block`;
+          node.content = ``;
           node.attributes = { language, fenceCount };
           this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
           this.editor.recordAndRender(before, { updated: [node.id] });
@@ -855,8 +855,8 @@ export class EditOperations {
     }
 
     // ── Enter inside a code block → insert newline ──
-    if (node.type === 'code-block') {
-      if (this.editor.viewMode === 'source' && node.sourceEditText !== null) {
+    if (node.type === `code-block`) {
+      if (this.editor.viewMode === `source` && node.sourceEditText !== null) {
         const srcLeft = node.sourceEditText.substring(0, this.editor.syntaxTree.treeCursor.offset);
         const srcRight = node.sourceEditText.substring(this.editor.syntaxTree.treeCursor.offset);
         node.sourceEditText = `${srcLeft}\n${srcRight}`;
@@ -875,13 +875,13 @@ export class EditOperations {
     const contentAfter = node.content.substring(this.editor.syntaxTree.treeCursor.offset);
 
     // ── Enter inside a list item ──
-    if (node.type === 'list-item') {
-      if (contentBefore === '' && contentAfter === '') {
+    if (node.type === `list-item`) {
+      if (contentBefore === `` && contentAfter === ``) {
         // Empty list item → exit list: convert to empty paragraph
         const siblings = this.editor.getSiblings(node);
         const idx = siblings.indexOf(node);
-        node.type = 'paragraph';
-        node.content = '';
+        node.type = `paragraph`;
+        node.content = ``;
         node.attributes = {};
         this.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         const renumbered = this.editor.renumberAdjacentList(siblings, idx);
@@ -903,10 +903,10 @@ export class EditOperations {
       if (node.attributes.ordered) {
         newAttrs.number = (node.attributes.number || 1) + 1;
       }
-      if (typeof node.attributes.checked === 'boolean') {
+      if (typeof node.attributes.checked === `boolean`) {
         newAttrs.checked = false;
       }
-      const newItem = new SyntaxNode('list-item', contentAfter);
+      const newItem = new SyntaxNode(`list-item`, contentAfter);
       newItem.attributes = newAttrs;
       const siblings = this.editor.getSiblings(node);
       const idx = siblings.indexOf(node);
@@ -934,7 +934,7 @@ export class EditOperations {
     }
 
     // New node is always a paragraph
-    const newNode = new SyntaxNode('paragraph', contentAfter);
+    const newNode = new SyntaxNode(`paragraph`, contentAfter);
     const siblings = this.editor.getSiblings(node);
     const idx = siblings.indexOf(node);
     siblings.splice(idx + 1, 0, newNode);

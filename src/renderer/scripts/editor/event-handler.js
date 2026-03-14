@@ -60,10 +60,10 @@ export class EventHandler {
     this.editor.editorInteractionPending = true;
 
     this.mouseDownAnchor =
-      event.target instanceof HTMLElement && event.target.tagName === 'A' ? event.target : null;
+      event.target instanceof HTMLElement && event.target.tagName === `A` ? event.target : null;
 
     this.mouseDownLanguageTag =
-      event.target instanceof HTMLElement && event.target.classList.contains('md-code-language-tag')
+      event.target instanceof HTMLElement && event.target.classList.contains(`md-code-language-tag`)
         ? event.target
         : null;
   }
@@ -91,10 +91,10 @@ export class EventHandler {
     // The tag may no longer be in the DOM (selectionchange can re-render
     // the code block between mousedown and click), so fall back to the
     // reference captured in handleMouseDown.
-    if (this.editor.viewMode === 'writing') {
+    if (this.editor.viewMode === `writing`) {
       const langTag =
         (event.target instanceof HTMLElement &&
-          event.target.classList.contains('md-code-language-tag') &&
+          event.target.classList.contains(`md-code-language-tag`) &&
           event.target) ||
         this.mouseDownLanguageTag;
       this.mouseDownLanguageTag = null;
@@ -104,11 +104,11 @@ export class EventHandler {
         // (we haven't synced the cursor yet, so getCurrentBlockNode
         // would return the previously focused node).
         const codeBlockEl = /** @type {HTMLElement|null} */ (
-          langTag.closest?.('.md-code-block') ?? null
+          langTag.closest?.(`.md-code-block`) ?? null
         );
         const nodeId = codeBlockEl?.dataset?.nodeId;
         const node = nodeId ? this.editor.syntaxTree?.findNodeById(nodeId) : null;
-        if (node?.type === 'code-block') {
+        if (node?.type === `code-block`) {
           this.openCodeLanguageModal(node);
         }
         return;
@@ -142,9 +142,9 @@ export class EventHandler {
     this.editor.selectionManager.updateFromDOM();
 
     // In writing view, clicking an image opens the edit modal directly.
-    if (this.editor.viewMode === 'writing' && this.editor.syntaxTree?.treeCursor) {
+    if (this.editor.viewMode === `writing` && this.editor.syntaxTree?.treeCursor) {
       const clickedNode = this.editor.getCurrentBlockNode();
-      if (clickedNode?.type === 'image' || clickedNode?.type === 'linked-image') {
+      if (clickedNode?.type === `image` || clickedNode?.type === `linked-image`) {
         this.editor.imageHelper.openImageModalForNode(clickedNode);
         return;
       }
@@ -155,9 +155,9 @@ export class EventHandler {
     // The anchor may no longer be in the DOM (selectionchange can
     // re-render the node between mousedown and click), so fall back
     // to the reference captured in handleMouseDown.
-    if (this.editor.viewMode === 'writing') {
+    if (this.editor.viewMode === `writing`) {
       const anchor =
-        (event.target instanceof HTMLElement && event.target.tagName === 'A' && event.target) ||
+        (event.target instanceof HTMLElement && event.target.tagName === `A` && event.target) ||
         this.mouseDownAnchor;
       this.mouseDownAnchor = null;
       if (anchor) {
@@ -185,7 +185,7 @@ export class EventHandler {
     // Finalize source-edit mode for code-blocks on click away.
     if (oldBlockId && oldBlockId !== newBlockId) {
       const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-      if (oldNode?.type === 'code-block' && oldNode.sourceEditText !== null) {
+      if (oldNode?.type === `code-block` && oldNode.sourceEditText !== null) {
         const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
         if (hints) {
           this.editor.renderNodes(hints);
@@ -193,7 +193,7 @@ export class EventHandler {
       }
     }
 
-    if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
+    if (this.editor.viewMode === `writing` && newBlockId && newBlockId !== oldBlockId) {
       const nodesToUpdate = [newBlockId];
       if (oldBlockId) nodesToUpdate.push(oldBlockId);
       this.editor.lastRenderedNodeId = newNodeId;
@@ -211,9 +211,9 @@ export class EventHandler {
     if (!event.dataTransfer) return;
 
     // Check whether the drag payload contains files
-    if (event.dataTransfer.types.includes('Files')) {
+    if (event.dataTransfer.types.includes(`Files`)) {
       event.preventDefault();
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = `copy`;
     }
   }
 
@@ -222,15 +222,15 @@ export class EventHandler {
    * @type {Set<string>}
    */
   static IMAGE_EXTENSIONS = new Set([
-    '.png',
-    '.jpg',
-    '.jpeg',
-    '.gif',
-    '.bmp',
-    '.webp',
-    '.svg',
-    '.ico',
-    '.avif',
+    `.png`,
+    `.jpg`,
+    `.jpeg`,
+    `.gif`,
+    `.bmp`,
+    `.webp`,
+    `.svg`,
+    `.ico`,
+    `.avif`,
   ]);
 
   /**
@@ -248,7 +248,7 @@ export class EventHandler {
 
     const files = [...event.dataTransfer.files];
     const imageFiles = files.filter((f) => {
-      const ext = f.name.includes('.') ? `.${f.name.split('.').pop()?.toLowerCase()}` : '';
+      const ext = f.name.includes(`.`) ? `.${f.name.split(`.`).pop()?.toLowerCase()}` : ``;
       return EventHandler.IMAGE_EXTENSIONS.has(ext);
     });
 
@@ -281,26 +281,26 @@ export class EventHandler {
     if (!this.editor.syntaxTree) return;
 
     const currentNode = this.editor.getCurrentBlockNode();
-    const alt = fileName.replace(/\.[^.]+$/, '');
+    const alt = fileName.replace(/\.[^.]+$/, ``);
 
     // Convert the absolute path to a file:// URL so the image resolves
     // regardless of where the current document is saved.
-    const fileUrl = filePath.startsWith('file://')
+    const fileUrl = filePath.startsWith(`file://`)
       ? filePath
-      : `file:///${filePath.replace(/\\/g, '/')}`;
+      : `file:///${filePath.replace(/\\/g, `/`)}`;
 
     // Use a relative path when the setting is enabled
     const src = this.editor.ensureLocalPaths
       ? await this.editor.imageHelper.toRelativeImagePath(fileUrl)
       : fileUrl;
 
-    const imageNode = new SyntaxNode('image', alt);
+    const imageNode = new SyntaxNode(`image`, alt);
     imageNode.attributes = { alt, url: src };
 
     if (!currentNode) {
       // No cursor node — append to the tree
       this.editor.syntaxTree.appendChild(imageNode);
-    } else if (currentNode.type === 'paragraph' && currentNode.content === '') {
+    } else if (currentNode.type === `paragraph` && currentNode.content === ``) {
       // Cursor is already on an empty paragraph — replace it
       const siblings = this.editor.getSiblings(currentNode);
       const idx = siblings.indexOf(currentNode);
@@ -319,8 +319,8 @@ export class EventHandler {
     const imgSiblings = this.editor.getSiblings(imageNode);
     const imgIdx = imgSiblings.indexOf(imageNode);
     const nextNode = imgSiblings[imgIdx + 1];
-    if (!nextNode || !(nextNode.type === 'paragraph' && nextNode.content === '')) {
-      const trailingParagraph = new SyntaxNode('paragraph', '');
+    if (!nextNode || !(nextNode.type === `paragraph` && nextNode.content === ``)) {
+      const trailingParagraph = new SyntaxNode(`paragraph`, ``);
       imgSiblings.splice(imgIdx + 1, 0, trailingParagraph);
       trailingParagraph.parent = imageNode.parent;
     }
@@ -332,7 +332,7 @@ export class EventHandler {
 
   /** Handles focus events. */
   handleFocus() {
-    this.editor.container.classList.add('focused');
+    this.editor.container.classList.add(`focused`);
 
     // When returning from a modal dialog (link/image/table), the
     // tree cursor was intentionally preserved (see handleBlur).
@@ -358,7 +358,7 @@ export class EventHandler {
     // preserve the tree cursor and the focused-node rendering so they
     // can be seamlessly restored when the modal closes.
     const related = /** @type {HTMLElement|null} */ (event.relatedTarget);
-    if (related?.closest?.('dialog')) {
+    if (related?.closest?.(`dialog`)) {
       this.blurredByModal = true;
       return;
     }
@@ -366,11 +366,11 @@ export class EventHandler {
     // When focus moves to a toolbar button (e.g. the view-mode toggle)
     // or the tab bar, preserve the tree cursor so the toolbar action
     // or tab-switch logic can operate on the correct cursor position.
-    if (related?.closest?.('#toolbar-container') || related?.closest?.('#tab-bar')) {
+    if (related?.closest?.(`#toolbar-container`) || related?.closest?.(`#tab-bar`)) {
       return;
     }
 
-    this.editor.container.classList.remove('focused');
+    this.editor.container.classList.remove(`focused`);
   }
 
   /** Handles selection change events. */
@@ -380,7 +380,7 @@ export class EventHandler {
       // If the selection is inside the phantom paragraph (no tree
       // node), skip all cursor syncing — handleClick will promote
       // it when the click event arrives.
-      const phantom = this.editor.container.querySelector('.md-phantom-paragraph');
+      const phantom = this.editor.container.querySelector(`.md-phantom-paragraph`);
       if (phantom) {
         const sel = window.getSelection();
         if (sel?.anchorNode) {
@@ -424,7 +424,7 @@ export class EventHandler {
       // back into tree properties (fenceCount, language, content).
       if (oldBlockId && oldBlockId !== newBlockId) {
         const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
-        if (oldNode?.type === 'code-block' && oldNode.sourceEditText !== null) {
+        if (oldNode?.type === `code-block` && oldNode.sourceEditText !== null) {
           const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
           if (hints) {
             this.editor.renderNodes(hints);
@@ -432,7 +432,7 @@ export class EventHandler {
         }
       }
 
-      if (this.editor.viewMode === 'writing' && newBlockId && newBlockId !== oldBlockId) {
+      if (this.editor.viewMode === `writing` && newBlockId && newBlockId !== oldBlockId) {
         const nodesToUpdate = [newBlockId];
         if (oldBlockId) nodesToUpdate.push(oldBlockId);
         this.editor.lastRenderedNodeId = newNodeId;
@@ -457,7 +457,7 @@ export class EventHandler {
         if (this.mouseDownLanguageTag) {
           this.mouseDownLanguageTag = null;
           const node = this.editor.getCurrentBlockNode();
-          if (node?.type === 'code-block') {
+          if (node?.type === `code-block`) {
             this.openCodeLanguageModal(node);
           }
         }
@@ -482,7 +482,7 @@ export class EventHandler {
       /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
         node.attributes
       );
-    const currentLanguage = attrs.language || '';
+    const currentLanguage = attrs.language || ``;
 
     // Save both the cursor and any active selection *before* the
     // dialog opens.  The dialog steals focus, which eventually
@@ -511,7 +511,7 @@ export class EventHandler {
     if (!this.editor.syntaxTree) return;
     const before = this.editor.syntaxTree.toMarkdown();
 
-    attrs.language = result.language || '';
+    attrs.language = result.language || ``;
     this.editor.recordAndRender(before, { updated: [node.id] });
 
     // Restore cursor + selection and suppress the pending async

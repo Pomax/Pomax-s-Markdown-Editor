@@ -15,9 +15,9 @@
 export function renderTreeToText(tree) {
   const lines = [];
   for (const child of tree.children) {
-    renderNodeToText(child, "", lines);
+    renderNodeToText(child, ``, lines);
   }
-  return lines.join("\n") + "\n";
+  return lines.join(`\n`) + `\n`;
 }
 
 /**
@@ -35,7 +35,7 @@ export function renderNodeToText(node, indent, lines) {
     ? ` "${node.tagName}"`
     : node.content && !hasChildren
       ? ` "${node.content.length > 60 ? `${node.content.slice(0, 60)}...` : node.content}"`
-      : "";
+      : ``;
   lines.push(`${indent}${node.type}${quotedValue}${attrs}`);
   for (const child of node.children) {
     renderNodeToText(child, `${indent}  `, lines);
@@ -49,6 +49,6 @@ export function renderNodeToText(node, indent, lines) {
  * @returns {string}
  */
 function serializeAttributes(attributes) {
-  if (Object.keys(attributes).length === 0) return "";
+  if (Object.keys(attributes).length === 0) return ``;
   return ` ${JSON.stringify(attributes)}`;
 }

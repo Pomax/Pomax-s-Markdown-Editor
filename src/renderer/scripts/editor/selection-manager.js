@@ -70,7 +70,7 @@ export class SelectionManager {
    */
   getPositionInContent(node, offset) {
     const content = this.editor.container.innerText;
-    const lines = content.split('\n');
+    const lines = content.split(`\n`);
 
     // Get the text offset from the start of the editor
     const textOffset = this.getTextOffset(node, offset);
@@ -181,7 +181,7 @@ export class SelectionManager {
   setSelection(range) {
     const container = this.editor.container;
     const content = container.innerText;
-    const lines = content.split('\n');
+    const lines = content.split(`\n`);
 
     // Convert line/column to text offset
     const startOffset = this.lineColumnToOffset(lines, range.startLine, range.startColumn);
@@ -262,7 +262,7 @@ export class SelectionManager {
    * Dispatches a custom event for selection changes.
    */
   dispatchSelectionChange() {
-    const event = new CustomEvent('editor:selectionchange', {
+    const event = new CustomEvent(`editor:selectionchange`, {
       bubbles: true,
       detail: {
         selection: this.currentSelection,

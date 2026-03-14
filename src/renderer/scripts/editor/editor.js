@@ -118,8 +118,8 @@ export class Editor {
     this.linkHelper = new LinkHelper(this);
 
     /** @type {ViewMode} */
-    this.viewMode = 'writing';
-    this.container.dataset.viewMode = 'writing';
+    this.viewMode = `writing`;
+    this.container.dataset.viewMode = `writing`;
 
     /** @type {boolean} */
     this.hasUnsavedChanges = false;
@@ -213,7 +213,7 @@ export class Editor {
 
     const parsed = this.parseMultiLine(text);
 
-    if (parsed.length === 1 && parsed[0].type === 'code-block') {
+    if (parsed.length === 1 && parsed[0].type === `code-block`) {
       // Still a valid code block — update attributes in place.
       node.content = parsed[0].content;
       node.attributes = parsed[0].attributes;
@@ -227,7 +227,7 @@ export class Editor {
     if (idx === -1) {
       // Shouldn't happen, but fall back gracefully.
       node.content = text;
-      node.type = 'paragraph';
+      node.type = `paragraph`;
       node.attributes = {};
       return { updated: [node.id] };
     }
@@ -259,7 +259,7 @@ export class Editor {
   async initialize() {
     // Set up initial empty document with one empty paragraph
     this.syntaxTree = new SyntaxTree();
-    const initialNode = new SyntaxNode('paragraph', '');
+    const initialNode = new SyntaxNode(`paragraph`, ``);
     this.syntaxTree.appendChild(initialNode);
     this.syntaxTree.treeCursor = { nodeId: initialNode.id, offset: 0 };
 
@@ -307,7 +307,7 @@ export class Editor {
     this.attachContainerListeners();
 
     document.addEventListener(
-      'selectionchange',
+      `selectionchange`,
       this.eventHandler.handleSelectionChange.bind(this.eventHandler),
     );
   }
@@ -442,7 +442,7 @@ export class Editor {
    * @returns {boolean} `true` if a phantom was promoted.
    */
   promotePhantomParagraph() {
-    const phantom = this.container.querySelector('.md-phantom-paragraph');
+    const phantom = this.container.querySelector(`.md-phantom-paragraph`);
     if (!phantom) return false;
 
     const selection = window.getSelection();
@@ -461,12 +461,12 @@ export class Editor {
     if (!inside) return false;
 
     // Create a real paragraph node and append it to the tree.
-    const para = new SyntaxNode('paragraph', '');
+    const para = new SyntaxNode(`paragraph`, ``);
     this.syntaxTree?.appendChild(para);
 
     // Replace the phantom DOM element with a properly rendered node.
     const element =
-      this.viewMode === 'source'
+      this.viewMode === `source`
         ? this.sourceRenderer.renderNode(para)
         : this.writingRenderer.renderNode(para, true);
     if (element) {
@@ -492,12 +492,12 @@ export class Editor {
 
     this.isRendering = true;
     try {
-      const renderer = this.viewMode === 'source' ? this.sourceRenderer : this.writingRenderer;
+      const renderer = this.viewMode === `source` ? this.sourceRenderer : this.writingRenderer;
       renderer.fullRender(this.syntaxTree, this.container);
     } finally {
       this.isRendering = false;
     }
-    document.dispatchEvent(new CustomEvent('editor:renderComplete'));
+    document.dispatchEvent(new CustomEvent(`editor:renderComplete`));
   }
 
   /**
@@ -509,7 +509,7 @@ export class Editor {
   renderNodes(hints) {
     if (!this.syntaxTree) return;
 
-    const renderer = this.viewMode === 'writing' ? this.writingRenderer : this.sourceRenderer;
+    const renderer = this.viewMode === `writing` ? this.writingRenderer : this.sourceRenderer;
 
     this.isRendering = true;
     try {
@@ -517,7 +517,7 @@ export class Editor {
     } finally {
       this.isRendering = false;
     }
-    document.dispatchEvent(new CustomEvent('editor:renderComplete'));
+    document.dispatchEvent(new CustomEvent(`editor:renderComplete`));
   }
 
   /**
@@ -554,30 +554,30 @@ export class Editor {
    */
   buildMarkdownLine(type, content, attributes) {
     switch (type) {
-      case 'heading1':
+      case `heading1`:
         return `# ${content}`;
-      case 'heading2':
+      case `heading2`:
         return `## ${content}`;
-      case 'heading3':
+      case `heading3`:
         return `### ${content}`;
-      case 'heading4':
+      case `heading4`:
         return `#### ${content}`;
-      case 'heading5':
+      case `heading5`:
         return `##### ${content}`;
-      case 'heading6':
+      case `heading6`:
         return `###### ${content}`;
-      case 'blockquote':
+      case `blockquote`:
         return `> ${content}`;
-      case 'list-item': {
-        const indent = '  '.repeat(attributes?.indent || 0);
-        const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
+      case `list-item`: {
+        const indent = `  `.repeat(attributes?.indent || 0);
+        const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : `- `;
         const checkbox =
-          typeof attributes?.checked === 'boolean' ? (attributes.checked ? '[x] ' : '[ ] ') : '';
+          typeof attributes?.checked === `boolean` ? (attributes.checked ? `[x] ` : `[ ] `) : ``;
         return `${indent}${marker}${checkbox}${content}`;
       }
-      case 'image': {
+      case `image`: {
         const imgAlt = attributes?.alt ?? content;
-        const imgSrc = attributes?.url ?? '';
+        const imgSrc = attributes?.url ?? ``;
         if (attributes?.href) {
           return `[![${imgAlt}](${imgSrc})](${attributes.href})`;
         }
@@ -598,27 +598,27 @@ export class Editor {
    */
   getPrefixLength(type, attributes) {
     switch (type) {
-      case 'heading1':
+      case `heading1`:
         return 2;
-      case 'heading2':
+      case `heading2`:
         return 3;
-      case 'heading3':
+      case `heading3`:
         return 4;
-      case 'heading4':
+      case `heading4`:
         return 5;
-      case 'heading5':
+      case `heading5`:
         return 6;
-      case 'heading6':
+      case `heading6`:
         return 7;
-      case 'blockquote':
+      case `blockquote`:
         return 2;
-      case 'list-item': {
-        const indent = '  '.repeat(attributes?.indent || 0);
-        const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : '- ';
-        const checkbox = typeof attributes?.checked === 'boolean' ? '[ ] ' : '';
+      case `list-item`: {
+        const indent = `  `.repeat(attributes?.indent || 0);
+        const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : `- `;
+        const checkbox = typeof attributes?.checked === `boolean` ? `[ ] ` : ``;
         return indent.length + marker.length + checkbox.length;
       }
-      case 'image':
+      case `image`:
         return 0;
       default:
         return 0;
@@ -642,7 +642,7 @@ export class Editor {
 
     const after = this.syntaxTree.toMarkdown();
     if (before !== after) {
-      this.undoManager.recordChange({ type: 'input', before, after });
+      this.undoManager.recordChange({ type: `input`, before, after });
       this.setUnsavedChanges(true);
     }
 
@@ -664,8 +664,8 @@ export class Editor {
     const children = this.syntaxTree.children;
     if (children.length === 0) return null;
     const last = children[children.length - 1];
-    if (last.type === 'html-block' && last.children.length > 0) {
-      const para = new SyntaxNode('paragraph', '');
+    if (last.type === `html-block` && last.children.length > 0) {
+      const para = new SyntaxNode(`paragraph`, ``);
       this.syntaxTree.appendChild(para);
       return para;
     }
@@ -679,12 +679,12 @@ export class Editor {
   loadMarkdown(markdown) {
     // Normalise excessive blank lines so that toMarkdown() / toBareText()
     // always produce exactly one blank line between blocks.
-    const normalised = markdown.replace(/\n{3,}/g, '\n\n');
+    const normalised = markdown.replace(/\n{3,}/g, `\n\n`);
     this.syntaxTree = this.parser.parse(normalised);
 
     // Ensure there is at least one node so the editor is never empty
     if (this.syntaxTree.children.length === 0) {
-      const node = new SyntaxNode('paragraph', '');
+      const node = new SyntaxNode(`paragraph`, ``);
       this.syntaxTree.appendChild(node);
     }
 
@@ -717,7 +717,7 @@ export class Editor {
    * @returns {string}
    */
   getMarkdown() {
-    return this.syntaxTree?.toMarkdown() ?? '';
+    return this.syntaxTree?.toMarkdown() ?? ``;
   }
 
   /**
@@ -725,7 +725,7 @@ export class Editor {
    */
   reset() {
     this.syntaxTree = new SyntaxTree();
-    const node = new SyntaxNode('paragraph', '');
+    const node = new SyntaxNode(`paragraph`, ``);
     this.syntaxTree.appendChild(node);
     this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
     this.undoManager.clear();
@@ -739,7 +739,7 @@ export class Editor {
    * @param {ViewMode} mode
    */
   setViewMode(mode) {
-    if (mode !== 'source' && mode !== 'writing') {
+    if (mode !== `source` && mode !== `writing`) {
       console.warn(`Invalid view mode: ${mode}`);
       return;
     }
@@ -752,7 +752,7 @@ export class Editor {
     if (this.syntaxTree) {
       const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
       for (const child of this.syntaxTree.children) {
-        if (child.type === 'code-block' && child.sourceEditText !== null) {
+        if (child.type === `code-block` && child.sourceEditText !== null) {
           // Source → writing: convert the offset from
           // sourceEditText-relative to content-relative by
           // subtracting the opening-fence preamble length.
@@ -761,7 +761,7 @@ export class Editor {
               /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
                 child.attributes
               );
-            const preamble = (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
+            const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
             this.syntaxTree.treeCursor = {
               nodeId: child.id,
               offset: this.syntaxTree.treeCursor.offset - preamble,
@@ -775,16 +775,16 @@ export class Editor {
     // Writing → source: if the cursor is on a code-block, convert
     // the content-relative offset to sourceEditText-relative by
     // adding the opening-fence preamble length.
-    if (mode === 'source' && this.syntaxTree?.treeCursor) {
+    if (mode === `source` && this.syntaxTree?.treeCursor) {
       const cursorBlockId =
         this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
       const node = this.syntaxTree.findNodeById(cursorBlockId);
-      if (node?.type === 'code-block') {
+      if (node?.type === `code-block`) {
         const attrs =
           /** @type {import('../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
             node.attributes
           );
-        const preamble = (attrs.fenceCount || 3) + (attrs.language || '').length + 1;
+        const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
         this.syntaxTree.treeCursor = {
           nodeId: node.id,
           offset: this.syntaxTree.treeCursor.offset + preamble,
@@ -818,7 +818,7 @@ export class Editor {
       // Fallback: node closest to the viewport centre.
       if (!anchorNodeId) {
         const centreY = containerRect.top + containerRect.height / 2;
-        const nodeEls = this.container.querySelectorAll('[data-node-id]');
+        const nodeEls = this.container.querySelectorAll(`[data-node-id]`);
         let bestDistance = Number.POSITIVE_INFINITY;
 
         for (const el of nodeEls) {
@@ -869,7 +869,7 @@ export class Editor {
     if (change) {
       this.syntaxTree = this.parser.parse(change.before);
       if (this.syntaxTree.children.length === 0) {
-        const node = new SyntaxNode('paragraph', '');
+        const node = new SyntaxNode(`paragraph`, ``);
         this.syntaxTree.appendChild(node);
       }
       const first = this.syntaxTree.children[0];
@@ -885,7 +885,7 @@ export class Editor {
     if (change) {
       this.syntaxTree = this.parser.parse(change.after);
       if (this.syntaxTree.children.length === 0) {
-        const node = new SyntaxNode('paragraph', '');
+        const node = new SyntaxNode(`paragraph`, ``);
         this.syntaxTree.appendChild(node);
       }
       const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
@@ -919,7 +919,7 @@ export class Editor {
    * @param {string} href - Optional link URL (empty string for no link)
    * @param {string} [style] - Optional inline style
    */
-  insertOrUpdateImage(alt, src, href, style = '') {
+  insertOrUpdateImage(alt, src, href, style = ``) {
     this.imageHelper.insertOrUpdateImage(alt, src, href, style);
   }
 
@@ -954,19 +954,19 @@ export class Editor {
     const currentNode = this.getCurrentBlockNode();
     let renderHints;
 
-    if (currentNode?.type === 'table') {
+    if (currentNode?.type === `table`) {
       // Update existing table
       currentNode.content = markdown;
       this.syntaxTree.treeCursor = { nodeId: currentNode.id, offset: 0 };
       renderHints = { updated: [currentNode.id] };
     } else {
       // Insert a new table node
-      const tableNode = new SyntaxNode('table', markdown);
+      const tableNode = new SyntaxNode(`table`, markdown);
 
       if (currentNode) {
         const siblings = this.getSiblings(currentNode);
         const idx = siblings.indexOf(currentNode);
-        if (currentNode.type === 'paragraph' && currentNode.content === '') {
+        if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, tableNode);
           tableNode.parent = currentNode.parent;
           currentNode.parent = null;
@@ -996,9 +996,9 @@ export class Editor {
     if (!currentNode || !this.syntaxTree) return;
 
     // html-block containers are structural nodes, not type-changeable.
-    if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+    if (currentNode.type === `html-block` && currentNode.children.length > 0) return;
 
-    const wasListItem = currentNode.type === 'list-item';
+    const wasListItem = currentNode.type === `list-item`;
     const siblings = this.getSiblings(currentNode);
     const idx = siblings.indexOf(currentNode);
 
@@ -1008,12 +1008,12 @@ export class Editor {
     // If a list item was removed from a run, renumber the remaining items.
     /** @type {string[]} */
     let renumbered = [];
-    if (wasListItem && currentNode.type !== 'list-item') {
+    if (wasListItem && currentNode.type !== `list-item`) {
       renumbered = this.renumberAdjacentList(siblings, idx);
     }
 
     this.undoManager.recordChange({
-      type: 'changeType',
+      type: `changeType`,
       before: beforeContent,
       after: this.getMarkdown(),
     });
@@ -1042,7 +1042,7 @@ export class Editor {
     if (!currentNode || !this.syntaxTree) return;
 
     // html-block containers are structural nodes, not convertible.
-    if (currentNode.type === 'html-block' && currentNode.children.length > 0) return;
+    if (currentNode.type === `html-block` && currentNode.children.length > 0) return;
 
     const before = this.getMarkdown();
 
@@ -1052,8 +1052,8 @@ export class Editor {
      * @returns {'unordered' | 'ordered' | 'checklist'}
      */
     const getListKind = (n) => {
-      if (typeof n.attributes.checked === 'boolean') return 'checklist';
-      return n.attributes.ordered ? 'ordered' : 'unordered';
+      if (typeof n.attributes.checked === `boolean`) return `checklist`;
+      return n.attributes.ordered ? `ordered` : `unordered`;
     };
 
     /**
@@ -1063,16 +1063,16 @@ export class Editor {
      * @param {number} [num]
      */
     const applyKind = (n, k, num) => {
-      n.type = 'list-item';
+      n.type = `list-item`;
       switch (k) {
-        case 'ordered':
+        case `ordered`:
           n.attributes = {
             ordered: true,
             indent: n.attributes.indent || 0,
             number: num || 1,
           };
           break;
-        case 'checklist':
+        case `checklist`:
           n.attributes = {
             ordered: false,
             indent: n.attributes.indent || 0,
@@ -1093,7 +1093,7 @@ export class Editor {
       // Converting them requires dissolving their parent wrapper.
       const htmlBlockParents = new Set();
       for (const n of nodes) {
-        if (n.parent && n.parent.type === 'html-block') {
+        if (n.parent && n.parent.type === `html-block`) {
           htmlBlockParents.add(n.parent);
         }
       }
@@ -1102,15 +1102,15 @@ export class Editor {
         const tagNames = [...htmlBlockParents]
           .map(
             (p) =>
-              `<${/** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? 'html'}>`,
+              `<${/** @type {import('../../../../old-parser/parser/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? `html`}>`,
           )
-          .join(', ');
+          .join(`, `);
         const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({
-          type: 'warning',
-          title: 'Destructive Conversion',
+          type: `warning`,
+          title: `Destructive Conversion`,
           message: `This selection includes content inside HTML block elements (${tagNames}) that will be removed by this conversion.`,
-          detail: 'The HTML wrapper tags will be permanently lost. Do you want to proceed?',
-          buttons: ['Convert', 'Cancel'],
+          detail: `The HTML wrapper tags will be permanently lost. Do you want to proceed?`,
+          buttons: [`Convert`, `Cancel`],
           defaultId: 0,
           cancelId: 1,
         });
@@ -1136,10 +1136,10 @@ export class Editor {
       const updatedIds = [];
       let num = 1;
       for (const n of nodes) {
-        if (n.type === 'html-block' && n.children.length > 0) continue;
-        if (n.type === 'table' || n.type === 'image' || n.type === 'linked-image') continue;
+        if (n.type === `html-block` && n.children.length > 0) continue;
+        if (n.type === `table` || n.type === `image` || n.type === `linked-image`) continue;
         applyKind(n, kind, num);
-        if (kind === 'ordered') num++;
+        if (kind === `ordered`) num++;
         updatedIds.push(n.id);
       }
       if (updatedIds.length === 0) return;
@@ -1151,7 +1151,7 @@ export class Editor {
         offset: 0,
       };
       this.undoManager.recordChange({
-        type: 'changeType',
+        type: `changeType`,
         before,
         after: this.getMarkdown(),
       });
@@ -1162,7 +1162,7 @@ export class Editor {
       // the list is visible after a large multi-node conversion.
       const firstEl = this.container.querySelector(`[data-node-id="${updatedIds[0]}"]`);
       if (firstEl) {
-        firstEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        firstEl.scrollIntoView({ block: `nearest`, behavior: `instant` });
       }
 
       this.setUnsavedChanges(true);
@@ -1171,7 +1171,7 @@ export class Editor {
 
     // Single node toggle — when on a list item, affect the entire
     // contiguous run of list items (the "list").
-    if (currentNode.type === 'list-item') {
+    if (currentNode.type === `list-item`) {
       const siblings = this.getSiblings(currentNode);
       const run = this.getContiguousListRun(siblings, currentNode);
       const currentKind = getListKind(currentNode);
@@ -1179,7 +1179,7 @@ export class Editor {
       if (currentKind === kind) {
         // Same list kind → convert entire run back to paragraphs
         for (const n of run) {
-          n.type = 'paragraph';
+          n.type = `paragraph`;
           n.attributes = {};
         }
       } else {
@@ -1187,7 +1187,7 @@ export class Editor {
         let num = 1;
         for (const n of run) {
           applyKind(n, kind, num);
-          if (kind === 'ordered') num++;
+          if (kind === `ordered`) num++;
         }
       }
 
@@ -1197,7 +1197,7 @@ export class Editor {
         offset: this.syntaxTree.treeCursor?.offset ?? 0,
       };
       this.undoManager.recordChange({
-        type: 'changeType',
+        type: `changeType`,
         before,
         after: this.getMarkdown(),
       });
@@ -1214,7 +1214,7 @@ export class Editor {
       offset: this.syntaxTree.treeCursor?.offset ?? 0,
     };
     this.undoManager.recordChange({
-      type: 'changeType',
+      type: `changeType`,
       before,
       after: this.getMarkdown(),
     });
@@ -1235,8 +1235,8 @@ export class Editor {
     const idx = siblings.indexOf(node);
     let start = idx;
     let end = idx;
-    while (start > 0 && siblings[start - 1].type === 'list-item') start--;
-    while (end < siblings.length - 1 && siblings[end + 1].type === 'list-item') end++;
+    while (start > 0 && siblings[start - 1].type === `list-item`) start--;
+    while (end < siblings.length - 1 && siblings[end + 1].type === `list-item`) end++;
     return siblings.slice(start, end + 1);
   }
 
@@ -1252,16 +1252,16 @@ export class Editor {
   renumberAdjacentList(siblings, nearIndex) {
     // Find the start of the contiguous list-item run
     let start = nearIndex;
-    while (start > 0 && siblings[start - 1]?.type === 'list-item') start--;
+    while (start > 0 && siblings[start - 1]?.type === `list-item`) start--;
     // Find the end
     let end = nearIndex;
-    while (end < siblings.length - 1 && siblings[end + 1]?.type === 'list-item') end++;
+    while (end < siblings.length - 1 && siblings[end + 1]?.type === `list-item`) end++;
 
     const changed = [];
     let num = 1;
     for (let i = start; i <= end; i++) {
       const sib = siblings[i];
-      if (sib.type !== 'list-item' || !sib.attributes.ordered) continue;
+      if (sib.type !== `list-item` || !sib.attributes.ordered) continue;
       if (sib.attributes.number !== num) {
         sib.attributes.number = num;
         changed.push(sib.id);
@@ -1293,7 +1293,7 @@ export class Editor {
       for (const child of children) {
         if (state.done) break;
         // Recurse into html-block containers
-        if (child.type === 'html-block' && child.children.length > 0) {
+        if (child.type === `html-block` && child.children.length > 0) {
           walk(child.children, state, result);
           continue;
         }
@@ -1345,7 +1345,7 @@ export class Editor {
     const newCursorOffset = this.syntaxTree.applyFormat(node, startOffset, endOffset, format);
 
     this.undoManager.recordChange({
-      type: 'format',
+      type: `format`,
       before: beforeContent,
       after: this.getMarkdown(),
     });
@@ -1393,12 +1393,12 @@ export class Editor {
    * Dispatches a 'editor:fileStateChanged' event for other components.
    */
   updateWindowTitle() {
-    const fileName = this.currentFilePath ? this.currentFilePath.split(/[\\/]/).pop() : 'Untitled';
-    const modified = this.hasUnsavedChanges ? ' •' : '';
+    const fileName = this.currentFilePath ? this.currentFilePath.split(/[\\/]/).pop() : `Untitled`;
+    const modified = this.hasUnsavedChanges ? ` •` : ``;
     document.title = `${fileName}${modified} - Markdown Editor`;
 
     document.dispatchEvent(
-      new CustomEvent('editor:fileStateChanged', {
+      new CustomEvent(`editor:fileStateChanged`, {
         detail: {
           filePath: this.currentFilePath,
           modified: this.hasUnsavedChanges,

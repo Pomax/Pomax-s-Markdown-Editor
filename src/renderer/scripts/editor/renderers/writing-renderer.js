@@ -41,13 +41,13 @@ export class WritingRenderer {
 
     // Derive the directory that contains the markdown file, then
     // resolve the relative src against it.
-    const fileDir = filePath.replace(/[\\/][^\\/]+$/, '');
+    const fileDir = filePath.replace(/[\\/][^\\/]+$/, ``);
     // Normalise to forward-slashes for the file:// URL.
-    const resolved = `${fileDir}/${src}`.replace(/\\/g, '/');
+    const resolved = `${fileDir}/${src}`.replace(/\\/g, `/`);
 
     // On Windows paths start with a drive letter (C:/…), so we need
     // three slashes: file:///C:/…
-    return resolved.startsWith('/') ? `file://${resolved}` : `file:///${resolved}`;
+    return resolved.startsWith(`/`) ? `file://${resolved}` : `file:///${resolved}`;
   }
 
   /**
@@ -62,9 +62,9 @@ export class WritingRenderer {
     const currentNodeId = this.editor.getBlockNodeId();
 
     // Clear and rebuild content
-    container.innerHTML = '';
-    container.classList.add('writing-view');
-    container.classList.remove('source-view');
+    container.innerHTML = ``;
+    container.classList.add(`writing-view`);
+    container.classList.remove(`source-view`);
 
     const fragment = document.createDocumentFragment();
 
@@ -79,7 +79,7 @@ export class WritingRenderer {
     for (let i = 0; i < children.length; i++) {
       const node = children[i];
       const attrs = node.attributes;
-      if (node.type === 'list-item' && attrs.ordered) {
+      if (node.type === `list-item` && attrs.ordered) {
         const indent = attrs.indent || 0;
         if (indent === runIndent) {
           runCount++;
@@ -104,9 +104,9 @@ export class WritingRenderer {
 
     // If empty, add a placeholder paragraph
     if (syntaxTree.children.length === 0) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'md-line md-paragraph writing-placeholder';
-      placeholder.appendChild(document.createElement('br'));
+      const placeholder = document.createElement(`div`);
+      placeholder.className = `md-line md-paragraph writing-placeholder`;
+      placeholder.appendChild(document.createElement(`br`));
       fragment.appendChild(placeholder);
     }
 
@@ -170,7 +170,7 @@ export class WritingRenderer {
 
       // No previous sibling — if inside an html-block, re-render
       // the parent instead; otherwise prepend to the container.
-      if (node.parent && node.parent.type === 'html-block') {
+      if (node.parent && node.parent.type === `html-block`) {
         const parentFocused = node.parent.id === currentNodeId;
         this.replaceNodeElement(container, tree, node.parent.id, parentFocused);
       } else {
@@ -191,12 +191,12 @@ export class WritingRenderer {
    * @returns {number|undefined}
    */
   computeVisualNumber(tree, node) {
-    if (node.type !== 'list-item' || !node.attributes.ordered) return undefined;
+    if (node.type !== `list-item` || !node.attributes.ordered) return undefined;
     const children = tree.children;
     const indent = node.attributes.indent || 0;
     let count = 0;
     for (const child of children) {
-      if (child.type === 'list-item' && child.attributes.ordered) {
+      if (child.type === `list-item` && child.attributes.ordered) {
         const childIndent = child.attributes.indent || 0;
         if (childIndent === indent) {
           count++;
@@ -222,16 +222,16 @@ export class WritingRenderer {
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
-    const existing = container.querySelector('.md-phantom-paragraph');
+    const existing = container.querySelector(`.md-phantom-paragraph`);
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
-    const needsPhantom = last?.type === 'code-block';
+    const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
-      const phantom = document.createElement('div');
-      phantom.className = 'md-line md-paragraph md-phantom-paragraph';
-      phantom.setAttribute('contenteditable', 'true');
-      phantom.appendChild(document.createElement('br'));
+      const phantom = document.createElement(`div`);
+      phantom.className = `md-line md-paragraph md-phantom-paragraph`;
+      phantom.setAttribute(`contenteditable`, `true`);
+      phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
     } else if (!needsPhantom && existing) {
       existing.remove();
@@ -269,46 +269,46 @@ export class WritingRenderer {
    * @returns {HTMLElement|null}
    */
   renderNode(node, isFocused, visualNumber) {
-    const element = document.createElement('div');
+    const element = document.createElement(`div`);
     element.className = `md-line md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     if (isFocused) {
-      element.classList.add('md-focused');
+      element.classList.add(`md-focused`);
     }
 
     switch (node.type) {
-      case 'heading1':
-      case 'heading2':
-      case 'heading3':
-      case 'heading4':
-      case 'heading5':
-      case 'heading6':
+      case `heading1`:
+      case `heading2`:
+      case `heading3`:
+      case `heading4`:
+      case `heading5`:
+      case `heading6`:
         return this.renderHeading(node, element, isFocused);
 
-      case 'paragraph':
+      case `paragraph`:
         return this.renderParagraph(node, element, isFocused);
 
-      case 'blockquote':
+      case `blockquote`:
         return this.renderBlockquote(node, element, isFocused);
 
-      case 'code-block':
+      case `code-block`:
         return this.renderCodeBlock(node, element, isFocused);
 
-      case 'list-item':
+      case `list-item`:
         return this.renderListItem(node, element, isFocused, visualNumber);
 
-      case 'horizontal-rule':
+      case `horizontal-rule`:
         return this.renderHorizontalRule(node, element);
 
-      case 'image':
-      case 'linked-image':
+      case `image`:
+      case `linked-image`:
         return this.renderImage(node, element);
 
-      case 'table':
+      case `table`:
         return this.renderTable(node, element);
 
-      case 'html-block':
+      case `html-block`:
         return this.renderHtmlBlock(node, element, isFocused);
 
       default:
@@ -324,16 +324,16 @@ export class WritingRenderer {
    * @returns {HTMLElement}
    */
   renderHeading(node, element, isFocused) {
-    const level = Number.parseInt(node.type.replace('heading', ''), 10);
+    const level = Number.parseInt(node.type.replace(`heading`, ``), 10);
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node, contentSpan);
     element.appendChild(contentSpan);
 
     // Apply heading styling
     element.style.fontSize = `${2.5 - level * 0.25}em`;
-    element.style.fontWeight = 'bold';
+    element.style.fontWeight = `bold`;
 
     return element;
   }
@@ -358,15 +358,15 @@ export class WritingRenderer {
    * @returns {HTMLElement}
    */
   renderBlockquote(node, element, isFocused) {
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node, contentSpan);
     element.appendChild(contentSpan);
 
     // Apply blockquote styling
-    element.style.borderLeft = '3px solid #ccc';
-    element.style.paddingLeft = '1em';
-    element.style.fontStyle = 'italic';
+    element.style.borderLeft = `3px solid #ccc`;
+    element.style.paddingLeft = `1em`;
+    element.style.fontStyle = `italic`;
 
     return element;
   }
@@ -380,7 +380,7 @@ export class WritingRenderer {
    */
   renderCodeBlock(node, element, isFocused) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
-    const language = attrs.language || '';
+    const language = attrs.language || ``;
 
     // Language tag spans — always rendered so the user can click
     // to set or change the language even when none is set yet.
@@ -388,15 +388,15 @@ export class WritingRenderer {
     // the browser from moving the caret, which would fire
     // selectionchange → re-render → destroy the span before click
     // arrives, and would overwrite the user's cursor offset.
-    const tagTop = document.createElement('span');
-    tagTop.className = 'md-code-language-tag md-code-language-tag--top';
-    tagTop.addEventListener('mousedown', (e) => {
+    const tagTop = document.createElement(`span`);
+    tagTop.className = `md-code-language-tag md-code-language-tag--top`;
+    tagTop.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
     });
-    const tagBottom = document.createElement('span');
-    tagBottom.className = 'md-code-language-tag md-code-language-tag--bottom';
-    tagBottom.addEventListener('mousedown', (e) => {
+    const tagBottom = document.createElement(`span`);
+    tagBottom.className = `md-code-language-tag md-code-language-tag--bottom`;
+    tagBottom.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
     });
@@ -404,16 +404,16 @@ export class WritingRenderer {
       tagTop.textContent = language;
       tagBottom.textContent = language;
     } else {
-      tagTop.textContent = 'lang';
-      tagBottom.textContent = 'lang';
-      tagTop.classList.add('md-code-language-tag--empty');
-      tagBottom.classList.add('md-code-language-tag--empty');
+      tagTop.textContent = `lang`;
+      tagBottom.textContent = `lang`;
+      tagTop.classList.add(`md-code-language-tag--empty`);
+      tagBottom.classList.add(`md-code-language-tag--empty`);
     }
 
-    const codeContent = document.createElement('pre');
-    codeContent.className = 'md-code-content md-content';
+    const codeContent = document.createElement(`pre`);
+    codeContent.className = `md-code-content md-content`;
 
-    const code = document.createElement('code');
+    const code = document.createElement(`code`);
     if (isFocused) {
       // Plain text when focused so cursor positions map 1:1.
       // Append a trailing newline so the last line always has
@@ -427,7 +427,7 @@ export class WritingRenderer {
     // Only show the bottom tag when the code block is tall (>= 20 lines).
     const lineCount = (node.content.match(/\n/g) || []).length + 1;
     if (lineCount >= 20) {
-      element.classList.add('tall');
+      element.classList.add(`tall`);
     }
 
     element.appendChild(tagTop);
@@ -449,7 +449,7 @@ export class WritingRenderer {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
     const indent = attrs.indent || 0;
     const isOrdered = attrs.ordered;
-    const isChecklist = typeof attrs.checked === 'boolean';
+    const isChecklist = typeof attrs.checked === `boolean`;
     const number = attrs.number || 1;
 
     /** @type {HTMLInputElement|null} */
@@ -457,31 +457,31 @@ export class WritingRenderer {
 
     if (isChecklist) {
       // Checklist: no bullet/number, show a checkbox
-      element.style.listStyleType = 'none';
-      element.style.display = 'block';
+      element.style.listStyleType = `none`;
+      element.style.display = `block`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-      element.classList.add('md-checklist-item');
+      element.classList.add(`md-checklist-item`);
 
-      checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.className = 'md-checklist-checkbox';
+      checkbox = document.createElement(`input`);
+      checkbox.type = `checkbox`;
+      checkbox.className = `md-checklist-checkbox`;
       if (attrs.checked) {
-        checkbox.setAttribute('checked', 'checked');
+        checkbox.setAttribute(`checked`, `checked`);
       }
 
       // mousedown guard: prevent caret movement and selectionchange re-render
-      checkbox.addEventListener('mousedown', (e) => {
+      checkbox.addEventListener(`mousedown`, (e) => {
         e.preventDefault();
         e.stopPropagation();
       });
 
-      checkbox.addEventListener('click', (e) => {
+      checkbox.addEventListener(`click`, (e) => {
         e.preventDefault();
         e.stopPropagation();
         const before = this.editor.getMarkdown();
         node.attributes.checked = !node.attributes.checked;
         this.editor.undoManager.recordChange({
-          type: 'checklistToggle',
+          type: `checklistToggle`,
           before,
           after: this.editor.getMarkdown(),
         });
@@ -494,25 +494,25 @@ export class WritingRenderer {
       // positioning keeps it visually to the left.
     } else {
       // Regular bullet or numbered list
-      element.style.listStyleType = isOrdered ? 'decimal' : 'disc';
-      element.style.display = 'list-item';
+      element.style.listStyleType = isOrdered ? `decimal` : `disc`;
+      element.style.display = `list-item`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
       if (isOrdered && visualNumber != null) {
         element.style.counterSet = `list-item ${visualNumber}`;
       }
     }
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node, contentSpan);
     element.appendChild(contentSpan);
 
     // Append checkbox inside a non-editable wrapper so the browser
     // never creates caret positions around it.
     if (checkbox) {
-      const wrapper = document.createElement('span');
-      wrapper.contentEditable = 'false';
-      wrapper.className = 'md-checklist-checkbox-wrapper';
+      const wrapper = document.createElement(`span`);
+      wrapper.contentEditable = `false`;
+      wrapper.className = `md-checklist-checkbox-wrapper`;
       wrapper.appendChild(checkbox);
       element.appendChild(wrapper);
     }
@@ -529,20 +529,20 @@ export class WritingRenderer {
   renderImage(node, element) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
     const alt = attrs.alt ?? node.content;
-    const src = attrs.url ?? '';
+    const src = attrs.url ?? ``;
 
     // Always show rendered image (WYSIWYG)
-    const img = document.createElement('img');
-    img.className = 'md-image-preview';
+    const img = document.createElement(`img`);
+    img.className = `md-image-preview`;
     img.src = this.resolveImageSrc(src);
     img.alt = alt;
     img.title = alt;
     if (attrs.style) {
-      img.setAttribute('style', attrs.style);
+      img.setAttribute(`style`, attrs.style);
     }
 
     if (attrs.href) {
-      const link = document.createElement('a');
+      const link = document.createElement(`a`);
       link.href = attrs.href;
       link.appendChild(img);
       element.appendChild(link);
@@ -561,7 +561,7 @@ export class WritingRenderer {
    */
   renderHorizontalRule(node, element) {
     // Always show as a visual rule (WYSIWYG)
-    const hr = document.createElement('hr');
+    const hr = document.createElement(`hr`);
     element.appendChild(hr);
     return element;
   }
@@ -585,32 +585,32 @@ export class WritingRenderer {
    * @returns {HTMLTableElement}
    */
   parseTableToHTML(content) {
-    const table = document.createElement('table');
-    table.className = 'md-table';
+    const table = document.createElement(`table`);
+    table.className = `md-table`;
 
-    const lines = content.split('\n').filter((line) => line.trim());
+    const lines = content.split(`\n`).filter((line) => line.trim());
 
     for (let i = 0; i < lines.length; i++) {
       // Skip separator line (must contain at least one dash)
-      if (/^[\s|:-]+$/.test(lines[i]) && lines[i].includes('-')) continue;
+      if (/^[\s|:-]+$/.test(lines[i]) && lines[i].includes(`-`)) continue;
 
-      const row = document.createElement('tr');
-      const cells = lines[i].split('|').filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+      const row = document.createElement(`tr`);
+      const cells = lines[i].split(`|`).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
 
       for (const cellContent of cells) {
-        const cell = document.createElement(i === 0 ? 'th' : 'td');
+        const cell = document.createElement(i === 0 ? `th` : `td`);
         this.renderInlineString(cellContent.trim(), cell);
         row.appendChild(cell);
       }
 
       if (i === 0) {
-        const thead = document.createElement('thead');
+        const thead = document.createElement(`thead`);
         thead.appendChild(row);
         table.appendChild(thead);
       } else {
-        let tbody = table.querySelector('tbody');
+        let tbody = table.querySelector(`tbody`);
         if (!tbody) {
-          tbody = document.createElement('tbody');
+          tbody = document.createElement(`tbody`);
           table.appendChild(tbody);
         }
         tbody.appendChild(row);
@@ -639,19 +639,19 @@ export class WritingRenderer {
    */
   renderHtmlBlock(node, element, isFocused) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
-    const tagName = attrs.tagName || 'div';
+    const tagName = attrs.tagName || `div`;
 
     // For <details> blocks we use a fake disclosure widget built from
     // plain <div>s so we have full control over collapsing without any
     // of the quirky browser behaviour of the native <details> element.
-    if (tagName === 'details') {
+    if (tagName === `details`) {
       return this.renderFakeDetails(node, element, isFocused);
     }
 
     // HTML comments, void elements, and raw content tags have no
     // visual representation in writing mode — hide them entirely.
-    const isComment = tagName === '!--';
-    const isVoid = attrs.closingTag === '' && node.children.length === 0;
+    const isComment = tagName === `!--`;
+    const isVoid = attrs.closingTag === `` && node.children.length === 0;
     const isRawContent = attrs.rawContent !== undefined;
     if (isComment || isVoid || isRawContent) {
       element.hidden = true;
@@ -660,10 +660,10 @@ export class WritingRenderer {
 
     // Create the actual HTML container element
     const container = document.createElement(tagName);
-    container.className = 'md-html-container';
+    container.className = `md-html-container`;
 
     // Copy attributes from the opening tag onto the container element
-    this.applyHtmlAttributes(container, attrs.openingTag || '');
+    this.applyHtmlAttributes(container, attrs.openingTag || ``);
 
     // Determine which child (if any) is focused
     const currentNodeId = this.editor.getBlockNodeId();
@@ -678,7 +678,7 @@ export class WritingRenderer {
 
     // If no children, add a placeholder so the element is visible
     if (node.children.length === 0) {
-      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement(`br`));
     }
 
     element.appendChild(container);
@@ -707,14 +707,14 @@ export class WritingRenderer {
     }
     const isOpen = !!node.attributes.detailsOpen;
 
-    const container = document.createElement('div');
-    container.className = 'md-html-container md-details';
+    const container = document.createElement(`div`);
+    container.className = `md-html-container md-details`;
     if (isOpen) {
-      container.classList.add('md-details--open');
+      container.classList.add(`md-details--open`);
     }
 
     // Copy any extra attributes from the original opening tag
-    this.applyHtmlAttributes(container, attrs.openingTag || '');
+    this.applyHtmlAttributes(container, attrs.openingTag || ``);
 
     const currentNodeId = this.editor.getBlockNodeId();
 
@@ -725,7 +725,7 @@ export class WritingRenderer {
     const bodyChildren = [];
 
     for (const child of node.children) {
-      if (!summaryNode && child.type === 'html-block' && child.attributes.tagName === 'summary') {
+      if (!summaryNode && child.type === `html-block` && child.attributes.tagName === `summary`) {
         summaryNode = child;
       } else {
         bodyChildren.push(child);
@@ -734,25 +734,25 @@ export class WritingRenderer {
 
     // ── Summary row ──
     if (summaryNode) {
-      const summaryRow = document.createElement('div');
-      summaryRow.className = 'md-details-summary';
+      const summaryRow = document.createElement(`div`);
+      summaryRow.className = `md-details-summary`;
 
       // Disclosure triangle
-      const triangle = document.createElement('span');
-      triangle.className = 'md-details-triangle';
-      triangle.textContent = isOpen ? '▼' : '▶';
-      triangle.setAttribute('role', 'button');
-      triangle.setAttribute('aria-label', isOpen ? 'Collapse' : 'Expand');
+      const triangle = document.createElement(`span`);
+      triangle.className = `md-details-triangle`;
+      triangle.textContent = isOpen ? `▼` : `▶`;
+      triangle.setAttribute(`role`, `button`);
+      triangle.setAttribute(`aria-label`, isOpen ? `Collapse` : `Expand`);
       // Intercept mousedown to prevent the browser from moving the
       // caret into the details body.  Without this, mousedown fires
       // before click, the caret moves, selectionchange triggers a
       // full re-render (destroying this element), and the click
       // handler never runs on the live DOM.
-      triangle.addEventListener('mousedown', (e) => {
+      triangle.addEventListener(`mousedown`, (e) => {
         e.preventDefault();
         e.stopPropagation();
       });
-      triangle.addEventListener('click', (e) => {
+      triangle.addEventListener(`click`, (e) => {
         e.stopPropagation();
         node.attributes.detailsOpen = !node.attributes.detailsOpen;
         this.editor.renderNodes({ updated: [node.id] });
@@ -761,8 +761,8 @@ export class WritingRenderer {
       summaryRow.appendChild(triangle);
 
       // Render summary content
-      const summaryContent = document.createElement('div');
-      summaryContent.className = 'md-details-summary-content';
+      const summaryContent = document.createElement(`div`);
+      summaryContent.className = `md-details-summary-content`;
       const summaryFocused = summaryNode.id === currentNodeId;
       // Render summary's own children (the bareText paragraph)
       for (const sc of summaryNode.children) {
@@ -775,8 +775,8 @@ export class WritingRenderer {
     }
 
     // ── Collapsible body ──
-    const body = document.createElement('div');
-    body.className = 'md-details-body';
+    const body = document.createElement(`div`);
+    body.className = `md-details-body`;
 
     for (const child of bodyChildren) {
       const childFocused = child.id === currentNodeId;
@@ -787,7 +787,7 @@ export class WritingRenderer {
     }
 
     if (bodyChildren.length === 0) {
-      body.appendChild(document.createElement('br'));
+      body.appendChild(document.createElement(`br`));
     }
 
     container.appendChild(body);
@@ -805,13 +805,13 @@ export class WritingRenderer {
   applyHtmlAttributes(el, openingTag) {
     // Strip `<tagName` from the front and `>` from the end
     const withoutBrackets = openingTag
-      .replace(/^<[a-zA-Z][a-zA-Z0-9-]*/, '')
-      .replace(/>$/, '')
+      .replace(/^<[a-zA-Z][a-zA-Z0-9-]*/, ``)
+      .replace(/>$/, ``)
       .trim();
     if (!withoutBrackets) return;
 
     // Use a temporary element to parse attributes safely
-    const tmp = document.createElement('div');
+    const tmp = document.createElement(`div`);
     tmp.innerHTML = `<span ${withoutBrackets}></span>`;
     const parsed = tmp.firstElementChild;
     if (!parsed) return;
@@ -831,7 +831,7 @@ export class WritingRenderer {
    */
   renderInlineContent(node, container) {
     if (!node.content) {
-      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement(`br`));
       return;
     }
 
@@ -853,7 +853,7 @@ export class WritingRenderer {
    */
   renderInlineString(content, container) {
     if (!content) {
-      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement(`br`));
       return;
     }
     this.renderInlineParts(content, container);
@@ -881,68 +881,68 @@ export class WritingRenderer {
   renderSyntaxNodeChildren(children, container) {
     for (const child of children) {
       switch (child.type) {
-        case 'text':
+        case `text`:
           container.appendChild(document.createTextNode(child.content));
           break;
-        case 'inline-code': {
-          const code = document.createElement('code');
+        case `inline-code`: {
+          const code = document.createElement(`code`);
           code.dataset.nodeId = child.id;
           code.textContent = child.content;
           container.appendChild(code);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'inline-image': {
-          const img = document.createElement('img');
+        case `inline-image`: {
+          const img = document.createElement(`img`);
           img.dataset.nodeId = child.id;
-          img.className = 'md-image-preview';
-          img.alt = child.attributes.alt ?? '';
-          img.src = this.resolveImageSrc(child.attributes.src ?? '');
+          img.className = `md-image-preview`;
+          img.alt = child.attributes.alt ?? ``;
+          img.src = this.resolveImageSrc(child.attributes.src ?? ``);
           container.appendChild(img);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'bold': {
-          const strong = document.createElement('strong');
+        case `bold`: {
+          const strong = document.createElement(`strong`);
           strong.dataset.nodeId = child.id;
           this.renderSyntaxNodeChildren(child.children, strong);
           container.appendChild(strong);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'bold-italic': {
-          const strong = document.createElement('strong');
+        case `bold-italic`: {
+          const strong = document.createElement(`strong`);
           strong.dataset.nodeId = child.id;
-          const em = document.createElement('em');
+          const em = document.createElement(`em`);
           this.renderSyntaxNodeChildren(child.children, em);
           strong.appendChild(em);
           container.appendChild(strong);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'italic': {
-          const em = document.createElement('em');
+        case `italic`: {
+          const em = document.createElement(`em`);
           em.dataset.nodeId = child.id;
           this.renderSyntaxNodeChildren(child.children, em);
           container.appendChild(em);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'strikethrough': {
-          const del = document.createElement('del');
+        case `strikethrough`: {
+          const del = document.createElement(`del`);
           del.dataset.nodeId = child.id;
           this.renderSyntaxNodeChildren(child.children, del);
           container.appendChild(del);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'link': {
-          const a = document.createElement('a');
+        case `link`: {
+          const a = document.createElement(`a`);
           a.dataset.nodeId = child.id;
-          a.href = child.attributes.href ?? '';
+          a.href = child.attributes.href ?? ``;
           this.renderSyntaxNodeChildren(child.children, a);
           container.appendChild(a);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
         default: {
@@ -952,7 +952,7 @@ export class WritingRenderer {
             el.dataset.nodeId = child.id;
             this.renderSyntaxNodeChildren(child.children, el);
             container.appendChild(el);
-            container.appendChild(document.createTextNode(''));
+            container.appendChild(document.createTextNode(``));
           }
           break;
         }
@@ -969,61 +969,61 @@ export class WritingRenderer {
   appendSegments(segments, container) {
     for (const seg of segments) {
       switch (seg.type) {
-        case 'text':
-          container.appendChild(document.createTextNode(seg.text ?? ''));
+        case `text`:
+          container.appendChild(document.createTextNode(seg.text ?? ``));
           break;
-        case 'code': {
-          const code = document.createElement('code');
-          code.textContent = seg.content ?? '';
+        case `code`: {
+          const code = document.createElement(`code`);
+          code.textContent = seg.content ?? ``;
           container.appendChild(code);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'bold': {
-          const strong = document.createElement('strong');
+        case `bold`: {
+          const strong = document.createElement(`strong`);
           this.appendSegments(seg.children ?? [], strong);
           container.appendChild(strong);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'bold-italic': {
-          const strong = document.createElement('strong');
-          const em = document.createElement('em');
+        case `bold-italic`: {
+          const strong = document.createElement(`strong`);
+          const em = document.createElement(`em`);
           this.appendSegments(seg.children ?? [], em);
           strong.appendChild(em);
           container.appendChild(strong);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'italic': {
-          const em = document.createElement('em');
+        case `italic`: {
+          const em = document.createElement(`em`);
           this.appendSegments(seg.children ?? [], em);
           container.appendChild(em);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'strikethrough': {
-          const del = document.createElement('del');
+        case `strikethrough`: {
+          const del = document.createElement(`del`);
           this.appendSegments(seg.children ?? [], del);
           container.appendChild(del);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'link': {
-          const a = document.createElement('a');
-          a.href = seg.href ?? '';
+        case `link`: {
+          const a = document.createElement(`a`);
+          a.href = seg.href ?? ``;
           this.appendSegments(seg.children ?? [], a);
           container.appendChild(a);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
-        case 'image': {
-          const img = document.createElement('img');
-          img.className = 'md-image-preview';
-          img.alt = seg.alt ?? '';
-          img.src = this.resolveImageSrc(seg.src ?? '');
+        case `image`: {
+          const img = document.createElement(`img`);
+          img.className = `md-image-preview`;
+          img.alt = seg.alt ?? ``;
+          img.src = this.resolveImageSrc(seg.src ?? ``);
           container.appendChild(img);
-          container.appendChild(document.createTextNode(''));
+          container.appendChild(document.createTextNode(``));
           break;
         }
         default: {
@@ -1032,7 +1032,7 @@ export class WritingRenderer {
             const el = document.createElement(seg.tag);
             this.appendSegments(seg.children ?? [], el);
             container.appendChild(el);
-            container.appendChild(document.createTextNode(''));
+            container.appendChild(document.createTextNode(``));
           }
           break;
         }

@@ -33,9 +33,9 @@ export class SourceRenderer {
     }
 
     // Clear and rebuild content
-    container.innerHTML = '';
-    container.classList.add('source-view');
-    container.classList.remove('writing-view');
+    container.innerHTML = ``;
+    container.classList.add(`source-view`);
+    container.classList.remove(`writing-view`);
 
     const fragment = document.createDocumentFragment();
 
@@ -48,9 +48,9 @@ export class SourceRenderer {
 
     // If empty, add a placeholder paragraph
     if (syntaxTree.children.length === 0) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'md-line md-paragraph';
-      placeholder.appendChild(document.createElement('br'));
+      const placeholder = document.createElement(`div`);
+      placeholder.className = `md-line md-paragraph`;
+      placeholder.appendChild(document.createElement(`br`));
       fragment.appendChild(placeholder);
     }
 
@@ -83,16 +83,16 @@ export class SourceRenderer {
    * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
-    const existing = container.querySelector('.md-phantom-paragraph');
+    const existing = container.querySelector(`.md-phantom-paragraph`);
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
-    const needsPhantom = last?.type === 'code-block';
+    const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
-      const phantom = document.createElement('div');
-      phantom.className = 'md-line md-paragraph md-phantom-paragraph';
-      phantom.setAttribute('contenteditable', 'true');
-      phantom.appendChild(document.createElement('br'));
+      const phantom = document.createElement(`div`);
+      phantom.className = `md-line md-paragraph md-phantom-paragraph`;
+      phantom.setAttribute(`contenteditable`, `true`);
+      phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
     } else if (!needsPhantom && existing) {
       existing.remove();
@@ -146,7 +146,7 @@ export class SourceRenderer {
 
       // No previous sibling — if inside an html-block, re-render
       // the parent instead; otherwise prepend to the container.
-      if (node.parent && node.parent.type === 'html-block') {
+      if (node.parent && node.parent.type === `html-block`) {
         this.replaceNodeElement(container, tree, node.parent.id);
       } else {
         container.prepend(element);
@@ -176,7 +176,7 @@ export class SourceRenderer {
     // Bare-text html-block children are rendered as part of the
     // parent html-block element — re-render the parent instead.
     const parent = node.parent;
-    if (parent?.type === 'html-block' && parent.children.length === 1 && node.attributes.bareText) {
+    if (parent?.type === `html-block` && parent.children.length === 1 && node.attributes.bareText) {
       const parentEl = container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!parentEl) return;
       const updated = this.renderNode(parent);
@@ -203,41 +203,41 @@ export class SourceRenderer {
    * @returns {HTMLElement|null}
    */
   renderNode(node) {
-    const element = document.createElement('div');
+    const element = document.createElement(`div`);
     element.className = `md-line md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     switch (node.type) {
-      case 'heading1':
-      case 'heading2':
-      case 'heading3':
-      case 'heading4':
-      case 'heading5':
-      case 'heading6':
+      case `heading1`:
+      case `heading2`:
+      case `heading3`:
+      case `heading4`:
+      case `heading5`:
+      case `heading6`:
         return this.renderHeading(node, element);
 
-      case 'paragraph':
+      case `paragraph`:
         return this.renderParagraph(node, element);
 
-      case 'blockquote':
+      case `blockquote`:
         return this.renderBlockquote(node, element);
 
-      case 'code-block':
+      case `code-block`:
         return this.renderCodeBlock(node, element);
 
-      case 'list-item':
+      case `list-item`:
         return this.renderListItem(node, element);
 
-      case 'horizontal-rule':
+      case `horizontal-rule`:
         return this.renderHorizontalRule(node, element);
 
-      case 'image':
+      case `image`:
         return this.renderImage(node, element);
 
-      case 'table':
+      case `table`:
         return this.renderTable(node, element);
 
-      case 'html-block':
+      case `html-block`:
         return this.renderHtmlBlock(node, element);
 
       default:
@@ -252,15 +252,15 @@ export class SourceRenderer {
    * @returns {HTMLElement}
    */
   renderHeading(node, element) {
-    const level = Number.parseInt(node.type.replace('heading', ''), 10);
-    const prefix = `${'#'.repeat(level)} `;
+    const level = Number.parseInt(node.type.replace(`heading`, ``), 10);
+    const prefix = `${`#`.repeat(level)} `;
 
-    const prefixSpan = document.createElement('span');
-    prefixSpan.className = 'md-syntax md-heading-marker';
+    const prefixSpan = document.createElement(`span`);
+    prefixSpan.className = `md-syntax md-heading-marker`;
     prefixSpan.textContent = prefix;
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node.content, contentSpan);
 
     element.appendChild(prefixSpan);
@@ -287,12 +287,12 @@ export class SourceRenderer {
    * @returns {HTMLElement}
    */
   renderBlockquote(node, element) {
-    const prefixSpan = document.createElement('span');
-    prefixSpan.className = 'md-syntax md-blockquote-marker';
-    prefixSpan.textContent = '> ';
+    const prefixSpan = document.createElement(`span`);
+    prefixSpan.className = `md-syntax md-blockquote-marker`;
+    prefixSpan.textContent = `> `;
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node.content, contentSpan);
 
     element.appendChild(prefixSpan);
@@ -324,8 +324,8 @@ export class SourceRenderer {
     // single editable string.
     node.enterSourceEditMode();
 
-    const codeContent = document.createElement('div');
-    codeContent.className = 'md-code-content md-content';
+    const codeContent = document.createElement(`div`);
+    codeContent.className = `md-code-content md-content`;
     // Append an extra newline so trailing empty lines have visual
     // height (same reason as the old per-section render).
     codeContent.textContent = `${node.sourceEditText}\n`;
@@ -342,16 +342,16 @@ export class SourceRenderer {
    */
   renderListItem(node, element) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
-    const indent = '  '.repeat(attrs.indent || 0);
-    const marker = attrs.ordered ? `${attrs.number}. ` : '- ';
-    const checkbox = typeof attrs.checked === 'boolean' ? (attrs.checked ? '[x] ' : '[ ] ') : '';
+    const indent = `  `.repeat(attrs.indent || 0);
+    const marker = attrs.ordered ? `${attrs.number}. ` : `- `;
+    const checkbox = typeof attrs.checked === `boolean` ? (attrs.checked ? `[x] ` : `[ ] `) : ``;
 
-    const prefixSpan = document.createElement('span');
-    prefixSpan.className = 'md-syntax md-list-marker';
+    const prefixSpan = document.createElement(`span`);
+    prefixSpan.className = `md-syntax md-list-marker`;
     prefixSpan.textContent = indent + marker + checkbox;
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
     this.renderInlineContent(node.content, contentSpan);
 
     element.appendChild(prefixSpan);
@@ -369,14 +369,14 @@ export class SourceRenderer {
   renderImage(node, element) {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
     const alt = attrs.alt ?? node.content;
-    const src = attrs.url ?? '';
+    const src = attrs.url ?? ``;
 
-    const contentSpan = document.createElement('span');
-    contentSpan.className = 'md-content';
+    const contentSpan = document.createElement(`span`);
+    contentSpan.className = `md-content`;
 
-    const style = attrs.style ?? '';
+    const style = attrs.style ?? ``;
     if (style) {
-      const altAttr = alt ? ` alt="${alt}"` : '';
+      const altAttr = alt ? ` alt="${alt}"` : ``;
       contentSpan.textContent = `<img src="${src}"${altAttr} style="${style}" />`;
     } else if (attrs.href) {
       contentSpan.textContent = `[![${alt}](${src})](${attrs.href})`;
@@ -396,8 +396,8 @@ export class SourceRenderer {
    * @returns {HTMLElement}
    */
   renderHorizontalRule(node, element) {
-    element.textContent = '---';
-    element.className += ' md-horizontal-rule';
+    element.textContent = `---`;
+    element.className += ` md-horizontal-rule`;
     return element;
   }
 
@@ -409,10 +409,10 @@ export class SourceRenderer {
    */
   renderTable(node, element) {
     // Render table as plain text in source mode
-    const lines = node.content.split('\n');
+    const lines = node.content.split(`\n`);
     for (const line of lines) {
-      const lineDiv = document.createElement('div');
-      lineDiv.className = 'md-table-row';
+      const lineDiv = document.createElement(`div`);
+      lineDiv.className = `md-table-row`;
       lineDiv.textContent = line;
       element.appendChild(lineDiv);
     }
@@ -435,52 +435,52 @@ export class SourceRenderer {
     if (
       node.children.length === 1 &&
       node.children[0].attributes.bareText &&
-      node.children[0].type === 'paragraph'
+      node.children[0].type === `paragraph`
     ) {
       const child = node.children[0];
       // Render as a single line whose data-node-id points to the
       // child paragraph so that editing targets the right node.
       element.dataset.nodeId = child.id;
-      element.className = 'md-line md-paragraph';
+      element.className = `md-line md-paragraph`;
 
-      const openSyntax = document.createElement('span');
-      openSyntax.className = 'md-syntax md-html-tag';
-      openSyntax.textContent = attrs.openingTag || '';
+      const openSyntax = document.createElement(`span`);
+      openSyntax.className = `md-syntax md-html-tag`;
+      openSyntax.textContent = attrs.openingTag || ``;
       element.appendChild(openSyntax);
 
-      const contentSpan = document.createElement('span');
-      contentSpan.className = 'md-content';
+      const contentSpan = document.createElement(`span`);
+      contentSpan.className = `md-content`;
       this.renderInlineContent(child.content, contentSpan);
       element.appendChild(contentSpan);
 
-      const closeSyntax = document.createElement('span');
-      closeSyntax.className = 'md-syntax md-html-tag';
-      closeSyntax.textContent = attrs.closingTag || '';
+      const closeSyntax = document.createElement(`span`);
+      closeSyntax.className = `md-syntax md-html-tag`;
+      closeSyntax.textContent = attrs.closingTag || ``;
       element.appendChild(closeSyntax);
 
       return element;
     }
 
     // Opening tag line — editable via data-tag-part="opening"
-    const openLine = document.createElement('div');
-    openLine.className = 'md-line md-html-tag';
+    const openLine = document.createElement(`div`);
+    openLine.className = `md-line md-html-tag`;
     openLine.dataset.nodeId = node.id;
-    openLine.dataset.tagPart = 'opening';
-    const openContent = document.createElement('span');
-    openContent.className = 'md-content';
-    openContent.textContent = attrs.openingTag || '';
+    openLine.dataset.tagPart = `opening`;
+    const openContent = document.createElement(`span`);
+    openContent.className = `md-content`;
+    openContent.textContent = attrs.openingTag || ``;
     openLine.appendChild(openContent);
     element.appendChild(openLine);
 
     // Raw content tags: render body lines verbatim (not as markdown)
     if (attrs.rawContent !== undefined) {
       if (attrs.rawContent) {
-        for (const line of attrs.rawContent.split('\n')) {
-          const rawLine = document.createElement('div');
-          rawLine.className = 'md-line md-html-raw';
+        for (const line of attrs.rawContent.split(`\n`)) {
+          const rawLine = document.createElement(`div`);
+          rawLine.className = `md-line md-html-raw`;
           rawLine.dataset.nodeId = node.id;
-          const rawContent = document.createElement('span');
-          rawContent.className = 'md-content';
+          const rawContent = document.createElement(`span`);
+          rawContent.className = `md-content`;
           rawContent.textContent = line;
           rawLine.appendChild(rawContent);
           element.appendChild(rawLine);
@@ -498,12 +498,12 @@ export class SourceRenderer {
 
     // Closing tag line — editable via data-tag-part="closing"
     if (attrs.closingTag) {
-      const closeLine = document.createElement('div');
-      closeLine.className = 'md-line md-html-tag';
+      const closeLine = document.createElement(`div`);
+      closeLine.className = `md-line md-html-tag`;
       closeLine.dataset.nodeId = node.id;
-      closeLine.dataset.tagPart = 'closing';
-      const closeContent = document.createElement('span');
-      closeContent.className = 'md-content';
+      closeLine.dataset.tagPart = `closing`;
+      const closeContent = document.createElement(`span`);
+      closeContent.className = `md-content`;
       closeContent.textContent = attrs.closingTag;
       closeLine.appendChild(closeContent);
       element.appendChild(closeLine);
@@ -519,7 +519,7 @@ export class SourceRenderer {
    */
   renderInlineContent(content, container) {
     if (!content) {
-      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement(`br`));
       return;
     }
 
@@ -527,10 +527,10 @@ export class SourceRenderer {
     const parts = this.parseInlineContent(content);
 
     for (const part of parts) {
-      if (part.type === 'text') {
+      if (part.type === `text`) {
         container.appendChild(document.createTextNode(part.content));
       } else {
-        const span = document.createElement('span');
+        const span = document.createElement(`span`);
         span.className = `md-inline md-${part.type}`;
         span.textContent = part.raw;
         container.appendChild(span);
@@ -550,19 +550,19 @@ export class SourceRenderer {
 
     // Regular expressions for inline elements
     const patterns = [
-      { type: 'bold', regex: /\*\*(.+?)\*\*/g },
-      { type: 'italic', regex: /__(.+?)__/g },
-      { type: 'italic', regex: /\*(.+?)\*/g },
-      { type: 'italic', regex: /(?<!\w)_([^_]+)_(?!\w)/g },
-      { type: 'code', regex: /`([^`]+)`/g },
-      { type: 'link', regex: /\[([^\]]+)\]\(([^)]+)\)/g },
-      { type: 'strikethrough', regex: /~~(.+?)~~/g },
+      { type: `bold`, regex: /\*\*(.+?)\*\*/g },
+      { type: `italic`, regex: /__(.+?)__/g },
+      { type: `italic`, regex: /\*(.+?)\*/g },
+      { type: `italic`, regex: /(?<!\w)_([^_]+)_(?!\w)/g },
+      { type: `code`, regex: /`([^`]+)`/g },
+      { type: `link`, regex: /\[([^\]]+)\]\(([^)]+)\)/g },
+      { type: `strikethrough`, regex: /~~(.+?)~~/g },
     ];
 
     // For simplicity in source view, we just return the raw text
     // with markers for styling purposes
     parts.push({
-      type: 'text',
+      type: `text`,
       content: content,
       raw: content,
     });

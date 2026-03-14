@@ -59,7 +59,7 @@ export class ImageHelper {
       return changedIds;
 
     for (const node of this.editor.syntaxTree.children) {
-      if (node.type !== 'image' && node.type !== 'linked-image') continue;
+      if (node.type !== `image` && node.type !== `linked-image`) continue;
 
       const url = node.attributes.url;
       if (!url) continue;
@@ -80,14 +80,14 @@ export class ImageHelper {
    * @param {string} href - Optional link URL (empty string for no link)
    * @param {string} [style] - Optional inline style
    */
-  insertOrUpdateImage(alt, src, href, style = '') {
+  insertOrUpdateImage(alt, src, href, style = ``) {
     if (!this.editor.syntaxTree) return;
 
     const before = this.editor.syntaxTree.toMarkdown();
     const currentNode = this.editor.getCurrentBlockNode();
     let renderHints;
 
-    if (currentNode?.type === 'image') {
+    if (currentNode?.type === `image`) {
       // Update existing image node
       currentNode.content = alt;
       currentNode.attributes = { alt, url: src };
@@ -101,7 +101,7 @@ export class ImageHelper {
       renderHints = { updated: [currentNode.id] };
     } else {
       // Insert a new image node
-      const imageNode = new SyntaxNode('image', alt);
+      const imageNode = new SyntaxNode(`image`, alt);
       imageNode.attributes = { alt, url: src };
       if (href) {
         imageNode.attributes.href = href;
@@ -114,7 +114,7 @@ export class ImageHelper {
         const siblings = this.editor.getSiblings(currentNode);
         const idx = siblings.indexOf(currentNode);
         // If the current node is an empty paragraph, replace it
-        if (currentNode.type === 'paragraph' && currentNode.content === '') {
+        if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, imageNode);
           imageNode.parent = currentNode.parent;
           currentNode.parent = null;
@@ -159,9 +159,9 @@ export class ImageHelper {
 
     const existing = {
       alt: node.attributes.alt ?? node.content,
-      src: node.attributes.url ?? '',
-      href: node.attributes.href ?? '',
-      style: node.attributes.style ?? '',
+      src: node.attributes.url ?? ``,
+      href: node.attributes.href ?? ``,
+      style: node.attributes.style ?? ``,
     };
 
     const result = await modal.open(existing);
@@ -211,10 +211,10 @@ export class ImageHelper {
    * @returns {string}
    */
   extractFilename(src) {
-    if (!src) return '';
-    const clean = src.split('?')[0].split('#')[0];
+    if (!src) return ``;
+    const clean = src.split(`?`)[0].split(`#`)[0];
     const parts = clean.split(/[/\\]/);
-    return parts[parts.length - 1] || '';
+    return parts[parts.length - 1] || ``;
   }
 
   /**
@@ -224,7 +224,7 @@ export class ImageHelper {
    * @returns {string}
    */
   replaceFilename(src, newName) {
-    const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
+    const lastSlash = Math.max(src.lastIndexOf(`/`), src.lastIndexOf(`\\`));
     if (lastSlash === -1) return newName;
     return src.substring(0, lastSlash + 1) + newName;
   }
@@ -237,11 +237,11 @@ export class ImageHelper {
    */
   resolveImagePath(src) {
     let resolved = src;
-    if (resolved.startsWith('file:///')) {
+    if (resolved.startsWith(`file:///`)) {
       resolved = resolved.slice(8);
     }
     resolved = decodeURIComponent(resolved);
-    resolved = resolved.replace(/\//g, '\\');
+    resolved = resolved.replace(/\//g, `\\`);
     return resolved;
   }
 }

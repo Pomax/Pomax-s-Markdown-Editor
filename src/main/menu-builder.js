@@ -57,48 +57,48 @@ export class MenuBuilder {
    */
   buildFileMenu() {
     return {
-      label: 'File',
+      label: `File`,
       submenu: [
         {
-          label: 'New',
-          accelerator: 'CmdOrCtrl+N',
-          click: () => this.sendMenuAction('file:new'),
+          label: `New`,
+          accelerator: `CmdOrCtrl+N`,
+          click: () => this.sendMenuAction(`file:new`),
         },
         {
-          label: 'Load...',
-          accelerator: 'CmdOrCtrl+O',
+          label: `Load...`,
+          accelerator: `CmdOrCtrl+O`,
           click: () => this.handleLoad(),
         },
         {
-          label: 'Open Recent',
+          label: `Open Recent`,
           submenu: this.buildRecentFilesSubmenu(),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Save',
-          accelerator: 'CmdOrCtrl+S',
+          label: `Save`,
+          accelerator: `CmdOrCtrl+S`,
           click: () => this.handleSave(),
         },
         {
-          label: 'Save As...',
-          accelerator: 'CmdOrCtrl+Shift+S',
+          label: `Save As...`,
+          accelerator: `CmdOrCtrl+Shift+S`,
           click: () => this.handleSaveAs(),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Close',
-          accelerator: 'CmdOrCtrl+W',
-          click: () => this.sendMenuAction('file:close'),
+          label: `Close`,
+          accelerator: `CmdOrCtrl+W`,
+          click: () => this.sendMenuAction(`file:close`),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Word Count',
-          click: () => this.sendMenuAction('file:wordCount'),
+          label: `Word Count`,
+          click: () => this.sendMenuAction(`file:wordCount`),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Exit',
-          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Alt+F4',
+          label: `Exit`,
+          accelerator: process.platform === `darwin` ? `Cmd+Q` : `Alt+F4`,
           click: () => this.handleExit(),
         },
       ],
@@ -113,7 +113,7 @@ export class MenuBuilder {
     const recentFiles = this.fileManager.getRecentFiles();
 
     if (recentFiles.length === 0) {
-      return [{ label: 'No Recent Files', enabled: false }];
+      return [{ label: `No Recent Files`, enabled: false }];
     }
 
     /** @type {Electron.MenuItemConstructorOptions[]} */
@@ -122,9 +122,9 @@ export class MenuBuilder {
       click: () => this.handleLoadRecent(filePath),
     }));
 
-    items.push({ type: 'separator' });
+    items.push({ type: `separator` });
     items.push({
-      label: 'Clear Recent',
+      label: `Clear Recent`,
       click: () => {
         this.fileManager.clearRecentFiles();
         this.refreshMenu();
@@ -140,55 +140,55 @@ export class MenuBuilder {
    */
   buildEditMenu() {
     return {
-      label: 'Edit',
+      label: `Edit`,
       submenu: [
         {
-          label: 'Undo',
-          accelerator: 'CmdOrCtrl+Z',
-          click: () => this.sendMenuAction('edit:undo'),
+          label: `Undo`,
+          accelerator: `CmdOrCtrl+Z`,
+          click: () => this.sendMenuAction(`edit:undo`),
         },
         {
-          label: 'Redo',
-          accelerator: 'CmdOrCtrl+Y',
-          click: () => this.sendMenuAction('edit:redo'),
+          label: `Redo`,
+          accelerator: `CmdOrCtrl+Y`,
+          click: () => this.sendMenuAction(`edit:redo`),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Cut',
-          accelerator: 'CmdOrCtrl+X',
-          role: 'cut',
-        },
-        {
-          label: 'Copy',
-          accelerator: 'CmdOrCtrl+C',
-          role: 'copy',
+          label: `Cut`,
+          accelerator: `CmdOrCtrl+X`,
+          role: `cut`,
         },
         {
-          label: 'Paste',
-          accelerator: 'CmdOrCtrl+V',
-          role: 'paste',
+          label: `Copy`,
+          accelerator: `CmdOrCtrl+C`,
+          role: `copy`,
         },
-        { type: 'separator' },
         {
-          label: 'Select All',
-          accelerator: 'CmdOrCtrl+A',
-          role: 'selectAll',
+          label: `Paste`,
+          accelerator: `CmdOrCtrl+V`,
+          role: `paste`,
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Images',
+          label: `Select All`,
+          accelerator: `CmdOrCtrl+A`,
+          role: `selectAll`,
+        },
+        { type: `separator` },
+        {
+          label: `Images`,
           submenu: [
             {
-              label: 'Gather',
+              label: `Gather`,
               click: () => this.handleGatherImages(),
             },
           ],
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Preferences',
-          accelerator: 'CmdOrCtrl+,',
-          click: () => this.sendMenuAction('edit:preferences'),
+          label: `Preferences`,
+          accelerator: `CmdOrCtrl+,`,
+          click: () => this.sendMenuAction(`edit:preferences`),
         },
       ],
     };
@@ -202,32 +202,32 @@ export class MenuBuilder {
     /** @type {Electron.MenuItemConstructorOptions[]} */
     const submenu = [
       {
-        label: 'Source View',
-        accelerator: 'CmdOrCtrl+1',
-        click: () => this.sendMenuAction('view:source'),
+        label: `Source View`,
+        accelerator: `CmdOrCtrl+1`,
+        click: () => this.sendMenuAction(`view:source`),
       },
       {
-        label: 'Writing View',
-        accelerator: 'CmdOrCtrl+2',
-        click: () => this.sendMenuAction('view:writing'),
+        label: `Writing View`,
+        accelerator: `CmdOrCtrl+2`,
+        click: () => this.sendMenuAction(`view:writing`),
       },
     ];
 
     // Add an entry for each open file
     if (this.openFiles.length > 0) {
-      submenu.push({ type: 'separator' });
+      submenu.push({ type: `separator` });
       for (const file of this.openFiles) {
         submenu.push({
-          label: file.label ?? 'Untitled',
-          type: 'checkbox',
+          label: file.label ?? `Untitled`,
+          type: `checkbox`,
           checked: file.active,
-          click: () => this.sendMenuAction('view:switchFile', file.id),
+          click: () => this.sendMenuAction(`view:switchFile`, file.id),
         });
       }
     }
 
     return {
-      label: 'View',
+      label: `View`,
       submenu,
     };
   }
@@ -238,21 +238,21 @@ export class MenuBuilder {
    */
   buildHelpMenu() {
     return {
-      label: 'Help',
+      label: `Help`,
       submenu: [
         {
-          label: 'Reload',
-          accelerator: 'CmdOrCtrl+Shift+R',
+          label: `Reload`,
+          accelerator: `CmdOrCtrl+Shift+R`,
           click: () => this.handleReload(),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'Debug',
+          label: `Debug`,
           click: () => this.handleDebug(),
         },
-        { type: 'separator' },
+        { type: `separator` },
         {
-          label: 'About',
+          label: `About`,
           click: () => this.handleAbout(),
         },
       ],
@@ -266,7 +266,7 @@ export class MenuBuilder {
    */
   sendMenuAction(action, ...args) {
     if (this.window) {
-      this.window.webContents.send('menu:action', action, ...args);
+      this.window.webContents.send(`menu:action`, action, ...args);
     }
   }
 
@@ -278,7 +278,7 @@ export class MenuBuilder {
 
     const result = await this.fileManager.load(this.window);
     if (result.success) {
-      this.window.webContents.send('menu:action', 'file:loaded', result);
+      this.window.webContents.send(`menu:action`, `file:loaded`, result);
       this.refreshMenu();
     }
   }
@@ -292,7 +292,7 @@ export class MenuBuilder {
 
     const result = await this.fileManager.loadRecent(filePath);
     if (result.success) {
-      this.window.webContents.send('menu:action', 'file:loaded', result);
+      this.window.webContents.send(`menu:action`, `file:loaded`, result);
     }
     // Refresh menu in both cases: success moves file to top,
     // failure removes a missing file from the list.
@@ -313,7 +313,7 @@ export class MenuBuilder {
    */
   async handleSave() {
     if (!this.window) return;
-    this.sendMenuAction('file:save');
+    this.sendMenuAction(`file:save`);
   }
 
   /**
@@ -321,7 +321,7 @@ export class MenuBuilder {
    */
   async handleSaveAs() {
     if (!this.window) return;
-    this.sendMenuAction('file:saveAs');
+    this.sendMenuAction(`file:saveAs`);
   }
 
   /**
@@ -344,7 +344,7 @@ export class MenuBuilder {
 
     this.window.webContents.reloadIgnoringCache();
 
-    this.window.webContents.once('did-finish-load', () => {
+    this.window.webContents.once(`did-finish-load`, () => {
       this.restoreOpenFiles();
     });
   }
@@ -357,7 +357,7 @@ export class MenuBuilder {
   async restoreOpenFiles() {
     if (!this.window) return;
 
-    const openFiles = settings.get('openFiles', null);
+    const openFiles = settings.get(`openFiles`, null);
     if (!Array.isArray(openFiles) || openFiles.length === 0) return;
 
     const valid = openFiles.filter(
@@ -405,7 +405,7 @@ export class MenuBuilder {
 
     // Send remaining files as loaded events
     for (let i = 1; i < loaded.length; i++) {
-      this.window.webContents.send('menu:action', 'file:loaded', {
+      this.window.webContents.send(`menu:action`, `file:loaded`, {
         success: true,
         content: loaded[i].content,
         filePath: loaded[i].filePath,
@@ -414,7 +414,7 @@ export class MenuBuilder {
 
     // Switch to the previously active file
     const activeEntry = loaded.find((e) => e.active) || first;
-    this.window.webContents.send('menu:action', 'view:switchFile', {
+    this.window.webContents.send(`menu:action`, `view:switchFile`, {
       filePath: activeEntry.filePath,
     });
 
@@ -428,7 +428,7 @@ export class MenuBuilder {
         tocHeadingPath: e.tocHeadingPath,
       }));
     if (restoreEntries.length > 0) {
-      this.window.webContents.send('menu:action', 'session:restore', restoreEntries);
+      this.window.webContents.send(`menu:action`, `session:restore`, restoreEntries);
     }
 
     this.refreshMenu();
@@ -449,10 +449,10 @@ export class MenuBuilder {
     // 1. Ensure the document has been saved
     if (!this.fileManager.currentFilePath) {
       const { response } = await dialog.showMessageBox(this.window, {
-        type: 'info',
-        title: 'Gather Images',
-        message: 'Please save your document first',
-        buttons: ['Cancel', 'Save'],
+        type: `info`,
+        title: `Gather Images`,
+        message: `Please save your document first`,
+        buttons: [`Cancel`, `Save`],
         defaultId: 1,
         cancelId: 0,
       });
@@ -460,7 +460,7 @@ export class MenuBuilder {
       if (response === 0) return; // Cancel
 
       // Trigger a save and wait for the renderer to complete it
-      this.sendMenuAction('file:save');
+      this.sendMenuAction(`file:save`);
 
       // Wait briefly for the save to complete and check again
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -477,13 +477,13 @@ export class MenuBuilder {
 
     // 2. Confirm the gather operation
     const { response } = await dialog.showMessageBox(this.window, {
-      type: 'question',
-      title: 'Gather Images',
-      message: 'Gather all images?',
+      type: `question`,
+      title: `Gather Images`,
+      message: `Gather all images?`,
       detail:
-        'This will copy all externally-referenced images into the ' +
-        "document's folder and update image paths to be relative.",
-      buttons: ['No', 'Yes'],
+        `This will copy all externally-referenced images into the ` +
+        `document's folder and update image paths to be relative.`,
+      buttons: [`No`, `Yes`],
       defaultId: 1,
       cancelId: 0,
     });
@@ -492,7 +492,7 @@ export class MenuBuilder {
 
     // 3. Get the current document content from the renderer
     const markdown = await this.window.webContents.executeJavaScript(
-      'window.editorAPI?.getContent() ?? ""',
+      `window.editorAPI?.getContent() ?? ""`,
     );
 
     if (!markdown) return;
@@ -504,32 +504,32 @@ export class MenuBuilder {
 
     if (result.changedCount === 0) {
       await dialog.showMessageBox(this.window, {
-        type: 'info',
-        title: 'Gather Images',
-        message: 'Nothing to gather',
-        detail: 'All images are already relative to the document.',
-        buttons: ['OK'],
+        type: `info`,
+        title: `Gather Images`,
+        message: `Nothing to gather`,
+        detail: `All images are already relative to the document.`,
+        buttons: [`OK`],
       });
       return;
     }
 
     // 5. Push the updated content back into the editor
     const escaped = result.updatedMarkdown
-      .replace(/\\/g, '\\\\')
-      .replace(/`/g, '\\`')
-      .replace(/\$/g, '\\$');
+      .replace(/\\/g, `\\\\`)
+      .replace(/`/g, `\\\``)
+      .replace(/\$/g, `\\$`);
 
     await this.window.webContents.executeJavaScript(`window.editorAPI?.setContent(\`${escaped}\`)`);
 
     // Mark as unsaved since the content changed
-    await this.window.webContents.executeJavaScript('window.editorAPI?.setUnsavedChanges(true)');
+    await this.window.webContents.executeJavaScript(`window.editorAPI?.setUnsavedChanges(true)`);
 
     await dialog.showMessageBox(this.window, {
-      type: 'info',
-      title: 'Gather Images',
-      message: `Gathered ${result.changedCount} image${result.changedCount === 1 ? '' : 's'}`,
-      detail: result.details.join('\n'),
-      buttons: ['OK'],
+      type: `info`,
+      title: `Gather Images`,
+      message: `Gathered ${result.changedCount} image${result.changedCount === 1 ? `` : `s`}`,
+      detail: result.details.join(`\n`),
+      buttons: [`OK`],
     });
   }
 
@@ -566,10 +566,10 @@ export class MenuBuilder {
       let srcPath = src;
 
       // Strip file:// prefix if present
-      if (srcPath.startsWith('file:///')) {
-        srcPath = srcPath.slice('file:///'.length);
-      } else if (srcPath.startsWith('file://')) {
-        srcPath = srcPath.slice('file://'.length);
+      if (srcPath.startsWith(`file:///`)) {
+        srcPath = srcPath.slice(`file:///`.length);
+      } else if (srcPath.startsWith(`file://`)) {
+        srcPath = srcPath.slice(`file://`.length);
       }
 
       // Decode URI-encoded characters (e.g. %20 → space)
@@ -596,7 +596,7 @@ export class MenuBuilder {
       ) {
         // Already in the document's directory — just update the reference
         // to be relative.
-        const relativePath = path.relative(docDir, srcPath).replace(/\\/g, '/');
+        const relativePath = path.relative(docDir, srcPath).replace(/\\/g, `/`);
         updatedMarkdown = updatedMarkdown.replace(match, match.replace(src, relativePath));
         changedCount++;
         details.push(`${path.basename(srcPath)} → ${relativePath}`);
@@ -623,7 +623,7 @@ export class MenuBuilder {
           await fs.copyFile(srcPath, destPath);
         }
 
-        const relativePath = path.relative(docDir, destPath).replace(/\\/g, '/');
+        const relativePath = path.relative(docDir, destPath).replace(/\\/g, `/`);
         updatedMarkdown = updatedMarkdown.replace(match, match.replace(src, relativePath));
         changedCount++;
         details.push(`${srcPath} → ${relativePath}`);
@@ -675,14 +675,14 @@ export class MenuBuilder {
 
     const wc = this.window.webContents;
 
-    wc.on('context-menu', (event, params) => {
+    wc.on(`context-menu`, (event, params) => {
       const menu = Menu.buildFromTemplate([
-        { role: 'copy' },
-        { role: 'cut' },
-        { role: 'paste' },
-        { type: 'separator' },
+        { role: `copy` },
+        { role: `cut` },
+        { role: `paste` },
+        { type: `separator` },
         {
-          label: 'Inspect Element',
+          label: `Inspect Element`,
           click: () => wc.inspectElement(params.x, params.y),
         },
       ]);
@@ -706,11 +706,11 @@ export class MenuBuilder {
     if (!this.window) return;
 
     dialog.showMessageBox(this.window, {
-      type: 'info',
-      title: 'About Markdown Editor',
-      message: 'Markdown Editor',
-      detail: 'Work in progress',
-      buttons: ['OK'],
+      type: `info`,
+      title: `About Markdown Editor`,
+      message: `Markdown Editor`,
+      detail: `Work in progress`,
+      buttons: [`OK`],
     });
   }
 }

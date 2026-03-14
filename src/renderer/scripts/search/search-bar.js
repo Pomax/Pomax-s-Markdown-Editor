@@ -65,7 +65,7 @@ export class SearchBar {
     this.offsetMap = [];
 
     /** @type {string} */
-    this.documentText = '';
+    this.documentText = ``;
 
     /**
      * The view mode the current offset map was built for.
@@ -86,21 +86,21 @@ export class SearchBar {
    * Called once during app initialisation.
    */
   initialize() {
-    this.container = document.createElement('div');
-    this.container.className = 'search-bar';
-    this.container.setAttribute('role', 'search');
-    this.container.setAttribute('aria-label', 'Find in document');
+    this.container = document.createElement(`div`);
+    this.container.className = `search-bar`;
+    this.container.setAttribute(`role`, `search`);
+    this.container.setAttribute(`aria-label`, `Find in document`);
     // Prevent the editor from losing focus metrics when clicking
     // inside the search bar — but we do want the input to be
     // focusable, so we only guard non-input clicks.
     // Also initiate drag when the mousedown is not on an interactive
     // element (input or button).
-    this.container.addEventListener('mousedown', (e) => {
+    this.container.addEventListener(`mousedown`, (e) => {
       const tag = /** @type {HTMLElement} */ (e.target).tagName;
-      if (tag !== 'INPUT' && tag !== 'BUTTON') {
+      if (tag !== `INPUT` && tag !== `BUTTON`) {
         e.preventDefault();
         this.startDrag(e);
-      } else if (tag === 'BUTTON') {
+      } else if (tag === `BUTTON`) {
         e.preventDefault();
       }
     });
@@ -124,53 +124,53 @@ export class SearchBar {
             </div>
         `;
 
-    this.input = /** @type {HTMLInputElement} */ (this.container.querySelector('.search-input'));
+    this.input = /** @type {HTMLInputElement} */ (this.container.querySelector(`.search-input`));
     this.matchCount = /** @type {HTMLElement} */ (
-      this.container.querySelector('.search-match-count')
+      this.container.querySelector(`.search-match-count`)
     );
 
     // Wire up events
-    this.input.addEventListener('input', () => this.onSearchChanged());
-    this.input.addEventListener('keydown', (e) => this.onInputKeyDown(e));
+    this.input.addEventListener(`input`, () => this.onSearchChanged());
+    this.input.addEventListener(`keydown`, (e) => this.onInputKeyDown(e));
 
     // Toggle buttons
-    for (const btn of this.container.querySelectorAll('.search-toggle')) {
-      btn.addEventListener('click', () => {
+    for (const btn of this.container.querySelectorAll(`.search-toggle`)) {
+      btn.addEventListener(`click`, () => {
         const action = /** @type {HTMLElement} */ (btn).dataset.action;
-        if (action === 'regex') {
+        if (action === `regex`) {
           this.useRegex = !this.useRegex;
-          btn.setAttribute('aria-pressed', String(this.useRegex));
-          btn.classList.toggle('active', this.useRegex);
-        } else if (action === 'case') {
+          btn.setAttribute(`aria-pressed`, String(this.useRegex));
+          btn.classList.toggle(`active`, this.useRegex);
+        } else if (action === `case`) {
           this.caseSensitive = !this.caseSensitive;
-          btn.setAttribute('aria-pressed', String(this.caseSensitive));
-          btn.classList.toggle('active', this.caseSensitive);
+          btn.setAttribute(`aria-pressed`, String(this.caseSensitive));
+          btn.classList.toggle(`active`, this.caseSensitive);
         }
         this.onSearchChanged();
       });
     }
 
     // Navigation buttons
-    for (const btn of this.container.querySelectorAll('.search-nav-btn')) {
-      btn.addEventListener('click', () => {
+    for (const btn of this.container.querySelectorAll(`.search-nav-btn`)) {
+      btn.addEventListener(`click`, () => {
         const action = /** @type {HTMLElement} */ (btn).dataset.action;
-        if (action === 'prev') this.previous();
-        if (action === 'next') this.next();
+        if (action === `prev`) this.previous();
+        if (action === `next`) this.next();
       });
     }
 
     // Close button
-    const closeBtn = /** @type {HTMLElement} */ (this.container.querySelector('.search-close-btn'));
-    closeBtn.addEventListener('click', () => this.close());
+    const closeBtn = /** @type {HTMLElement} */ (this.container.querySelector(`.search-close-btn`));
+    closeBtn.addEventListener(`click`, () => this.close());
 
     // Insert into the DOM as a floating panel inside #app.
-    const app = document.getElementById('app');
+    const app = document.getElementById(`app`);
     if (app) {
       app.appendChild(this.container);
     }
 
     // Start hidden
-    this.container.style.display = 'none';
+    this.container.style.display = `none`;
 
     // Listen for renders so we can re-apply highlights.
     // If the view mode changed since we last searched, rebuild
@@ -183,7 +183,7 @@ export class SearchBar {
         this.applyHighlights();
       }
     };
-    document.addEventListener('editor:renderComplete', this.renderCompleteHandler);
+    document.addEventListener(`editor:renderComplete`, this.renderCompleteHandler);
   }
 
   /**
@@ -193,11 +193,11 @@ export class SearchBar {
   open() {
     if (!this.container || !this.input) return;
     this.visible = true;
-    this.container.style.display = '';
+    this.container.style.display = ``;
     // Reset position to default top-right corner.
-    this.container.style.top = '';
-    this.container.style.right = '';
-    this.container.style.left = '';
+    this.container.style.top = ``;
+    this.container.style.right = ``;
+    this.container.style.left = ``;
     this.input.focus();
     this.input.select();
     // Re-run the search in case the view mode changed since
@@ -211,7 +211,7 @@ export class SearchBar {
   close() {
     if (!this.container) return;
     this.visible = false;
-    this.container.style.display = 'none';
+    this.container.style.display = `none`;
     this.clearHighlights();
     this.matches = [];
     this.currentIndex = -1;
@@ -246,7 +246,7 @@ export class SearchBar {
   /** Cleans up event listeners. */
   destroy() {
     if (this.renderCompleteHandler) {
-      document.removeEventListener('editor:renderComplete', this.renderCompleteHandler);
+      document.removeEventListener(`editor:renderComplete`, this.renderCompleteHandler);
       this.renderCompleteHandler = null;
     }
     this.container?.remove();
@@ -271,16 +271,16 @@ export class SearchBar {
       const y = moveEvent.clientY - offsetY;
       this.container.style.left = `${x}px`;
       this.container.style.top = `${y}px`;
-      this.container.style.right = 'auto';
+      this.container.style.right = `auto`;
     };
 
     const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener(`mousemove`, onMove);
+      document.removeEventListener(`mouseup`, onUp);
     };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    document.addEventListener(`mousemove`, onMove);
+    document.addEventListener(`mouseup`, onUp);
   }
 
   // ─── Private ────────────────────────────────────────────
@@ -290,7 +290,7 @@ export class SearchBar {
    * Rebuilds the offset map, runs the search, highlights results.
    */
   onSearchChanged() {
-    const query = this.input?.value ?? '';
+    const query = this.input?.value ?? ``;
     this.buildOffsetMap();
     this.runSearch(query);
     this.currentIndex = this.findClosestMatchIndex();
@@ -339,13 +339,13 @@ export class SearchBar {
    * @param {KeyboardEvent} e
    */
   onInputKeyDown(e) {
-    if (e.key === 'Escape') {
+    if (e.key === `Escape`) {
       e.preventDefault();
       this.close();
-    } else if (e.key === 'Enter' && e.shiftKey) {
+    } else if (e.key === `Enter` && e.shiftKey) {
       e.preventDefault();
       this.previous();
-    } else if (e.key === 'Enter') {
+    } else if (e.key === `Enter`) {
       e.preventDefault();
       this.next();
     }
@@ -358,12 +358,12 @@ export class SearchBar {
   buildOffsetMap() {
     const tree = this.editor.syntaxTree;
     if (!tree) {
-      this.documentText = '';
+      this.documentText = ``;
       this.offsetMap = [];
       return;
     }
 
-    const isSource = this.editor.viewMode === 'source';
+    const isSource = this.editor.viewMode === `source`;
     this.searchViewMode = this.editor.viewMode;
     /** @type {OffsetMapEntry[]} */
     const map = [];
@@ -380,7 +380,7 @@ export class SearchBar {
         // html-block containers are virtual — their text is produced
         // by their children.  In source mode the opening/closing tag
         // lines are part of toMarkdown(), so we handle them as a unit.
-        if (node.type === 'html-block' && node.children.length > 0) {
+        if (node.type === `html-block` && node.children.length > 0) {
           if (isSource) {
             // Source mode: the whole block is one markdown chunk.
             const text = node.toMarkdown();
@@ -402,7 +402,7 @@ export class SearchBar {
             if (
               node.children.length === 1 &&
               node.children[0].attributes.bareText &&
-              node.children[0].type === 'paragraph'
+              node.children[0].type === `paragraph`
             ) {
               const text = node.toBareText();
               if (!first) pos += 2;
@@ -424,7 +424,7 @@ export class SearchBar {
 
         const text = isSource ? node.toMarkdown() : node.toBareText();
         // Skip nodes that produce no text (images, hr in writing)
-        if (text === '') continue;
+        if (text === ``) continue;
 
         if (!first) {
           pos += 2; // \n\n separator
@@ -439,12 +439,12 @@ export class SearchBar {
 
     // Reconstruct the flat document string from the map so it is
     // guaranteed to align with the offsets.
-    let doc = '';
+    let doc = ``;
     for (let i = 0; i < map.length; i++) {
       if (i > 0) {
         // Fill the gap between previous entry end and this entry start
         const gap = map[i].docStart - map[i - 1].docEnd;
-        doc += '\n\n'.substring(0, gap);
+        doc += `\n\n`.substring(0, gap);
       }
       doc += map[i].text;
     }
@@ -469,10 +469,10 @@ export class SearchBar {
     // In writing view, plain-text (non-regex) searches are confined
     // to individual elements so matches don't span across block
     // boundaries — this feels more natural in WYSIWYG mode.
-    const perNode = !this.useRegex && this.editor.viewMode === 'writing';
+    const perNode = !this.useRegex && this.editor.viewMode === `writing`;
 
     if (perNode) {
-      const flags = this.caseSensitive ? 'g' : 'gi';
+      const flags = this.caseSensitive ? `g` : `gi`;
       const re = new RegExp(SearchBar.escapeRegex(query), flags);
       for (const entry of this.offsetMap) {
         let m;
@@ -489,7 +489,7 @@ export class SearchBar {
     }
 
     try {
-      const flags = this.caseSensitive ? 'g' : 'gi';
+      const flags = this.caseSensitive ? `g` : `gi`;
       const pattern = this.useRegex ? query : SearchBar.escapeRegex(query);
       const re = new RegExp(pattern, flags);
 
@@ -536,12 +536,12 @@ export class SearchBar {
    * Clears all `<mark>` highlight elements from the editor DOM.
    */
   clearHighlights() {
-    const marks = this.editor.container.querySelectorAll('mark.search-highlight');
+    const marks = this.editor.container.querySelectorAll(`mark.search-highlight`);
     for (const mark of marks) {
       const parent = mark.parentNode;
       if (!parent) continue;
       // Replace the <mark> with its text content.
-      const text = document.createTextNode(mark.textContent ?? '');
+      const text = document.createTextNode(mark.textContent ?? ``);
       parent.replaceChild(text, mark);
       // Merge adjacent text nodes.
       parent.normalize();
@@ -603,7 +603,7 @@ export class SearchBar {
     const el = this.editor.container.querySelector(`[data-node-id="${seg.nodeId}"]`);
     if (!el) return;
 
-    const isFocused = this.editor.viewMode === 'writing';
+    const isFocused = this.editor.viewMode === `writing`;
 
     // Collect text nodes in document order via TreeWalker.
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -629,13 +629,13 @@ export class SearchBar {
       const wrapStart = Math.max(0, seg.startOffset - run.start);
       const wrapEnd = Math.min(run.node.textContent?.length ?? 0, seg.endOffset - run.start);
 
-      const mark = document.createElement('mark');
-      mark.className = isActive ? 'search-highlight search-highlight--active' : 'search-highlight';
+      const mark = document.createElement(`mark`);
+      mark.className = isActive ? `search-highlight search-highlight--active` : `search-highlight`;
 
       // Split the text node and wrap the middle part.
-      const before = run.node.textContent?.substring(0, wrapStart) ?? '';
-      const matched = run.node.textContent?.substring(wrapStart, wrapEnd) ?? '';
-      const after = run.node.textContent?.substring(wrapEnd) ?? '';
+      const before = run.node.textContent?.substring(0, wrapStart) ?? ``;
+      const matched = run.node.textContent?.substring(wrapStart, wrapEnd) ?? ``;
+      const after = run.node.textContent?.substring(wrapEnd) ?? ``;
 
       const parent = run.node.parentNode;
       if (!parent) continue;
@@ -661,9 +661,9 @@ export class SearchBar {
    * Scrolls the current active match into view.
    */
   scrollToCurrentMatch() {
-    const active = this.editor.container.querySelector('mark.search-highlight--active');
+    const active = this.editor.container.querySelector(`mark.search-highlight--active`);
     if (active) {
-      active.scrollIntoView({ block: 'center', behavior: 'instant' });
+      active.scrollIntoView({ block: `center`, behavior: `instant` });
     }
   }
 
@@ -671,11 +671,11 @@ export class SearchBar {
   updateMatchCount() {
     if (!this.matchCount) return;
     if (this.matches.length === 0) {
-      const query = this.input?.value ?? '';
+      const query = this.input?.value ?? ``;
       // Don't show "No results" when the query is too short to
       // trigger a search (< 2 chars in plain-text mode).
       const tooShort = !this.useRegex && query.length < 2;
-      this.matchCount.textContent = query && !tooShort ? 'No results' : '';
+      this.matchCount.textContent = query && !tooShort ? `No results` : ``;
     } else {
       this.matchCount.textContent = `${this.currentIndex + 1} of ${this.matches.length}`;
     }
@@ -687,6 +687,6 @@ export class SearchBar {
    * @returns {string}
    */
   static escapeRegex(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return str.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`);
   }
 }

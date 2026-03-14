@@ -25,19 +25,19 @@ function stripMarkdownSyntax(text) {
   let s = text;
 
   // Linked images: [![alt](src)](href) → alt
-  s = s.replace(/\[!\[([^\]]*)\]\([^)]*\)\]\([^)]*\)/g, '$1');
+  s = s.replace(/\[!\[([^\]]*)\]\([^)]*\)\]\([^)]*\)/g, `$1`);
 
   // Images: ![alt](src) → alt
-  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, `$1`);
 
   // Links: [text](url) → text
-  s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, `$1`);
 
   // Bold/italic markers
-  s = s.replace(/(\*{1,3}|_{1,3})/g, '');
+  s = s.replace(/(\*{1,3}|_{1,3})/g, ``);
 
   // Strikethrough
-  s = s.replace(/~~/g, '');
+  s = s.replace(/~~/g, ``);
 
   return s;
 }
@@ -48,7 +48,7 @@ function stripMarkdownSyntax(text) {
  * @returns {string}
  */
 function stripInlineCode(text) {
-  return text.replace(/`[^`]*`/g, '');
+  return text.replace(/`[^`]*`/g, ``);
 }
 
 /**
@@ -73,7 +73,7 @@ export function getWordCounts(syntaxTree) {
     const stripped = stripMarkdownSyntax(raw);
     total += countWords(stripped);
 
-    if (node.type === 'code-block') {
+    if (node.type === `code-block`) {
       // Code block counts toward total but not excludingCode
       continue;
     }
@@ -105,9 +105,9 @@ export class WordCountModal {
     if (this.built) return;
     this.built = true;
 
-    const dialog = document.createElement('dialog');
-    dialog.className = 'word-count-dialog';
-    dialog.setAttribute('aria-label', 'Word Count');
+    const dialog = document.createElement(`dialog`);
+    dialog.className = `word-count-dialog`;
+    dialog.setAttribute(`aria-label`, `Word Count`);
 
     dialog.innerHTML = `
             <div class="word-count-content">
@@ -136,9 +136,9 @@ export class WordCountModal {
         `;
 
     // Close handlers
-    dialog.querySelector('.word-count-close')?.addEventListener('click', () => this.close());
-    dialog.querySelector('.word-count-ok')?.addEventListener('click', () => this.close());
-    dialog.addEventListener('cancel', () => this.close());
+    dialog.querySelector(`.word-count-close`)?.addEventListener(`click`, () => this.close());
+    dialog.querySelector(`.word-count-ok`)?.addEventListener(`click`, () => this.close());
+    dialog.addEventListener(`cancel`, () => this.close());
 
     document.body.appendChild(dialog);
     this.dialog = dialog;
@@ -154,8 +154,8 @@ export class WordCountModal {
 
     const { total, excludingCode } = getWordCounts(syntaxTree);
 
-    const totalEl = this.dialog.querySelector('#wc-total');
-    const exclEl = this.dialog.querySelector('#wc-excluding-code');
+    const totalEl = this.dialog.querySelector(`#wc-total`);
+    const exclEl = this.dialog.querySelector(`#wc-excluding-code`);
     if (totalEl) totalEl.textContent = total.toLocaleString();
     if (exclEl) exclEl.textContent = excludingCode.toLocaleString();
 

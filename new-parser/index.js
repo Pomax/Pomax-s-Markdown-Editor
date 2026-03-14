@@ -30,8 +30,8 @@ export const Parser = {
     async parse(markdown) {
         let doc = globalThis.document;
         if (!doc) {
-            const { JSDOM } = await import('jsdom');
-            const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+            const { JSDOM } = await import(`jsdom`);
+            const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`);
             doc = dom.window.document;
         }
         return parser.parse(markdown, doc);

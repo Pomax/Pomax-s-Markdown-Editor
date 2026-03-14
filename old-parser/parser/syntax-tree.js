@@ -11,15 +11,15 @@ import { buildInlineTree, tokenizeInline } from './inline-tokenizer.js';
  * @type {Set<string>}
  */
 const INLINE_CONTENT_TYPES = new Set([
-  'paragraph',
-  'heading1',
-  'heading2',
-  'heading3',
-  'heading4',
-  'heading5',
-  'heading6',
-  'blockquote',
-  'list-item',
+  `paragraph`,
+  `heading1`,
+  `heading2`,
+  `heading3`,
+  `heading4`,
+  `heading5`,
+  `heading6`,
+  `blockquote`,
+  `list-item`,
 ]);
 
 /**
@@ -67,7 +67,7 @@ export class SyntaxNode {
    * @param {string} type - The node type (heading1-6, paragraph, etc.)
    * @param {string} content - The text content of the node
    */
-  constructor(type, content = '') {
+  constructor(type, content = ``) {
     /**
      * Unique identifier for this node.
      * @type {string}
@@ -170,20 +170,20 @@ export class SyntaxNode {
    */
   static segmentToNode(segment) {
     switch (segment.type) {
-      case 'text':
-        return new SyntaxNode('text', segment.text ?? '');
-      case 'code':
-        return new SyntaxNode('inline-code', segment.content ?? '');
-      case 'image': {
-        const img = new SyntaxNode('inline-image', '');
-        img.attributes.alt = segment.alt ?? '';
-        img.attributes.src = segment.src ?? '';
+      case `text`:
+        return new SyntaxNode(`text`, segment.text ?? ``);
+      case `code`:
+        return new SyntaxNode(`inline-code`, segment.content ?? ``);
+      case `image`: {
+        const img = new SyntaxNode(`inline-image`, ``);
+        img.attributes.alt = segment.alt ?? ``;
+        img.attributes.src = segment.src ?? ``;
         return img;
       }
       default: {
         // Containers: bold, italic, bold-italic, strikethrough,
         // link, and HTML inline tags (sub, sup, etc.)
-        const node = new SyntaxNode(segment.type, '');
+        const node = new SyntaxNode(segment.type, ``);
         if (segment.href) node.attributes.href = segment.href;
         if (segment.tag) node.attributes.tag = segment.tag;
         if (segment.children) {
@@ -272,11 +272,11 @@ export class SyntaxNode {
    * already in source edit mode.
    */
   enterSourceEditMode() {
-    if (this.type !== 'code-block') return;
+    if (this.type !== `code-block`) return;
     if (this.sourceEditText !== null) return;
 
-    const lang = this.attributes.language || '';
-    const fence = '`'.repeat(this.attributes.fenceCount || 3);
+    const lang = this.attributes.language || ``;
+    const fence = `\``.repeat(this.attributes.fenceCount || 3);
     this.sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
   }
 
@@ -309,50 +309,50 @@ export class SyntaxNode {
    */
   toMarkdown() {
     switch (this.type) {
-      case 'heading1':
+      case `heading1`:
         return `# ${this.content}`;
-      case 'heading2':
+      case `heading2`:
         return `## ${this.content}`;
-      case 'heading3':
+      case `heading3`:
         return `### ${this.content}`;
-      case 'heading4':
+      case `heading4`:
         return `#### ${this.content}`;
-      case 'heading5':
+      case `heading5`:
         return `##### ${this.content}`;
-      case 'heading6':
+      case `heading6`:
         return `###### ${this.content}`;
-      case 'paragraph':
+      case `paragraph`:
         return this.content;
-      case 'blockquote':
+      case `blockquote`:
         return this.content
-          .split('\n')
+          .split(`\n`)
           .map((line) => `> ${line}`)
-          .join('\n');
-      case 'code-block': {
+          .join(`\n`);
+      case `code-block`: {
         if (this.sourceEditText !== null) return this.sourceEditText;
-        const lang = this.attributes.language || '';
-        const fence = '`'.repeat(this.attributes.fenceCount || 3);
+        const lang = this.attributes.language || ``;
+        const fence = `\``.repeat(this.attributes.fenceCount || 3);
         return `${fence}${lang}\n${this.content}\n${fence}`;
       }
-      case 'list-item': {
-        const indent = '  '.repeat(this.attributes.indent || 0);
-        const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : '- ';
+      case `list-item`: {
+        const indent = `  `.repeat(this.attributes.indent || 0);
+        const marker = this.attributes.ordered ? `${this.attributes.number || 1}. ` : `- `;
         const checkbox =
-          typeof this.attributes.checked === 'boolean'
+          typeof this.attributes.checked === `boolean`
             ? this.attributes.checked
-              ? '[x] '
-              : '[ ] '
-            : '';
+              ? `[x] `
+              : `[ ] `
+            : ``;
         return `${indent}${marker}${checkbox}${this.content}`;
       }
-      case 'horizontal-rule':
-        return '---';
-      case 'image': {
+      case `horizontal-rule`:
+        return `---`;
+      case `image`: {
         const imgAlt = this.attributes.alt ?? this.content;
-        const imgSrc = this.attributes.url ?? '';
-        const imgStyle = this.attributes.style ?? '';
+        const imgSrc = this.attributes.url ?? ``;
+        const imgStyle = this.attributes.style ?? ``;
         if (imgStyle) {
-          const altAttr = imgAlt ? ` alt="${imgAlt}"` : '';
+          const altAttr = imgAlt ? ` alt="${imgAlt}"` : ``;
           return `<img src="${imgSrc}"${altAttr} style="${imgStyle}" />`;
         }
         if (this.attributes.href) {
@@ -360,25 +360,25 @@ export class SyntaxNode {
         }
         return `![${imgAlt}](${imgSrc})`;
       }
-      case 'table':
+      case `table`:
         return this.content;
-      case 'html-block': {
+      case `html-block`: {
         // Raw content tags (script, style, textarea): body stored verbatim
         if (this.attributes.rawContent !== undefined) {
-          if (this.attributes.rawContent === '') {
-            return (this.attributes.openingTag || '') + (this.attributes.closingTag || '');
+          if (this.attributes.rawContent === ``) {
+            return (this.attributes.openingTag || ``) + (this.attributes.closingTag || ``);
           }
-          const parts = [this.attributes.openingTag || ''];
+          const parts = [this.attributes.openingTag || ``];
           parts.push(this.attributes.rawContent);
           if (this.attributes.closingTag) {
             parts.push(this.attributes.closingTag);
           }
-          return parts.join('\n');
+          return parts.join(`\n`);
         }
 
         // Void elements: opening tag only, no children, no closing tag
-        if (this.attributes.closingTag === '' && this.children.length === 0) {
-          return this.attributes.openingTag || '';
+        if (this.attributes.closingTag === `` && this.children.length === 0) {
+          return this.attributes.openingTag || ``;
         }
 
         // If the container has exactly one bare-text child, collapse
@@ -386,19 +386,19 @@ export class SyntaxNode {
         if (
           this.children.length === 1 &&
           this.children[0].attributes.bareText &&
-          this.children[0].type === 'paragraph'
+          this.children[0].type === `paragraph`
         ) {
           return `${this.attributes.openingTag}${this.children[0].content}${this.attributes.closingTag}`;
         }
 
-        const parts = [this.attributes.openingTag || ''];
+        const parts = [this.attributes.openingTag || ``];
         for (const child of this.children) {
           parts.push(child.toMarkdown());
         }
         if (this.attributes.closingTag) {
           parts.push(this.attributes.closingTag);
         }
-        return parts.join('\n\n');
+        return parts.join(`\n\n`);
       }
       default:
         return this.content;
@@ -417,50 +417,50 @@ export class SyntaxNode {
    */
   toBareText() {
     switch (this.type) {
-      case 'heading1':
-      case 'heading2':
-      case 'heading3':
-      case 'heading4':
-      case 'heading5':
-      case 'heading6':
-      case 'paragraph':
-      case 'blockquote':
-      case 'list-item':
+      case `heading1`:
+      case `heading2`:
+      case `heading3`:
+      case `heading4`:
+      case `heading5`:
+      case `heading6`:
+      case `paragraph`:
+      case `blockquote`:
+      case `list-item`:
         return SyntaxNode._inlineChildrenToText(this.children);
 
-      case 'code-block':
+      case `code-block`:
         return this.content;
 
-      case 'table': {
+      case `table`: {
         // Extract visible cell text from the pipe-delimited table.
         // Skip the separator row (e.g. |---|---|).
-        const lines = this.content.split('\n');
+        const lines = this.content.split(`\n`);
         const textLines = [];
         for (const line of lines) {
           if (/^\s*\|?\s*[-:]+[-|:\s]*$/.test(line)) continue;
           const cells = line
-            .replace(/^\||\|$/g, '')
-            .split('|')
+            .replace(/^\||\|$/g, ``)
+            .split(`|`)
             .map((c) => SyntaxNode._extractInlineText(c.trim()));
-          textLines.push(cells.join('\t'));
+          textLines.push(cells.join(`\t`));
         }
-        return textLines.join('\n');
+        return textLines.join(`\n`);
       }
 
-      case 'image':
+      case `image`:
         // Images are purely visual – no searchable text.
-        return '';
+        return ``;
 
-      case 'horizontal-rule':
-        return '';
+      case `horizontal-rule`:
+        return ``;
 
-      case 'html-block': {
+      case `html-block`: {
         // If the container has exactly one bare-text child,
         // return just its text.
         if (
           this.children.length === 1 &&
           this.children[0].attributes.bareText &&
-          this.children[0].type === 'paragraph'
+          this.children[0].type === `paragraph`
         ) {
           return SyntaxNode._inlineChildrenToText(this.children[0].children);
         }
@@ -470,7 +470,7 @@ export class SyntaxNode {
           const text = child.toBareText();
           if (text) parts.push(text);
         }
-        return parts.join('\n\n');
+        return parts.join(`\n\n`);
       }
 
       default:
@@ -499,13 +499,13 @@ export class SyntaxNode {
    * @returns {string}
    */
   static _segmentsToText(segments) {
-    let result = '';
+    let result = ``;
     for (const seg of segments) {
-      if (seg.type === 'text') {
-        result += seg.text ?? '';
-      } else if (seg.type === 'code') {
-        result += seg.content ?? '';
-      } else if (seg.type === 'image') {
+      if (seg.type === `text`) {
+        result += seg.text ?? ``;
+      } else if (seg.type === `code`) {
+        result += seg.content ?? ``;
+      } else if (seg.type === `image`) {
         // Images produce no visible text.
       } else if (seg.children) {
         result += SyntaxNode._segmentsToText(seg.children);
@@ -523,13 +523,13 @@ export class SyntaxNode {
    * @returns {string}
    */
   static _inlineChildrenToText(children) {
-    let result = '';
+    let result = ``;
     for (const child of children) {
-      if (child.type === 'text') {
+      if (child.type === `text`) {
         result += child._content;
-      } else if (child.type === 'inline-code') {
+      } else if (child.type === `inline-code`) {
         result += child._content;
-      } else if (child.type === 'inline-image') {
+      } else if (child.type === `inline-image`) {
         // Images produce no visible text.
       } else if (child.children.length > 0) {
         result += SyntaxNode._inlineChildrenToText(child.children);
@@ -698,20 +698,20 @@ export class SyntaxTree {
 
     // Reset type-specific attributes
     switch (newType) {
-      case 'list-item':
+      case `list-item`:
         node.attributes = {
           ordered: !!node.attributes.ordered,
           indent: node.attributes.indent || 0,
           ...(node.attributes.ordered ? { number: node.attributes.number || 1 } : {}),
-          ...(typeof node.attributes.checked === 'boolean'
+          ...(typeof node.attributes.checked === `boolean`
             ? { checked: node.attributes.checked }
             : {}),
         };
         break;
-      case 'code-block':
+      case `code-block`:
         if (!node.attributes.language) {
           node.attributes = {
-            language: '',
+            language: ``,
             fenceCount: node.attributes.fenceCount || 3,
           };
         } else {
@@ -773,8 +773,8 @@ export class SyntaxTree {
     }
 
     // ── Mutual exclusion: sub ↔ sup — strip the opposite first ──
-    if (format === 'subscript' || format === 'superscript') {
-      const opposite = format === 'subscript' ? 'superscript' : 'subscript';
+    if (format === `subscript` || format === `superscript`) {
+      const opposite = format === `subscript` ? `superscript` : `subscript`;
       const oppositeSpan = this._findFormatSpan(node.content, selStart, selEnd, opposite);
       if (oppositeSpan) {
         // Remove the opposite wrapper, then re-wrap with the new format.
@@ -797,31 +797,31 @@ export class SyntaxTree {
 
     // Trim trailing whitespace so markers hug the text
     // (e.g. **word** not **word **).
-    const trimmed = selected.replace(/\s+$/, '');
+    const trimmed = selected.replace(/\s+$/, ``);
     const trailingWS = selected.substring(trimmed.length);
     selected = trimmed;
 
     let formatted;
     switch (format) {
-      case 'bold':
+      case `bold`:
         formatted = `**${selected}**`;
         break;
-      case 'italic':
+      case `italic`:
         formatted = `*${selected}*`;
         break;
-      case 'code':
+      case `code`:
         formatted = `\`${selected}\``;
         break;
-      case 'strikethrough':
+      case `strikethrough`:
         formatted = `~~${selected}~~`;
         break;
-      case 'subscript':
+      case `subscript`:
         formatted = `<sub>${selected}</sub>`;
         break;
-      case 'superscript':
+      case `superscript`:
         formatted = `<sup>${selected}</sup>`;
         break;
-      case 'link':
+      case `link`:
         formatted = `[${selected}](url)`;
         break;
       default:
@@ -856,12 +856,12 @@ export class SyntaxTree {
     const tokens = tokenizeInline(content);
 
     // ── Code is a single token, not a paired open/close ─────────
-    if (format === 'code') {
+    if (format === `code`) {
       let rawPos = 0;
       for (const token of tokens) {
         const tokenStart = rawPos;
         rawPos += token.raw.length;
-        if (token.type === 'code') {
+        if (token.type === `code`) {
           const contentStart = tokenStart + 1; // after opening `
           const contentEnd = rawPos - 1; // before closing `
           if (selStart <= contentEnd && selEnd >= contentStart) {
@@ -880,12 +880,12 @@ export class SyntaxTree {
     // ── Paired delimiters: bold / italic / strikethrough ────────
     /** @type {Record<string, { open: string, close: string, htmlTags?: string[] }>} */
     const typeMap = {
-      bold: { open: 'bold-open', close: 'bold-close', htmlTags: ['strong', 'b'] },
-      italic: { open: 'italic-open', close: 'italic-close', htmlTags: ['em', 'i'] },
+      bold: { open: `bold-open`, close: `bold-close`, htmlTags: [`strong`, `b`] },
+      italic: { open: `italic-open`, close: `italic-close`, htmlTags: [`em`, `i`] },
       strikethrough: {
-        open: 'strikethrough-open',
-        close: 'strikethrough-close',
-        htmlTags: ['del', 's'],
+        open: `strikethrough-open`,
+        close: `strikethrough-close`,
+        htmlTags: [`del`, `s`],
       },
     };
     const spec = typeMap[format];
@@ -894,8 +894,8 @@ export class SyntaxTree {
     if (!spec) {
       /** @type {Record<string, string>} */
       const htmlTagMap = {
-        subscript: 'sub',
-        superscript: 'sup',
+        subscript: `sub`,
+        superscript: `sup`,
       };
       const tagName = htmlTagMap[format];
       if (!tagName) return null; // link — no toggle
@@ -908,9 +908,9 @@ export class SyntaxTree {
         const tokenStart = rawPos;
         rawPos += token.raw.length;
 
-        if (token.type === 'html-open' && token.tag === tagName) {
+        if (token.type === `html-open` && token.tag === tagName) {
           htmlOpens.push({ rawStart: tokenStart, rawEnd: rawPos });
-        } else if (token.type === 'html-close' && token.tag === tagName && htmlOpens.length > 0) {
+        } else if (token.type === `html-close` && token.tag === tagName && htmlOpens.length > 0) {
           const open = /** @type {{ rawStart: number, rawEnd: number }} */ (htmlOpens.pop());
           if (selStart <= tokenStart && selEnd >= open.rawEnd) {
             return {
@@ -961,9 +961,9 @@ export class SyntaxTree {
           const tokenStart = htmlPos;
           htmlPos += token.raw.length;
 
-          if (token.type === 'html-open' && token.tag === tagName) {
+          if (token.type === `html-open` && token.tag === tagName) {
             htmlOpens.push({ rawStart: tokenStart, rawEnd: htmlPos });
-          } else if (token.type === 'html-close' && token.tag === tagName && htmlOpens.length > 0) {
+          } else if (token.type === `html-close` && token.tag === tagName && htmlOpens.length > 0) {
             const open = /** @type {{ rawStart: number, rawEnd: number }} */ (htmlOpens.pop());
             if (selStart <= tokenStart && selEnd >= open.rawEnd) {
               return {
@@ -1018,7 +1018,7 @@ export class SyntaxTree {
     const nodeStartLine = node.startLine;
     const relativeLine = line - nodeStartLine;
 
-    const lines = node.content.split('\n');
+    const lines = node.content.split(`\n`);
     let offset = 0;
 
     for (let i = 0; i < relativeLine && i < lines.length; i++) {
@@ -1039,7 +1039,7 @@ export class SyntaxTree {
       lines.push(child.toMarkdown());
     }
 
-    return lines.join('\n\n');
+    return lines.join(`\n\n`);
   }
 
   /**
@@ -1054,10 +1054,10 @@ export class SyntaxTree {
 
     for (const child of this.children) {
       const text = child.toBareText();
-      if (text !== '') parts.push(text);
+      if (text !== ``) parts.push(text);
     }
 
-    return parts.join('\n\n');
+    return parts.join(`\n\n`);
   }
 
   /**

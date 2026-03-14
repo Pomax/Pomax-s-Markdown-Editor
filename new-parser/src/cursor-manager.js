@@ -11,8 +11,8 @@
  * @type {Set<string>}
  */
 const INLINE_NODE_TYPES = new Set([
-  'text', 'bold', 'italic', 'bold-italic', 'strikethrough',
-  'inline-code', 'inline-image', 'link',
+  `text`, `bold`, `italic`, `bold-italic`, `strikethrough`,
+  `inline-code`, `inline-image`, `link`,
 ]);
 
 /**
@@ -25,30 +25,30 @@ const INLINE_NODE_TYPES = new Set([
  */
 function getDelimiters(node) {
   switch (node.type) {
-    case 'paragraph':
+    case `paragraph`:
       return { prefix: 0, suffix: 0 };
-    case 'heading1':
+    case `heading1`:
       return { prefix: 2, suffix: 0 };
-    case 'heading2':
+    case `heading2`:
       return { prefix: 3, suffix: 0 };
-    case 'heading3':
+    case `heading3`:
       return { prefix: 4, suffix: 0 };
-    case 'heading4':
+    case `heading4`:
       return { prefix: 5, suffix: 0 };
-    case 'heading5':
+    case `heading5`:
       return { prefix: 6, suffix: 0 };
-    case 'heading6':
+    case `heading6`:
       return { prefix: 7, suffix: 0 };
-    case 'bold':
+    case `bold`:
       return { prefix: 2, suffix: 2 };
-    case 'italic':
+    case `italic`:
       return { prefix: 1, suffix: 1 };
-    case 'bold-italic':
+    case `bold-italic`:
       return { prefix: 3, suffix: 3 };
-    case 'strikethrough':
+    case `strikethrough`:
       return { prefix: 2, suffix: 2 };
-    case 'link':
-      return { prefix: 1, suffix: 2 + (node.attributes.href || '').length + 1 };
+    case `link`:
+      return { prefix: 1, suffix: 2 + (node.attributes.href || ``).length + 1 };
     default:
       return null;
   }
@@ -147,7 +147,7 @@ export class CursorManager {
     this.selections = [];
 
     /** @type {'text' | 'dom'} */
-    this.mode = 'text';
+    this.mode = `text`;
   }
 
   /**
@@ -163,7 +163,7 @@ export class CursorManager {
    */
   resolvePath(...args) {
     if (args.length < 2) {
-      throw new Error('resolvePath requires at least one child index and an offset');
+      throw new Error(`resolvePath requires at least one child index and an offset`);
     }
     const offset = args[args.length - 1];
     const path = args.slice(0, -1);

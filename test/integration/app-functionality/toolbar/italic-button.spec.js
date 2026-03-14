@@ -22,8 +22,8 @@ import {
   setWritingView,
 } from '../../test-utils.js';
 
-const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
-const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
+const fixturePath = path.join(projectRoot, `test`, `fixtures`, `bold-button.md`);
+const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -47,16 +47,16 @@ test.afterAll(async () => {
  * @param {string} word
  * @param {'first'|'middle'|'last'} which
  */
-async function dblclickWord(pg, lineLocator, word, which = 'first') {
+async function dblclickWord(pg, lineLocator, word, which = `first`) {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -96,7 +96,7 @@ async function dblclickWord(pg, lineLocator, word, which = 'first') {
  * @param {import('@playwright/test').Page} pg
  */
 async function clickItalicButton(pg) {
-  await pg.locator('[data-button-id="italic"]').click();
+  await pg.locator(`[data-button-id="italic"]`).click();
   await pg.waitForTimeout(200);
 }
 
@@ -107,131 +107,131 @@ async function clickItalicButton(pg) {
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator('#editor .md-line').nth(index).innerText();
+  return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
 // ─── Italic first word, paragraph 1, then toggle off ────────────────
 
-test.describe('Italic first word, toggle off', () => {
-  test('italicizing first word produces correct markdown', async () => {
+test.describe(`Italic first word, toggle off`, () => {
+  test(`italicizing first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('*text1* text1 text1');
+    expect(line).toBe(`*text1* text1 text1`);
   });
 
-  test('toggling italic off restores plain text', async () => {
+  test(`toggling italic off restores plain text`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickItalicButton(page);
 
-    const firstLineAgain = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLineAgain, 'text1', 'first');
+    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLineAgain, `text1`, `first`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });
 
 // ─── Italic middle word, paragraph 1 ───────────────────────────────
 
-test.describe('Italic middle word, paragraph 1', () => {
-  test('italicizing middle word produces correct markdown', async () => {
+test.describe(`Italic middle word, paragraph 1`, () => {
+  test(`italicizing middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 *text1* text1');
+    expect(line).toBe(`text1 *text1* text1`);
   });
 
-  test('toggling italic off middle word restores plain text', async () => {
+  test(`toggling italic off middle word restores plain text`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
-    const firstLineAgain = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLineAgain, 'text1', 'middle');
+    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLineAgain, `text1`, `middle`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });
 
 // ─── Italic first word, paragraph 2 ────────────────────────────────
 
-test.describe('Italic first word, paragraph 2', () => {
-  test('italicizing first word of second paragraph produces correct markdown', async () => {
+test.describe(`Italic first word, paragraph 2`, () => {
+  test(`italicizing first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'first');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `first`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('*text2* text2 text2');
+    expect(line1).toBe(`*text2* text2 text2`);
   });
 });
 
 // ─── Italic middle word, paragraph 2 ───────────────────────────────
 
-test.describe('Italic middle word, paragraph 2', () => {
-  test('italicizing middle word of second paragraph produces correct markdown', async () => {
+test.describe(`Italic middle word, paragraph 2`, () => {
+  test(`italicizing middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'middle');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('text2 *text2* text2');
+    expect(line1).toBe(`text2 *text2* text2`);
   });
 });
 
 // ─── Cursor position after italicizing ─────────────────────────────
 
-test.describe('Cursor position after italic', () => {
-  test('cursor is at end of italicized middle word', async () => {
+test.describe(`Cursor position after italic`, () => {
+  test(`cursor is at end of italicized middle word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest('.md-line');
+      const line = range.startContainer.parentElement?.closest(`.md-line`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -252,19 +252,19 @@ test.describe('Cursor position after italic', () => {
     expect(cursorInfo?.offset).toBe(11);
   });
 
-  test('cursor is at end of italicized first word', async () => {
+  test(`cursor is at end of italicized first word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickItalicButton(page);
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest('.md-line');
+      const line = range.startContainer.parentElement?.closest(`.md-line`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -295,16 +295,16 @@ test.describe('Cursor position after italic', () => {
  * @param {string} word
  * @param {'first'|'middle'|'last'} which
  */
-async function clickInsideWord(pg, lineLocator, word, which = 'first') {
+async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -339,31 +339,31 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
   await pg.waitForTimeout(200);
 }
 
-test.describe('Collapsed cursor — italic word under caret', () => {
-  test('clicking italic with cursor on a plain word italicizes that word', async () => {
+test.describe(`Collapsed cursor — italic word under caret`, () => {
+  test(`clicking italic with cursor on a plain word italicizes that word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await clickInsideWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 *text1* text1');
+    expect(line).toBe(`text1 *text1* text1`);
   });
 
-  test('clicking italic with cursor inside italic text removes italic', async () => {
-    const italicContent = 'text1 *text1* text1\n\ntext2 text2 text2\n';
+  test(`clicking italic with cursor inside italic text removes italic`, async () => {
+    const italicContent = `text1 *text1* text1\n\ntext2 text2 text2\n`;
     await loadContent(page, italicContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await clickInsideWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });

@@ -183,9 +183,9 @@ export class RangeOperations {
    */
   hasContentParent(node) {
     // List items belong to a contiguous list run
-    if (node.type === 'list-item') return true;
+    if (node.type === `list-item`) return true;
     // Nodes inside an html-block container (e.g., children of <details>)
-    if (node.parent && node.parent.type === 'html-block') return true;
+    if (node.parent && node.parent.type === `html-block`) return true;
     return false;
   }
 
@@ -197,8 +197,8 @@ export class RangeOperations {
   selectNode(node) {
     // ── Table cell: select just the cell content ──
     if (
-      node.type === 'table' &&
-      this.editor.viewMode === 'writing' &&
+      node.type === `table` &&
+      this.editor.viewMode === `writing` &&
       this.editor.syntaxTree?.treeCursor?.cellRow !== undefined &&
       this.editor.syntaxTree?.treeCursor?.cellCol !== undefined
     ) {
@@ -218,7 +218,7 @@ export class RangeOperations {
         const sel = window.getSelection();
         if (sel && cellText.length > 0) {
           const range = sel.getRangeAt(0);
-          const contentEl = range.startContainer.parentElement?.closest('td, th');
+          const contentEl = range.startContainer.parentElement?.closest(`td, th`);
           if (contentEl) {
             const domRange = document.createRange();
             domRange.selectNodeContents(contentEl);
@@ -235,7 +235,7 @@ export class RangeOperations {
     const nodeEl = this.editor.container.querySelector(`[data-node-id="${node.id}"]`);
     if (!nodeEl) return;
 
-    const contentEl = nodeEl.querySelector('.md-content') ?? nodeEl;
+    const contentEl = nodeEl.querySelector(`.md-content`) ?? nodeEl;
     const sel = window.getSelection();
     if (!sel) return;
 
@@ -254,7 +254,7 @@ export class RangeOperations {
    * @param {SyntaxNode} node
    */
   selectContentParent(node) {
-    if (node.type === 'list-item') {
+    if (node.type === `list-item`) {
       const siblings = this.editor.getSiblings(node);
       const run = this.editor.getContiguousListRun(siblings, node);
       if (run.length > 0) {
@@ -263,7 +263,7 @@ export class RangeOperations {
       }
     }
 
-    if (node.parent && node.parent.type === 'html-block') {
+    if (node.parent && node.parent.type === `html-block`) {
       const children = node.parent.children;
       if (children.length > 0) {
         this.selectNodeRange(children[0], children[children.length - 1]);
@@ -296,7 +296,7 @@ export class RangeOperations {
     // Only descend into block-level children (html-block containers).
     // Inline children (text, bold, etc.) are not rendered as separate
     // DOM elements with data-node-id, so we must stop at block nodes.
-    while (current.type === 'html-block' && current.children.length > 0) {
+    while (current.type === `html-block` && current.children.length > 0) {
       current = current.children[0];
     }
     return current;
@@ -309,7 +309,7 @@ export class RangeOperations {
    */
   lastLeaf(node) {
     let current = node;
-    while (current.type === 'html-block' && current.children.length > 0) {
+    while (current.type === `html-block` && current.children.length > 0) {
       current = current.children[current.children.length - 1];
     }
     return current;
@@ -326,8 +326,8 @@ export class RangeOperations {
     const lastEl = this.editor.container.querySelector(`[data-node-id="${lastNode.id}"]`);
     if (!firstEl || !lastEl) return;
 
-    const firstContent = firstEl.querySelector('.md-content') ?? firstEl;
-    const lastContent = lastEl.querySelector('.md-content') ?? lastEl;
+    const firstContent = firstEl.querySelector(`.md-content`) ?? firstEl;
+    const lastContent = lastEl.querySelector(`.md-content`) ?? lastEl;
 
     const sel = window.getSelection();
     if (!sel) return;

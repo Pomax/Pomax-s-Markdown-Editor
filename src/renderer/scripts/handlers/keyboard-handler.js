@@ -38,26 +38,26 @@ export class KeyboardHandler {
   getShortcuts() {
     return [
       // Formatting shortcuts
-      { key: 'b', ctrl: true, action: 'format:bold' },
-      { key: 'i', ctrl: true, action: 'format:italic' },
-      { key: 'k', ctrl: true, action: 'format:link' },
-      { key: '`', ctrl: true, action: 'format:code' },
+      { key: `b`, ctrl: true, action: `format:bold` },
+      { key: `i`, ctrl: true, action: `format:italic` },
+      { key: `k`, ctrl: true, action: `format:link` },
+      { key: `\``, ctrl: true, action: `format:code` },
 
       // Heading shortcuts
-      { key: '1', ctrl: true, alt: true, action: 'changeType:heading1' },
-      { key: '2', ctrl: true, alt: true, action: 'changeType:heading2' },
-      { key: '3', ctrl: true, alt: true, action: 'changeType:heading3' },
-      { key: '4', ctrl: true, alt: true, action: 'changeType:heading4' },
-      { key: '5', ctrl: true, alt: true, action: 'changeType:heading5' },
-      { key: '6', ctrl: true, alt: true, action: 'changeType:heading6' },
-      { key: '0', ctrl: true, alt: true, action: 'changeType:paragraph' },
+      { key: `1`, ctrl: true, alt: true, action: `changeType:heading1` },
+      { key: `2`, ctrl: true, alt: true, action: `changeType:heading2` },
+      { key: `3`, ctrl: true, alt: true, action: `changeType:heading3` },
+      { key: `4`, ctrl: true, alt: true, action: `changeType:heading4` },
+      { key: `5`, ctrl: true, alt: true, action: `changeType:heading5` },
+      { key: `6`, ctrl: true, alt: true, action: `changeType:heading6` },
+      { key: `0`, ctrl: true, alt: true, action: `changeType:paragraph` },
 
       // Block shortcuts
-      { key: 'q', ctrl: true, shift: true, action: 'changeType:blockquote' },
-      { key: 'c', ctrl: true, shift: true, action: 'changeType:code-block' },
+      { key: `q`, ctrl: true, shift: true, action: `changeType:blockquote` },
+      { key: `c`, ctrl: true, shift: true, action: `changeType:code-block` },
 
       // Search
-      { key: 'f', ctrl: true, action: 'search:open' },
+      { key: `f`, ctrl: true, action: `search:open` },
     ];
   }
 
@@ -68,7 +68,7 @@ export class KeyboardHandler {
     this.keydownHandler = /** @type {(event: KeyboardEvent) => void} */ (
       this.handleKeyDown.bind(this)
     );
-    document.addEventListener('keydown', this.keydownHandler);
+    document.addEventListener(`keydown`, this.keydownHandler);
   }
 
   /**
@@ -76,7 +76,7 @@ export class KeyboardHandler {
    */
   destroy() {
     if (this.keydownHandler) {
-      document.removeEventListener('keydown', this.keydownHandler);
+      document.removeEventListener(`keydown`, this.keydownHandler);
       this.keydownHandler = null;
     }
   }
@@ -87,8 +87,8 @@ export class KeyboardHandler {
    */
   handleKeyDown(event) {
     // Escape dismisses the search bar from anywhere.
-    if (event.key === 'Escape') {
-      document.dispatchEvent(new CustomEvent('search:close'));
+    if (event.key === `Escape`) {
+      document.dispatchEvent(new CustomEvent(`search:close`));
       return;
     }
 
@@ -148,17 +148,17 @@ export class KeyboardHandler {
    * @param {string} action - The action to execute
    */
   executeAction(action) {
-    const [actionType, actionValue] = action.split(':');
+    const [actionType, actionValue] = action.split(`:`);
 
     switch (actionType) {
-      case 'format':
+      case `format`:
         this.editor.applyFormat(actionValue);
         break;
-      case 'changeType':
+      case `changeType`:
         this.editor.changeElementType(actionValue);
         break;
-      case 'search':
-        document.dispatchEvent(new CustomEvent('search:open'));
+      case `search`:
+        document.dispatchEvent(new CustomEvent(`search:open`));
         break;
       default:
         console.warn(`Unknown action type: ${actionType}`);

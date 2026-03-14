@@ -26,35 +26,35 @@ function tokeniseJSON(code, lang) {
   while (pos < code.length) {
     let text = tryMatch(WHITESPACE, code, pos);
     if (text) {
-      tokens.push({ type: 'text', text });
+      tokens.push({ type: `text`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(JSON_PROPERTY_KEY, code, pos);
     if (text) {
-      tokens.push({ type: 'attribute', text });
+      tokens.push({ type: `attribute`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(DOUBLE_STRING, code, pos);
     if (text) {
-      tokens.push({ type: 'string', text });
+      tokens.push({ type: `string`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(NUMBER, code, pos);
     if (text) {
-      tokens.push({ type: 'number', text });
+      tokens.push({ type: `number`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(IDENT, code, pos);
     if (text) {
-      const type = lang.constants.has(text) ? 'constant' : 'text';
+      const type = lang.constants.has(text) ? `constant` : `text`;
       tokens.push({ type, text });
       pos += text.length;
       continue;
@@ -62,12 +62,12 @@ function tokeniseJSON(code, lang) {
 
     text = tryMatch(PUNCTUATION, code, pos);
     if (text) {
-      tokens.push({ type: 'punctuation', text });
+      tokens.push({ type: `punctuation`, text });
       pos += text.length;
       continue;
     }
 
-    tokens.push({ type: 'text', text: code[pos] });
+    tokens.push({ type: `text`, text: code[pos] });
     pos++;
   }
 
@@ -79,8 +79,8 @@ export const definition = /** @type {LangDef} */ ({
   strings: [DOUBLE_STRING],
   keywords: new Set(),
   types: new Set(),
-  constants: new Set(['true', 'false', 'null']),
+  constants: new Set([`true`, `false`, `null`]),
   tokenise: tokeniseJSON,
 });
 
-export const aliases = ['json', 'jsonc'];
+export const aliases = [`json`, `jsonc`];

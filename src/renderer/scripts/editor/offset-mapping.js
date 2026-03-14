@@ -37,14 +37,14 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
     const token = tokens[i];
     const rawLen = token.raw.length;
 
-    if (token.type === 'text') {
+    if (token.type === `text`) {
       // Visible text: raw length == rendered length.
       if (rawOffset <= rawPos + rawLen) {
         return renderedPos + (rawOffset - rawPos);
       }
       rawPos += rawLen;
       renderedPos += rawLen;
-    } else if (token.type === 'code') {
+    } else if (token.type === `code`) {
       // Code span: `content` — backticks are invisible.
       const contentLen = token.content?.length ?? 0;
       const openDelim = 1;
@@ -59,7 +59,7 @@ export function rawOffsetToRenderedOffset(content, rawOffset) {
       }
       rawPos += rawLen;
       renderedPos += contentLen;
-    } else if (token.type === 'image') {
+    } else if (token.type === `image`) {
       // Image: ![alt](src) — entire syntax replaced by one rendered unit.
       if (rawOffset < rawPos + rawLen) {
         return renderedPos;
@@ -107,13 +107,13 @@ export function renderedOffsetToRawOffset(content, renderedOffset) {
     const token = tokens[i];
     const rawLen = token.raw.length;
 
-    if (token.type === 'text') {
+    if (token.type === `text`) {
       if (renderedOffset <= renderedPos + rawLen) {
         return rawPos + (renderedOffset - renderedPos);
       }
       rawPos += rawLen;
       renderedPos += rawLen;
-    } else if (token.type === 'code') {
+    } else if (token.type === `code`) {
       const contentLen = token.content?.length ?? 0;
       const openDelim = 1;
       if (renderedOffset < renderedPos + contentLen) {
@@ -121,7 +121,7 @@ export function renderedOffsetToRawOffset(content, renderedOffset) {
       }
       rawPos += rawLen;
       renderedPos += contentLen;
-    } else if (token.type === 'image') {
+    } else if (token.type === `image`) {
       // Image: ![alt](src) — one rendered unit maps to entire raw syntax.
       if (renderedOffset < renderedPos + 1) {
         return rawPos;

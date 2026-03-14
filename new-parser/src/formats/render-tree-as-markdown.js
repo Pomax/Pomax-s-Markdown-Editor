@@ -12,7 +12,7 @@
  * @returns {string}
  */
 function serializeInlineChildren(children) {
-    return children.map(serializeInlineNode).join('');
+    return children.map(serializeInlineNode).join(``);
 }
 
 /**
@@ -23,34 +23,34 @@ function serializeInlineChildren(children) {
  */
 function serializeInlineNode(node) {
     switch (node.type) {
-        case 'text':
+        case `text`:
             return node.content;
-        case 'inline-code':
+        case `inline-code`:
             return `\`${node.content}\``;
-        case 'bold':
+        case `bold`:
             return `**${serializeInlineChildren(node.children)}**`;
-        case 'italic':
+        case `italic`:
             return `*${serializeInlineChildren(node.children)}*`;
-        case 'bold-italic':
+        case `bold-italic`:
             return `***${serializeInlineChildren(node.children)}***`;
-        case 'strikethrough':
+        case `strikethrough`:
             return `~~${serializeInlineChildren(node.children)}~~`;
-        case 'link':
-            return `[${serializeInlineChildren(node.children)}](${node.attributes.href || ''})`;
-        case 'inline-image':
-            return `![${node.attributes.alt || ''}](${node.attributes.src || ''})`;
-        case 'html-element': {
+        case `link`:
+            return `[${serializeInlineChildren(node.children)}](${node.attributes.href || ``})`;
+        case `inline-image`:
+            return `![${node.attributes.alt || ``}](${node.attributes.src || ``})`;
+        case `html-element`: {
             const tag = node.tagName;
             const attrs = Object.entries(node.attributes)
                 .map(([k, v]) => ` ${k}="${v}"`)
-                .join('');
+                .join(``);
             if (node.children.length === 0) {
                 return `<${tag}${attrs}>`;
             }
             return `<${tag}${attrs}>${serializeInlineChildren(node.children)}</${tag}>`;
         }
         default:
-            return node.content || '';
+            return node.content || ``;
     }
 }
 
@@ -65,7 +65,7 @@ export function renderTreeToMarkdown(tree) {
     for (const child of tree.children) {
         lines.push(renderNodeToMarkdown(child));
     }
-    return lines.join('\n\n') + '\n';
+    return lines.join(`\n\n`) + `\n`;
 }
 
 /**
@@ -77,65 +77,65 @@ export function renderTreeToMarkdown(tree) {
  */
 export function renderNodeToMarkdown(node, depth = 0) {
     switch (node.type) {
-        case 'heading1':
+        case `heading1`:
             return `# ${node.content}`;
-        case 'heading2':
+        case `heading2`:
             return `## ${node.content}`;
-        case 'heading3':
+        case `heading3`:
             return `### ${node.content}`;
-        case 'heading4':
+        case `heading4`:
             return `#### ${node.content}`;
-        case 'heading5':
+        case `heading5`:
             return `##### ${node.content}`;
-        case 'heading6':
+        case `heading6`:
             return `###### ${node.content}`;
-        case 'paragraph':
+        case `paragraph`:
             return node.content;
-        case 'blockquote':
+        case `blockquote`:
             return node.content
-                .split('\n')
+                .split(`\n`)
                 .map((line) => `> ${line}`)
-                .join('\n');
-        case 'code-block': {
-            const lang = node.attributes.language || '';
-            const fence = '`'.repeat(node.attributes.fenceCount || 3);
+                .join(`\n`);
+        case `code-block`: {
+            const lang = node.attributes.language || ``;
+            const fence = `\``.repeat(node.attributes.fenceCount || 3);
             const code = node.children.length > 0 ? node.children[0].content : node.content;
             return `${fence}${lang}\n${code}\n${fence}`;
         }
-        case 'list': {
-            return node.children.map((child) => renderNodeToMarkdown(child, depth)).join('\n');
+        case `list`: {
+            return node.children.map((child) => renderNodeToMarkdown(child, depth)).join(`\n`);
         }
-        case 'list-item': {
+        case `list-item`: {
             const listParent = node.parent;
-            const indent = listParent ? '  '.repeat(listParent.attributes.indent || 0) : '';
+            const indent = listParent ? `  `.repeat(listParent.attributes.indent || 0) : ``;
             const marker = listParent?.attributes.ordered
                 ? `${listParent.attributes.number || 1}. `
-                : `${listParent?.runtime.marker || '-'} `;
+                : `${listParent?.runtime.marker || `-`} `;
             const checkbox =
-                typeof node.attributes.checked === 'boolean'
+                typeof node.attributes.checked === `boolean`
                     ? node.attributes.checked
-                        ? '[x] '
-                        : '[ ] '
-                    : '';
+                        ? `[x] `
+                        : `[ ] `
+                    : ``;
             const lines = [`${indent}${marker}${checkbox}${node.content}`];
             for (const child of node.children) {
-                if (child.type === 'list') {
+                if (child.type === `list`) {
                     lines.push(renderNodeToMarkdown(child, depth));
                 }
             }
-            return lines.join('\n');
+            return lines.join(`\n`);
         }
-        case 'horizontal-rule': {
-            const hrMarker = node.attributes.marker || '-';
+        case `horizontal-rule`: {
+            const hrMarker = node.attributes.marker || `-`;
             const hrCount = node.attributes.count || 3;
             return hrMarker.repeat(hrCount);
         }
-        case 'image': {
+        case `image`: {
             const imgAlt = node.attributes.alt ?? node.content;
-            const imgSrc = node.attributes.url ?? '';
-            const imgStyle = node.attributes.style ?? '';
+            const imgSrc = node.attributes.url ?? ``;
+            const imgStyle = node.attributes.style ?? ``;
             if (imgStyle) {
-                const altAttr = imgAlt ? ` alt="${imgAlt}"` : '';
+                const altAttr = imgAlt ? ` alt="${imgAlt}"` : ``;
                 return `<img src="${imgSrc}"${altAttr} style="${imgStyle}" />`;
             }
             if (node.attributes.href) {
@@ -143,59 +143,59 @@ export function renderNodeToMarkdown(node, depth = 0) {
             }
             return `![${imgAlt}](${imgSrc})`;
         }
-        case 'table': {
+        case `table`: {
             const rows = [];
             for (const child of node.children) {
                 const cells = child.children.map((cell) => {
                     return ` ${serializeInlineChildren(cell.children)} `;
                 });
-                rows.push(`|${cells.join('|')}|`);
+                rows.push(`|${cells.join(`|`)}|`);
                 // Insert separator after header
-                if (child.type === 'header') {
-                    const sep = child.children.map(() => '---');
-                    rows.push(`|${sep.join('|')}|`);
+                if (child.type === `header`) {
+                    const sep = child.children.map(() => `---`);
+                    rows.push(`|${sep.join(`|`)}|`);
                 }
             }
-            return rows.join('\n');
+            return rows.join(`\n`);
         }
-        case 'html-element': {
-            const indent = '  '.repeat(depth);
+        case `html-element`: {
+            const indent = `  `.repeat(depth);
             // If the container has exactly one bare-text child, collapse
             // to a single line: <tag>content</tag>
             if (
                 node.children.length === 1 &&
                 node.children[0].attributes.bareText &&
-                node.children[0].type === 'paragraph'
+                node.children[0].type === `paragraph`
             ) {
-                const tag = node.tagName || 'div';
+                const tag = node.tagName || `div`;
                 return `${indent}<${tag}>${node.children[0].content}</${tag}>`;
             }
 
-            const lines = [`${indent}${node.runtime.openingTag || ''}`];
+            const lines = [`${indent}${node.runtime.openingTag || ``}`];
             for (const child of node.children) {
-                if (child.type === 'html-element') {
+                if (child.type === `html-element`) {
                     lines.push(renderNodeToMarkdown(child, depth + 1));
                 } else {
-                    lines.push('');
+                    lines.push(``);
                     lines.push(renderNodeToMarkdown(child));
-                    lines.push('');
+                    lines.push(``);
                 }
             }
             if (node.runtime.closingTag) {
                 lines.push(`${indent}${node.runtime.closingTag}`);
             }
             // Collapse multiple consecutive blank lines
-            const result = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+            const result = lines.join(`\n`).replace(/\n{3,}/g, `\n\n`);
             return result;
         }
-        case 'text':
-        case 'inline-code':
-        case 'bold':
-        case 'italic':
-        case 'bold-italic':
-        case 'strikethrough':
-        case 'link':
-        case 'inline-image':
+        case `text`:
+        case `inline-code`:
+        case `bold`:
+        case `italic`:
+        case `bold-italic`:
+        case `strikethrough`:
+        case `link`:
+        case `inline-image`:
             return serializeInlineNode(node);
         default:
             return node.content;

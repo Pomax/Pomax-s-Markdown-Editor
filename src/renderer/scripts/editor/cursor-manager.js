@@ -104,7 +104,7 @@ export class CursorManager {
           }
 
           // Check if the cursor is inside a table cell
-          if (node?.type === 'table' && this.editor.viewMode === 'writing') {
+          if (node?.type === `table` && this.editor.viewMode === `writing`) {
             const pos = this.editor.tableManager.computeTableCellPosition(
               htmlEl,
               domNode,
@@ -132,7 +132,7 @@ export class CursorManager {
           // source view, record which part so edit methods can
           // route changes to the correct attribute.
           const tagPart = htmlEl.dataset?.tagPart;
-          if (tagPart === 'opening' || tagPart === 'closing') {
+          if (tagPart === `opening` || tagPart === `closing`) {
             cursor.tagPart = tagPart;
           }
           return { cursor };
@@ -159,7 +159,7 @@ export class CursorManager {
     while (parent && parent !== nodeElement) {
       if (parent.nodeType === Node.ELEMENT_NODE) {
         const parentEl = /** @type {Element} */ (parent);
-        if (parentEl.classList?.contains('md-syntax')) {
+        if (parentEl.classList?.contains(`md-syntax`)) {
           return 0;
         }
       }
@@ -167,7 +167,7 @@ export class CursorManager {
     }
 
     // Determine which sub-element holds the editable content
-    const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
+    const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
     if (!contentEl.contains(cursorNode)) {
       return 0;
@@ -234,7 +234,7 @@ export class CursorManager {
    * @returns {number}
    */
   toRawOffset(nodeElement, renderedOffset, afterFormatting = false) {
-    if (this.editor.viewMode !== 'writing') return renderedOffset;
+    if (this.editor.viewMode !== `writing`) return renderedOffset;
     const nodeId = nodeElement.dataset?.nodeId;
     if (!nodeId) return renderedOffset;
     const syntaxNode = this.editor.syntaxTree?.findNodeById(nodeId);
@@ -270,15 +270,15 @@ export class CursorManager {
    */
   hasInlineFormatting(type) {
     switch (type) {
-      case 'paragraph':
-      case 'heading1':
-      case 'heading2':
-      case 'heading3':
-      case 'heading4':
-      case 'heading5':
-      case 'heading6':
-      case 'blockquote':
-      case 'list-item':
+      case `paragraph`:
+      case `heading1`:
+      case `heading2`:
+      case `heading3`:
+      case `heading4`:
+      case `heading5`:
+      case `heading6`:
+      case `blockquote`:
+      case `list-item`:
         return true;
       default:
         return false;
@@ -313,7 +313,7 @@ export class CursorManager {
 
     // ── Table cell cursor placement ──
     if (
-      this.editor.viewMode === 'writing' &&
+      this.editor.viewMode === `writing` &&
       this.editor.syntaxTree.treeCursor.cellRow !== undefined &&
       this.editor.syntaxTree.treeCursor.cellCol !== undefined
     ) {
@@ -326,7 +326,7 @@ export class CursorManager {
       return;
     }
 
-    const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
+    const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
     // In writing mode the DOM shows rendered text (no markdown syntax),
     // so we must convert the raw tree offset to a rendered offset.
@@ -334,7 +334,7 @@ export class CursorManager {
     // heading, blockquote, list-item).  Other types (table, code-block,
     // image, horizontal-rule) don't use inline markup rendering.
     let cursorOffset = this.editor.syntaxTree.treeCursor.offset;
-    if (this.editor.viewMode === 'writing') {
+    if (this.editor.viewMode === `writing`) {
       const node = this.editor.getCurrentBlockNode();
       if (node && this.hasInlineFormatting(node.type)) {
         cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
@@ -427,11 +427,11 @@ export class CursorManager {
     const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
     if (!nodeElement) return null;
 
-    const contentEl = nodeElement.querySelector('.md-content') ?? nodeElement;
+    const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
     // Convert raw tree offset to rendered offset in writing mode.
     let cursorOffset = offset;
-    if (this.editor.viewMode === 'writing') {
+    if (this.editor.viewMode === `writing`) {
       const node = this.editor.syntaxTree?.findNodeById(nodeId);
       if (node && this.hasInlineFormatting(node.type)) {
         cursorOffset = rawOffsetToRenderedOffset(node.content, cursorOffset);
@@ -463,18 +463,18 @@ export class CursorManager {
 
   /** @type {Set<string>} */
   static FORMATTING_TAGS = new Set([
-    'EM',
-    'STRONG',
-    'DEL',
-    'A',
-    'CODE',
-    'SUB',
-    'SUP',
-    'MARK',
-    'U',
-    'B',
-    'I',
-    'S',
+    `EM`,
+    `STRONG`,
+    `DEL`,
+    `A`,
+    `CODE`,
+    `SUB`,
+    `SUP`,
+    `MARK`,
+    `U`,
+    `B`,
+    `I`,
+    `S`,
   ]);
 
   /**

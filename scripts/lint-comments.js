@@ -17,9 +17,9 @@ import { join, relative } from 'node:path';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = join(dirname(fileURLToPath(import.meta.url)), `..`);
 
-const SCAN_DIRS = ['src', 'scripts', 'new-parser/src', 'new-parser/tests', 'test'];
+const SCAN_DIRS = [`src`, `scripts`, `new-parser/src`, `new-parser/tests`, `test`];
 
 /**
  * Matches a comment line whose body is primarily a section separator:
@@ -40,14 +40,14 @@ const violations = [];
 function scan(dir) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
-    if (entry === 'node_modules') continue;
+    if (entry === `node_modules`) continue;
     const stat = statSync(full);
     if (stat.isDirectory()) {
       scan(full);
       continue;
     }
-    if (!entry.endsWith('.js')) continue;
-    const lines = readFileSync(full, 'utf-8').split('\n');
+    if (!entry.endsWith(`.js`)) continue;
+    const lines = readFileSync(full, `utf-8`).split(`\n`);
     for (let i = 0; i < lines.length; i++) {
       if (SEPARATOR_RE.test(lines[i])) {
         violations.push({ file: relative(root, full), line: i + 1, text: lines[i].trimEnd() });

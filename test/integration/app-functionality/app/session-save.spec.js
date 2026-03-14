@@ -15,8 +15,8 @@ import { clickInEditor, closeApp, launchApp } from '../../test-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.join(__dirname, '..', '..', '..', 'fixtures');
-const MANY_SECTIONS = path.join(FIXTURES_DIR, 'many-sections.md');
+const FIXTURES_DIR = path.join(__dirname, `..`, `..`, `..`, `fixtures`);
+const MANY_SECTIONS = path.join(FIXTURES_DIR, `many-sections.md`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -32,21 +32,21 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('flushing open files saves the current cursorPath', async () => {
-  const content = await readFile(MANY_SECTIONS, 'utf-8');
+test(`flushing open files saves the current cursorPath`, async () => {
+  const content = await readFile(MANY_SECTIONS, `utf-8`);
 
-  const editor = page.locator('#editor');
+  const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
 
   await page.evaluate((md) => window.editorAPI?.setContent(md), content);
-  await page.waitForSelector('#editor .md-line');
+  await page.waitForSelector(`#editor .md-line`);
 
   // Place the cursor on "Section 15" (a heading roughly in the middle)
   await page.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
     if (!tree) return;
     const target = tree.children.find(
-      (/** @type {any} */ n) => n.type.startsWith('heading') && n.content?.includes('Section 15'),
+      (/** @type {any} */ n) => n.type.startsWith(`heading`) && n.content?.includes(`Section 15`),
     );
     if (target) {
       tree.treeCursor = { nodeId: target.id, offset: 4 };
@@ -75,19 +75,19 @@ test('flushing open files saves the current cursorPath', async () => {
   expect(s.cursorPath[s.cursorPath.length - 1]).toBe(4);
 });
 
-test('flushing open files saves the active ToC heading path', async () => {
-  const content = await readFile(MANY_SECTIONS, 'utf-8');
+test(`flushing open files saves the active ToC heading path`, async () => {
+  const content = await readFile(MANY_SECTIONS, `utf-8`);
 
-  const editor = page.locator('#editor');
+  const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
 
   await page.evaluate((md) => window.editorAPI?.setContent(md), content);
-  await page.waitForSelector('#toc-sidebar .toc-link');
+  await page.waitForSelector(`#toc-sidebar .toc-link`);
 
   // Scroll so that "Section 20" fills most of the viewport
   await page.evaluate((text) => {
-    const container = document.getElementById('editor-container');
-    const lines = document.querySelectorAll('#editor > .md-line');
+    const container = document.getElementById(`editor-container`);
+    const lines = document.querySelectorAll(`#editor > .md-line`);
     for (const line of lines) {
       if (line.textContent?.includes(text)) {
         const containerRect = container?.getBoundingClientRect();
@@ -98,7 +98,7 @@ test('flushing open files saves the active ToC heading path', async () => {
         break;
       }
     }
-  }, 'Section 20');
+  }, `Section 20`);
 
   // Wait for the ToC to highlight a section in the Section 20 neighbourhood.
   // The initial active heading is "Section 1" (or "Many Sections") so we
@@ -106,7 +106,7 @@ test('flushing open files saves the active ToC heading path', async () => {
   // has taken effect and _updateActiveHeading has run.
   await page.waitForFunction(
     () => {
-      const text = document.querySelector('#toc-sidebar .toc-link.toc-active')?.textContent ?? '';
+      const text = document.querySelector(`#toc-sidebar .toc-link.toc-active`)?.textContent ?? ``;
       const m = text.match(/^Section (\d+)$/);
       return m && Number(m[1]) >= 19;
     },
@@ -115,7 +115,7 @@ test('flushing open files saves the active ToC heading path', async () => {
 
   // Read the heading that is actually active after scroll
   const activeHeadingText = await page.evaluate(
-    () => document.querySelector('#toc-sidebar .toc-link.toc-active')?.textContent ?? '',
+    () => document.querySelector(`#toc-sidebar .toc-link.toc-active`)?.textContent ?? ``,
   );
   expect(activeHeadingText).toBeTruthy();
 
@@ -126,7 +126,7 @@ test('flushing open files saves the active ToC heading path', async () => {
   const tocHeadingPath = await page.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
     if (!tree) return null;
-    const tocActive = document.querySelector('#toc-sidebar .toc-link.toc-active');
+    const tocActive = document.querySelector(`#toc-sidebar .toc-link.toc-active`);
     if (!tocActive) return null;
     const nodeId = /** @type {HTMLElement} */ (tocActive).dataset.nodeId;
     if (!nodeId) return null;
@@ -148,7 +148,7 @@ test('flushing open files saves the active ToC heading path', async () => {
   expect(resolvedText).toContain(activeHeadingText);
 });
 
-test('reopening the app restores cursor position and ToC heading', async () => {
+test(`reopening the app restores cursor position and ToC heading`, async () => {
   // ── Phase 1: set up state and persist ─────────────────────────
   const app1 = await launchApp([MANY_SECTIONS]);
   const page1 = app1.page;
@@ -156,19 +156,19 @@ test('reopening the app restores cursor position and ToC heading', async () => {
   // Wait for the file to load via the CLI path
   await page1.waitForFunction(
     () => {
-      const md = window.editorAPI?.getContent() ?? '';
-      return md.includes('Section 15');
+      const md = window.editorAPI?.getContent() ?? ``;
+      return md.includes(`Section 15`);
     },
     { timeout: 10000 },
   );
-  await page1.waitForSelector('#toc-sidebar .toc-link');
+  await page1.waitForSelector(`#toc-sidebar .toc-link`);
 
   // Place cursor on "Section 15" at offset 4
   await page1.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
     if (!tree) return;
     const target = tree.children.find(
-      (/** @type {any} */ n) => n.type.startsWith('heading') && n.content?.includes('Section 15'),
+      (/** @type {any} */ n) => n.type.startsWith(`heading`) && n.content?.includes(`Section 15`),
     );
     if (target) {
       tree.treeCursor = { nodeId: target.id, offset: 4 };
@@ -178,8 +178,8 @@ test('reopening the app restores cursor position and ToC heading', async () => {
 
   // Scroll so that "Section 15" content is visible (triggers ToC highlight)
   await page1.evaluate((text) => {
-    const container = document.getElementById('editor-container');
-    const lines = document.querySelectorAll('#editor > .md-line');
+    const container = document.getElementById(`editor-container`);
+    const lines = document.querySelectorAll(`#editor > .md-line`);
     for (const line of lines) {
       if (line.textContent?.includes(text)) {
         const containerRect = container?.getBoundingClientRect();
@@ -190,12 +190,12 @@ test('reopening the app restores cursor position and ToC heading', async () => {
         break;
       }
     }
-  }, 'Section 15');
+  }, `Section 15`);
 
   // Wait for the ToC to highlight a section in the Section 15 neighbourhood.
   await page1.waitForFunction(
     () => {
-      const text = document.querySelector('#toc-sidebar .toc-link.toc-active')?.textContent ?? '';
+      const text = document.querySelector(`#toc-sidebar .toc-link.toc-active`)?.textContent ?? ``;
       const m = text.match(/^Section (\d+)$/);
       return m && Number(m[1]) >= 14;
     },
@@ -204,7 +204,7 @@ test('reopening the app restores cursor position and ToC heading', async () => {
 
   // Read whichever heading the ToC actually highlighted after scroll
   const savedHeadingText = await page1.evaluate(
-    () => document.querySelector('#toc-sidebar .toc-link.toc-active')?.textContent ?? '',
+    () => document.querySelector(`#toc-sidebar .toc-link.toc-active`)?.textContent ?? ``,
   );
   expect(savedHeadingText).toBeTruthy();
 
@@ -216,7 +216,7 @@ test('reopening the app restores cursor position and ToC heading', async () => {
 
   // Read back what was persisted
   const persisted = await app1.electronApp.evaluate(() => {
-    return /** @type {any} */ (global).__settingsManager.get('openFiles', null);
+    return /** @type {any} */ (global).__settingsManager.get(`openFiles`, null);
   });
 
   await closeApp(app1.electronApp);
@@ -237,7 +237,7 @@ test('reopening the app restores cursor position and ToC heading', async () => {
   // automatic restore so we drive it explicitly).
   await app2.electronApp.evaluate(({ BrowserWindow }) => {
     const sm = /** @type {any} */ (global).__settingsManager;
-    const openFiles = sm.get('openFiles', null);
+    const openFiles = sm.get(`openFiles`, null);
     if (!openFiles || openFiles.length === 0) return;
     const win = BrowserWindow.getAllWindows()[0];
     if (!win) return;
@@ -247,15 +247,15 @@ test('reopening the app restores cursor position and ToC heading', async () => {
   // Wait for the restored content to appear
   await page2.waitForFunction(
     () => {
-      const md = window.editorAPI?.getContent() ?? '';
-      return md.includes('Section 15');
+      const md = window.editorAPI?.getContent() ?? ``;
+      return md.includes(`Section 15`);
     },
     { timeout: 10000 },
   );
   // Wait for the ToC to highlight the same heading that was saved
   await page2.waitForFunction(
     (expected) =>
-      document.querySelector('#toc-sidebar .toc-link.toc-active')?.textContent === expected,
+      document.querySelector(`#toc-sidebar .toc-link.toc-active`)?.textContent === expected,
     savedHeadingText,
     { timeout: 10000 },
   );
@@ -273,11 +273,11 @@ test('reopening the app restores cursor position and ToC heading', async () => {
 
   expect(cursor).not.toBeNull();
   const c = /** @type {NonNullable<typeof cursor>} */ (cursor);
-  expect(c.content).toContain('Section 15');
+  expect(c.content).toContain(`Section 15`);
   expect(c.offset).toBe(4);
 
   // Verify the ToC highlights the same heading that was active at save
-  const tocAfter = await page2.locator('#toc-sidebar .toc-link.toc-active').textContent();
+  const tocAfter = await page2.locator(`#toc-sidebar .toc-link.toc-active`).textContent();
   expect(tocAfter).toBe(savedHeadingText);
 
   await closeApp(app2.electronApp);

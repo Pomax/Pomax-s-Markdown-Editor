@@ -52,7 +52,7 @@ function saveWindowBounds() {
   const display = screen.getDisplayMatching(bounds);
   const work = display.workArea;
 
-  settings.set('windowBounds', {
+  settings.set(`windowBounds`, {
     xRatio: (bounds.x - work.x) / work.width,
     yRatio: (bounds.y - work.y) / work.height,
     width: bounds.width,
@@ -76,7 +76,7 @@ function debounceSaveWindowBounds() {
  */
 function saveOpenFiles() {
   if (!menuBuilder) {
-    settings.delete('openFiles');
+    settings.delete(`openFiles`);
     return;
   }
 
@@ -97,9 +97,9 @@ function saveOpenFiles() {
     );
 
   if (entries.length === 0) {
-    settings.delete('openFiles');
+    settings.delete(`openFiles`);
   } else {
-    settings.set('openFiles', entries);
+    settings.set(`openFiles`, entries);
   }
 }
 
@@ -114,7 +114,7 @@ function createWindow() {
 
   // Load saved window bounds (stored as screen-relative ratios) and
   // convert them back to absolute pixels for the current display.
-  const saved = settings.get('windowBounds');
+  const saved = settings.get(`windowBounds`);
   const work = screen.getPrimaryDisplay().workArea;
 
   const restoredWidth = saved?.width ?? defaultWidth;
@@ -140,7 +140,7 @@ function createWindow() {
     minWidth: 600,
     minHeight: 848,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, `preload.cjs`),
       contextIsolation: true,
       nodeIntegration: false,
       // Allow the renderer to load file:// resources (e.g. images)
@@ -163,21 +163,21 @@ function createWindow() {
     mainWindow.maximize();
   }
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, `..`, `renderer`, `index.html`));
 
   const win = mainWindow;
 
-  win.once('ready-to-show', () => {
+  win.once(`ready-to-show`, () => {
     if (!process.env.TESTING) {
       win.show();
     }
   });
 
   // Persist window bounds on move/resize (debounced)
-  win.on('resize', debounceSaveWindowBounds);
-  win.on('move', debounceSaveWindowBounds);
+  win.on(`resize`, debounceSaveWindowBounds);
+  win.on(`move`, debounceSaveWindowBounds);
 
-  win.on('close', async (event) => {
+  win.on(`close`, async (event) => {
     // Flush any pending debounced save immediately
     if (boundsDebounce) {
       clearTimeout(boundsDebounce);
@@ -198,7 +198,7 @@ function createWindow() {
     // IPC that updates menuBuilder.openFiles synchronously, so by
     // the time executeJavaScript resolves we have fresh data.
     try {
-      await win.webContents.executeJavaScript('window.__flushOpenFiles?.()');
+      await win.webContents.executeJavaScript(`window.__flushOpenFiles?.()`);
     } catch {
       // If the renderer is gone, fall through to stale data
     }
@@ -206,7 +206,7 @@ function createWindow() {
     saveOpenFiles();
 
     const hasUnsavedChanges = await win.webContents.executeJavaScript(
-      'window.editorAPI?.hasUnsavedChanges() ?? false',
+      `window.editorAPI?.hasUnsavedChanges() ?? false`,
     );
 
     if (hasUnsavedChanges) {
@@ -216,7 +216,7 @@ function createWindow() {
     }
   });
 
-  win.on('closed', () => {
+  win.on(`closed`, () => {
     mainWindow = null;
   });
 
@@ -230,17 +230,17 @@ function createWindow() {
  */
 async function handleUnsavedChangesOnClose(window) {
   const result = await dialog.showMessageBox(window, {
-    type: 'warning',
-    buttons: ['Save', 'Save As...', 'Discard', 'Cancel'],
+    type: `warning`,
+    buttons: [`Save`, `Save As...`, `Discard`, `Cancel`],
     defaultId: 0,
     cancelId: 3,
-    title: 'Unsaved Changes',
-    message: 'You have unsaved changes. What would you like to do?',
+    title: `Unsaved Changes`,
+    message: `You have unsaved changes. What would you like to do?`,
   });
 
   // Get current content from renderer
   const content = await window.webContents.executeJavaScript(
-    'window.editorAPI?.getContent() ?? ""',
+    `window.editorAPI?.getContent() ?? ""`,
   );
 
   switch (result.response) {
@@ -307,7 +307,7 @@ function getFilePathFromArgs() {
   const entryScript = path.resolve(__filename);
 
   for (const arg of userArgs) {
-    if (arg.startsWith('-')) continue;
+    if (arg.startsWith(`-`)) continue;
     const resolved = path.resolve(arg);
     if (resolved === entryScript) continue;
     try {
@@ -328,7 +328,7 @@ function getFilePathFromArgs() {
 async function loadFileFromPath(window, filePath) {
   const result = await fileManager.loadRecent(filePath);
   if (result.success) {
-    window.webContents.send('menu:action', 'file:loaded', result);
+    window.webContents.send(`menu:action`, `file:loaded`, result);
     menuBuilder.refreshMenu();
   }
 }
@@ -383,7 +383,7 @@ async function restoreOpenFiles(window, entries) {
   // Send remaining files as loaded events so the renderer creates
   // additional tabs for each one
   for (let i = 1; i < loaded.length; i++) {
-    window.webContents.send('menu:action', 'file:loaded', {
+    window.webContents.send(`menu:action`, `file:loaded`, {
       success: true,
       content: loaded[i].content,
       filePath: loaded[i].filePath,
@@ -395,7 +395,7 @@ async function restoreOpenFiles(window, entries) {
   // first one — because subsequent file:loaded events may have
   // changed which tab the renderer considers active.
   const activeEntry = loaded.find((e) => e.active) || first;
-  window.webContents.send('menu:action', 'view:switchFile', {
+  window.webContents.send(`menu:action`, `view:switchFile`, {
     filePath: activeEntry.filePath,
   });
 
@@ -411,7 +411,7 @@ async function restoreOpenFiles(window, entries) {
       tocHeadingPath: e.tocHeadingPath,
     }));
   if (restoreEntries.length > 0) {
-    window.webContents.send('menu:action', 'session:restore', restoreEntries);
+    window.webContents.send(`menu:action`, `session:restore`, restoreEntries);
   }
 
   menuBuilder.refreshMenu();
@@ -441,37 +441,37 @@ app.whenReady().then(async () => {
   // that was open when the app was last closed.
   const cliFilePath = getFilePathFromArgs();
   if (cliFilePath) {
-    window.webContents.once('did-finish-load', () => {
+    window.webContents.once(`did-finish-load`, () => {
       loadFileFromPath(window, cliFilePath);
     });
   } else if (!process.env.TESTING) {
-    const openFiles = settings.get('openFiles', null);
+    const openFiles = settings.get(`openFiles`, null);
     if (Array.isArray(openFiles) && openFiles.length > 0) {
       // Filter to files that still exist on disk
       const valid = openFiles.filter(
         /** @param {{filePath: string}} f */ (f) => f.filePath && fs.existsSync(f.filePath),
       );
       if (valid.length > 0) {
-        window.webContents.once('did-finish-load', () => {
+        window.webContents.once(`did-finish-load`, () => {
           restoreOpenFiles(window, valid);
         });
       }
     }
   }
 
-  app.on('activate', () => {
+  app.on(`activate`, () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
+app.on(`window-all-closed`, () => {
   settings.close();
   app.quit();
 });
 
 // Run with unlimited memory
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=0');
+app.commandLine.appendSwitch(`js-flags`, `--max-old-space-size=0`);
 
 export { mainWindow, fileManager };

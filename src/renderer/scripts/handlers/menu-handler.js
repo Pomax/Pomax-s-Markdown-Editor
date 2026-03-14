@@ -32,7 +32,7 @@ export class MenuHandler {
    */
   initialize() {
     if (!window.electronAPI) {
-      console.warn('electronAPI not available, menu handler will not work');
+      console.warn(`electronAPI not available, menu handler will not work`);
       return;
     }
 
@@ -57,49 +57,49 @@ export class MenuHandler {
    */
   handleMenuAction(action, ...args) {
     switch (action) {
-      case 'file:new':
+      case `file:new`:
         this.handleNew();
         break;
-      case 'file:loaded':
+      case `file:loaded`:
         this.handleLoaded(args[0]);
         break;
-      case 'file:save':
+      case `file:save`:
         this.handleSave();
         break;
-      case 'file:saveAs':
+      case `file:saveAs`:
         this.handleSaveAs();
         break;
-      case 'file:close':
+      case `file:close`:
         this.handleClose();
         break;
-      case 'file:wordCount':
+      case `file:wordCount`:
         this.handleWordCount();
         break;
-      case 'edit:undo':
+      case `edit:undo`:
         this.handleUndo();
         break;
-      case 'edit:redo':
+      case `edit:redo`:
         this.handleRedo();
         break;
-      case 'view:source':
+      case `view:source`:
         this.handleViewSource();
         break;
-      case 'view:writing':
+      case `view:writing`:
         this.handleViewWriting();
         break;
-      case 'edit:preferences':
+      case `edit:preferences`:
         this.handlePreferences();
         break;
-      case 'view:switchFile':
+      case `view:switchFile`:
         this.handleSwitchFile(args[0]);
         break;
-      case 'session:restore':
-        document.dispatchEvent(new CustomEvent('session:restore', { detail: args[0] }));
+      case `session:restore`:
+        document.dispatchEvent(new CustomEvent(`session:restore`, { detail: args[0] }));
         break;
-      case 'element:changeType':
+      case `element:changeType`:
         this.handleChangeType(args[0]);
         break;
-      case 'element:format':
+      case `element:format`:
         this.handleFormat(args[0]);
         break;
       default:
@@ -112,7 +112,7 @@ export class MenuHandler {
    * Dispatches a 'file:new' event so the app can create a new tab.
    */
   handleNew() {
-    document.dispatchEvent(new CustomEvent('file:new'));
+    document.dispatchEvent(new CustomEvent(`file:new`));
   }
 
   /**
@@ -120,7 +120,7 @@ export class MenuHandler {
    * Dispatches a 'file:close' event so the app can close the active tab.
    */
   handleClose() {
-    document.dispatchEvent(new CustomEvent('file:close'));
+    document.dispatchEvent(new CustomEvent(`file:close`));
   }
 
   /**
@@ -130,7 +130,7 @@ export class MenuHandler {
    */
   handleLoaded(result) {
     if (result.success && result.content !== undefined) {
-      document.dispatchEvent(new CustomEvent('file:loaded', { detail: result }));
+      document.dispatchEvent(new CustomEvent(`file:loaded`, { detail: result }));
     }
   }
 
@@ -182,16 +182,16 @@ export class MenuHandler {
    * Handles switching to Source view.
    */
   handleViewSource() {
-    this.editor.setViewMode('source');
-    this.toolbar.setViewMode('source');
+    this.editor.setViewMode(`source`);
+    this.toolbar.setViewMode(`source`);
   }
 
   /**
    * Handles switching to Writing view.
    */
   handleViewWriting() {
-    this.editor.setViewMode('writing');
-    this.toolbar.setViewMode('writing');
+    this.editor.setViewMode(`writing`);
+    this.toolbar.setViewMode(`writing`);
   }
 
   /**
@@ -227,12 +227,12 @@ export class MenuHandler {
   handleSwitchFile(arg) {
     // arg may be a tabId string (from menu clicks) or an object
     // with { filePath } (from session restore).
-    if (typeof arg === 'object' && arg?.filePath) {
+    if (typeof arg === `object` && arg?.filePath) {
       document.dispatchEvent(
-        new CustomEvent('view:switchFile', { detail: { filePath: arg.filePath } }),
+        new CustomEvent(`view:switchFile`, { detail: { filePath: arg.filePath } }),
       );
     } else {
-      document.dispatchEvent(new CustomEvent('view:switchFile', { detail: { tabId: arg } }));
+      document.dispatchEvent(new CustomEvent(`view:switchFile`, { detail: { tabId: arg } }));
     }
   }
 

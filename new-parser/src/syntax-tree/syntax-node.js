@@ -31,7 +31,7 @@ export class SyntaxNode {
    * @param {string} type - The node type (heading1-6, paragraph, etc.)
    * @param {string} content - The text content of the node
    */
-  constructor(type, content = "") {
+  constructor(type, content = ``) {
     /**
      * Unique identifier for this node.
      * @type {string}
@@ -69,7 +69,7 @@ export class SyntaxNode {
      * HTML tag name for html-element nodes.
      * @type {string}
      */
-    this.tagName = "";
+    this.tagName = ``;
 
     /**
      * Additional attributes for the node.

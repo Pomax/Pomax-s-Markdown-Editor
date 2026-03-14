@@ -29,59 +29,59 @@ function tokeniseHTML(code, lang) {
   while (pos < code.length) {
     let text = tryMatch(WHITESPACE, code, pos);
     if (text) {
-      tokens.push({ type: 'text', text });
+      tokens.push({ type: `text`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(HTML_COMMENT, code, pos);
     if (text) {
-      tokens.push({ type: 'comment', text });
+      tokens.push({ type: `comment`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(HTML_TAG, code, pos);
     if (text) {
-      tokens.push({ type: 'tag', text });
+      tokens.push({ type: `tag`, text });
       pos += text.length;
 
       while (pos < code.length) {
         const ws = tryMatch(WHITESPACE, code, pos);
         if (ws) {
-          tokens.push({ type: 'text', text: ws });
+          tokens.push({ type: `text`, text: ws });
           pos += ws.length;
           continue;
         }
 
         const close = tryMatch(HTML_CLOSE_TAG, code, pos);
         if (close) {
-          tokens.push({ type: 'tag', text: close });
+          tokens.push({ type: `tag`, text: close });
           pos += close.length;
           break;
         }
 
         const attr = tryMatch(HTML_ATTR_NAME, code, pos);
         if (attr) {
-          tokens.push({ type: 'attribute', text: attr });
+          tokens.push({ type: `attribute`, text: attr });
           pos += attr.length;
           continue;
         }
 
-        if (code[pos] === '=') {
-          tokens.push({ type: 'operator', text: '=' });
+        if (code[pos] === `=`) {
+          tokens.push({ type: `operator`, text: `=` });
           pos++;
           continue;
         }
 
         const str = tryMatch(DOUBLE_STRING, code, pos) ?? tryMatch(SINGLE_STRING, code, pos);
         if (str) {
-          tokens.push({ type: 'string', text: str });
+          tokens.push({ type: `string`, text: str });
           pos += str.length;
           continue;
         }
 
-        tokens.push({ type: 'text', text: code[pos] });
+        tokens.push({ type: `text`, text: code[pos] });
         pos++;
       }
       continue;
@@ -89,12 +89,12 @@ function tokeniseHTML(code, lang) {
 
     text = tryMatch(DOUBLE_STRING, code, pos) ?? tryMatch(SINGLE_STRING, code, pos);
     if (text) {
-      tokens.push({ type: 'string', text });
+      tokens.push({ type: `string`, text });
       pos += text.length;
       continue;
     }
 
-    tokens.push({ type: 'text', text: code[pos] });
+    tokens.push({ type: `text`, text: code[pos] });
     pos++;
   }
 
@@ -110,4 +110,4 @@ export const definition = /** @type {LangDef} */ ({
   tokenise: tokeniseHTML,
 });
 
-export const aliases = ['html', 'xml', 'svg', 'htm'];
+export const aliases = [`html`, `xml`, `svg`, `htm`];

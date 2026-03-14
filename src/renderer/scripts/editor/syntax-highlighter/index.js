@@ -82,7 +82,7 @@ function tokeniseGeneric(code, lang) {
 
     let text = tryMatch(WHITESPACE, code, pos);
     if (text) {
-      tokens.push({ type: 'text', text });
+      tokens.push({ type: `text`, text });
       pos += text.length;
       continue;
     }
@@ -90,7 +90,7 @@ function tokeniseGeneric(code, lang) {
     for (const cp of lang.comments) {
       text = tryMatch(cp, code, pos);
       if (text) {
-        tokens.push({ type: 'comment', text });
+        tokens.push({ type: `comment`, text });
         pos += text.length;
         matched = true;
         break;
@@ -110,7 +110,7 @@ function tokeniseGeneric(code, lang) {
     for (const sp of lang.strings) {
       text = tryMatch(sp, code, pos);
       if (text) {
-        tokens.push({ type: 'string', text });
+        tokens.push({ type: `string`, text });
         pos += text.length;
         matched = true;
         break;
@@ -120,7 +120,7 @@ function tokeniseGeneric(code, lang) {
 
     text = tryMatch(NUMBER, code, pos);
     if (text) {
-      tokens.push({ type: 'number', text });
+      tokens.push({ type: `number`, text });
       pos += text.length;
       continue;
     }
@@ -129,17 +129,17 @@ function tokeniseGeneric(code, lang) {
     if (text) {
       const lookup = caseInsensitive ? text.toUpperCase() : text;
       /** @type {TokenType} */
-      let type = 'text';
+      let type = `text`;
       if (lang.keywords.has(lookup)) {
-        type = 'keyword';
+        type = `keyword`;
       } else if (lang.types.has(lookup)) {
-        type = 'type';
+        type = `type`;
       } else if (lang.constants.has(lookup)) {
-        type = 'constant';
+        type = `constant`;
       } else {
         const next = code[pos + text.length];
-        if (next === '(') {
-          type = 'function';
+        if (next === `(`) {
+          type = `function`;
         }
       }
       tokens.push({ type, text });
@@ -149,21 +149,21 @@ function tokeniseGeneric(code, lang) {
 
     text = tryMatch(OPERATOR, code, pos);
     if (text) {
-      tokens.push({ type: 'operator', text });
+      tokens.push({ type: `operator`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(PUNCTUATION, code, pos);
     if (text) {
-      tokens.push({ type: 'punctuation', text });
+      tokens.push({ type: `punctuation`, text });
       pos += text.length;
       continue;
     }
 
     text = tryMatch(CATCH_ALL, code, pos);
     if (text) {
-      tokens.push({ type: 'text', text });
+      tokens.push({ type: `text`, text });
       pos += text.length;
       continue;
     }
@@ -189,7 +189,7 @@ export function highlight(code, language) {
   const fragment = document.createDocumentFragment();
 
   if (!code) {
-    fragment.appendChild(document.createTextNode(''));
+    fragment.appendChild(document.createTextNode(``));
     return fragment;
   }
 
@@ -204,10 +204,10 @@ export function highlight(code, language) {
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.type === 'text') {
+    if (token.type === `text`) {
       fragment.appendChild(document.createTextNode(token.text));
     } else {
-      const span = document.createElement('span');
+      const span = document.createElement(`span`);
       span.className = `sh-${token.type}`;
       span.textContent = token.text;
       fragment.appendChild(span);

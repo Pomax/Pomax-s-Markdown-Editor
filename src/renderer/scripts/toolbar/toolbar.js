@@ -54,223 +54,223 @@ export class Toolbar {
     return [
       // Block-level transformations
       {
-        id: 'heading1',
-        label: 'Heading 1',
-        icon: 'H1',
-        action: 'changeType:heading1',
+        id: `heading1`,
+        label: `Heading 1`,
+        icon: `H1`,
+        action: `changeType:heading1`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `list-item`,
         ],
       },
       {
-        id: 'heading2',
-        label: 'Heading 2',
-        icon: 'H2',
-        action: 'changeType:heading2',
+        id: `heading2`,
+        label: `Heading 2`,
+        icon: `H2`,
+        action: `changeType:heading2`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `list-item`,
         ],
       },
       {
-        id: 'heading3',
-        label: 'Heading 3',
-        icon: 'H3',
-        action: 'changeType:heading3',
+        id: `heading3`,
+        label: `Heading 3`,
+        icon: `H3`,
+        action: `changeType:heading3`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `list-item`,
         ],
       },
       {
-        id: 'paragraph',
-        label: 'Paragraph',
-        icon: '¶',
-        action: 'changeType:paragraph',
+        id: `paragraph`,
+        label: `Paragraph`,
+        icon: `¶`,
+        action: `changeType:paragraph`,
         applicableTo: [
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'blockquote',
-        label: 'Quote',
-        icon: '"',
-        action: 'changeType:blockquote',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'list-item'],
+        id: `blockquote`,
+        label: `Quote`,
+        icon: `"`,
+        action: `changeType:blockquote`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `list-item`],
       },
       {
-        id: 'code-block',
-        label: 'Code Block',
-        icon: '</>',
-        action: 'changeType:code-block',
-        applicableTo: ['paragraph', 'list-item'],
+        id: `code-block`,
+        label: `Code Block`,
+        icon: `</>`,
+        action: `changeType:code-block`,
+        applicableTo: [`paragraph`, `list-item`],
       },
       {
-        id: 'image',
-        label: 'Image',
-        icon: '🖼',
-        action: 'image:insert',
-        applicableTo: ['paragraph', 'image', 'list-item'],
+        id: `image`,
+        label: `Image`,
+        icon: `🖼`,
+        action: `image:insert`,
+        applicableTo: [`paragraph`, `image`, `list-item`],
       },
       {
-        id: 'table',
-        label: 'Table',
-        icon: '▦',
-        action: 'table:insert',
-        applicableTo: ['paragraph', 'table', 'list-item'],
+        id: `table`,
+        label: `Table`,
+        icon: `▦`,
+        action: `table:insert`,
+        applicableTo: [`paragraph`, `table`, `list-item`],
       },
       {
-        id: 'unordered-list',
-        label: 'Bullet List',
-        icon: '•',
-        action: 'list:unordered',
+        id: `unordered-list`,
+        label: `Bullet List`,
+        icon: `•`,
+        action: `list:unordered`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'ordered-list',
-        label: 'Numbered List',
-        icon: '1.',
-        action: 'list:ordered',
+        id: `ordered-list`,
+        label: `Numbered List`,
+        icon: `1.`,
+        action: `list:ordered`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'checklist',
-        label: 'Checklist',
-        icon: '☑',
-        action: 'list:checklist',
+        id: `checklist`,
+        label: `Checklist`,
+        icon: `☑`,
+        action: `list:checklist`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'separator1',
-        label: '',
-        icon: '',
-        action: 'separator',
+        id: `separator1`,
+        label: ``,
+        icon: ``,
+        action: `separator`,
       },
       // Inline formatting
       {
-        id: 'bold',
-        label: 'Bold',
-        icon: 'B',
-        action: 'format:bold',
+        id: `bold`,
+        label: `Bold`,
+        icon: `B`,
+        action: `format:bold`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'italic',
-        label: 'Italic',
-        icon: 'I',
-        action: 'format:italic',
+        id: `italic`,
+        label: `Italic`,
+        icon: `I`,
+        action: `format:italic`,
         applicableTo: [
-          'paragraph',
-          'heading1',
-          'heading2',
-          'heading3',
-          'heading4',
-          'heading5',
-          'heading6',
-          'blockquote',
-          'list-item',
+          `paragraph`,
+          `heading1`,
+          `heading2`,
+          `heading3`,
+          `heading4`,
+          `heading5`,
+          `heading6`,
+          `blockquote`,
+          `list-item`,
         ],
       },
       {
-        id: 'strikethrough',
-        label: 'Strikethrough',
-        icon: 'S̶',
-        action: 'format:strikethrough',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'blockquote', 'list-item'],
+        id: `strikethrough`,
+        label: `Strikethrough`,
+        icon: `S̶`,
+        action: `format:strikethrough`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
-        id: 'subscript',
-        label: 'Subscript',
-        icon: 'ₓ',
-        action: 'format:subscript',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'blockquote', 'list-item'],
+        id: `subscript`,
+        label: `Subscript`,
+        icon: `ₓ`,
+        action: `format:subscript`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
-        id: 'superscript',
-        label: 'Superscript',
-        icon: 'ˣ',
-        action: 'format:superscript',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'blockquote', 'list-item'],
+        id: `superscript`,
+        label: `Superscript`,
+        icon: `ˣ`,
+        action: `format:superscript`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
-        id: 'code',
-        label: 'Inline Code',
-        icon: '`',
-        action: 'format:code',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'blockquote', 'list-item'],
+        id: `code`,
+        label: `Inline Code`,
+        icon: `\``,
+        action: `format:code`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
-        id: 'link',
-        label: 'Link',
-        icon: '🔗',
-        action: 'format:link',
-        applicableTo: ['paragraph', 'heading1', 'heading2', 'heading3', 'blockquote', 'list-item'],
+        id: `link`,
+        label: `Link`,
+        icon: `🔗`,
+        action: `format:link`,
+        applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
     ];
   }
@@ -283,25 +283,25 @@ export class Toolbar {
     this.createFileButtonGroup();
 
     // ── Content toolbar (grid-area: center) ──
-    this.toolbarElement = document.createElement('div');
-    this.toolbarElement.className = 'toolbar';
-    this.toolbarElement.setAttribute('role', 'toolbar');
-    this.toolbarElement.setAttribute('aria-label', 'Formatting toolbar');
+    this.toolbarElement = document.createElement(`div`);
+    this.toolbarElement.className = `toolbar`;
+    this.toolbarElement.setAttribute(`role`, `toolbar`);
+    this.toolbarElement.setAttribute(`aria-label`, `Formatting toolbar`);
 
     // Create view mode toggle
     const viewModeGroup = this.createViewModeToggle();
     this.toolbarElement.appendChild(viewModeGroup);
 
     // Separator after toggle
-    const sep = document.createElement('div');
-    sep.className = 'toolbar-separator';
+    const sep = document.createElement(`div`);
+    sep.className = `toolbar-separator`;
     this.toolbarElement.appendChild(sep);
 
     // Create buttons
     for (const config of this.buttonConfigs) {
-      if (config.action === 'separator') {
-        const separator = document.createElement('div');
-        separator.className = 'toolbar-separator';
+      if (config.action === `separator`) {
+        const separator = document.createElement(`div`);
+        separator.className = `toolbar-separator`;
         this.toolbarElement.appendChild(separator);
       } else {
         const button = new ToolbarButton(config, this.handleButtonClick.bind(this));
@@ -320,7 +320,7 @@ export class Toolbar {
     // Listen for selection changes on document so tab switches
     // (which swap editor.container) keep working.
     document.addEventListener(
-      'editor:selectionchange',
+      `editor:selectionchange`,
       /** @type {EventListener} */ (this.handleSelectionChange.bind(this)),
     );
 
@@ -337,8 +337,8 @@ export class Toolbar {
     if (!this.toolbarElement) return;
 
     // Reset so we can measure the natural width
-    this.toolbarElement.style.transform = '';
-    this.container.style.height = '';
+    this.toolbarElement.style.transform = ``;
+    this.container.style.height = ``;
 
     const containerWidth = this.container.clientWidth;
     const padding =
@@ -361,8 +361,8 @@ export class Toolbar {
    * @type {Record<string, string>}
    */
   static VIEW_MODE_LABELS = {
-    writing: 'Writing View',
-    source: 'Source View',
+    writing: `Writing View`,
+    source: `Source View`,
   };
 
   /**
@@ -371,25 +371,25 @@ export class Toolbar {
    */
   static FILE_BUTTONS = [
     {
-      id: 'file-new',
-      label: 'New File',
-      handler: () => document.dispatchEvent(new CustomEvent('file:new')),
+      id: `file-new`,
+      label: `New File`,
+      handler: () => document.dispatchEvent(new CustomEvent(`file:new`)),
     },
     {
-      id: 'file-open',
-      label: 'Open File',
+      id: `file-open`,
+      label: `Open File`,
       handler: async () => {
         if (!window.electronAPI) return;
         const result = await window.electronAPI.loadFile();
         if (result?.success && result.content !== undefined) {
-          document.dispatchEvent(new CustomEvent('file:loaded', { detail: result }));
+          document.dispatchEvent(new CustomEvent(`file:loaded`, { detail: result }));
         }
       },
     },
     {
-      id: 'file-save',
-      label: 'Save File',
-      handler: () => document.dispatchEvent(new CustomEvent('file:save')),
+      id: `file-save`,
+      label: `Save File`,
+      handler: () => document.dispatchEvent(new CustomEvent(`file:save`)),
     },
   ];
 
@@ -398,11 +398,11 @@ export class Toolbar {
    * These buttons live in the grid "left" area.
    */
   createFileButtonGroup() {
-    const group = document.createElement('div');
-    group.className = 'toolbar-file-group';
+    const group = document.createElement(`div`);
+    group.className = `toolbar-file-group`;
 
     for (const def of Toolbar.FILE_BUTTONS) {
-      const btn = new ToolbarButton({ id: def.id, label: def.label, icon: '', action: '' }, () =>
+      const btn = new ToolbarButton({ id: def.id, label: def.label, icon: ``, action: `` }, () =>
         def.handler(),
       );
       group.appendChild(btn.element);
@@ -416,24 +416,24 @@ export class Toolbar {
    * @returns {HTMLElement}
    */
   createViewModeToggle() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'toolbar-view-mode-group';
+    const wrapper = document.createElement(`div`);
+    wrapper.className = `toolbar-view-mode-group`;
 
-    const label = document.createElement('span');
-    label.className = 'toolbar-view-mode-label';
-    label.textContent = 'View:';
+    const label = document.createElement(`span`);
+    label.className = `toolbar-view-mode-label`;
+    label.textContent = `View:`;
     wrapper.appendChild(label);
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'toolbar-view-mode-toggle';
-    button.setAttribute('aria-label', 'Toggle view mode');
+    const button = document.createElement(`button`);
+    button.type = `button`;
+    button.className = `toolbar-view-mode-toggle`;
+    button.setAttribute(`aria-label`, `Toggle view mode`);
 
     const currentMode = this.editor.getViewMode();
     button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
-    button.addEventListener('click', () => {
-      const newMode = this.editor.getViewMode() === 'writing' ? 'source' : 'writing';
+    button.addEventListener(`click`, () => {
+      const newMode = this.editor.getViewMode() === `writing` ? `source` : `writing`;
       this.editor.setViewMode(/** @type {import('../editor/editor.js').ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
     });
@@ -460,24 +460,24 @@ export class Toolbar {
    * @param {ButtonConfig} config - The button configuration
    */
   async handleButtonClick(config) {
-    const [actionType, actionValue] = config.action.split(':');
+    const [actionType, actionValue] = config.action.split(`:`);
 
     switch (actionType) {
-      case 'changeType':
+      case `changeType`:
         this.editor.changeElementType(actionValue);
         break;
-      case 'format':
+      case `format`:
         this.editor.applyFormat(actionValue);
         break;
-      case 'list':
+      case `list`:
         await this.editor.toggleList(
           /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
         );
         break;
-      case 'image':
+      case `image`:
         this.handleImageAction();
         break;
-      case 'table':
+      case `table`:
         this.handleTableAction();
         break;
     }
@@ -496,12 +496,12 @@ export class Toolbar {
     /** @type {Partial<import('../image/image-modal.js').ImageData>|undefined} */
     let existing;
 
-    if (currentNode?.type === 'image') {
+    if (currentNode?.type === `image`) {
       existing = {
         alt: currentNode.attributes.alt ?? currentNode.content,
-        src: currentNode.attributes.url ?? '',
-        href: currentNode.attributes.href ?? '',
-        style: currentNode.attributes.style ?? '',
+        src: currentNode.attributes.url ?? ``,
+        href: currentNode.attributes.href ?? ``,
+        style: currentNode.attributes.style ?? ``,
       };
     }
 
@@ -539,10 +539,10 @@ export class Toolbar {
    * @returns {string}
    */
   extractFilename(src) {
-    if (!src) return '';
-    const clean = src.split('?')[0].split('#')[0];
+    if (!src) return ``;
+    const clean = src.split(`?`)[0].split(`#`)[0];
     const parts = clean.split(/[/\\]/);
-    return parts[parts.length - 1] || '';
+    return parts[parts.length - 1] || ``;
   }
 
   /**
@@ -552,7 +552,7 @@ export class Toolbar {
    * @returns {string}
    */
   replaceFilename(src, newName) {
-    const lastSlash = Math.max(src.lastIndexOf('/'), src.lastIndexOf('\\'));
+    const lastSlash = Math.max(src.lastIndexOf(`/`), src.lastIndexOf(`\\`));
     if (lastSlash === -1) return newName;
     return src.substring(0, lastSlash + 1) + newName;
   }
@@ -565,12 +565,12 @@ export class Toolbar {
    */
   resolveImagePath(src) {
     let resolved = src;
-    if (resolved.startsWith('file:///')) {
+    if (resolved.startsWith(`file:///`)) {
       resolved = resolved.slice(8); // Remove 'file:///'
     }
     resolved = decodeURIComponent(resolved);
     // Convert forward slashes back to backslashes on Windows
-    resolved = resolved.replace(/\//g, '\\');
+    resolved = resolved.replace(/\//g, `\\`);
     return resolved;
   }
 
@@ -588,7 +588,7 @@ export class Toolbar {
     /** @type {import('../table/table-modal.js').TableData|null} */
     let existing = null;
 
-    if (currentNode?.type === 'table') {
+    if (currentNode?.type === `table`) {
       existing = TableModal.parseTableContent(currentNode.content);
     }
 
@@ -613,21 +613,21 @@ export class Toolbar {
    * @type {Record<string, string[]>}
    */
   static INLINE_TYPE_TO_BUTTONS = {
-    bold: ['bold'],
-    italic: ['italic'],
-    'bold-italic': ['bold', 'italic'],
-    strikethrough: ['strikethrough'],
-    sub: ['subscript'],
-    sup: ['superscript'],
-    'inline-code': ['code'],
-    link: ['link'],
+    bold: [`bold`],
+    italic: [`italic`],
+    'bold-italic': [`bold`, `italic`],
+    strikethrough: [`strikethrough`],
+    sub: [`subscript`],
+    sup: [`superscript`],
+    'inline-code': [`code`],
+    link: [`link`],
     // HTML tag equivalents
-    strong: ['bold'],
-    b: ['bold'],
-    em: ['italic'],
-    i: ['italic'],
-    del: ['strikethrough'],
-    s: ['strikethrough'],
+    strong: [`bold`],
+    b: [`bold`],
+    em: [`italic`],
+    i: [`italic`],
+    del: [`strikethrough`],
+    s: [`strikethrough`],
   };
 
   /**
@@ -657,7 +657,7 @@ export class Toolbar {
       blockNode = walk;
     }
 
-    const blockType = blockNode?.type || 'paragraph';
+    const blockType = blockNode?.type || `paragraph`;
 
     for (const button of this.buttons) {
       const config = button.config;
@@ -669,25 +669,25 @@ export class Toolbar {
       }
 
       // Block-type active state.
-      if (config.action.startsWith('changeType:')) {
-        const targetType = config.action.split(':')[1];
+      if (config.action.startsWith(`changeType:`)) {
+        const targetType = config.action.split(`:`)[1];
         button.setActive(targetType === blockType);
-      } else if (config.action === 'list:unordered') {
+      } else if (config.action === `list:unordered`) {
         button.setActive(
-          blockType === 'list-item' &&
+          blockType === `list-item` &&
             !blockNode?.attributes?.ordered &&
-            typeof blockNode?.attributes?.checked !== 'boolean',
+            typeof blockNode?.attributes?.checked !== `boolean`,
         );
-      } else if (config.action === 'list:ordered') {
-        button.setActive(blockType === 'list-item' && !!blockNode?.attributes?.ordered);
-      } else if (config.action === 'list:checklist') {
+      } else if (config.action === `list:ordered`) {
+        button.setActive(blockType === `list-item` && !!blockNode?.attributes?.ordered);
+      } else if (config.action === `list:checklist`) {
         button.setActive(
-          blockType === 'list-item' && typeof blockNode?.attributes?.checked === 'boolean',
+          blockType === `list-item` && typeof blockNode?.attributes?.checked === `boolean`,
         );
       }
 
       // Inline format active state.
-      if (config.action.startsWith('format:')) {
+      if (config.action.startsWith(`format:`)) {
         button.setActive(activeFormats.has(config.id));
       }
     }
@@ -698,7 +698,7 @@ export class Toolbar {
    */
   show() {
     if (this.toolbarElement) {
-      this.toolbarElement.classList.remove('hidden');
+      this.toolbarElement.classList.remove(`hidden`);
     }
   }
 
@@ -707,7 +707,7 @@ export class Toolbar {
    */
   hide() {
     if (this.toolbarElement) {
-      this.toolbarElement.classList.add('hidden');
+      this.toolbarElement.classList.add(`hidden`);
     }
   }
 }

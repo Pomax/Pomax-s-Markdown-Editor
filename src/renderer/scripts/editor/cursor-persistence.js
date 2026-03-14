@@ -44,13 +44,13 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
       if (node.id === cursor.nodeId) {
         // For html-block containers, the cursor may be on the
         // opening/closing tag line (source view tagPart).
-        if (node.type === 'html-block' && node.children.length > 0 && !cursor.tagPart) {
+        if (node.type === `html-block` && node.children.length > 0 && !cursor.tagPart) {
           // Cursor is on a child — not this node itself.
           // Fall through to walk children below.
-        } else if (cursor.tagPart === 'closing') {
+        } else if (cursor.tagPart === `closing`) {
           // Cursor is on the closing tag line of an html-block.
           const md = node.toMarkdown();
-          const closingTag = node.attributes.closingTag ?? '';
+          const closingTag = node.attributes.closingTag ?? ``;
           return pos + md.length - closingTag.length + cursor.offset;
         } else {
           const prefix = getPrefixLength(node.type, node.attributes);
@@ -59,19 +59,19 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
       }
 
       // For html-block containers, walk children to find the cursor.
-      if (node.type === 'html-block' && node.children.length > 0) {
-        const openingTag = node.attributes.openingTag ?? '';
+      if (node.type === `html-block` && node.children.length > 0) {
+        const openingTag = node.attributes.openingTag ?? ``;
 
         // Check if this is a single bare-text child (collapsed form).
         if (
           node.children.length === 1 &&
           node.children[0].attributes.bareText &&
-          node.children[0].type === 'paragraph'
+          node.children[0].type === `paragraph`
         ) {
           const child = node.children[0];
           if (child.id === cursor.nodeId) {
             // <tag>content</tag> — cursor is inside the content
-            const tag = node.attributes.tagName || 'div';
+            const tag = node.attributes.tagName || `div`;
             return pos + `<${tag}>`.length + cursor.offset;
           }
           // Not found here; advance past this node's markdown
@@ -82,14 +82,14 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
         // Multi-child html-block: opening tag \n\n child1 \n\n child2 ... \n\n closing tag
         pos += openingTag.length;
         // Separator between opening tag and first child
-        pos += '\n\n'.length;
+        pos += `\n\n`.length;
 
-        const result = walk(node.children, '\n\n');
+        const result = walk(node.children, `\n\n`);
         if (result !== -1) return result;
 
         // Closing tag
         if (node.attributes.closingTag) {
-          pos += '\n\n'.length;
+          pos += `\n\n`.length;
           pos += node.attributes.closingTag.length;
         }
       } else {
@@ -100,7 +100,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
     return -1;
   }
 
-  return walk(tree.children, '\n\n');
+  return walk(tree.children, `\n\n`);
 }
 
 /**
@@ -136,15 +136,15 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
         // Target is within this node (or at its end boundary).
 
         // For html-block containers with children, recurse.
-        if (node.type === 'html-block' && node.children.length > 0) {
+        if (node.type === `html-block` && node.children.length > 0) {
           // Single bare-text child (collapsed):  <tag>content</tag>
           if (
             node.children.length === 1 &&
             node.children[0].attributes.bareText &&
-            node.children[0].type === 'paragraph'
+            node.children[0].type === `paragraph`
           ) {
             const child = node.children[0];
-            const tag = node.attributes.tagName || 'div';
+            const tag = node.attributes.tagName || `div`;
             const openLen = `<${tag}>`.length;
             const contentOffset = absoluteOffset - pos - openLen;
             return {
@@ -154,30 +154,30 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
           }
 
           // Multi-child: opening tag \n\n children \n\n closing tag
-          const openingTag = node.attributes.openingTag ?? '';
-          const afterOpen = pos + openingTag.length + '\n\n'.length;
+          const openingTag = node.attributes.openingTag ?? ``;
+          const afterOpen = pos + openingTag.length + `\n\n`.length;
 
           if (absoluteOffset < afterOpen) {
             // Cursor is on the opening tag line
             return {
               nodeId: node.id,
               offset: Math.min(absoluteOffset - pos, openingTag.length),
-              tagPart: 'opening',
+              tagPart: `opening`,
             };
           }
 
-          pos += openingTag.length + '\n\n'.length;
-          const result = walk(node.children, '\n\n');
+          pos += openingTag.length + `\n\n`.length;
+          const result = walk(node.children, `\n\n`);
           if (result) return result;
 
           // If we get here, offset is in the closing tag area
           if (node.attributes.closingTag) {
-            pos += '\n\n'.length;
+            pos += `\n\n`.length;
             const closingOffset = absoluteOffset - pos;
             return {
               nodeId: node.id,
               offset: Math.max(0, Math.min(closingOffset, node.attributes.closingTag.length)),
-              tagPart: 'closing',
+              tagPart: `closing`,
             };
           }
 
@@ -199,7 +199,7 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
     return null;
   }
 
-  const cursor = walk(tree.children, '\n\n');
+  const cursor = walk(tree.children, `\n\n`);
   if (cursor) return cursor;
 
   // Offset past the end — place cursor at end of last node.

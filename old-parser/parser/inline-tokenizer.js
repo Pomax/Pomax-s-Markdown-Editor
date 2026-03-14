@@ -15,7 +15,7 @@
 // add the tag name to this set.
 
 /** @type {Set<string>} */
-const INLINE_HTML_TAGS = new Set(['strong', 'em', 'del', 's', 'sub', 'sup', 'mark', 'u', 'b', 'i']);
+const INLINE_HTML_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
 // ── Token types ─────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ export function tokenizeInline(input) {
    * @param {number} end */
   function flushText(end) {
     if (end > textStart) {
-      tokens.push({ type: 'text', raw: input.slice(textStart, end) });
+      tokens.push({ type: `text`, raw: input.slice(textStart, end) });
     }
   }
 
@@ -65,12 +65,12 @@ export function tokenizeInline(input) {
     const ch = input[i];
 
     // ── Backtick: inline code (no nesting) ──────────────────
-    if (ch === '`') {
-      const close = input.indexOf('`', i + 1);
+    if (ch === `\``) {
+      const close = input.indexOf(`\``, i + 1);
       if (close > i + 1) {
         flushText(i);
         const raw = input.slice(i, close + 1);
-        tokens.push({ type: 'code', raw, content: input.slice(i + 1, close) });
+        tokens.push({ type: `code`, raw, content: input.slice(i + 1, close) });
         i = close + 1;
         textStart = i;
         continue;
@@ -78,39 +78,39 @@ export function tokenizeInline(input) {
     }
 
     // ── **** or more: nonsense, treat as plain text ──────
-    if (ch === '*' && input[i + 1] === '*' && input[i + 2] === '*' && input[i + 3] === '*') {
+    if (ch === `*` && input[i + 1] === `*` && input[i + 2] === `*` && input[i + 3] === `*`) {
       // Count the full run of asterisks and leave them as text
       let end = i + 4;
-      while (end < input.length && input[end] === '*') end++;
+      while (end < input.length && input[end] === `*`) end++;
       // Don't flush — let the asterisks accumulate in the text span
       i = end;
       continue;
     }
 
     // ── *** bold+italic (single delimiter) ─────────────────
-    if (ch === '*' && input[i + 1] === '*' && input[i + 2] === '*') {
+    if (ch === `*` && input[i + 1] === `*` && input[i + 2] === `*`) {
       flushText(i);
       const isClose = tokens.some(
         (t) =>
-          t.type === 'bold-italic-open' &&
+          t.type === `bold-italic-open` &&
           !tokens.some(
-            (u) => u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+            (u) => u.type === `bold-italic-close` && tokens.indexOf(u) > tokens.indexOf(t),
           ),
       );
-      tokens.push({ type: isClose ? 'bold-italic-close' : 'bold-italic-open', raw: '***' });
+      tokens.push({ type: isClose ? `bold-italic-close` : `bold-italic-open`, raw: `***` });
       i += 3;
       textStart = i;
       continue;
     }
 
     // ── ** bold ─────────────────────────────────────────────
-    if (ch === '*' && input[i + 1] === '*') {
+    if (ch === `*` && input[i + 1] === `*`) {
       // If *** is open, * and ** are just text — only *** can close it.
       const hasBoldItalicOpen = tokens.some(
         (t) =>
-          t.type === 'bold-italic-open' &&
+          t.type === `bold-italic-open` &&
           !tokens.some(
-            (u) => u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+            (u) => u.type === `bold-italic-close` && tokens.indexOf(u) > tokens.indexOf(t),
           ),
       );
       if (hasBoldItalicOpen) {
@@ -122,34 +122,34 @@ export function tokenizeInline(input) {
       // on the stack, this is a close; otherwise it's an open.
       const isClose = tokens.some(
         (t) =>
-          t.type === 'bold-open' &&
-          !tokens.some((u) => u.type === 'bold-close' && tokens.indexOf(u) > tokens.indexOf(t)),
+          t.type === `bold-open` &&
+          !tokens.some((u) => u.type === `bold-close` && tokens.indexOf(u) > tokens.indexOf(t)),
       );
-      tokens.push({ type: isClose ? 'bold-close' : 'bold-open', raw: '**' });
+      tokens.push({ type: isClose ? `bold-close` : `bold-open`, raw: `**` });
       i += 2;
       textStart = i;
       continue;
     }
 
     // ── __ double-underscore emphasis ────────────────────────
-    if (ch === '_' && input[i + 1] === '_') {
+    if (ch === `_` && input[i + 1] === `_`) {
       // Only at word boundary
-      const before = i > 0 ? input[i - 1] : ' ';
-      const after = i + 2 < input.length ? input[i + 2] : ' ';
+      const before = i > 0 ? input[i - 1] : ` `;
+      const after = i + 2 < input.length ? input[i + 2] : ` `;
       if (/\W/.test(before) || /\W/.test(after)) {
         flushText(i);
         const isClose = tokens.some(
           (t) =>
-            t.type === 'italic-open' &&
-            t.raw === '__' &&
+            t.type === `italic-open` &&
+            t.raw === `__` &&
             !tokens.some(
               (u) =>
-                u.type === 'italic-close' &&
-                u.raw === '__' &&
+                u.type === `italic-close` &&
+                u.raw === `__` &&
                 tokens.indexOf(u) > tokens.indexOf(t),
             ),
         );
-        tokens.push({ type: isClose ? 'italic-close' : 'italic-open', raw: '__' });
+        tokens.push({ type: isClose ? `italic-close` : `italic-open`, raw: `__` });
         i += 2;
         textStart = i;
         continue;
@@ -157,18 +157,18 @@ export function tokenizeInline(input) {
     }
 
     // ── ~~ strikethrough ────────────────────────────────────
-    if (ch === '~' && input[i + 1] === '~') {
+    if (ch === `~` && input[i + 1] === `~`) {
       flushText(i);
       const isClose = tokens.some(
         (t) =>
-          t.type === 'strikethrough-open' &&
+          t.type === `strikethrough-open` &&
           !tokens.some(
-            (u) => u.type === 'strikethrough-close' && tokens.indexOf(u) > tokens.indexOf(t),
+            (u) => u.type === `strikethrough-close` && tokens.indexOf(u) > tokens.indexOf(t),
           ),
       );
       tokens.push({
-        type: isClose ? 'strikethrough-close' : 'strikethrough-open',
-        raw: '~~',
+        type: isClose ? `strikethrough-close` : `strikethrough-open`,
+        raw: `~~`,
       });
       i += 2;
       textStart = i;
@@ -176,13 +176,13 @@ export function tokenizeInline(input) {
     }
 
     // ── * single-star italic ────────────────────────────────
-    if (ch === '*' && input[i + 1] !== '*') {
+    if (ch === `*` && input[i + 1] !== `*`) {
       // If *** is open, * and ** are just text — only *** can close it.
       const hasBoldItalicOpen = tokens.some(
         (t) =>
-          t.type === 'bold-italic-open' &&
+          t.type === `bold-italic-open` &&
           !tokens.some(
-            (u) => u.type === 'bold-italic-close' && tokens.indexOf(u) > tokens.indexOf(t),
+            (u) => u.type === `bold-italic-close` && tokens.indexOf(u) > tokens.indexOf(t),
           ),
       );
       if (hasBoldItalicOpen) {
@@ -192,35 +192,35 @@ export function tokenizeInline(input) {
       flushText(i);
       const isClose = tokens.some(
         (t) =>
-          t.type === 'italic-open' &&
-          t.raw === '*' &&
+          t.type === `italic-open` &&
+          t.raw === `*` &&
           !tokens.some(
             (u) =>
-              u.type === 'italic-close' && u.raw === '*' && tokens.indexOf(u) > tokens.indexOf(t),
+              u.type === `italic-close` && u.raw === `*` && tokens.indexOf(u) > tokens.indexOf(t),
           ),
       );
-      tokens.push({ type: isClose ? 'italic-close' : 'italic-open', raw: '*' });
+      tokens.push({ type: isClose ? `italic-close` : `italic-open`, raw: `*` });
       i += 1;
       textStart = i;
       continue;
     }
 
     // ── _ single-underscore italic (word-boundary only) ─────
-    if (ch === '_' && input[i + 1] !== '_') {
-      const before = i > 0 ? input[i - 1] : ' ';
-      const after = i + 1 < input.length ? input[i + 1] : ' ';
+    if (ch === `_` && input[i + 1] !== `_`) {
+      const before = i > 0 ? input[i - 1] : ` `;
+      const after = i + 1 < input.length ? input[i + 1] : ` `;
       if (/\W/.test(before) || /\W/.test(after)) {
         flushText(i);
         const isClose = tokens.some(
           (t) =>
-            t.type === 'italic-open' &&
-            t.raw === '_' &&
+            t.type === `italic-open` &&
+            t.raw === `_` &&
             !tokens.some(
               (u) =>
-                u.type === 'italic-close' && u.raw === '_' && tokens.indexOf(u) > tokens.indexOf(t),
+                u.type === `italic-close` && u.raw === `_` && tokens.indexOf(u) > tokens.indexOf(t),
             ),
         );
-        tokens.push({ type: isClose ? 'italic-close' : 'italic-open', raw: '_' });
+        tokens.push({ type: isClose ? `italic-close` : `italic-open`, raw: `_` });
         i += 1;
         textStart = i;
         continue;
@@ -228,14 +228,14 @@ export function tokenizeInline(input) {
     }
 
     // ── ![alt](src) image or [text](href) link ─────────────
-    if (ch === '[') {
+    if (ch === `[`) {
       // Check for image syntax: preceding '!' means this is ![alt](src)
-      const isImage = i > 0 && input[i - 1] === '!';
+      const isImage = i > 0 && input[i - 1] === `!`;
 
       // Look ahead for ](href)
-      const closeBracket = input.indexOf(']', i + 1);
-      if (closeBracket !== -1 && input[closeBracket + 1] === '(') {
-        const closeParen = input.indexOf(')', closeBracket + 2);
+      const closeBracket = input.indexOf(`]`, i + 1);
+      if (closeBracket !== -1 && input[closeBracket + 1] === `(`) {
+        const closeParen = input.indexOf(`)`, closeBracket + 2);
         if (closeParen !== -1) {
           if (isImage) {
             // Flush text up to (but not including) the '!'
@@ -243,7 +243,7 @@ export function tokenizeInline(input) {
             const alt = input.slice(i + 1, closeBracket);
             const src = input.slice(closeBracket + 2, closeParen);
             tokens.push({
-              type: 'image',
+              type: `image`,
               raw: input.slice(i - 1, closeParen + 1),
               alt,
               src,
@@ -255,13 +255,13 @@ export function tokenizeInline(input) {
           flushText(i);
           const linkText = input.slice(i + 1, closeBracket);
           const href = input.slice(closeBracket + 2, closeParen);
-          tokens.push({ type: 'link-open', raw: '[' });
+          tokens.push({ type: `link-open`, raw: `[` });
           // Tokenize the link text recursively for nested formatting
           const innerTokens = tokenizeInline(linkText);
           for (const t of innerTokens) {
             tokens.push(t);
           }
-          tokens.push({ type: 'link-close', raw: `](${href})`, href });
+          tokens.push({ type: `link-close`, raw: `](${href})`, href });
           i = closeParen + 1;
           textStart = i;
           continue;
@@ -270,8 +270,8 @@ export function tokenizeInline(input) {
     }
 
     // ── <tag> / </tag> HTML inline tags ──────────────────────
-    if (ch === '<') {
-      const closeAngle = input.indexOf('>', i + 1);
+    if (ch === `<`) {
+      const closeAngle = input.indexOf(`>`, i + 1);
       if (closeAngle !== -1) {
         const tagContent = input.slice(i + 1, closeAngle);
         // Closing tag: </tagname>
@@ -281,7 +281,7 @@ export function tokenizeInline(input) {
           if (INLINE_HTML_TAGS.has(tagName)) {
             flushText(i);
             tokens.push({
-              type: 'html-close',
+              type: `html-close`,
               raw: input.slice(i, closeAngle + 1),
               tag: tagName,
             });
@@ -297,7 +297,7 @@ export function tokenizeInline(input) {
           if (INLINE_HTML_TAGS.has(tagName)) {
             flushText(i);
             tokens.push({
-              type: 'html-open',
+              type: `html-open`,
               raw: input.slice(i, closeAngle + 1),
               tag: tagName,
             });
@@ -345,10 +345,10 @@ export function findMatchedTokenIndices(tokens) {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
 
-    if (token.type === 'text' || token.type === 'code') continue;
+    if (token.type === `text` || token.type === `code`) continue;
 
     // Image tokens are self-contained — always matched.
-    if (token.type === 'image') {
+    if (token.type === `image`) {
       matched.add(i);
       continue;
     }
@@ -360,7 +360,7 @@ export function findMatchedTokenIndices(tokens) {
     }
 
     // ── HTML open tags ──────────────────────────────────────
-    if (token.type === 'html-open') {
+    if (token.type === `html-open`) {
       const tag = /** @type {string} */ (token.tag);
       openStack.push({ closeType: `html-close:${tag}`, tokenIndex: i });
       continue;
@@ -368,10 +368,10 @@ export function findMatchedTokenIndices(tokens) {
 
     // ── Markdown close tokens ───────────────────────────────
     if (
-      token.type === 'bold-close' ||
-      token.type === 'italic-close' ||
-      token.type === 'bold-italic-close' ||
-      token.type === 'strikethrough-close'
+      token.type === `bold-close` ||
+      token.type === `italic-close` ||
+      token.type === `bold-italic-close` ||
+      token.type === `strikethrough-close`
     ) {
       const idx = _findOpenIdx(openStack, token.type);
       if (idx !== -1) {
@@ -383,8 +383,8 @@ export function findMatchedTokenIndices(tokens) {
     }
 
     // ── Link close ──────────────────────────────────────────
-    if (token.type === 'link-close') {
-      const idx = _findOpenIdx(openStack, 'link-close');
+    if (token.type === `link-close`) {
+      const idx = _findOpenIdx(openStack, `link-close`);
       if (idx !== -1) {
         matched.add(openStack[idx].tokenIndex);
         matched.add(i);
@@ -394,7 +394,7 @@ export function findMatchedTokenIndices(tokens) {
     }
 
     // ── HTML close tags ─────────────────────────────────────
-    if (token.type === 'html-close') {
+    if (token.type === `html-close`) {
       const tag = /** @type {string} */ (token.tag);
       const closeKey = `html-close:${tag}`;
       const idx = _findOpenIdx(openStack, closeKey);
@@ -446,11 +446,11 @@ function _findOpenIdx(openStack, closeType) {
  * @type {Record<string, string>}
  */
 const CLOSE_TYPE_FOR = {
-  'bold-open': 'bold-close',
-  'italic-open': 'italic-close',
-  'bold-italic-open': 'bold-italic-close',
-  'strikethrough-open': 'strikethrough-close',
-  'link-open': 'link-close',
+  'bold-open': `bold-close`,
+  'italic-open': `italic-close`,
+  'bold-italic-open': `bold-italic-close`,
+  'strikethrough-open': `strikethrough-close`,
+  'link-open': `link-close`,
 };
 
 /**
@@ -458,11 +458,11 @@ const CLOSE_TYPE_FOR = {
  * @type {Record<string, string>}
  */
 const SEGMENT_TYPE_FOR = {
-  'bold-open': 'bold',
-  'italic-open': 'italic',
-  'bold-italic-open': 'bold-italic',
-  'strikethrough-open': 'strikethrough',
-  'link-open': 'link',
+  'bold-open': `bold`,
+  'italic-open': `italic`,
+  'bold-italic-open': `bold-italic`,
+  'strikethrough-open': `strikethrough`,
+  'link-open': `link`,
 };
 
 /**
@@ -489,18 +489,18 @@ export function buildInlineTree(tokens) {
   for (const token of tokens) {
     const current = stack[stack.length - 1];
 
-    if (token.type === 'text') {
-      current.push({ type: 'text', text: token.raw });
+    if (token.type === `text`) {
+      current.push({ type: `text`, text: token.raw });
       continue;
     }
 
-    if (token.type === 'code') {
-      current.push({ type: 'code', content: token.content });
+    if (token.type === `code`) {
+      current.push({ type: `code`, content: token.content });
       continue;
     }
 
-    if (token.type === 'image') {
-      current.push({ type: 'image', alt: token.alt, src: token.src });
+    if (token.type === `image`) {
+      current.push({ type: `image`, alt: token.alt, src: token.src });
       continue;
     }
 
@@ -520,10 +520,10 @@ export function buildInlineTree(tokens) {
 
     // ── Markdown close tokens ───────────────────────────────
     if (
-      token.type === 'bold-close' ||
-      token.type === 'italic-close' ||
-      token.type === 'bold-italic-close' ||
-      token.type === 'strikethrough-close'
+      token.type === `bold-close` ||
+      token.type === `italic-close` ||
+      token.type === `bold-italic-close` ||
+      token.type === `strikethrough-close`
     ) {
       // Find the matching open on the stack
       const idx = findMatchingOpen(openStack, token.type);
@@ -536,27 +536,27 @@ export function buildInlineTree(tokens) {
         parent.push({ type: meta.type, children });
       } else {
         // Unmatched close — emit as text
-        current.push({ type: 'text', text: token.raw });
+        current.push({ type: `text`, text: token.raw });
       }
       continue;
     }
 
-    if (token.type === 'link-close') {
-      const idx = findMatchingOpen(openStack, 'link-close');
+    if (token.type === `link-close`) {
+      const idx = findMatchingOpen(openStack, `link-close`);
       if (idx !== -1) {
         collapseStack(stack, openStack, idx);
         openStack.pop();
         const children = /** @type {InlineSegment[]} */ (stack.pop());
         const parent = stack[stack.length - 1];
-        parent.push({ type: 'link', href: token.href, children });
+        parent.push({ type: `link`, href: token.href, children });
       } else {
-        current.push({ type: 'text', text: token.raw });
+        current.push({ type: `text`, text: token.raw });
       }
       continue;
     }
 
     // ── HTML open tags ──────────────────────────────────────
-    if (token.type === 'html-open') {
+    if (token.type === `html-open`) {
       const tag = /** @type {string} */ (token.tag);
       openStack.push({
         type: tag,
@@ -569,7 +569,7 @@ export function buildInlineTree(tokens) {
     }
 
     // ── HTML close tags ─────────────────────────────────────
-    if (token.type === 'html-close') {
+    if (token.type === `html-close`) {
       const tag = /** @type {string} */ (token.tag);
       const closeKey = `html-close:${tag}`;
       const idx = findMatchingOpen(openStack, closeKey);
@@ -581,7 +581,7 @@ export function buildInlineTree(tokens) {
         parent.push({ type: meta.tag, tag: meta.tag, children });
       } else {
         // Unmatched close tag — emit as text
-        current.push({ type: 'text', text: token.raw });
+        current.push({ type: `text`, text: token.raw });
       }
     }
   }
@@ -592,7 +592,7 @@ export function buildInlineTree(tokens) {
     const children = /** @type {InlineSegment[]} */ (stack.pop());
     const parent = stack[stack.length - 1];
     // Emit the open delimiter as text, then append children
-    parent.push({ type: 'text', text: meta.raw });
+    parent.push({ type: `text`, text: meta.raw });
     for (const child of children) {
       parent.push(child);
     }
@@ -631,7 +631,7 @@ function collapseStack(stack, openStack, targetIdx) {
     const meta = /** @type {{raw: string}} */ (openStack.pop());
     const children = /** @type {InlineSegment[]} */ (stack.pop());
     const parent = stack[stack.length - 1];
-    parent.push({ type: 'text', text: meta.raw });
+    parent.push({ type: `text`, text: meta.raw });
     for (const child of children) {
       parent.push(child);
     }

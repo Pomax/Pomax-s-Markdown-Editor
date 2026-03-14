@@ -15,7 +15,7 @@
     "lint": "npm run lint:format && npm run lint:typing && npm run lint:codestyle",
     "lint:codestyle": "npm run lint:comments && npm run lint:quotes",
     "lint:comments": "node scripts/lint-comments.js",
-    "lint:quotes": "node scripts/force-backtick-strings.js",
+    "lint:quotes": "eslint --fix -c backticks.config.js",
     "lint:typing": "tsc -p jsconfig.json",
     "lint:format": "biome format --write src test scripts",
     "docs:generate": "node scripts/generate-api-docs.js",
@@ -39,6 +39,7 @@
     "@playwright/test": "^1.40.0",
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
+    "eslint": "^10.0.3",
     "typescript": "^5.3.0"
   },
   "dependencies": {

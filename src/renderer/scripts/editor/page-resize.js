@@ -37,7 +37,7 @@ export const MIN_WIDTH_PX = 300;
  */
 export function computeNewWidth({ startWidth, startX, currentX, side, maxContainerWidth }) {
   const dx = currentX - startX;
-  const widthDelta = side === 'right' ? dx * 2 : -dx * 2;
+  const widthDelta = side === `right` ? dx * 2 : -dx * 2;
   const maxWidth = maxContainerWidth - 40;
   return Math.round(Math.max(MIN_WIDTH_PX, Math.min(maxWidth, startWidth + widthDelta)));
 }
@@ -58,8 +58,8 @@ export function initPageResizeHandles(editor) {
   /** @type {{ current: HTMLElement }} */
   const editorRef = { current: editor };
 
-  const leftHandle = createHandle('left');
-  const rightHandle = createHandle('right');
+  const leftHandle = createHandle(`left`);
+  const rightHandle = createHandle(`right`);
 
   document.body.appendChild(leftHandle);
   document.body.appendChild(rightHandle);
@@ -74,10 +74,10 @@ export function initPageResizeHandles(editor) {
   ro.observe(container);
 
   // Re-position on scroll (the editor container is the scroll parent).
-  container.addEventListener('scroll', update, { passive: true });
+  container.addEventListener(`scroll`, update, { passive: true });
 
-  attachDrag(editorRef, leftHandle, 'left', rightHandle);
-  attachDrag(editorRef, rightHandle, 'right', leftHandle);
+  attachDrag(editorRef, leftHandle, `left`, rightHandle);
+  attachDrag(editorRef, rightHandle, `right`, leftHandle);
 
   /**
    * Re-targets the resize handles to a different editor element.
@@ -100,7 +100,7 @@ export function initPageResizeHandles(editor) {
  * @returns {HTMLDivElement}
  */
 function createHandle(side) {
-  const handle = document.createElement('div');
+  const handle = document.createElement(`div`);
   handle.className = `editor-resize-handle editor-resize-handle--${side}`;
   handle.dataset.side = side;
   return handle;
@@ -116,8 +116,8 @@ function createHandle(side) {
  * @param {HTMLDivElement} rightHandle
  */
 function positionHandles(editor, leftHandle, rightHandle) {
-  leftHandle.style.display = '';
-  rightHandle.style.display = '';
+  leftHandle.style.display = ``;
+  rightHandle.style.display = ``;
 
   const container = editor.parentElement;
   if (!container) return;
@@ -198,8 +198,8 @@ function attachDrag(editorRef, handle, side, otherHandle) {
       const newLeftX = startLeftX - halfGrowth - handleWidth / 2;
       const newRightX = startRightX + halfGrowth - handleWidth / 2;
 
-      handle.style.left = `${side === 'left' ? newLeftX : newRightX}px`;
-      otherHandle.style.left = `${side === 'left' ? newRightX : newLeftX}px`;
+      handle.style.left = `${side === `left` ? newLeftX : newRightX}px`;
+      otherHandle.style.left = `${side === `left` ? newRightX : newLeftX}px`;
     });
   };
 
@@ -208,28 +208,28 @@ function attachDrag(editorRef, handle, side, otherHandle) {
       cancelAnimationFrame(rafId);
       rafId = null;
     }
-    handle.classList.remove('dragging');
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    handle.classList.remove(`dragging`);
+    document.body.style.cursor = ``;
+    document.body.style.userSelect = ``;
+    document.removeEventListener(`mousemove`, onMouseMove);
+    document.removeEventListener(`mouseup`, onMouseUp);
 
     // Compute final width from the delta (don't rely on rAF having run).
     const finalWidth = getNewWidth();
-    editorRef.current.style.maxWidth = '';
-    applyPageWidth({ useFixed: false, width: finalWidth, unit: 'px' });
+    editorRef.current.style.maxWidth = ``;
+    applyPageWidth({ useFixed: false, width: finalWidth, unit: `px` });
 
     // Snap handles to actual editor rect now that the CSS variable is set.
     positionHandles(
       editorRef.current,
-      side === 'left' ? handle : otherHandle,
-      side === 'right' ? handle : otherHandle,
+      side === `left` ? handle : otherHandle,
+      side === `right` ? handle : otherHandle,
     );
 
     persistPageWidth(finalWidth);
   };
 
-  handle.addEventListener('mousedown', (e) => {
+  handle.addEventListener(`mousedown`, (e) => {
     e.preventDefault();
     startX = e.clientX;
     startWidth = editorRef.current.getBoundingClientRect().width;
@@ -239,11 +239,11 @@ function attachDrag(editorRef, handle, side, otherHandle) {
     startLeftX = editorRect.left;
     startRightX = editorRect.right;
 
-    handle.classList.add('dragging');
-    document.body.style.cursor = 'ew-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    handle.classList.add(`dragging`);
+    document.body.style.cursor = `ew-resize`;
+    document.body.style.userSelect = `none`;
+    document.addEventListener(`mousemove`, onMouseMove);
+    document.addEventListener(`mouseup`, onMouseUp);
   });
 }
 
@@ -253,9 +253,9 @@ function attachDrag(editorRef, handle, side, otherHandle) {
  */
 async function persistPageWidth(widthPx) {
   if (!window.electronAPI) return;
-  const pageWidth = { useFixed: false, width: widthPx, unit: 'px' };
+  const pageWidth = { useFixed: false, width: widthPx, unit: `px` };
   try {
-    await window.electronAPI.setSetting('pageWidth', pageWidth);
+    await window.electronAPI.setSetting(`pageWidth`, pageWidth);
   } catch {
     // Non-critical — ignore
   }

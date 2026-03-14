@@ -38,16 +38,16 @@ export class InputHandler {
     if (this.editor.promotePhantomParagraph()) {
       // For paste we still need to continue; for other input types
       // the keydown handler already drove the edit, so prevent.
-      if (event.inputType !== 'insertFromPaste') {
+      if (event.inputType !== `insertFromPaste`) {
         event.preventDefault();
         return;
       }
     }
 
     // Handle paste
-    if (event.inputType === 'insertFromPaste') {
+    if (event.inputType === `insertFromPaste`) {
       event.preventDefault();
-      const text = event.dataTransfer?.getData('text/plain') ?? '';
+      const text = event.dataTransfer?.getData(`text/plain`) ?? ``;
       if (text) {
         this.editor.editOperations.insertTextAtCursor(text);
       }
@@ -56,7 +56,7 @@ export class InputHandler {
 
     // Handle cut — the clipboard was already written by the 'cut'
     // event handler; here we just delete the selected range via the tree.
-    if (event.inputType === 'deleteByCut') {
+    if (event.inputType === `deleteByCut`) {
       event.preventDefault();
       this.editor.syncCursorFromDOM();
       if (this.editor.treeRange) {
@@ -100,30 +100,30 @@ export class InputHandler {
     // Reset select-all cycling for any key that is not Ctrl/Cmd+A
     // and not a bare modifier key (pressing Ctrl alone should not
     // reset the cycle so that repeated Ctrl+A works).
-    const isSelectAll = (event.ctrlKey || event.metaKey) && event.key === 'a';
+    const isSelectAll = (event.ctrlKey || event.metaKey) && event.key === `a`;
     const isModifierOnly =
-      event.key === 'Control' ||
-      event.key === 'Shift' ||
-      event.key === 'Alt' ||
-      event.key === 'Meta';
+      event.key === `Control` ||
+      event.key === `Shift` ||
+      event.key === `Alt` ||
+      event.key === `Meta`;
     if (!isSelectAll && !isModifierOnly) {
       this.editor.rangeOperations.resetSelectAllLevel();
     }
 
     // ── Undo / Redo ──
     if (event.ctrlKey || event.metaKey) {
-      if (event.key === 'z' && !event.shiftKey) {
+      if (event.key === `z` && !event.shiftKey) {
         event.preventDefault();
         this.editor.undo();
         return;
       }
-      if ((event.key === 'z' && event.shiftKey) || event.key === 'y') {
+      if ((event.key === `z` && event.shiftKey) || event.key === `y`) {
         event.preventDefault();
         this.editor.redo();
         return;
       }
       // ── Select All (Ctrl+A) — context-restricted ──
-      if (event.key === 'a') {
+      if (event.key === `a`) {
         event.preventDefault();
         this.editor.rangeOperations.handleSelectAll();
         return;
@@ -131,7 +131,7 @@ export class InputHandler {
     }
 
     // ── Enter ──
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === `Enter` && !event.shiftKey) {
       event.preventDefault();
       // If the cursor is inside the phantom paragraph, promoting it
       // is all we need — an empty real paragraph already exists.
@@ -141,14 +141,14 @@ export class InputHandler {
     }
 
     // ── Backspace ──
-    if (event.key === 'Backspace') {
+    if (event.key === `Backspace`) {
       event.preventDefault();
       this.editor.editOperations.handleBackspace();
       return;
     }
 
     // ── Delete ──
-    if (event.key === 'Delete') {
+    if (event.key === `Delete`) {
       event.preventDefault();
       this.editor.editOperations.handleDelete();
       return;
@@ -163,10 +163,10 @@ export class InputHandler {
     }
 
     // ── Tab / Shift+Tab inside a table ──
-    if (event.key === 'Tab' && this.editor.viewMode === 'writing') {
+    if (event.key === `Tab` && this.editor.viewMode === `writing`) {
       this.editor.syncCursorFromDOM();
       const node = this.editor.getCurrentBlockNode();
-      if (node?.type === 'table' && this.editor.syntaxTree?.treeCursor?.cellRow !== undefined) {
+      if (node?.type === `table` && this.editor.syntaxTree?.treeCursor?.cellRow !== undefined) {
         event.preventDefault();
         this.editor.tableManager.handleTableTab(event.shiftKey);
         return;

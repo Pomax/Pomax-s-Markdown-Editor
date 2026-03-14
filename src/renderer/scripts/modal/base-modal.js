@@ -46,7 +46,7 @@ export class BaseModal {
    * @returns {string}
    */
   get prefix() {
-    throw new Error('Subclass must implement get prefix()');
+    throw new Error(`Subclass must implement get prefix()`);
   }
 
   /**
@@ -55,7 +55,7 @@ export class BaseModal {
    * @returns {string}
    */
   get ariaLabel() {
-    throw new Error('Subclass must implement get ariaLabel()');
+    throw new Error(`Subclass must implement get ariaLabel()`);
   }
 
   /**
@@ -66,7 +66,7 @@ export class BaseModal {
    * @returns {string}
    */
   getTemplate() {
-    throw new Error('Subclass must implement getTemplate()');
+    throw new Error(`Subclass must implement getTemplate()`);
   }
 
   /**
@@ -86,7 +86,7 @@ export class BaseModal {
    * @param {*} existing - Modal-specific data (may be null/undefined).
    */
   populateFields(existing) {
-    throw new Error('Subclass must implement populateFields()');
+    throw new Error(`Subclass must implement populateFields()`);
   }
 
   /**
@@ -98,7 +98,7 @@ export class BaseModal {
    * @returns {HTMLElement}
    */
   getFocusTarget(existing) {
-    throw new Error('Subclass must implement getFocusTarget()');
+    throw new Error(`Subclass must implement getFocusTarget()`);
   }
 
   /**
@@ -109,7 +109,7 @@ export class BaseModal {
    * @abstract
    */
   submit() {
-    throw new Error('Subclass must implement submit()');
+    throw new Error(`Subclass must implement submit()`);
   }
 
   // ──────────────────────────────────────────────
@@ -123,9 +123,9 @@ export class BaseModal {
     if (this.built) return;
     this.built = true;
 
-    const dialog = document.createElement('dialog');
+    const dialog = document.createElement(`dialog`);
     dialog.className = `${this.prefix}-dialog`;
-    dialog.setAttribute('aria-label', this.ariaLabel);
+    dialog.setAttribute(`aria-label`, this.ariaLabel);
     dialog.innerHTML = this.getTemplate();
 
     const p = this.prefix;
@@ -133,17 +133,17 @@ export class BaseModal {
     // Close on × or Cancel
     const closeBtn = dialog.querySelector(`.${p}-dialog-close`);
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => this.cancel());
+      closeBtn.addEventListener(`click`, () => this.cancel());
     }
     const cancelBtn = dialog.querySelector(`.${p}-btn--cancel`);
     if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => this.cancel());
+      cancelBtn.addEventListener(`click`, () => this.cancel());
     }
 
     // Submit handler
-    const form = dialog.querySelector('form');
+    const form = dialog.querySelector(`form`);
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener(`submit`, (e) => {
         e.preventDefault();
         this.submit();
       });
@@ -156,10 +156,10 @@ export class BaseModal {
     // we must not dismiss in that case.
     /** @type {EventTarget|null} */
     let mouseDownTarget = null;
-    dialog.addEventListener('mousedown', (e) => {
+    dialog.addEventListener(`mousedown`, (e) => {
       mouseDownTarget = e.target;
     });
-    dialog.addEventListener('click', (e) => {
+    dialog.addEventListener(`click`, (e) => {
       if (e.target === dialog && mouseDownTarget === dialog) {
         this.cancel();
       }
@@ -167,7 +167,7 @@ export class BaseModal {
     });
 
     // Close on Escape key
-    dialog.addEventListener('cancel', (e) => {
+    dialog.addEventListener(`cancel`, (e) => {
       e.preventDefault();
       this.cancel();
     });
@@ -231,7 +231,7 @@ export class BaseModal {
    * Restores focus to the element that was active before the modal opened.
    */
   restoreFocus() {
-    if (this.previousFocus && typeof this.previousFocus.focus === 'function') {
+    if (this.previousFocus && typeof this.previousFocus.focus === `function`) {
       this.previousFocus.focus();
       this.previousFocus = null;
     }

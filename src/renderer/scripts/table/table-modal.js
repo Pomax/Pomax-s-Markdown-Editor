@@ -31,11 +31,11 @@ export class TableModal extends BaseModal {
   }
 
   get prefix() {
-    return 'table';
+    return `table`;
   }
 
   get ariaLabel() {
-    return 'Insert Table';
+    return `Insert Table`;
   }
 
   getTemplate() {
@@ -71,21 +71,21 @@ export class TableModal extends BaseModal {
   populateFields(existing) {
     this.existing = existing ?? null;
 
-    const colsInput = this.getInput('table-columns');
-    const rowsInput = this.getInput('table-rows');
+    const colsInput = this.getInput(`table-columns`);
+    const rowsInput = this.getInput(`table-rows`);
     const insertBtn = this.getInsertBtn();
     const heading = this.getHeading();
 
     if (existing) {
       colsInput.value = String(existing.columns);
       rowsInput.value = String(existing.rows);
-      if (insertBtn) insertBtn.textContent = 'Update';
-      if (heading) heading.textContent = 'Edit Table';
+      if (insertBtn) insertBtn.textContent = `Update`;
+      if (heading) heading.textContent = `Edit Table`;
     } else {
-      colsInput.value = '3';
-      rowsInput.value = '3';
-      if (insertBtn) insertBtn.textContent = 'Insert';
-      if (heading) heading.textContent = 'Insert Table';
+      colsInput.value = `3`;
+      rowsInput.value = `3`;
+      if (insertBtn) insertBtn.textContent = `Insert`;
+      if (heading) heading.textContent = `Insert Table`;
     }
   }
 
@@ -93,14 +93,14 @@ export class TableModal extends BaseModal {
    * @returns {HTMLElement}
    */
   getFocusTarget() {
-    const colsInput = this.getInput('table-columns');
+    const colsInput = this.getInput(`table-columns`);
     colsInput.select();
     return colsInput;
   }
 
   submit() {
-    const newCols = Number.parseInt(this.getInput('table-columns').value, 10) || 1;
-    const newRows = Number.parseInt(this.getInput('table-rows').value, 10) || 1;
+    const newCols = Number.parseInt(this.getInput(`table-columns`).value, 10) || 1;
+    const newRows = Number.parseInt(this.getInput(`table-rows`).value, 10) || 1;
 
     // Clamp to valid range
     const cols = Math.max(1, Math.min(20, newCols));
@@ -115,7 +115,7 @@ export class TableModal extends BaseModal {
         const wouldLose = this.wouldLoseData(this.existing, rows, cols);
         if (wouldLose) {
           const ok = window.confirm(
-            'Reducing the table size will remove data from the deleted rows or columns. Continue?',
+            `Reducing the table size will remove data from the deleted rows or columns. Continue?`,
           );
           if (!ok) return;
         }
@@ -148,7 +148,7 @@ export class TableModal extends BaseModal {
     for (let r = 0; r < totalOldRows; r++) {
       const row = data.cells[r];
       for (let c = 0; c < row.length; c++) {
-        const trimmed = (row[c] ?? '').trim();
+        const trimmed = (row[c] ?? ``).trim();
         if (!trimmed) continue;
 
         if (r >= keepRows || c >= newCols) {
@@ -177,7 +177,7 @@ export class TableModal extends BaseModal {
         if (r < oldCells.length && c < (oldCells[r]?.length ?? 0)) {
           row.push(oldCells[r][c]);
         } else {
-          row.push(r === 0 ? `Header ${c + 1}` : '');
+          row.push(r === 0 ? `Header ${c + 1}` : ``);
         }
       }
       cells.push(row);
@@ -206,7 +206,7 @@ export class TableModal extends BaseModal {
     for (let r = 0; r < rows; r++) {
       const row = [];
       for (let c = 0; c < cols; c++) {
-        row.push('');
+        row.push(``);
       }
       cells.push(row);
     }
@@ -224,11 +224,11 @@ export class TableModal extends BaseModal {
    * @returns {TableData}
    */
   static parseTableContent(content) {
-    const lines = content.split('\n').filter((l) => l.trim());
+    const lines = content.split(`\n`).filter((l) => l.trim());
     // A separator line contains only pipes, dashes, colons, and spaces,
     // and must include at least one dash.
     /** @param {string} l */
-    const isSeparator = (l) => /^[\s|:-]+$/.test(l) && l.includes('-');
+    const isSeparator = (l) => /^[\s|:-]+$/.test(l) && l.includes(`-`);
     const dataLines = lines.filter((l) => !isSeparator(l));
 
     /** @type {string[][]} */
@@ -236,7 +236,7 @@ export class TableModal extends BaseModal {
 
     for (const line of dataLines) {
       const row = line
-        .split('|')
+        .split(`|`)
         .filter((_, i, a) => i > 0 && i < a.length - 1) // trim leading/trailing empty splits
         .map((cell) => cell.trim());
       cells.push(row);
@@ -262,21 +262,21 @@ export class TableModal extends BaseModal {
       const paddedCells = [];
 
       for (let c = 0; c < columns; c++) {
-        paddedCells.push(` ${row[c] ?? ''} `);
+        paddedCells.push(` ${row[c] ?? ``} `);
       }
 
-      lines.push(`|${paddedCells.join('|')}|`);
+      lines.push(`|${paddedCells.join(`|`)}|`);
 
       // After the header row, insert the separator line
       if (r === 0) {
         const sep = [];
         for (let c = 0; c < columns; c++) {
-          sep.push('---');
+          sep.push(`---`);
         }
-        lines.push(`| ${sep.join(' | ')} |`);
+        lines.push(`| ${sep.join(` | `)} |`);
       }
     }
 
-    return lines.join('\n');
+    return lines.join(`\n`);
   }
 }

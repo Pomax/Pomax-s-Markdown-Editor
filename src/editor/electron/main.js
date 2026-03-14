@@ -14,36 +14,36 @@ function createWindow() {
     width: 1024,
     height: 768,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, `preload.cjs`),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'application', 'UI', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, `..`, `application`, `UI`, `index.html`));
 }
 
 function buildMenu() {
   const template = [
     {
-      label: 'File',
+      label: `File`,
       submenu: [
         {
-          label: 'Open',
-          accelerator: 'CmdOrCtrl+O',
+          label: `Open`,
+          accelerator: `CmdOrCtrl+O`,
           async click() {
             const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-              properties: ['openFile'],
+              properties: [`openFile`],
               filters: [
-                { name: 'Markdown', extensions: ['md', 'markdown', 'txt'] },
-                { name: 'All Files', extensions: ['*'] },
+                { name: `Markdown`, extensions: [`md`, `markdown`, `txt`] },
+                { name: `All Files`, extensions: [`*`] },
               ],
             });
             if (canceled || filePaths.length === 0) return;
             const filePath = filePaths[0];
-            const content = await readFile(filePath, 'utf-8');
+            const content = await readFile(filePath, `utf-8`);
             const fileDir = path.dirname(filePath);
-            mainWindow.webContents.send('file-opened', content, fileDir);
+            mainWindow.webContents.send(`file-opened`, content, fileDir);
           },
         },
       ],
@@ -52,59 +52,59 @@ function buildMenu() {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 
-  mainWindow.webContents.on('context-menu', (_event, params) => {
+  mainWindow.webContents.on(`context-menu`, (_event, params) => {
     const menuItems = [];
 
     if (params.linkURL) {
       menuItems.push({
-        label: 'Copy Link Address',
+        label: `Copy Link Address`,
         click: () => {
-          require('electron').clipboard.writeText(params.linkURL);
+          require(`electron`).clipboard.writeText(params.linkURL);
         },
       });
-      menuItems.push({ type: 'separator' });
+      menuItems.push({ type: `separator` });
     }
 
-    if (params.mediaType === 'image') {
+    if (params.mediaType === `image`) {
       menuItems.push({
-        label: 'Copy Image',
+        label: `Copy Image`,
         click: () => {
           mainWindow.webContents.copyImageAt(params.x, params.y);
         },
       });
       menuItems.push({
-        label: 'Copy Image Address',
+        label: `Copy Image Address`,
         click: () => {
-          require('electron').clipboard.writeText(params.srcURL);
+          require(`electron`).clipboard.writeText(params.srcURL);
         },
       });
-      menuItems.push({ type: 'separator' });
+      menuItems.push({ type: `separator` });
     }
 
     if (params.isEditable) {
-      menuItems.push({ role: 'undo' });
-      menuItems.push({ role: 'redo' });
-      menuItems.push({ type: 'separator' });
+      menuItems.push({ role: `undo` });
+      menuItems.push({ role: `redo` });
+      menuItems.push({ type: `separator` });
     }
 
     if (params.isEditable || params.selectionText) {
-      menuItems.push({ role: 'cut', enabled: params.isEditable });
-      menuItems.push({ role: 'copy' });
+      menuItems.push({ role: `cut`, enabled: params.isEditable });
+      menuItems.push({ role: `copy` });
     }
 
     if (params.isEditable) {
-      menuItems.push({ role: 'paste' });
-      menuItems.push({ role: 'delete' });
+      menuItems.push({ role: `paste` });
+      menuItems.push({ role: `delete` });
     }
 
     if (menuItems.length > 0) {
-      menuItems.push({ type: 'separator' });
+      menuItems.push({ type: `separator` });
     }
 
-    menuItems.push({ role: 'selectAll' });
-    menuItems.push({ type: 'separator' });
+    menuItems.push({ role: `selectAll` });
+    menuItems.push({ type: `separator` });
     menuItems.push({
-      label: 'Inspect Element',
+      label: `Inspect Element`,
       click: () => {
         mainWindow.webContents.inspectElement(params.x, params.y);
       },
@@ -118,11 +118,11 @@ function buildMenu() {
 app.whenReady().then(() => {
   settings.initialize();
 
-  ipcMain.handle('settings:get', (_event, key, defaultValue) => {
+  ipcMain.handle(`settings:get`, (_event, key, defaultValue) => {
     return settings.get(key, defaultValue);
   });
 
-  ipcMain.handle('settings:set', (_event, key, value) => {
+  ipcMain.handle(`settings:set`, (_event, key, value) => {
     settings.set(key, value);
   });
 
@@ -130,7 +130,7 @@ app.whenReady().then(() => {
   buildMenu();
 });
 
-app.on('window-all-closed', () => {
+app.on(`window-all-closed`, () => {
   settings.close();
   app.quit();
 });

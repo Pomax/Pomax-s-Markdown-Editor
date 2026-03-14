@@ -47,9 +47,9 @@ export class ClipboardHandler {
    */
   getSelectedMarkdown() {
     this.editor.syncCursorFromDOM();
-    if (!this.editor.treeRange || !this.editor.syntaxTree) return '';
+    if (!this.editor.treeRange || !this.editor.syntaxTree) return ``;
 
-    if (this.editor.viewMode === 'writing') {
+    if (this.editor.viewMode === `writing`) {
       return this.getSelectedMarkdownWriting();
     }
 
@@ -69,7 +69,7 @@ export class ClipboardHandler {
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
-    if (!startNode || !endNode) return '';
+    if (!startNode || !endNode) return ``;
 
     // Same node — just the selected substring.
     if (startNodeId === endNodeId) {
@@ -81,7 +81,7 @@ export class ClipboardHandler {
     const siblings = this.editor.getSiblings(startNode);
     const startIdx = siblings.indexOf(startNode);
     const endIdx = siblings.indexOf(endNode);
-    if (startIdx === -1 || endIdx === -1) return '';
+    if (startIdx === -1 || endIdx === -1) return ``;
 
     const parts = [];
     parts.push(startNode.content.substring(startOffset));
@@ -89,7 +89,7 @@ export class ClipboardHandler {
       parts.push(siblings[i].toMarkdown());
     }
     parts.push(endNode.content.substring(0, endOffset));
-    return parts.join('\n\n');
+    return parts.join(`\n\n`);
   }
 
   /**
@@ -107,7 +107,7 @@ export class ClipboardHandler {
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
-    if (!startNode || !endNode) return '';
+    if (!startNode || !endNode) return ``;
 
     // Same node — trim content, fix tags, apply prefix.
     if (startNodeId === endNodeId) {
@@ -118,7 +118,7 @@ export class ClipboardHandler {
 
     // Cross-node: walk all block nodes in document order.
     const nodes = this.editor.getNodesInRange(startNodeId, endNodeId);
-    if (nodes.length === 0) return '';
+    if (nodes.length === 0) return ``;
 
     const parts = [];
     for (let i = 0; i < nodes.length; i++) {
@@ -140,7 +140,7 @@ export class ClipboardHandler {
         parts.push(node.toMarkdown());
       }
     }
-    return parts.join('\n\n');
+    return parts.join(`\n\n`);
   }
 
   // ── Static helpers ─────────────────────────────────────────────
@@ -156,44 +156,44 @@ export class ClipboardHandler {
    */
   static nodeToPartialMarkdown(node, content) {
     switch (node.type) {
-      case 'heading1':
+      case `heading1`:
         return `# ${content}`;
-      case 'heading2':
+      case `heading2`:
         return `## ${content}`;
-      case 'heading3':
+      case `heading3`:
         return `### ${content}`;
-      case 'heading4':
+      case `heading4`:
         return `#### ${content}`;
-      case 'heading5':
+      case `heading5`:
         return `##### ${content}`;
-      case 'heading6':
+      case `heading6`:
         return `###### ${content}`;
-      case 'paragraph':
+      case `paragraph`:
         return content;
-      case 'blockquote':
+      case `blockquote`:
         return content
-          .split('\n')
+          .split(`\n`)
           .map((line) => `> ${line}`)
-          .join('\n');
-      case 'code-block': {
-        const lang = node.attributes.language || '';
-        const fence = '`'.repeat(node.attributes.fenceCount || 3);
+          .join(`\n`);
+      case `code-block`: {
+        const lang = node.attributes.language || ``;
+        const fence = `\``.repeat(node.attributes.fenceCount || 3);
         return `${fence}${lang}\n${content}\n${fence}`;
       }
-      case 'list-item': {
-        const indent = '  '.repeat(node.attributes.indent || 0);
-        const marker = node.attributes.ordered ? `${node.attributes.number || 1}. ` : '- ';
+      case `list-item`: {
+        const indent = `  `.repeat(node.attributes.indent || 0);
+        const marker = node.attributes.ordered ? `${node.attributes.number || 1}. ` : `- `;
         const checkbox =
-          typeof node.attributes.checked === 'boolean'
+          typeof node.attributes.checked === `boolean`
             ? node.attributes.checked
-              ? '[x] '
-              : '[ ] '
-            : '';
+              ? `[x] `
+              : `[ ] `
+            : ``;
         return `${indent}${marker}${checkbox}${content}`;
       }
-      case 'horizontal-rule':
-        return '---';
-      case 'table':
+      case `horizontal-rule`:
+        return `---`;
+      case `table`:
         return content;
       default:
         return content;
@@ -229,16 +229,16 @@ export class ClipboardHandler {
 
     HTML_OPEN_RE.lastIndex = 0;
     for (let m = HTML_OPEN_RE.exec(slice); m !== null; m = HTML_OPEN_RE.exec(slice)) {
-      positioned.push({ tag: m[1].toLowerCase(), kind: 'open', index: m.index });
+      positioned.push({ tag: m[1].toLowerCase(), kind: `open`, index: m.index });
     }
     HTML_CLOSE_RE.lastIndex = 0;
     for (let m = HTML_CLOSE_RE.exec(slice); m !== null; m = HTML_CLOSE_RE.exec(slice)) {
-      positioned.push({ tag: m[1].toLowerCase(), kind: 'close', index: m.index });
+      positioned.push({ tag: m[1].toLowerCase(), kind: `close`, index: m.index });
     }
     positioned.sort((a, b) => a.index - b.index);
 
     for (const { tag, kind } of positioned) {
-      if (kind === 'open') {
+      if (kind === `open`) {
         openStack.push(tag);
       } else {
         // Try to match against the most recent open of the same tag.
@@ -254,12 +254,12 @@ export class ClipboardHandler {
     }
 
     // Prepend missing openers (in the order the closers appeared).
-    const prefix = unmatchedCloses.map((t) => `<${t}>`).join('');
+    const prefix = unmatchedCloses.map((t) => `<${t}>`).join(``);
     // Append missing closers (innermost first → reverse the stack).
     const suffix = openStack
       .reverse()
       .map((t) => `</${t}>`)
-      .join('');
+      .join(``);
 
     return `${prefix}${slice}${suffix}`;
   }
@@ -277,7 +277,7 @@ export class ClipboardHandler {
     event.preventDefault();
     const markdown = this.getSelectedMarkdown();
     if (event.clipboardData) {
-      event.clipboardData.setData('text/plain', markdown);
+      event.clipboardData.setData(`text/plain`, markdown);
     }
     // After this event, the browser fires beforeinput with inputType
     // 'deleteByCut', which we intercept to delete through the tree.
@@ -301,7 +301,7 @@ export class ClipboardHandler {
     event.preventDefault();
     const markdown = this.getSelectedMarkdown();
     if (event.clipboardData) {
-      event.clipboardData.setData('text/plain', markdown);
+      event.clipboardData.setData(`text/plain`, markdown);
     }
   }
 }

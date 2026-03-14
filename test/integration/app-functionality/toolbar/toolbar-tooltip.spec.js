@@ -21,8 +21,8 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('toolbar tooltip appears below the button, not above', async () => {
-  const boldButton = page.locator('[data-button-id="bold"]');
+test(`toolbar tooltip appears below the button, not above`, async () => {
+  const boldButton = page.locator(`[data-button-id="bold"]`);
   await expect(boldButton).toBeVisible();
 
   // Hover over the Bold button to trigger the CSS tooltip.
@@ -32,11 +32,11 @@ test('toolbar tooltip appears below the button, not above', async () => {
   // query pseudo-elements directly in Playwright, so instead we evaluate
   // the computed style in-page to obtain the tooltip's bounding position.
   const positions = await page.evaluate(() => {
-    const btn = document.querySelector('[data-button-id="bold"]');
-    if (!btn) throw new Error('Bold button not found');
+    const btn = document.querySelector(`[data-button-id="bold"]`);
+    if (!btn) throw new Error(`Bold button not found`);
 
     const btnRect = btn.getBoundingClientRect();
-    const style = window.getComputedStyle(btn, '::after');
+    const style = window.getComputedStyle(btn, `::after`);
 
     // The ::after is position: absolute with top: 100%.
     // Its rendered top equals the button's bottom edge + any margin-top.
@@ -44,8 +44,8 @@ test('toolbar tooltip appears below the button, not above', async () => {
     const tooltipTop = btnRect.bottom + marginTop;
 
     // The toolbar container's edges.
-    const toolbar = document.getElementById('toolbar-container');
-    if (!toolbar) throw new Error('Toolbar container not found');
+    const toolbar = document.getElementById(`toolbar-container`);
+    if (!toolbar) throw new Error(`Toolbar container not found`);
     const toolbarRect = toolbar.getBoundingClientRect();
 
     return {
