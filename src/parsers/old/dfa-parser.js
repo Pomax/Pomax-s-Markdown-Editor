@@ -10,7 +10,7 @@
 import { tokenize } from './dfa-tokenizer.js';
 import { SyntaxNode, SyntaxTree } from './syntax-tree.js';
 
-// ── Block-level HTML tag set (GFM type 6) ───────────────────────────
+// Block-level HTML tag set (GFM type 6)
 
 /** @type {Set<string>} */
 const HTML_BLOCK_TAGS = new Set([
@@ -81,7 +81,7 @@ const HTML_BLOCK_TAGS = new Set([
   `ul`,
 ]);
 
-// ── Void HTML elements (never have a closing tag) ───────────────────
+// Void HTML elements (never have a closing tag)
 
 /** @type {Set<string>} */
 const VOID_HTML_ELEMENTS = new Set([
@@ -103,17 +103,17 @@ const VOID_HTML_ELEMENTS = new Set([
   `wbr`,
 ]);
 
-// ── Raw content HTML tags (body is not markdown) ────────────────────
+// Raw content HTML tags (body is not markdown)
 
 /** @type {Set<string>} */
 const RAW_CONTENT_TAGS = new Set([`script`, `style`, `textarea`]);
 
-// ── Inline-only HTML tags (never treated as block-level) ────────────
+// Inline-only HTML tags (never treated as block-level)
 
 /** @type {Set<string>} */
 const INLINE_ONLY_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
-// ── Helper: count newlines in a string ──────────────────────────────
+// Helper: count newlines in a string
 
 /**
  * @param {string} s
@@ -127,7 +127,7 @@ function countNewlines(s) {
   return n;
 }
 
-// ── DFA Parser ──────────────────────────────────────────────────────
+// DFA Parser
 
 /**
  * Parses markdown text into a syntax tree using a token-driven DFA.
@@ -160,7 +160,7 @@ export class DFAParser {
     return tree;
   }
 
-  // ── Block dispatch ──────────────────────────────────────────
+  // Block dispatch
 
   /**
    * Determines what block element starts at the current position
@@ -255,7 +255,7 @@ export class DFAParser {
     return this._parseParagraph(ctx);
   }
 
-  // ── Heading ─────────────────────────────────────────────────
+  // Heading
 
   /**
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
@@ -292,7 +292,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Code block ──────────────────────────────────────────────
+  // Code block
 
   /**
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
@@ -390,7 +390,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Blockquote ──────────────────────────────────────────────
+  // Blockquote
 
   /**
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
@@ -417,7 +417,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── List items ──────────────────────────────────────────────
+  // List items
 
   /**
    * Checks if current position is start of unordered list item.
@@ -558,7 +558,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Horizontal rule ─────────────────────────────────────────
+  // Horizontal rule
 
   /**
    * Checks if current position is a horizontal rule.
@@ -602,7 +602,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Images ──────────────────────────────────────────────────
+  // Images
 
   /**
    * Tries to parse ![alt](src). Returns null if it doesn't match.
@@ -759,7 +759,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── HTML image ──────────────────────────────────────────────
+  // HTML image
 
   /**
    * Checks if current position is an <img ...> tag.
@@ -864,7 +864,7 @@ export class DFAParser {
     return ``;
   }
 
-  // ── HTML block ──────────────────────────────────────────────
+  // HTML block
 
   /**
    * Checks if current position starts an HTML block tag.
@@ -1103,7 +1103,7 @@ export class DFAParser {
   _parseHtmlBlock(ctx) {
     const startLine = ctx.line;
 
-    // ── HTML comments: <!-- ... --> ──────────────────────────
+    // HTML comments: <!-- ... -->
     if (this._isHtmlCommentStart(ctx)) {
       return this._parseHtmlComment(ctx, startLine);
     }
@@ -1129,7 +1129,7 @@ export class DFAParser {
       ctx.pos++;
     }
 
-    // ── Void elements: no body, no closing tag ──────────────
+    // Void elements: no body, no closing tag
     if (VOID_HTML_ELEMENTS.has(lowerTagName)) {
       // Skip trailing newline
       if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
@@ -1147,7 +1147,7 @@ export class DFAParser {
       return node;
     }
 
-    // ── Raw content tags: body is stored verbatim ───────────
+    // Raw content tags: body is stored verbatim
     if (RAW_CONTENT_TAGS.has(lowerTagName)) {
       // Skip newline after opening tag
       if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
@@ -1399,7 +1399,7 @@ export class DFAParser {
     }
   }
 
-  // ── Table ───────────────────────────────────────────────────
+  // Table
 
   /**
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
@@ -1440,7 +1440,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Paragraph ───────────────────────────────────────────────
+  // Paragraph
 
   /**
    * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
@@ -1488,7 +1488,7 @@ export class DFAParser {
     return node;
   }
 
-  // ── Lookahead helpers ───────────────────────────────────────
+  // Lookahead helpers
 
   /**
    * Returns the token type at pos + offset, or 'EOF'.

@@ -22,7 +22,7 @@ export class TableManager {
 
   /**
    * Returns the text of a specific table cell.
-   * @param {import('../../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @param {number} row - Row index (0 = header row)
    * @param {number} col - Column index
    * @returns {string}
@@ -34,7 +34,7 @@ export class TableManager {
 
   /**
    * Replaces a single cell's text and rebuilds the table markdown.
-   * @param {import('../../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @param {number} row - Row index (0 = header)
    * @param {number} col - Column index
    * @param {string} newText - New cell content
@@ -49,7 +49,7 @@ export class TableManager {
 
   /**
    * Returns the dimensions of a table node.
-   * @param {import('../../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @returns {{totalRows: number, columns: number}}
    */
   getTableDimensions(node) {
@@ -59,7 +59,7 @@ export class TableManager {
 
   /**
    * Appends an empty row to a table node and rebuilds the markdown.
-   * @param {import('../../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @returns {number} The row index of the new row
    */
   tableAddRow(node) {

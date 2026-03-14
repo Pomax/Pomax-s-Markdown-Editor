@@ -5,24 +5,9 @@
  * cut, copy, and paste-with-selection.
  */
 
-import { readFile } from 'node:fs/promises';
-import { createServer } from 'node:http';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { END, HOME, MOD, clickInEditor } from '../../test-utils.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const RENDERER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `src`, `renderer`);
-const OLD_PARSER_DIR = path.join(__dirname, `..`, `..`, `..`, `..`, `old-parser`);
-
-/** @type {Record<string, string>} */
-const CONTENT_TYPES = {
-  '.html': `text/html`,
-  '.js': `application/javascript`,
-  '.css': `text/css`,
-};
+import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
 let server;
@@ -31,48 +16,11 @@ let server;
 let baseURL;
 
 test.beforeAll(async () => {
-  server = createServer(async (req, res) => {
-    let urlPath = new URL(req.url ?? `/`, `http://localhost`).pathname;
-    if (urlPath === `/`) urlPath = `/index.html`;
-    let filePath;
-    if (urlPath.startsWith(`/old-parser/`)) {
-      filePath = path.resolve(path.join(OLD_PARSER_DIR, urlPath.slice(`/old-parser`.length)));
-      if (!filePath.startsWith(OLD_PARSER_DIR)) {
-        res.writeHead(403);
-        res.end(`Forbidden`);
-        return;
-      }
-    } else {
-      filePath = path.resolve(path.join(RENDERER_DIR, urlPath));
-      if (!filePath.startsWith(RENDERER_DIR)) {
-        res.writeHead(403);
-        res.end(`Forbidden`);
-        return;
-      }
-    }
-
-    try {
-      const content = await readFile(filePath);
-      const ext = path.extname(filePath);
-      res.writeHead(200, {
-        'Content-Type': CONTENT_TYPES[ext] || `application/octet-stream`,
-      });
-      res.end(content);
-    } catch {
-      res.writeHead(404);
-      res.end(`Not Found`);
-    }
-  });
-
-  await new Promise((resolve) => server.listen(0, /** @type {() => void} */ (resolve)));
-  const addr = /** @type {import('node:net').AddressInfo} */ (server.address());
-  baseURL = `http://localhost:${addr.port}`;
+  ({ server, baseURL } = await startServer());
 });
 
 test.afterAll(async () => {
-  if (server) {
-    await new Promise((resolve) => server.close(resolve));
-  }
+  await stopServer(server);
 });
 
 /**
@@ -272,6 +220,9 @@ test.describe(`Enter with selection`, () => {
     await page.keyboard.press(`ArrowRight`); // after 'b'
     await page.keyboard.press(`Shift+ArrowRight`); // select 'c'
     await page.keyboard.press(`Shift+ArrowRight`); // select 'd'
+
+    const selected = await page.evaluate(() => window.getSelection()?.toString());
+    expect(selected).toBe(`cd`);
 
     await page.keyboard.press(`Enter`);
 

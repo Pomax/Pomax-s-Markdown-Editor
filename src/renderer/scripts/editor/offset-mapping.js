@@ -5,10 +5,7 @@
  * that offset mapping is always in sync with the rendered DOM.
  */
 
-import {
-  findMatchedTokenIndices,
-  tokenizeInline,
-} from '../../../../old-parser/parser/inline-tokenizer.js';
+import { findMatchedTokenIndices, tokenizeInline } from '../../../parsers/old/inline-tokenizer.js';
 
 /**
  * Given a raw markdown string and an offset into that raw string,

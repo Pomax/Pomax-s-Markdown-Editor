@@ -9,7 +9,7 @@
  * {@link buildInlineTree}, which a renderer can walk to produce DOM nodes.
  */
 
-// ── Known inline HTML tags ──────────────────────────────────────────
+//  Known inline HTML tags
 //
 // Adding support for a new inline HTML tag is a one-line change: just
 // add the tag name to this set.
@@ -17,7 +17,7 @@
 /** @type {Set<string>} */
 const INLINE_HTML_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
-// ── Token types ─────────────────────────────────────────────────────
+//  Token types
 
 /**
  * @typedef {'text'|'bold-open'|'bold-close'|'italic-open'|'italic-close'
@@ -39,7 +39,7 @@ const INLINE_HTML_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mar
  * @property {string} [src]     - Image URL (for image tokens).
  */
 
-// ── Tokenizer ───────────────────────────────────────────────────────
+//  Tokenizer
 
 /**
  * Tokenizes a string of inline markdown + HTML into a flat token list.
@@ -64,7 +64,7 @@ export function tokenizeInline(input) {
   while (i < input.length) {
     const ch = input[i];
 
-    // ── Backtick: inline code (no nesting) ──────────────────
+    //  Backtick: inline code (no nesting)
     if (ch === `\``) {
       const close = input.indexOf(`\``, i + 1);
       if (close > i + 1) {
@@ -77,7 +77,7 @@ export function tokenizeInline(input) {
       }
     }
 
-    // ── **** or more: nonsense, treat as plain text ──────
+    //  **** or more: nonsense, treat as plain text
     if (ch === `*` && input[i + 1] === `*` && input[i + 2] === `*` && input[i + 3] === `*`) {
       // Count the full run of asterisks and leave them as text
       let end = i + 4;
@@ -87,7 +87,7 @@ export function tokenizeInline(input) {
       continue;
     }
 
-    // ── *** bold+italic (single delimiter) ─────────────────
+    //  *** bold+italic (single delimiter)
     if (ch === `*` && input[i + 1] === `*` && input[i + 2] === `*`) {
       flushText(i);
       const isClose = tokens.some(
@@ -103,7 +103,7 @@ export function tokenizeInline(input) {
       continue;
     }
 
-    // ── ** bold ─────────────────────────────────────────────
+    //  ** bold
     if (ch === `*` && input[i + 1] === `*`) {
       // If *** is open, * and ** are just text — only *** can close it.
       const hasBoldItalicOpen = tokens.some(
@@ -131,7 +131,7 @@ export function tokenizeInline(input) {
       continue;
     }
 
-    // ── __ double-underscore emphasis ────────────────────────
+    //  __ double-underscore emphasis
     if (ch === `_` && input[i + 1] === `_`) {
       // Only at word boundary
       const before = i > 0 ? input[i - 1] : ` `;
@@ -156,7 +156,7 @@ export function tokenizeInline(input) {
       }
     }
 
-    // ── ~~ strikethrough ────────────────────────────────────
+    //  ~~ strikethrough
     if (ch === `~` && input[i + 1] === `~`) {
       flushText(i);
       const isClose = tokens.some(
@@ -175,7 +175,7 @@ export function tokenizeInline(input) {
       continue;
     }
 
-    // ── * single-star italic ────────────────────────────────
+    //  * single-star italic
     if (ch === `*` && input[i + 1] !== `*`) {
       // If *** is open, * and ** are just text — only *** can close it.
       const hasBoldItalicOpen = tokens.some(
@@ -205,7 +205,7 @@ export function tokenizeInline(input) {
       continue;
     }
 
-    // ── _ single-underscore italic (word-boundary only) ─────
+    //  _ single-underscore italic (word-boundary only)
     if (ch === `_` && input[i + 1] !== `_`) {
       const before = i > 0 ? input[i - 1] : ` `;
       const after = i + 1 < input.length ? input[i + 1] : ` `;
@@ -227,7 +227,7 @@ export function tokenizeInline(input) {
       }
     }
 
-    // ── ![alt](src) image or [text](href) link ─────────────
+    //  ![alt](src) image or [text](href) link
     if (ch === `[`) {
       // Check for image syntax: preceding '!' means this is ![alt](src)
       const isImage = i > 0 && input[i - 1] === `!`;
@@ -269,7 +269,7 @@ export function tokenizeInline(input) {
       }
     }
 
-    // ── <tag> / </tag> HTML inline tags ──────────────────────
+    //  <tag> / </tag> HTML inline tags
     if (ch === `<`) {
       const closeAngle = input.indexOf(`>`, i + 1);
       if (closeAngle !== -1) {
@@ -318,7 +318,7 @@ export function tokenizeInline(input) {
   return tokens;
 }
 
-// ── Matched-delimiter analysis ───────────────────────────────────────
+//  Matched-delimiter analysis
 
 /**
  * Returns a Set of token indices whose delimiters are successfully
@@ -353,20 +353,20 @@ export function findMatchedTokenIndices(tokens) {
       continue;
     }
 
-    // ── Markdown open tokens ────────────────────────────────
+    //  Markdown open tokens
     if (CLOSE_TYPE_FOR[token.type]) {
       openStack.push({ closeType: CLOSE_TYPE_FOR[token.type], tokenIndex: i });
       continue;
     }
 
-    // ── HTML open tags ──────────────────────────────────────
+    //  HTML open tags
     if (token.type === `html-open`) {
       const tag = /** @type {string} */ (token.tag);
       openStack.push({ closeType: `html-close:${tag}`, tokenIndex: i });
       continue;
     }
 
-    // ── Markdown close tokens ───────────────────────────────
+    //  Markdown close tokens
     if (
       token.type === `bold-close` ||
       token.type === `italic-close` ||
@@ -382,7 +382,7 @@ export function findMatchedTokenIndices(tokens) {
       continue;
     }
 
-    // ── Link close ──────────────────────────────────────────
+    //  Link close
     if (token.type === `link-close`) {
       const idx = _findOpenIdx(openStack, `link-close`);
       if (idx !== -1) {
@@ -393,7 +393,7 @@ export function findMatchedTokenIndices(tokens) {
       continue;
     }
 
-    // ── HTML close tags ─────────────────────────────────────
+    //  HTML close tags
     if (token.type === `html-close`) {
       const tag = /** @type {string} */ (token.tag);
       const closeKey = `html-close:${tag}`;
@@ -426,7 +426,7 @@ function _findOpenIdx(openStack, closeType) {
   return -1;
 }
 
-// ── Tree builder ────────────────────────────────────────────────────
+//  Tree builder
 
 /**
  * An inline segment: either plain text, a code span, or a formatted
@@ -504,7 +504,7 @@ export function buildInlineTree(tokens) {
       continue;
     }
 
-    // ── Markdown open tokens ────────────────────────────────
+    //  Markdown open tokens
     if (CLOSE_TYPE_FOR[token.type]) {
       const closeType = CLOSE_TYPE_FOR[token.type];
       const segType = SEGMENT_TYPE_FOR[token.type];
@@ -518,7 +518,7 @@ export function buildInlineTree(tokens) {
       continue;
     }
 
-    // ── Markdown close tokens ───────────────────────────────
+    //  Markdown close tokens
     if (
       token.type === `bold-close` ||
       token.type === `italic-close` ||
@@ -555,7 +555,7 @@ export function buildInlineTree(tokens) {
       continue;
     }
 
-    // ── HTML open tags ──────────────────────────────────────
+    //  HTML open tags
     if (token.type === `html-open`) {
       const tag = /** @type {string} */ (token.tag);
       openStack.push({
@@ -568,7 +568,7 @@ export function buildInlineTree(tokens) {
       continue;
     }
 
-    // ── HTML close tags ─────────────────────────────────────
+    //  HTML close tags
     if (token.type === `html-close`) {
       const tag = /** @type {string} */ (token.tag);
       const closeKey = `html-close:${tag}`;

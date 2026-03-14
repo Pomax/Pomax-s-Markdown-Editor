@@ -31,7 +31,7 @@ export class LinkHelper {
    * from the clicked `<a>` element and, on submit, replaces it in the
    * node's raw content.
    *
-   * @param {import('../../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @param {HTMLAnchorElement} anchor - The clicked `<a>` element
    */
   async openLinkModalForNode(node, anchor) {

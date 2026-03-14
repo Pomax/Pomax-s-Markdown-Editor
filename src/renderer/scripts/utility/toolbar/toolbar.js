@@ -638,7 +638,7 @@ export class Toolbar {
    * to determine block-level state (heading, list, etc.) and collect
    * the set of active inline formats along the way.
    *
-   * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode|null} node - The current node
+   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} node - The current node
    */
   updateButtonStates(node) {
     // Walk from the (potentially inline) node up to its block parent,
@@ -647,7 +647,7 @@ export class Toolbar {
     const activeFormats = new Set();
     let blockNode = node;
     if (node?.isInlineNode()) {
-      /** @type {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode|null} */
+      /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} */
       let walk = node;
       while (walk?.isInlineNode()) {
         const buttons = Toolbar.INLINE_TYPE_TO_BUTTONS[walk.type];

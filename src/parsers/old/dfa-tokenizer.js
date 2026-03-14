@@ -6,8 +6,6 @@
  * single TEXT token.  No regex is used anywhere.
  */
 
-// ── Token types ─────────────────────────────────────────────────────
-
 /**
  * @typedef {'TEXT'|'NEWLINE'|'HASH'|'SPACE'|'TAB'|'GT'|'DASH'|'STAR'
  *   |'UNDERSCORE'|'TILDE'|'BACKTICK'|'PIPE'|'BANG'|'LBRACKET'
@@ -20,8 +18,6 @@
  * @property {DFATokenType} type
  * @property {string} value  - The raw character(s).
  */
-
-// ── Character classification ────────────────────────────────────────
 
 /**
  * Maps a single character to its token type.  Characters that don't
@@ -79,8 +75,6 @@ function charType(ch) {
       return null;
   }
 }
-
-// ── Tokenizer ───────────────────────────────────────────────────────
 
 /**
  * Tokenizes a markdown string character-by-character.

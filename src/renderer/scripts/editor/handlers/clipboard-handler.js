@@ -63,10 +63,9 @@ export class ClipboardHandler {
   getSelectedMarkdownSource() {
     const { startNodeId, startOffset, endNodeId, endOffset } =
       /** @type {import('../index.js').TreeRange} */ (this.editor.treeRange);
-    const tree =
-      /** @type {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} */ (
-        this.editor.syntaxTree
-      );
+    const tree = /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} */ (
+      this.editor.syntaxTree
+    );
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
@@ -102,10 +101,9 @@ export class ClipboardHandler {
   getSelectedMarkdownWriting() {
     const { startNodeId, startOffset, endNodeId, endOffset } =
       /** @type {import('../index.js').TreeRange} */ (this.editor.treeRange);
-    const tree =
-      /** @type {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree} */ (
-        this.editor.syntaxTree
-      );
+    const tree = /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} */ (
+      this.editor.syntaxTree
+    );
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
@@ -150,7 +148,7 @@ export class ClipboardHandler {
    * markdown prefix / suffix that `node.toMarkdown()` would normally
    * produce, but using `content` instead of `node.content`.
    *
-   * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    * @param {string} content — trimmed / repaired content
    * @returns {string}
    */

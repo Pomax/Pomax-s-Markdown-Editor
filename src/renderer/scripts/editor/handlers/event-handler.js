@@ -5,7 +5,7 @@
 
 /// <reference path="../../../../types.d.ts" />
 
-import { SyntaxNode } from '../../../../../old-parser/parser/syntax-tree.js';
+import { SyntaxNode } from '../../../../parsers/old/syntax-tree.js';
 import { CodeLanguageModal } from '../content-types/code-block/code-language/code-language-modal.js';
 
 /**
@@ -470,7 +470,7 @@ export class EventHandler {
    * Opens the code-language modal for a code-block node and applies
    * the result when the user submits.
    *
-   * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode} node
+   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
    */
   async openCodeLanguageModal(node) {
     if (!this.codeLanguageModal) {
@@ -478,7 +478,7 @@ export class EventHandler {
     }
 
     const attrs =
-      /** @type {import('../../../../../old-parser/parser/syntax-tree.js').NodeAttributes} */ (
+      /** @type {import('../../../../parsers/old/syntax-tree.js').NodeAttributes} */ (
         node.attributes
       );
     const currentLanguage = attrs.language || ``;

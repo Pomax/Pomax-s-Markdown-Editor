@@ -7,8 +7,8 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { DFAParser } from '../../../old-parser/parser/dfa-parser.js';
-import { tokenize } from '../../../old-parser/parser/dfa-tokenizer.js';
+import { DFAParser } from '../../../src/parsers/old/dfa-parser.js';
+import { tokenize } from '../../../src/parsers/old/dfa-tokenizer.js';
 
 describe(`DFA Tokenizer`, () => {
   it(`should tokenize an empty string to just EOF`, () => {

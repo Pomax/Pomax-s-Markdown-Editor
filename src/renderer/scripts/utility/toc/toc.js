@@ -158,7 +158,7 @@ export class TableOfContents {
    * Recursively collects h1–h3 headings from a list of nodes.
    * Descends into container nodes (e.g. html-block) so that headings
    * nested inside HTML elements appear in the table of contents.
-   * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} nodes
+   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
    * @param {TocHeading[]} headings
    */
   collectHeadings(nodes, headings) {
@@ -206,7 +206,7 @@ export class TableOfContents {
     let currentHeadingId = ``;
 
     /**
-     * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxNode[]} nodes
+     * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
      */
     const walk = (nodes) => {
       for (const node of nodes) {

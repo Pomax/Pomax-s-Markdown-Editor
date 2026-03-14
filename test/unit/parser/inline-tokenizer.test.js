@@ -10,7 +10,7 @@ import {
   buildInlineTree,
   findMatchedTokenIndices,
   tokenizeInline,
-} from '../../../old-parser/parser/inline-tokenizer.js';
+} from '../../../src/parsers/old/inline-tokenizer.js';
 
 describe(`tokenizeInline`, () => {
   it(`returns plain text for a string with no markup`, () => {

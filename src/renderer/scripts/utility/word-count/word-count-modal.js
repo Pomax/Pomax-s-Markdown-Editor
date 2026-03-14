@@ -59,7 +59,7 @@ function stripInlineCode(text) {
 
 /**
  * Counts words in a syntax tree.
- * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree | null} syntaxTree
+ * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree | null} syntaxTree
  * @returns {WordCountResult}
  */
 export function getWordCounts(syntaxTree) {
@@ -146,7 +146,7 @@ export class WordCountModal {
 
   /**
    * Opens the modal, displaying counts from the given syntax tree.
-   * @param {import('../../../../../old-parser/parser/syntax-tree.js').SyntaxTree | null} syntaxTree
+   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree | null} syntaxTree
    */
   open(syntaxTree) {
     this.build();

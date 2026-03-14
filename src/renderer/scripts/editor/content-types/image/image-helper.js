@@ -5,7 +5,7 @@
 
 /// <reference path="../../../../../types.d.ts" />
 
-import { SyntaxNode } from '../../../../../../old-parser/parser/syntax-tree.js';
+import { SyntaxNode } from '../../../../../parsers/old/syntax-tree.js';
 import { ImageModal } from './image-modal.js';
 
 /**

@@ -260,7 +260,7 @@ export class SyntaxNode {
     return false;
   }
 
-  // ── Source-view code-block editing ──────────────────
+  // Source-view code-block editing
 
   /**
    * Enters source edit mode for a code-block node.  The full markdown
@@ -573,7 +573,7 @@ export class SyntaxTree {
 
     /**
      * Tree-based cursor position.
-     * @type {import('../../src/renderer/scripts/editor/index.js').TreeCursor|null}
+     * @type {import('../../renderer/scripts/editor/index.js').TreeCursor|null}
      */
     this.treeCursor = null;
   }
@@ -740,7 +740,7 @@ export class SyntaxTree {
     let selStart = startOffset;
     let selEnd = endOffset;
 
-    // ── Collapsed cursor (no selection): infer the target ──────────
+    // Collapsed cursor (no selection): infer the target
     if (selStart === selEnd) {
       // If inside an existing format span, toggle it off.
       const span = this._findFormatSpan(content, selStart, selStart, format);
@@ -759,7 +759,7 @@ export class SyntaxTree {
       selEnd = bounds.end;
     }
 
-    // ── Toggle-off: check if the selection overlaps an existing span ─
+    // Toggle-off: check if the selection overlaps an existing span ─
     const span = this._findFormatSpan(content, selStart, selEnd, format);
     if (span) {
       // Remove closing delimiter first (higher offset) then opening,
@@ -772,7 +772,7 @@ export class SyntaxTree {
       return span.openStart + contentLen;
     }
 
-    // ── Mutual exclusion: sub ↔ sup — strip the opposite first ──
+    // Mutual exclusion: sub ↔ sup — strip the opposite first
     if (format === `subscript` || format === `superscript`) {
       const opposite = format === `subscript` ? `superscript` : `subscript`;
       const oppositeSpan = this._findFormatSpan(node.content, selStart, selEnd, opposite);
@@ -790,7 +790,7 @@ export class SyntaxTree {
       }
     }
 
-    // ── Toggle-on: wrap the selected text in format markers ──────────
+    // Toggle-on: wrap the selected text in format markers
     const before = node.content.substring(0, selStart);
     let selected = node.content.substring(selStart, selEnd);
     const after = node.content.substring(selEnd);
@@ -855,7 +855,7 @@ export class SyntaxTree {
   _findFormatSpan(content, selStart, selEnd, format) {
     const tokens = tokenizeInline(content);
 
-    // ── Code is a single token, not a paired open/close ─────────
+    // Code is a single token, not a paired open/close
     if (format === `code`) {
       let rawPos = 0;
       for (const token of tokens) {
@@ -877,11 +877,19 @@ export class SyntaxTree {
       return null;
     }
 
-    // ── Paired delimiters: bold / italic / strikethrough ────────
+    // Paired delimiters: bold / italic / strikethrough
     /** @type {Record<string, { open: string, close: string, htmlTags?: string[] }>} */
     const typeMap = {
-      bold: { open: `bold-open`, close: `bold-close`, htmlTags: [`strong`, `b`] },
-      italic: { open: `italic-open`, close: `italic-close`, htmlTags: [`em`, `i`] },
+      bold: {
+        open: `bold-open`,
+        close: `bold-close`,
+        htmlTags: [`strong`, `b`],
+      },
+      italic: {
+        open: `italic-open`,
+        close: `italic-close`,
+        htmlTags: [`em`, `i`],
+      },
       strikethrough: {
         open: `strikethrough-open`,
         close: `strikethrough-close`,
@@ -890,7 +898,7 @@ export class SyntaxTree {
     };
     const spec = typeMap[format];
 
-    // ── HTML-tag formats: subscript / superscript ───────────
+    // HTML-tag formats: subscript / superscript
     if (!spec) {
       /** @type {Record<string, string>} */
       const htmlTagMap = {
@@ -950,7 +958,7 @@ export class SyntaxTree {
       }
     }
 
-    // ── Fall back to HTML-tag equivalents (e.g. <strong> for bold) ──
+    // Fall back to HTML-tag equivalents (e.g. <strong> for bold)
     if (spec.htmlTags) {
       for (const tagName of spec.htmlTags) {
         let htmlPos = 0;
@@ -1165,7 +1173,10 @@ export class SyntaxTree {
       if (index < 0 || index >= children.length) return;
       const node = children[index];
       if (i === cursorPath.length - 2) {
-        this.treeCursor = { nodeId: node.id, offset: cursorPath[cursorPath.length - 1] };
+        this.treeCursor = {
+          nodeId: node.id,
+          offset: cursorPath[cursorPath.length - 1],
+        };
         return;
       }
       children = node.children;
