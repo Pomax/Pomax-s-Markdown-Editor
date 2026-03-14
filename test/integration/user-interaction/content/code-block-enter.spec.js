@@ -32,8 +32,6 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-// ── Typing tests in writing view ────────────────────────────
-
 test.describe('Code-block early conversion — writing view', () => {
   test('typing ``` + Enter creates an empty code block', async () => {
     await page.evaluate(() => window.editorAPI?.setContent(''));
@@ -146,8 +144,6 @@ test.describe('Code-block early conversion — writing view', () => {
   });
 });
 
-// ── Typing tests in source view ─────────────────────────────
-
 test.describe('Code-block early conversion — source view', () => {
   test('typing ``` + Enter creates an empty code block', async () => {
     await page.evaluate(() => window.editorAPI?.setContent(''));
@@ -238,8 +234,6 @@ test.describe('Code-block early conversion — source view', () => {
     await expect(codeBlock).toHaveCount(0);
   });
 });
-
-// ── Loading/parsing tests (view-independent) ────────────────
 
 test.describe('Code-block parsing — issue #82 examples', () => {
   test('loading markdown with four-backtick fence preserves nested three-backtick fences', async () => {

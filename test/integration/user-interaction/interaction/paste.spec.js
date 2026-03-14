@@ -57,10 +57,6 @@ async function getMarkdown() {
 // clipboard writes from other workers cannot race with ours.
 test.describe.configure({ mode: 'serial' });
 
-// ──────────────────────────────────────────────
-//  Source view paste
-// ──────────────────────────────────────────────
-
 test.describe('Paste in source view', () => {
   test('single-line paste inserts text at cursor', async () => {
     await loadContent(page, 'hello world');
@@ -206,10 +202,6 @@ test.describe('Paste in source view', () => {
     expect(md).toContain('beta extra');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Writing view paste
-// ──────────────────────────────────────────────
 
 test.describe('Paste in writing view', () => {
   test('single-line paste inserts text at cursor', async () => {

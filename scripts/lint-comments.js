@@ -12,10 +12,10 @@
  * Exits with code 1 if any are found.
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -28,8 +28,15 @@ const SCAN_DIRS = ['src', 'scripts', 'new-parser/src', 'new-parser/tests', 'test
  */
 const SEPARATOR_RE = /^\s*\/\/\s*[-─═]{2,}/;
 
+/** @type {{ file: string, line: number, text: string }[]} */
 const violations = [];
 
+/**
+ * Recursively scans a directory for .js files containing
+ * section-separator comments, appending any matches to `violations`.
+ *
+ * @param {string} dir - Absolute path to the directory to scan.
+ */
 function scan(dir) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
@@ -59,11 +66,12 @@ for (const dir of SCAN_DIRS) {
   scan(full);
 }
 
-if (violations.length > 0) {
+const errors = violations.length;
+if (errors > 0) {
   console.error(`\nSection-separator comments found (${violations.length}):\n`);
   for (const v of violations) {
     console.error(`  ${v.file}:${v.line}  ${v.text}`);
   }
-  console.error('\nRemove these comments. Use descriptive function/file names instead.\n');
+  console.error(`\n${errors} pointless comments found.\n`);
   process.exit(1);
 }

@@ -84,8 +84,6 @@ async function setCursorInCodeBlock(pg, offset) {
   );
 }
 
-// ── Basic rendering ─────────────────────────────────────────
-
 test.describe('Source-view code-block rendering', () => {
   test('code block is rendered as a single editable region containing fences', async () => {
     await loadContent(page, '```js\nconsole.log("hi")\n```');
@@ -114,8 +112,6 @@ test.describe('Source-view code-block rendering', () => {
     await expect(fenceDivs).toHaveCount(0);
   });
 });
-
-// ── Typing into the language tag ────────────────────────────
 
 test.describe('Editing the language tag', () => {
   test('can append to the language tag by typing after it', async () => {
@@ -156,8 +152,6 @@ test.describe('Editing the language tag', () => {
   });
 });
 
-// ── Editing the code content ────────────────────────────────
-
 test.describe('Editing code content in source view', () => {
   test('typing inside the code content area works', async () => {
     await loadContent(page, '```js\nhello\n```');
@@ -193,8 +187,6 @@ test.describe('Editing code content in source view', () => {
   });
 });
 
-// ── Editing the fences ──────────────────────────────────────
-
 test.describe('Editing the code fences', () => {
   test('adding a backtick at the start of the opening fence', async () => {
     await loadContent(page, '```js\ncode\n```');
@@ -213,8 +205,6 @@ test.describe('Editing the code fences', () => {
     expect(md).toContain('````');
   });
 });
-
-// ── Backspace removes fence entirely ────────────────────────
 
 test.describe('Backspace after removing opening fence', () => {
   test('backspace at offset 0 with no backticks on first line finalizes and merges', async () => {
@@ -245,8 +235,6 @@ test.describe('Backspace after removing opening fence', () => {
     expect(md).toContain('previouscode');
   });
 });
-
-// ── View mode switch finalization ───────────────────────────
 
 test.describe('View mode switch finalization', () => {
   test('switching to writing view finalizes source edit', async () => {

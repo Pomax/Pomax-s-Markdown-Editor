@@ -32,8 +32,6 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-// ── Rendering ────────────────────────────────────────────────
-
 test.describe('Writing-view code-block language tag spans', () => {
   test('code block with language shows language text in top tag', async () => {
     await loadContent(page, '```js\nconsole.log("hi");\n```');
@@ -86,8 +84,6 @@ test.describe('Writing-view code-block language tag spans', () => {
     await expect(tags).toHaveCount(0);
   });
 });
-
-// ── Click-to-edit dialog ─────────────────────────────────────
 
 test.describe('Code-block language tag dialog', () => {
   test('single click on language tag opens dialog even when code block is not focused', async () => {
