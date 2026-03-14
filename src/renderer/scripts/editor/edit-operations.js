@@ -171,7 +171,6 @@ export class EditOperations {
 
     const before = rangeDeleteBefore ?? this.editor.syntaxTree.toMarkdown();
 
-    // ── Table cell editing ──
     if (
       node.type === 'table' &&
       this.editor.syntaxTree.treeCursor.cellRow !== undefined &&

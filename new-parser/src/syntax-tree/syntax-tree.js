@@ -12,25 +12,6 @@ import {
 } from "../formats/index.js";
 
 /**
- * @typedef {Object} NodeAttributes
- * @property {string} [language] - Language for code blocks
- * @property {number} [fenceCount] - Number of backticks in the code fence (3 or more)
- * @property {number} [indent] - Indentation level for list items
- * @property {boolean} [ordered] - Whether a list is ordered
- * @property {number} [number] - Number for ordered list items
- * @property {string} [url] - URL for links and images
- * @property {string} [title] - Title for links and images
- * @property {string} [alt] - Alt text for images
- * @property {string} [href] - Link URL for linked images or link nodes
- * @property {string} [src] - Image source URL (for inline-image nodes)
- * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
- * @property {string} [style] - Inline CSS style string for HTML images
- * @property {string} [tagName] - HTML tag name for html-element nodes
- * @property {boolean} [checked] - Whether a checklist item is checked
- * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
- */
-
-/**
  * Represents the root of a syntax tree.
  */
 export class SyntaxTree {

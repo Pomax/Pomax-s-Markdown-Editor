@@ -20,8 +20,6 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-// ── Select-All Cycling ──
-
 test.describe('Select-All Cycling', () => {
   test('first Ctrl+A selects current paragraph content', async () => {
     await loadContent(page, 'Hello world\n\nSecond paragraph');
@@ -122,8 +120,6 @@ test.describe('Select-All Cycling', () => {
     expect(selectedText).toBe('My Heading');
   });
 });
-
-// ── Delete/Backspace Removes Empty Elements ──
 
 test.describe('Delete Empty Elements', () => {
   test('Ctrl+A then Backspace on single paragraph removes it, leaves empty doc', async () => {

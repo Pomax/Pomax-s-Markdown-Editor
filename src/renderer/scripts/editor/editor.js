@@ -90,8 +90,6 @@ export class Editor {
     /** @type {SelectionManager} */
     this.selectionManager = new SelectionManager(this);
 
-    // ── Task managers ──
-
     /** @type {CursorManager} */
     this.cursorManager = new CursorManager(this);
 
@@ -118,8 +116,6 @@ export class Editor {
 
     /** @type {LinkHelper} */
     this.linkHelper = new LinkHelper(this);
-
-    // ── Editor state ──
 
     /** @type {ViewMode} */
     this.viewMode = 'writing';
@@ -176,10 +172,6 @@ export class Editor {
      */
     this.boundHandlers = {};
   }
-
-  // ──────────────────────────────────────────────
-  //  Parser helpers
-  // ──────────────────────────────────────────────
 
   /**
    * Re-parses a single markdown line to detect type changes during
@@ -260,10 +252,6 @@ export class Editor {
     if (addedIds.length > 0) hints.added = addedIds;
     return hints;
   }
-
-  // ──────────────────────────────────────────────
-  //  Initialization
-  // ──────────────────────────────────────────────
 
   /**
    * Initializes the editor.
@@ -353,10 +341,6 @@ export class Editor {
     this.attachContainerListeners();
   }
 
-  // ──────────────────────────────────────────────
-  //  Tree cursor helpers
-  // ──────────────────────────────────────────────
-
   /**
    * Returns the SyntaxNode that the tree cursor currently points at.
    * When the cursor is inside inline formatting, this returns the
@@ -427,10 +411,6 @@ export class Editor {
     return this.getSiblings(node).indexOf(node);
   }
 
-  // ──────────────────────────────────────────────
-  //  Cursor delegation
-  // ──────────────────────────────────────────────
-
   /**
    * Syncs the tree cursor/range from the current DOM selection.
    * @param {{ preserveRange?: boolean }} [options]
@@ -452,10 +432,6 @@ export class Editor {
   placeSelection() {
     this.cursorManager.placeSelection();
   }
-
-  // ──────────────────────────────────────────────
-  //  Phantom paragraph promotion
-  // ──────────────────────────────────────────────
 
   /**
    * Checks whether the DOM selection is inside the phantom paragraph
@@ -505,10 +481,6 @@ export class Editor {
 
     return true;
   }
-
-  // ──────────────────────────────────────────────
-  //  Rendering
-  // ──────────────────────────────────────────────
 
   /**
    * Full re-render: tears down the entire DOM and rebuilds it from
@@ -569,10 +541,6 @@ export class Editor {
     this.placeCursor();
     this.isRendering = false;
   }
-
-  // ──────────────────────────────────────────────
-  //  Helpers for tree-level edits
-  // ──────────────────────────────────────────────
 
   /**
    * Builds the full markdown source line for a node, including its syntax
@@ -703,10 +671,6 @@ export class Editor {
     }
     return null;
   }
-
-  // ──────────────────────────────────────────────
-  //  Public API (used by toolbar, IPC, tests, …)
-  // ──────────────────────────────────────────────
 
   /**
    * Loads markdown content into the editor.

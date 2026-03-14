@@ -277,8 +277,6 @@ describe('SyntaxTree', () => {
   });
 });
 
-// ── toBareText ──────────────────────────────────────────────────────
-
 describe('SyntaxNode.toBareText', () => {
   it('strips heading prefix', () => {
     const node = new SyntaxNode('heading2', 'Hello World');

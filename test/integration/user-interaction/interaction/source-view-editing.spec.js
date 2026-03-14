@@ -43,10 +43,6 @@ async function getMarkdown() {
   return page.evaluate(() => window.editorAPI?.getContent() ?? '');
 }
 
-// ──────────────────────────────────────────────
-//  Typing
-// ──────────────────────────────────────────────
-
 test.describe('Source view typing', () => {
   test('typing a character updates the node content', async () => {
     await loadContent(page, 'hello');
@@ -96,10 +92,6 @@ test.describe('Source view typing', () => {
     expect(nodeType).toBe('heading2');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Backspace
-// ──────────────────────────────────────────────
 
 test.describe('Source view backspace', () => {
   test('backspace deletes a character within a line', async () => {
@@ -151,10 +143,6 @@ test.describe('Source view backspace', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Delete (forward)
-// ──────────────────────────────────────────────
-
 test.describe('Source view delete', () => {
   test('delete removes the character after the cursor', async () => {
     await loadContent(page, 'abcdef');
@@ -205,10 +193,6 @@ test.describe('Source view delete', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Cut
-// ──────────────────────────────────────────────
-
 test.describe('Source view cut', () => {
   test('cut removes selected text and updates the document', async () => {
     await loadContent(page, 'cut this text');
@@ -247,10 +231,6 @@ test.describe('Source view cut', () => {
     expect(md).not.toContain('REMOVE');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Toolbar formatting
-// ──────────────────────────────────────────────
 
 test.describe('Source view toolbar formatting', () => {
   test('bold button wraps selected text with ** delimiters', async () => {
@@ -297,10 +277,6 @@ test.describe('Source view toolbar formatting', () => {
     expect(md).toContain('make *this* italic');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Enter (node splitting)
-// ──────────────────────────────────────────────
 
 test.describe('Source view enter', () => {
   test('enter splits a paragraph into two nodes', async () => {

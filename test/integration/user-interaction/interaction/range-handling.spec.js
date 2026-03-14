@@ -75,10 +75,6 @@ test.afterAll(async () => {
   }
 });
 
-// ──────────────────────────────────────────────
-//  Helpers
-// ──────────────────────────────────────────────
-
 /**
  * Types a string character by character, waits for editor to settle.
  * @param {import('@playwright/test').Page} page
@@ -158,10 +154,6 @@ async function setCrossNodeSelection(page, startText, startOff, endText, endOff)
   await page.waitForTimeout(100);
 }
 
-// ──────────────────────────────────────────────
-//  Type with selection replaces it
-// ──────────────────────────────────────────────
-
 test.describe('Type with selection', () => {
   test('typing with a selection replaces the selected text (single node)', async ({ page }) => {
     await page.goto(baseURL);
@@ -205,10 +197,6 @@ test.describe('Type with selection', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Backspace with selection
-// ──────────────────────────────────────────────
-
 test.describe('Backspace with selection', () => {
   test('backspace deletes the entire selection', async ({ page }) => {
     await page.goto(baseURL);
@@ -250,10 +238,6 @@ test.describe('Backspace with selection', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Delete with selection
-// ──────────────────────────────────────────────
-
 test.describe('Delete with selection', () => {
   test('delete key removes the entire selection', async ({ page }) => {
     await page.goto(baseURL);
@@ -271,10 +255,6 @@ test.describe('Delete with selection', () => {
     expect(content).toBe('');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Enter with selection
-// ──────────────────────────────────────────────
 
 test.describe('Enter with selection', () => {
   test('enter replaces selection and splits at cursor', async ({ page }) => {
@@ -306,10 +286,6 @@ test.describe('Enter with selection', () => {
     expect(secondText.trim()).toBe('ef');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Ctrl+A context-restricted select-all
-// ──────────────────────────────────────────────
 
 test.describe('Ctrl+A context-restricted select-all', () => {
   test('Ctrl+A selects only the current paragraph, not the whole document', async ({ page }) => {
@@ -392,10 +368,6 @@ test.describe('Ctrl+A context-restricted select-all', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Cross-node selection deletion
-// ──────────────────────────────────────────────
-
 test.describe('Cross-node selection deletion', () => {
   test('selecting across two paragraphs and deleting merges them', async ({ page }) => {
     await page.goto(baseURL);
@@ -442,10 +414,6 @@ test.describe('Cross-node selection deletion', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Paste with selection replaces it
-// ──────────────────────────────────────────────
-
 test.describe('Paste with selection', () => {
   test('pasting with a selection replaces the selected text', async ({ page }) => {
     await page.goto(baseURL);
@@ -482,10 +450,6 @@ test.describe('Paste with selection', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Cut (Ctrl+X)
-// ──────────────────────────────────────────────
-
 test.describe('Cut', () => {
   test('cut removes selected text and puts it on clipboard', async ({ page }) => {
     await page.goto(baseURL);
@@ -519,10 +483,6 @@ test.describe('Cut', () => {
     expect(content).toBe('hello world');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Writing-view copy (block prefix + HTML repair)
-// ──────────────────────────────────────────────
 
 test.describe('Writing-view copy', () => {
   test('cross-node copy produces markdown with block prefixes', async ({ page }) => {
@@ -620,10 +580,6 @@ test.describe('Writing-view copy', () => {
   });
 });
 
-// ──────────────────────────────────────────────
-//  Writing-view cut (copy + delete)
-// ──────────────────────────────────────────────
-
 test.describe('Writing-view cut', () => {
   test('cross-node cut copies markdown and removes content', async ({ page }) => {
     await page.goto(baseURL);
@@ -685,10 +641,6 @@ test.describe('Writing-view cut', () => {
     expect(remainingMarkdown).toBe('# he_o_ne\n\nand <strong>inline</strong> html');
   });
 });
-
-// ──────────────────────────────────────────────
-//  Undo/redo after range operations
-// ──────────────────────────────────────────────
 
 test.describe('Undo after range operations', () => {
   test('undo restores content after select-all and type', async ({ page }) => {

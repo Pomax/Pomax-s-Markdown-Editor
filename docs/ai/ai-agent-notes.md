@@ -50,6 +50,7 @@ this **before** doing any work.
   how JavaScript works. However, using `_` as prefix for unused but
   required function arguments is allowed as the underscore is not use
   to signify some kind of ownership or privacy.
+- **Never** use "// --- ...." sectioning comments in code.
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
   terminal invocation must be a single command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its

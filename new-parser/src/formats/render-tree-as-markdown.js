@@ -188,6 +188,15 @@ export function renderNodeToMarkdown(node, depth = 0) {
             const result = lines.join('\n').replace(/\n{3,}/g, '\n\n');
             return result;
         }
+        case 'text':
+        case 'inline-code':
+        case 'bold':
+        case 'italic':
+        case 'bold-italic':
+        case 'strikethrough':
+        case 'link':
+        case 'inline-image':
+            return serializeInlineNode(node);
         default:
             return node.content;
     }

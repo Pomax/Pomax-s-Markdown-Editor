@@ -56,8 +56,6 @@ export class ClipboardHandler {
     return this.getSelectedMarkdownSource();
   }
 
-  // ── Source-view copy (existing behaviour, extracted) ────────────
-
   /**
    * Source-view copy: raw content substrings joined with blank lines.
    * @returns {string}
@@ -93,8 +91,6 @@ export class ClipboardHandler {
     parts.push(endNode.content.substring(0, endOffset));
     return parts.join('\n\n');
   }
-
-  // ── Writing-view copy ──────────────────────────────────────────
 
   /**
    * Writing-view copy: produces valid markdown for the selected region

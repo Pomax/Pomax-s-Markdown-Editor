@@ -306,10 +306,6 @@ class App {
     console.log('Markdown Editor initialized');
   }
 
-  // ──────────────────────────────────────────────
-  //  Multi-file tab management
-  // ──────────────────────────────────────────────
-
   /**
    * Generates a unique tab identifier.
    * @returns {string}

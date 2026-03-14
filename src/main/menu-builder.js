@@ -446,7 +446,7 @@ export class MenuBuilder {
   async handleGatherImages() {
     if (!this.window) return;
 
-    // ── 1. Ensure the document has been saved ──
+    // 1. Ensure the document has been saved
     if (!this.fileManager.currentFilePath) {
       const { response } = await dialog.showMessageBox(this.window, {
         type: 'info',
@@ -475,7 +475,7 @@ export class MenuBuilder {
       if (!this.fileManager.currentFilePath) return;
     }
 
-    // ── 2. Confirm the gather operation ──
+    // 2. Confirm the gather operation
     const { response } = await dialog.showMessageBox(this.window, {
       type: 'question',
       title: 'Gather Images',
@@ -490,7 +490,7 @@ export class MenuBuilder {
 
     if (response === 0) return; // No
 
-    // ── 3. Get the current document content from the renderer ──
+    // 3. Get the current document content from the renderer
     const markdown = await this.window.webContents.executeJavaScript(
       'window.editorAPI?.getContent() ?? ""',
     );
@@ -499,7 +499,7 @@ export class MenuBuilder {
 
     const docDir = path.dirname(this.fileManager.currentFilePath);
 
-    // ── 4. Find and gather images ──
+    // 4. Find and gather images
     const result = await this.gatherImages(markdown, docDir);
 
     if (result.changedCount === 0) {
@@ -513,7 +513,7 @@ export class MenuBuilder {
       return;
     }
 
-    // ── 5. Push the updated content back into the editor ──
+    // 5. Push the updated content back into the editor
     const escaped = result.updatedMarkdown
       .replace(/\\/g, '\\\\')
       .replace(/`/g, '\\`')

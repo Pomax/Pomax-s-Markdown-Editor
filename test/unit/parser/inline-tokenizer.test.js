@@ -12,8 +12,6 @@ import {
   tokenizeInline,
 } from '../../../old-parser/parser/inline-tokenizer.js';
 
-// ── tokenizeInline ──────────────────────────────────────────────────
-
 describe('tokenizeInline', () => {
   it('returns plain text for a string with no markup', () => {
     const tokens = tokenizeInline('hello world');
@@ -158,8 +156,6 @@ describe('tokenizeInline', () => {
   });
 });
 
-// ── buildInlineTree ─────────────────────────────────────────────────
-
 describe('buildInlineTree', () => {
   it('builds a tree from bold tokens', () => {
     const tokens = tokenizeInline('a **b** c');
@@ -268,8 +264,6 @@ describe('buildInlineTree', () => {
     assert.equal(codeNode.content, '<sub>');
   });
 });
-
-// ── findMatchedTokenIndices ─────────────────────────────────────────
 
 describe('findMatchedTokenIndices', () => {
   it('returns empty set for plain text', () => {
