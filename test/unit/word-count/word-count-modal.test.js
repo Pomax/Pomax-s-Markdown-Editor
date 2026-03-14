@@ -5,7 +5,7 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { SyntaxNode, SyntaxTree } from '../../../old-parser/parser/syntax-tree.js';
-import { getWordCounts } from '../../../src/renderer/scripts/word-count/word-count-modal.js';
+import { getWordCounts } from '../../../src/renderer/scripts/utility/word-count/word-count-modal.js';
 
 describe(`getWordCounts`, () => {
   it(`should return zeros for a null syntax tree`, () => {

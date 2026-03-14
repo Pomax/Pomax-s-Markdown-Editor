@@ -12,10 +12,10 @@ import { SyntaxNode } from '../../../../old-parser/parser/syntax-tree.js';
  */
 export class RangeOperations {
   /**
-   * @param {import('./editor.js').Editor} editor
+   * @param {import('./index.js').Editor} editor
    */
   constructor(editor) {
-    /** @type {import('./editor.js').Editor} */
+    /** @type {import('./index.js').Editor} */
     this.editor = editor;
 
     /**
@@ -83,17 +83,18 @@ export class RangeOperations {
 
     const before = this.editor.syntaxTree.toMarkdown();
 
-    // ── Same-node selection ──
     if (startNodeId === endNodeId) {
       const left = startNode.content.substring(0, startOffset);
       const right = startNode.content.substring(endOffset);
       startNode.content = left + right;
-      this.editor.syntaxTree.treeCursor = { nodeId: startNode.id, offset: startOffset };
+      this.editor.syntaxTree.treeCursor = {
+        nodeId: startNode.id,
+        offset: startOffset,
+      };
       this.editor.treeRange = null;
       return { before, hints: { updated: [startNode.id] } };
     }
 
-    // ── Cross-node selection ──
     // Both nodes must share the same parent (sibling list).
     const siblings = this.editor.getSiblings(startNode);
     const startIdx = siblings.indexOf(startNode);
@@ -129,7 +130,10 @@ export class RangeOperations {
     // Remove them from the siblings array.
     siblings.splice(firstIdx + 1, lastIdx - firstIdx);
 
-    this.editor.syntaxTree.treeCursor = { nodeId: firstNode.id, offset: firstOffset };
+    this.editor.syntaxTree.treeCursor = {
+      nodeId: firstNode.id,
+      offset: firstOffset,
+    };
     this.editor.treeRange = null;
     return { before, hints: { updated: [firstNode.id], removed: removedIds } };
   }
@@ -195,7 +199,6 @@ export class RangeOperations {
    * @param {SyntaxNode} node
    */
   selectNode(node) {
-    // ── Table cell: select just the cell content ──
     if (
       node.type === `table` &&
       this.editor.viewMode === `writing` &&

@@ -4,7 +4,7 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { UndoManager } from '../../../src/renderer/scripts/editor/undo-manager.js';
+import { UndoManager } from '../../../src/renderer/scripts/editor/managers/undo-manager.js';
 
 describe(`UndoManager`, () => {
   /** @type {UndoManager} */

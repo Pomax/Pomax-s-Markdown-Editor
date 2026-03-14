@@ -12,10 +12,10 @@
  */
 export class SourceRenderer {
   /**
-   * @param {import('../editor.js').Editor} editor - The editor instance
+   * @param {import('../index.js').Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../editor.js').Editor} */
+    /** @type {import('../index.js').Editor} */
     this.editor = editor;
   }
 

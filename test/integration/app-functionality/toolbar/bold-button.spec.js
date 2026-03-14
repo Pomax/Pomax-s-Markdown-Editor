@@ -120,8 +120,6 @@ async function getSourceLineText(pg, index) {
   return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Problem 1: bold first word, paragraph 1, then toggle off ───────
-
 test.describe(`Problem 1 — bold first word, toggle off`, () => {
   test(`bolding first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -158,8 +156,6 @@ test.describe(`Problem 1 — bold first word, toggle off`, () => {
   });
 });
 
-// ─── Problem 2: bold middle word, paragraph 1 ──────────────────────
-
 test.describe(`Problem 2 — bold middle word, paragraph 1`, () => {
   test(`bolding middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -194,8 +190,6 @@ test.describe(`Problem 2 — bold middle word, paragraph 1`, () => {
   });
 });
 
-// ─── Problem 3: bold first word, paragraph 2 ───────────────────────
-
 test.describe(`Problem 3 — bold first word, paragraph 2`, () => {
   test(`bolding first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -216,8 +210,6 @@ test.describe(`Problem 3 — bold first word, paragraph 2`, () => {
   });
 });
 
-// ─── Problem 4: bold middle word, paragraph 2 ──────────────────────
-
 test.describe(`Problem 4 — bold middle word, paragraph 2`, () => {
   test(`bolding middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -236,8 +228,6 @@ test.describe(`Problem 4 — bold middle word, paragraph 2`, () => {
     expect(line1).toBe(`text2 **text2** text2`);
   });
 });
-
-// ─── Cursor position after bolding ─────────────────────────────────
 
 test.describe(`Cursor position after bold`, () => {
   test(`cursor is at end of bolded word, not start of line`, async () => {
@@ -318,8 +308,6 @@ test.describe(`Cursor position after bold`, () => {
     expect(cursorInfo?.offset).toBe(5);
   });
 });
-
-// ─── Collapsed cursor: bold word under caret / unbold ───────────────
 
 /**
  * Single-click inside a word to place a collapsed cursor.

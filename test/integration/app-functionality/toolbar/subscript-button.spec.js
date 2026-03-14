@@ -114,8 +114,6 @@ async function getSourceLineText(pg, index) {
   return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Subscript first word, paragraph 1 ──────────────────────────────
-
 test.describe(`Subscript first word, paragraph 1`, () => {
   test(`subscript first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -131,8 +129,6 @@ test.describe(`Subscript first word, paragraph 1`, () => {
   });
 });
 
-// ─── Subscript middle word, paragraph 1 ─────────────────────────────
-
 test.describe(`Subscript middle word, paragraph 1`, () => {
   test(`subscript middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -147,8 +143,6 @@ test.describe(`Subscript middle word, paragraph 1`, () => {
     expect(line).toBe(`text1 <sub>text1</sub> text1`);
   });
 });
-
-// ─── Subscript first word, paragraph 2 ──────────────────────────────
 
 test.describe(`Subscript first word, paragraph 2`, () => {
   test(`subscript first word of second paragraph produces correct markdown`, async () => {
@@ -167,8 +161,6 @@ test.describe(`Subscript first word, paragraph 2`, () => {
   });
 });
 
-// ─── Subscript middle word, paragraph 2 ─────────────────────────────
-
 test.describe(`Subscript middle word, paragraph 2`, () => {
   test(`subscript middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -185,8 +177,6 @@ test.describe(`Subscript middle word, paragraph 2`, () => {
     expect(line1).toBe(`text2 <sub>text2</sub> text2`);
   });
 });
-
-// ─── Cursor position after subscript ────────────────────────────────
 
 test.describe(`Cursor position after subscript`, () => {
   test(`cursor is at end of subscripted middle word`, async () => {
@@ -208,7 +198,10 @@ test.describe(`Cursor position after subscript`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -222,8 +215,6 @@ test.describe(`Cursor position after subscript`, () => {
     expect(cursorInfo?.offset).toBe(11);
   });
 });
-
-// ─── Collapsed cursor: subscript word under caret ───────────────────
 
 /**
  * Single-click inside a word to place a collapsed cursor.

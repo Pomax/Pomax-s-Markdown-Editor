@@ -6,27 +6,31 @@
 /// <reference path="../../types.d.ts" />
 
 import { crc32 } from './editor/crc32.js';
-import { cursorToAbsoluteOffset } from './editor/cursor-persistence.js';
-import { Editor } from './editor/editor.js';
+import { cursorToAbsoluteOffset } from './editor/managers/cursor-persistence.js';
+import { Editor } from './editor/index.js';
 import { initPageResizeHandles } from './editor/page-resize.js';
-import { KeyboardHandler } from './handlers/keyboard-handler.js';
-import { MenuHandler } from './handlers/menu-handler.js';
-import { applyColors, applyMargins, applyPageWidth } from './preferences/preferences-modal.js';
-import { SearchBar } from './search/search-bar.js';
-import { TabBar, getDisambiguatedLabels } from './tab-bar/tab-bar.js';
-import { TableOfContents } from './toc/toc.js';
-import { Toolbar } from './toolbar/toolbar.js';
+import { KeyboardHandler } from './editor/handlers/keyboard-handler.js';
+import { MenuHandler } from './editor/handlers/menu-handler.js';
+import {
+  applyColors,
+  applyMargins,
+  applyPageWidth,
+} from './utility/preferences/preferences-modal.js';
+import { SearchBar } from './utility/search/search-bar.js';
+import { TabBar, getDisambiguatedLabels } from './utility/tab-bar/tab-bar.js';
+import { TableOfContents } from './utility/toc/toc.js';
+import { Toolbar } from './utility/toolbar/toolbar.js';
 
 /**
  * @typedef {Object} DocumentState
  * @property {string} content - The markdown content
  * @property {string|null} filePath - Full file path or null for untitled
  * @property {boolean} modified - Whether there are unsaved changes
- * @property {import('./editor/editor.js').TreeCursor|null} cursor - Cursor position
+ * @property {import('./editor/index.js').TreeCursor|null} cursor - Cursor position
  * @property {number} cursorOffset - Absolute character offset in markdown source
  * @property {number} contentHash - CRC32 hash of the markdown content
  * @property {import('../../../old-parser/parser/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
- * @property {import('./editor/editor.js').TreeRange|null} treeRange - Active text selection range
+ * @property {import('./editor/index.js').TreeRange|null} treeRange - Active text selection range
  * @property {number} scrollTop - Scroll position of the scroll container
  * @property {string|null} tocActiveHeadingId - The active ToC heading node ID
  * @property {any[]} undoStack - Undo history
@@ -934,7 +938,7 @@ class App {
       },
       getViewMode: () => this.editor?.getViewMode() ?? `source`,
       setViewMode: (/** @type {string} */ mode) => {
-        this.editor?.setViewMode(/** @type {import('./editor/editor.js').ViewMode} */ (mode));
+        this.editor?.setViewMode(/** @type {import('./editor/index.js').ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);
       },
       setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),

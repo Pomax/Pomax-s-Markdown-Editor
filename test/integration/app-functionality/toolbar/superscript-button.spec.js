@@ -114,8 +114,6 @@ async function getSourceLineText(pg, index) {
   return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Superscript first word, paragraph 1 ────────────────────────────
-
 test.describe(`Superscript first word, paragraph 1`, () => {
   test(`superscript first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -131,8 +129,6 @@ test.describe(`Superscript first word, paragraph 1`, () => {
   });
 });
 
-// ─── Superscript middle word, paragraph 1 ───────────────────────────
-
 test.describe(`Superscript middle word, paragraph 1`, () => {
   test(`superscript middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -147,8 +143,6 @@ test.describe(`Superscript middle word, paragraph 1`, () => {
     expect(line).toBe(`text1 <sup>text1</sup> text1`);
   });
 });
-
-// ─── Superscript first word, paragraph 2 ────────────────────────────
 
 test.describe(`Superscript first word, paragraph 2`, () => {
   test(`superscript first word of second paragraph produces correct markdown`, async () => {
@@ -167,8 +161,6 @@ test.describe(`Superscript first word, paragraph 2`, () => {
   });
 });
 
-// ─── Superscript middle word, paragraph 2 ───────────────────────────
-
 test.describe(`Superscript middle word, paragraph 2`, () => {
   test(`superscript middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -185,8 +177,6 @@ test.describe(`Superscript middle word, paragraph 2`, () => {
     expect(line1).toBe(`text2 <sup>text2</sup> text2`);
   });
 });
-
-// ─── Cursor position after superscript ──────────────────────────────
 
 test.describe(`Cursor position after superscript`, () => {
   test(`cursor is at end of superscripted middle word`, async () => {
@@ -208,7 +198,10 @@ test.describe(`Cursor position after superscript`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -222,8 +215,6 @@ test.describe(`Cursor position after superscript`, () => {
     expect(cursorInfo?.offset).toBe(11);
   });
 });
-
-// ─── Collapsed cursor: superscript word under caret ─────────────────
 
 /**
  * Single-click inside a word to place a collapsed cursor.

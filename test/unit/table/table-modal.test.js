@@ -4,7 +4,7 @@
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { TableModal } from '../../../src/renderer/scripts/table/table-modal.js';
+import { TableModal } from '../../../src/renderer/scripts/editor/content-types/table/table-modal.js';
 
 describe(`TableModal`, () => {
   describe(`parseTableContent`, () => {
@@ -48,7 +48,7 @@ describe(`TableModal`, () => {
 
   describe(`tableDateToMarkdown`, () => {
     it(`should generate markdown for a simple table`, () => {
-      /** @type {import('../../../src/renderer/scripts/table/table-modal.js').TableData} */
+      /** @type {import('../../../src/renderer/scripts/editor/content-types/table/table-modal.js').TableData} */
       const data = {
         rows: 1,
         columns: 2,
@@ -64,7 +64,7 @@ describe(`TableModal`, () => {
     });
 
     it(`should include separator after header`, () => {
-      /** @type {import('../../../src/renderer/scripts/table/table-modal.js').TableData} */
+      /** @type {import('../../../src/renderer/scripts/editor/content-types/table/table-modal.js').TableData} */
       const data = {
         rows: 1,
         columns: 2,

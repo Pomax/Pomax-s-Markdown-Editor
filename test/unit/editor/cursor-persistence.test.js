@@ -13,7 +13,7 @@ import { SyntaxNode, SyntaxTree } from '../../../old-parser/parser/syntax-tree.j
 import {
   absoluteOffsetToCursor,
   cursorToAbsoluteOffset,
-} from '../../../src/renderer/scripts/editor/cursor-persistence.js';
+} from '../../../src/renderer/scripts/editor/managers/cursor-persistence.js';
 
 /**
  * Mirrors Editor.getPrefixLength for use in tests.

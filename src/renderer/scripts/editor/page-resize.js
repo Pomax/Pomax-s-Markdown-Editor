@@ -17,7 +17,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
-import { applyPageWidth } from '../preferences/preferences-modal.js';
+import { applyPageWidth } from '../utility/preferences/preferences-modal.js';
 
 /** Minimum page width in pixels. */
 export const MIN_WIDTH_PX = 300;
@@ -91,8 +91,6 @@ export function initPageResizeHandles(editor) {
     update();
   };
 }
-
-// ── Private helpers ──────────────────────────────────────────────────
 
 /**
  * Creates a resize handle element.

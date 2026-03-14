@@ -41,7 +41,6 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   // The details body should start open (default preference is open).
   await expect(detailsBlock).toHaveClass(/md-details--open/);
 
-  // ── Step 1: Measure the details block height while expanded ──
   // We measure the .md-details element's own height rather than the
   // editor's scrollHeight, because the editor has a large min-height
   // (A4 aspect ratio) that masks content-size changes.
@@ -51,7 +50,6 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   });
   expect(heightExpanded).toBeGreaterThan(0);
 
-  // ── Step 2: Click the triangle to collapse ──
   // Use page.mouse to simulate a real mouse click (mousedown → mouseup →
   // click) so the browser fires selectionchange between mousedown and
   // click, just like a real human click.  Playwright's locator.click()
@@ -82,7 +80,6 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
     `collapsed height (${heightCollapsed}) should be less than expanded height (${heightExpanded})`,
   ).toBeLessThan(heightExpanded);
 
-  // ── Step 3: Click the triangle again to expand ──
   // Re-query the bounding box because the DOM was re-rendered.
   const triangleBox2 = await triangleLoc.boundingBox();
   if (!triangleBox2) throw new Error(`triangle bounding box is null after collapse`);

@@ -87,8 +87,6 @@ async function getFormatButtonStates(pg) {
   return result;
 }
 
-// ─── Tests ─────────────────────────────────────────────────────────
-
 test(`bold button is active when cursor is inside bold text`, async () => {
   await loadContent(page, fixtureContent);
   await setWritingView(page);
@@ -189,8 +187,6 @@ test(`paragraph button stays active when cursor is inside bold text in a paragra
   expect(paragraphActive).toBe(true);
 });
 
-// ─── HTML tag equivalents ──────────────────────────────────────────
-
 test(`bold button is active when cursor is inside <strong> tag`, async () => {
   await loadContent(page, fixtureContent);
   await setWritingView(page);
@@ -268,8 +264,6 @@ test(`strikethrough button is active when cursor is inside <s> tag`, async () =>
   expect(states.italic).toBe(false);
   expect(states.strikethrough).toBe(true);
 });
-
-// ─── HTML tag toggle-off (strip tags via toolbar button) ───────────
 
 test(`clicking bold button inside <strong> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);

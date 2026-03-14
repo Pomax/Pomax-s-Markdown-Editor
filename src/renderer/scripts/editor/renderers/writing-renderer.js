@@ -18,10 +18,10 @@ import { highlight } from '../syntax-highlighter/index.js';
  */
 export class WritingRenderer {
   /**
-   * @param {import('../editor.js').Editor} editor - The editor instance
+   * @param {import('../index.js').Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../editor.js').Editor} */
+    /** @type {import('../index.js').Editor} */
     this.editor = editor;
   }
 
@@ -732,7 +732,7 @@ export class WritingRenderer {
       }
     }
 
-    // ── Summary row ──
+    // Summary row
     if (summaryNode) {
       const summaryRow = document.createElement(`div`);
       summaryRow.className = `md-details-summary`;
@@ -774,7 +774,7 @@ export class WritingRenderer {
       container.appendChild(summaryRow);
     }
 
-    // ── Collapsible body ──
+    // Collapsible body
     const body = document.createElement(`div`);
     body.className = `md-details-body`;
 

@@ -49,8 +49,6 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-// ─── Opening and closing ────────────────────────────────────────────
-
 test(`Ctrl+F opens the search bar`, async () => {
   await loadContent(page, FIXTURE);
   // Search bar should be hidden initially.
@@ -101,8 +99,6 @@ test(`Ctrl+F while open selects the search text`, async () => {
   });
   expect(selected).toBe(5);
 });
-
-// ─── Plain text search in source view ───────────────────────────────
 
 test(`plain text search highlights matches in source view`, async () => {
   await loadContent(page, FIXTURE);
@@ -164,8 +160,6 @@ test(`case sensitive toggle restricts matches`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-// ─── Regex search ───────────────────────────────────────────────────
-
 test(`regex search finds pattern matches`, async () => {
   await loadContent(page, FIXTURE);
   await setSourceView(page);
@@ -202,8 +196,6 @@ test(`invalid regex shows no results instead of error`, async () => {
   await page.locator(`.search-toggle[data-action="regex"]`).click();
   await page.keyboard.press(`Escape`);
 });
-
-// ─── Navigation ─────────────────────────────────────────────────────
 
 test(`Enter navigates to next match`, async () => {
   await loadContent(page, FIXTURE);
@@ -260,8 +252,6 @@ test(`next/prev buttons navigate matches`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-// ─── Writing view ───────────────────────────────────────────────────
-
 test(`search works in writing view (bare text)`, async () => {
   await loadContent(page, FIXTURE);
   await setWritingView(page);
@@ -307,8 +297,6 @@ test(`source view search matches markdown syntax`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-// ─── Highlights cleared on close ────────────────────────────────────
-
 test(`highlights are removed when search bar closes`, async () => {
   await loadContent(page, FIXTURE);
   await setSourceView(page);
@@ -328,8 +316,6 @@ test(`highlights are removed when search bar closes`, async () => {
   await expect(marks).toHaveCount(0);
 });
 
-// ─── Close button ───────────────────────────────────────────────────
-
 test(`close button closes the search bar`, async () => {
   await loadContent(page, FIXTURE);
   await page.keyboard.press(`${MOD}+f`);
@@ -338,8 +324,6 @@ test(`close button closes the search bar`, async () => {
   await page.locator(`.search-close-btn`).click();
   await expect(page.locator(`.search-bar`)).toBeHidden();
 });
-
-// ─── No results ─────────────────────────────────────────────────────
 
 test(`shows "No results" for unmatched query`, async () => {
   await loadContent(page, FIXTURE);
@@ -353,8 +337,6 @@ test(`shows "No results" for unmatched query`, async () => {
 
   await page.keyboard.press(`Escape`);
 });
-
-// ─── Cross-node regex match ─────────────────────────────────────────
 
 test(`regex can match across element boundaries`, async () => {
   await loadContent(page, FIXTURE);
@@ -376,8 +358,6 @@ test(`regex can match across element boundaries`, async () => {
   await page.locator(`.search-toggle[data-action="regex"]`).click();
   await page.keyboard.press(`Escape`);
 });
-
-// ─── Minimum query length ───────────────────────────────────────────
 
 test(`plain text search requires at least 2 characters`, async () => {
   await loadContent(page, FIXTURE);
@@ -413,14 +393,14 @@ test(`regex search still works with single character`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-// ─── Cursor proximity ───────────────────────────────────────────────
-
 test(`initial match is closest to cursor position`, async () => {
   await loadContent(page, FIXTURE);
   await setSourceView(page);
 
   // Place cursor at the start of "## Another heading" by clicking it.
-  const secondHeading = page.locator(`#editor .md-line`, { hasText: `Another heading` });
+  const secondHeading = page.locator(`#editor .md-line`, {
+    hasText: `Another heading`,
+  });
   await secondHeading.click();
 
   await page.keyboard.press(`${MOD}+f`);

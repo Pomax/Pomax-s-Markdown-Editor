@@ -110,8 +110,6 @@ async function getSourceLineText(pg, index) {
   return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Italic first word, paragraph 1, then toggle off ────────────────
-
 test.describe(`Italic first word, toggle off`, () => {
   test(`italicizing first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -143,8 +141,6 @@ test.describe(`Italic first word, toggle off`, () => {
     expect(line).toBe(`text1 text1 text1`);
   });
 });
-
-// ─── Italic middle word, paragraph 1 ───────────────────────────────
 
 test.describe(`Italic middle word, paragraph 1`, () => {
   test(`italicizing middle word produces correct markdown`, async () => {
@@ -178,8 +174,6 @@ test.describe(`Italic middle word, paragraph 1`, () => {
   });
 });
 
-// ─── Italic first word, paragraph 2 ────────────────────────────────
-
 test.describe(`Italic first word, paragraph 2`, () => {
   test(`italicizing first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -197,8 +191,6 @@ test.describe(`Italic first word, paragraph 2`, () => {
   });
 });
 
-// ─── Italic middle word, paragraph 2 ───────────────────────────────
-
 test.describe(`Italic middle word, paragraph 2`, () => {
   test(`italicizing middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -215,8 +207,6 @@ test.describe(`Italic middle word, paragraph 2`, () => {
     expect(line1).toBe(`text2 *text2* text2`);
   });
 });
-
-// ─── Cursor position after italicizing ─────────────────────────────
 
 test.describe(`Cursor position after italic`, () => {
   test(`cursor is at end of italicized middle word`, async () => {
@@ -238,7 +228,10 @@ test.describe(`Cursor position after italic`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -271,7 +264,10 @@ test.describe(`Cursor position after italic`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -284,8 +280,6 @@ test.describe(`Cursor position after italic`, () => {
     expect(cursorInfo?.offset).toBe(5);
   });
 });
-
-// ─── Collapsed cursor: italic word under caret / un-italic ─────────
 
 /**
  * Single-click inside a word to place a collapsed cursor.

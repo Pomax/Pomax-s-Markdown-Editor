@@ -110,8 +110,6 @@ async function getSourceLineText(pg, index) {
   return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Strikethrough first word, paragraph 1, then toggle off ─────────
-
 test.describe(`Strikethrough first word, toggle off`, () => {
   test(`strikethrough first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -143,8 +141,6 @@ test.describe(`Strikethrough first word, toggle off`, () => {
     expect(line).toBe(`text1 text1 text1`);
   });
 });
-
-// ─── Strikethrough middle word, paragraph 1 ─────────────────────────
 
 test.describe(`Strikethrough middle word, paragraph 1`, () => {
   test(`strikethrough middle word produces correct markdown`, async () => {
@@ -178,8 +174,6 @@ test.describe(`Strikethrough middle word, paragraph 1`, () => {
   });
 });
 
-// ─── Strikethrough first word, paragraph 2 ──────────────────────────
-
 test.describe(`Strikethrough first word, paragraph 2`, () => {
   test(`strikethrough first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -197,8 +191,6 @@ test.describe(`Strikethrough first word, paragraph 2`, () => {
   });
 });
 
-// ─── Strikethrough middle word, paragraph 2 ─────────────────────────
-
 test.describe(`Strikethrough middle word, paragraph 2`, () => {
   test(`strikethrough middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -215,8 +207,6 @@ test.describe(`Strikethrough middle word, paragraph 2`, () => {
     expect(line1).toBe(`text2 ~~text2~~ text2`);
   });
 });
-
-// ─── Cursor position after strikethrough ────────────────────────────
 
 test.describe(`Cursor position after strikethrough`, () => {
   test(`cursor is at end of struck-through middle word`, async () => {
@@ -238,7 +228,10 @@ test.describe(`Cursor position after strikethrough`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -270,7 +263,10 @@ test.describe(`Cursor position after strikethrough`, () => {
       let node = walker.nextNode();
       while (node) {
         if (node === range.startContainer) {
-          return { offset: offset + range.startOffset, collapsed: sel.isCollapsed };
+          return {
+            offset: offset + range.startOffset,
+            collapsed: sel.isCollapsed,
+          };
         }
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
@@ -283,8 +279,6 @@ test.describe(`Cursor position after strikethrough`, () => {
     expect(cursorInfo?.offset).toBe(5);
   });
 });
-
-// ─── Collapsed cursor: strikethrough word under caret / undo ────────
 
 /**
  * Single-click inside a word to place a collapsed cursor.
