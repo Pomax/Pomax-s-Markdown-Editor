@@ -156,10 +156,11 @@ export class ImageHelper {
    */
   async openImageModalForNode(node) {
     const modal = this.getImageModal();
+    const isInline = node.type === `inline-image`;
 
     const existing = {
       alt: node.attributes.alt ?? node.content,
-      src: node.attributes.url ?? ``,
+      src: node.attributes.url ?? node.attributes.src ?? ``,
       href: node.attributes.href ?? ``,
       style: node.attributes.style ?? ``,
     };
@@ -194,7 +195,13 @@ export class ImageHelper {
     if (!this.editor.syntaxTree) return;
     const before = this.editor.syntaxTree.toMarkdown();
     node.content = result.alt;
-    node.attributes = { alt: result.alt, url: src };
+    // Inline-image nodes store the path as `src`; block-level image
+    // nodes store it as `url`.
+    if (isInline) {
+      node.attributes = { alt: result.alt, src };
+    } else {
+      node.attributes = { alt: result.alt, url: src };
+    }
     if (result.href) {
       node.attributes.href = result.href;
     }

@@ -82,6 +82,26 @@ export class EventHandler {
     // tree node so the cursor can be placed there.
     this.editor.promotePhantomParagraph();
 
+    // In writing view, clicking an image opens the edit modal directly.
+    // Check this before any cursor syncing — void elements like <img>
+    // don't hold text selections, so syncCursorFromDOM would resolve
+    // to a neighbouring node instead.
+    if (this.editor.viewMode === `writing` && event.target instanceof HTMLImageElement && event.target.classList.contains(`md-image-preview`)) {
+      const imgEl = event.target;
+      // Walk up to find the nearest data-node-id
+      let el = /** @type {HTMLElement|null} */ (imgEl.parentElement);
+      while (el && el !== this.editor.container) {
+        if (el.dataset?.nodeId) break;
+        el = el.parentElement;
+      }
+      const nodeId = el?.dataset?.nodeId;
+      const node = nodeId ? this.editor.syntaxTree?.findNodeById(nodeId) : null;
+      if (node?.type === `image` || node?.type === `linked-image` || node?.type === `inline-image`) {
+        this.editor.imageHelper.openImageModalForNode(node);
+        return;
+      }
+    }
+
     // In writing view, clicking a language tag span opens the language
     // editing modal so the user can set or change the code fence language.
     // This check must happen *before* syncCursorFromDOM — the tag span
@@ -140,15 +160,6 @@ export class EventHandler {
     }
 
     this.editor.selectionManager.updateFromDOM();
-
-    // In writing view, clicking an image opens the edit modal directly.
-    if (this.editor.viewMode === `writing` && this.editor.syntaxTree?.treeCursor) {
-      const clickedNode = this.editor.getCurrentBlockNode();
-      if (clickedNode?.type === `image` || clickedNode?.type === `linked-image`) {
-        this.editor.imageHelper.openImageModalForNode(clickedNode);
-        return;
-      }
-    }
 
     // In writing view, clicking a link prevents navigation and opens
     // the edit modal so the user can change the text or URL.
