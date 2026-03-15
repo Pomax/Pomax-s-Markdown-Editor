@@ -10,7 +10,7 @@ See the [release notes](./RELEASE_NOTES.md) for what's new in this version.
 
 ### Downloads
 
-This editor is released as a standalone, installer-free executable for Windows, MacOS, and Linux. Current download links:
+This editor is released as a standalone, installer-free executable for Windows, MacOS, and Linux. The current download links are:
 
 - Windows exe: [Markdown.Editor.1.7.0.exe](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor.1.7.0.exe)
 - MacOS dmg: [Markdown.Editor-1.7.0-arm64.dmg](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0-arm64.dmg)
