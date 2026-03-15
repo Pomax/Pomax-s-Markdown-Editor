@@ -10,7 +10,7 @@
  *   6. Collapsed cursor: superscript word under caret
  *
  * Note: superscript uses HTML tags (<sup>...</sup>) and toggle-off is not
- * yet supported in _findFormatSpan.  Toggle tests are included so they
+ * yet supported in findFormatSpan.  Toggle tests are included so they
  * serve as regression markers once toggle support is added.
  */
 

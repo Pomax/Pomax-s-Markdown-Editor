@@ -6,7 +6,7 @@
  * inline tags (`<strong>`, `<em>`, `<sub>`, `<sup>`, etc.).
  *
  * The token list is consumed by {@link parseInlineContent} in
- * syntax-tree.js, which assembles it into SyntaxNode children.
+ * parse-inline-content.js, which assembles it into SyntaxNode children.
  */
 
 // Void HTML elements
