@@ -6,7 +6,7 @@ A GitHub-flavoured markdown editor built using the web stack, running in Electro
 
 ## Current version: v1.7.0
 
-See the [release notes](./RELEASE_NOTES.md) for what's new in this version.
+See the [release log](./RELEASE_LOG.md) for what's new in this version.
 
 ### Downloads
 
