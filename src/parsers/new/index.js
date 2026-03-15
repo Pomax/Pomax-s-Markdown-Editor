@@ -1,13 +1,12 @@
 /**
  * @fileoverview Public API for the standalone markdown parser.
  *
- * Exposes a singleton `Parser` object with a `parse(markdown)` method
- * that returns a `SyntaxTree`.
+ * Exposes a `parse(markdown)` function that returns a `SyntaxTree`.
  *
  * Usage:
  *
- *   import { Parser } from '@tooling/parser';
- *   const tree = await Parser.parse('# Hello\n\nWorld');
+ *   import { parse } from '@tooling/parser';
+ *   const tree = await parse('# Hello\n\nWorld');
  *   console.log(tree.toMarkdown());
  *   console.log(tree.toHTML());
  */

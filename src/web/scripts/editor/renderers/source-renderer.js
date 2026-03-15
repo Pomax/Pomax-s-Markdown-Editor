@@ -530,34 +530,11 @@ export class SourceRenderer {
   }
 
   /**
-   * Parses inline content into parts.
-   * @param {string} content - The content to parse
+   * Returns the raw content as a single text part (no inline parsing in source view).
+   * @param {string} content - The content to wrap
    * @returns {Array<{type: string, content: string, raw: string}>}
    */
   parseInlineContent(content) {
-    const parts = [];
-    const remaining = content;
-    const lastIndex = 0;
-
-    // Regular expressions for inline elements
-    const patterns = [
-      { type: `bold`, regex: /\*\*(.+?)\*\*/g },
-      { type: `italic`, regex: /__(.+?)__/g },
-      { type: `italic`, regex: /\*(.+?)\*/g },
-      { type: `italic`, regex: /(?<!\w)_([^_]+)_(?!\w)/g },
-      { type: `code`, regex: /`([^`]+)`/g },
-      { type: `link`, regex: /\[([^\]]+)\]\(([^)]+)\)/g },
-      { type: `strikethrough`, regex: /~~(.+?)~~/g },
-    ];
-
-    // For simplicity in source view, we just return the raw text
-    // with markers for styling purposes
-    parts.push({
-      type: `text`,
-      content: content,
-      raw: content,
-    });
-
-    return parts;
+    return [{ type: `text`, content, raw: content }];
   }
 }

@@ -16,26 +16,20 @@ Each class has a single, well-defined responsibility:
 
 ### 2. One Class Per File
 
-Every class is in its own file:
+Every class is in its own file. See the Source Structure tree below for the full layout. Top-level editor files:
 ```
 src/web/scripts/editor/
-├── editor.js              # Editor class (coordinator)
-├── cursor-manager.js      # CursorManager — DOM ↔ tree cursor sync
-├── table-manager.js       # TableManager — table cell editing
-├── input-handler.js       # InputHandler — keyboard/beforeinput dispatch
-├── edit-operations.js     # EditOperations — insert, backspace, delete, enter
-├── range-operations.js    # RangeOperations — selection range deletion, Ctrl+A
-├── clipboard-handler.js   # ClipboardHandler — cut, copy
-├── event-handler.js       # EventHandler — click, focus, blur, drag/drop
-├── image-helper.js        # ImageHelper — image modal, insert/update, path rewriting
-├── link-helper.js         # LinkHelper — link edit modal
-├── offset-mapping.js      # Pure functions for raw ↔ rendered offset mapping
-├── undo-manager.js        # UndoManager class
-├── selection-manager.js   # SelectionManager class
+├── index.js               # Editor class (coordinator)
 ├── crc32.js               # CRC32 digest for content-change detection
-├── cursor-persistence.js  # Cursor position ↔ absolute source offset conversion
+├── offset-mapping.js      # Pure functions for raw ↔ rendered offset mapping
 ├── page-resize.js         # Page resize handles (both source and writing modes)
-└── syntax-highlighter.js  # Inline syntax highlighting
+├── range-operations.js    # RangeOperations — selection range deletion, Ctrl+A
+├── content-types/         # Image, link, table, code-block modals and helpers
+├── edit-operations/       # Per-action edit logic (backspace, delete, enter, insert)
+├── handlers/              # Clipboard, event, input, keyboard, menu handlers
+├── managers/              # Cursor, selection, undo, persistence managers
+├── renderers/             # Source + writing renderers
+└── syntax-highlighter/    # Per-language syntax highlighting
 ```
 
 ### 3. No Nested Function Declarations
@@ -116,55 +110,36 @@ src/
 │   │   ├── preferences.css  # Preferences modal styles
 │   │   ├── word-count.css   # Word count modal styles
 │   │   ├── search.css       # Search panel styles
-│   │   └── tab-bar.css      # Tab bar styles
+│   │   ├── tab-bar.css      # Tab bar styles
+│   │   └── code-language.css # Code-block language tag styles
 │   │
 │   └── scripts/              # JavaScript
 │       ├── app.js           # App entry, wires components together
-│       ├── editor/          # Core editor components
-│       │   ├── editor.js              # Editor class (coordinator)
-│       │   ├── cursor-manager.js      # DOM ↔ tree cursor sync
-│       │   ├── table-manager.js       # Table cell editing
-│       │   ├── input-handler.js       # Keyboard/beforeinput dispatch
-│       │   ├── edit-operations.js     # Insert, backspace, delete, enter
-│       │   ├── range-operations.js    # Selection range deletion, Ctrl+A
-│       │   ├── clipboard-handler.js   # Cut, copy
-│       │   ├── event-handler.js       # Click, focus, blur, drag/drop
-│       │   ├── image-helper.js        # Image modal, path rewriting
-│       │   ├── link-helper.js         # Link edit modal
-│       │   ├── offset-mapping.js      # Raw ↔ rendered offset mapping
-│       │   ├── undo-manager.js        # UndoManager class
-│       │   ├── selection-manager.js   # SelectionManager class
-│       │   ├── syntax-highlighter.js  # Inline syntax highlighting
-│       │   ├── parse-tree.js          # Parse tree cursor helper
-│       │   └── renderers/
-│       │       ├── source-renderer.js
-│       │       └── writing-renderer.js
-│       ├── parser/          # Markdown parser
-│       │   ├── dfa-tokenizer.js
-│       │   ├── dfa-parser.js
-│       │   ├── inline-tokenizer.js
-│       │   └── syntax-tree.js
-│       ├── toolbar/         # Toolbar UI
-│       │   ├── toolbar.js
-│       │   ├── toolbar-button.js
-│       │   └── icons.js
-│       ├── handlers/        # Event handlers
-│       │   ├── keyboard-handler.js
-│       │   └── menu-handler.js
-│       ├── image/           # Image modal
-│       │   └── image-modal.js       ├── link/            # Link modal
-       │   └── link-modal.js
-       ├── modal/           # Base modal class
-       │   └── base-modal.js│       ├── table/           # Table modal
-│       │   └── table-modal.js
-│       ├── toc/             # Table of Contents sidebar
-│       │   └── toc.js
-│       ├── preferences/     # Preferences modal
-│       │   └── preferences-modal.js
-│       ├── search/          # Search panel
-│       │   └── search-bar.js
-│       └── word-count/      # Word count modal
-│           └── word-count-modal.js
+│       ├── editor/          # Core editor (see Section 2 for full breakdown)
+│       │   ├── index.js               # Editor class (coordinator)
+│       │   ├── content-types/         # Image, link, table, code-block modals
+│       │   ├── edit-operations/       # Backspace, delete, enter, insert
+│       │   ├── handlers/              # Clipboard, event, input, keyboard, menu
+│       │   ├── managers/              # Cursor, selection, undo, persistence
+│       │   ├── renderers/             # Source + writing renderers
+│       │   └── syntax-highlighter/    # Per-language syntax highlighting
+│       └── utility/         # UI components
+│           ├── modal/           # Base modal class
+│           │   └── base-modal.js
+│           ├── toolbar/         # Formatting toolbar + icons
+│           │   ├── toolbar.js
+│           │   ├── toolbar-button.js
+│           │   └── icons.js
+│           ├── toc/             # Table of Contents sidebar
+│           │   └── toc.js
+│           ├── preferences/     # Preferences modal
+│           │   └── preferences-modal.js
+│           ├── search/          # Search panel
+│           │   └── search-bar.js
+│           ├── tab-bar/         # Multi-file tab bar
+│           │   └── tab-bar.js
+│           └── word-count/      # Word count modal
+│               └── word-count-modal.js
 │
 └── types.d.ts                # Global TypeScript type declarations
 ```
@@ -175,15 +150,17 @@ src/
 test/
 ├── unit/                     # Unit tests (Node.js native test runner)
 │   ├── parser/
+│   │   ├── apply-format-html.test.js
 │   │   ├── dfa-parser.test.js
-│   │   ├── syntax-tree.test.js
-│   │   └── inline-tokenizer.test.js
+│   │   ├── inline-tokenizer.test.js
+│   │   └── syntax-tree.test.js
 │   ├── editor/
-│   │   ├── undo-manager.test.js
+│   │   ├── clipboard-handler.test.js
 │   │   ├── crc32.test.js
 │   │   ├── cursor-persistence.test.js
 │   │   ├── offset-mapping.test.js
-│   │   └── page-resize.test.js
+│   │   ├── page-resize.test.js
+│   │   └── undo-manager.test.js
 │   ├── table/
 │   │   └── table-modal.test.js
 │   └── word-count/
@@ -231,6 +208,8 @@ test/
         │   ├── backspace-after-html-block.spec.js
         │   ├── backspace-heading.spec.js
         │   ├── code-block-enter.spec.js
+        │   ├── code-block-language-tag.spec.js
+        │   ├── code-block-source-edit.spec.js
         │   ├── cursor-typing-delimiters.spec.js
         │   ├── details-summary-input.spec.js
         │   ├── heading-input.spec.js

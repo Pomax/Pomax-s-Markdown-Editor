@@ -169,7 +169,7 @@ The renderer entry point. Wires together all renderer components:
 
 ### Editor
 
-Core editing coordinator (~500 lines). The Editor class owns the document
+Core editing coordinator. The Editor class owns the document
 state and public API, but delegates operational concerns to focused manager
 classes. Each manager receives the editor as a constructor argument and
 accesses state via `this.editor`.
@@ -178,15 +178,15 @@ accesses state via `this.editor`.
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `CursorManager` | `cursor-manager.js` | DOM ↔ tree cursor synchronization and placement |
-| `TableManager` | `table-manager.js` | Table cell editing, navigation, markdown building |
-| `InputHandler` | `input-handler.js` | Keyboard and `beforeinput` event dispatch |
-| `EditOperations` | `edit-operations.js` | Tree-level edits: insert, backspace, delete, enter |
+| `CursorManager` | `managers/cursor-manager.js` | DOM ↔ tree cursor synchronization and placement |
+| `TableManager` | `content-types/table/table-manager.js` | Table cell editing, navigation, markdown building |
+| `InputHandler` | `handlers/input-handler.js` | Keyboard and `beforeinput` event dispatch |
+| `EditOperations` | `edit-operations/index.js` | Tree-level edits: insert, backspace, delete, enter |
 | `RangeOperations` | `range-operations.js` | Selection range deletion and Ctrl+A |
-| `ClipboardHandler` | `clipboard-handler.js` | Cut and copy operations |
-| `EventHandler` | `event-handler.js` | Click, focus, blur, selectionchange, drag/drop |
-| `ImageHelper` | `image-helper.js` | Image modal, insert/update, path rewriting |
-| `LinkHelper` | `link-helper.js` | Link edit modal |
+| `ClipboardHandler` | `handlers/clipboard-handler.js` | Cut and copy operations |
+| `EventHandler` | `handlers/event-handler.js` | Click, focus, blur, selectionchange, drag/drop |
+| `ImageHelper` | `content-types/image/image-helper.js` | Image modal, insert/update, path rewriting |
+| `LinkHelper` | `content-types/link/link-helper.js` | Link edit modal |
 
 **Additional editor utilities:**
 
@@ -194,9 +194,9 @@ accesses state via `this.editor`.
 |--------|------|---------|
 | `offset-mapping` | `offset-mapping.js` | Pure functions for raw ↔ rendered offset mapping (used by `CursorManager`) |
 | `crc32` | `crc32.js` | CRC32 digest for content-change detection |
-| `cursor-persistence` | `cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
+| `cursor-persistence` | `managers/cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
 | `page-resize` | `page-resize.js` | Page resize handles for the editor (both source and writing modes) |
-| `syntax-highlighter` | `syntax-highlighter.js` | Inline syntax highlighting for source view |
+| `syntax-highlighter` | `syntax-highlighter/index.js` | Per-language syntax highlighting for source view |
 
 The Editor itself keeps:
 - Document state (`syntaxTree`, `treeRange`, `viewMode`) — cursor state lives on `syntaxTree.treeCursor`
@@ -275,7 +275,7 @@ In writing mode, inline formatting elements in the DOM carry `data-node-id` matc
 Displays markdown with syntax highlighting:
 - Shows literal markdown syntax
 - Color-codes different element types (headings, code, emphasis, etc.)
-- Uses `SyntaxHighlighter` for inline syntax coloring
+- Uses the `highlight()` function from `syntax-highlighter` for inline syntax coloring
 - Supports incremental rendering via `renderNodes()` (same interface as WritingRenderer)
 - Handles bare-text html-block children (e.g. `<summary>text</summary>`) by re-rendering the parent html-block
 - Maintains editability
@@ -327,7 +327,7 @@ Tokenizes inline markdown formatting within a line of text:
 - Handles bold, italic, bold-italic (`***`), strikethrough, code, links, images, subscript, superscript
 - Treats `***` as an atomic bold-italic delimiter (single open/close token pair)
 - Treats four or more consecutive asterisks (`****`+) as plain text
-- Used by `SyntaxNode.buildInlineChildren()` to populate inline child nodes, by `SyntaxNode.toBareText()` for text extraction, and by `SyntaxHighlighter` for inline syntax coloring
+- Used by `SyntaxNode.buildInlineChildren()` to populate inline child nodes, by `SyntaxNode.toBareText()` for text extraction, and by the `highlight()` function in `syntax-highlighter` for inline syntax coloring
 
 ### BaseModal
 
@@ -536,6 +536,6 @@ See `docs/api/README.md` for full API documentation.
 
 - **Local builds**: `npm run dist:win`, `dist:mac`, `dist:linux`
 - **CI**: GitHub Actions workflow (`.github/workflows/build.yml`) builds all three platforms on push to `main`
-- **Packaging**: `electron-builder` creates standalone executables (portable `.exe`, `.zip`, `AppImage`)
+- **Packaging**: `electron-builder` creates standalone executables (portable `.exe`, `.dmg`, `AppImage`)
 - **Native modules**: `better-sqlite3` is rebuilt per-platform via `@electron/rebuild`
 - **Artifacts**: Published as GitHub Releases
