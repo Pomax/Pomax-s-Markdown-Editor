@@ -2,6 +2,29 @@
  * Global type declarations for the markdown editor.
  */
 
+declare module 'better-sqlite3' {
+    interface Statement {
+        run(...params: any[]): { changes: number; lastInsertRowid: number };
+        get(...params: any[]): any;
+        all(...params: any[]): any[];
+    }
+
+    interface Database {
+        prepare(sql: string): Statement;
+        exec(sql: string): this;
+        pragma(sql: string, options?: object): any;
+        close(): void;
+    }
+
+    interface DatabaseConstructor {
+        new(filename: string, options?: object): Database;
+        (filename: string, options?: object): Database;
+    }
+
+    const Database: DatabaseConstructor;
+    export default Database;
+}
+
 /**
  * View mode of the editor.
  */
@@ -320,7 +343,7 @@ interface LangDef {
     /** Whether keywords/types/constants are case-insensitive. */
     caseInsensitive?: boolean;
     /** Custom tokeniser function. */
-    tokenise?: (code: string, lang: LangDef) => Array<{type: TokenType, text: string}>;
+    tokenise?: (code: string, lang: LangDef) => Array<{ type: TokenType, text: string }>;
 }
 
 /**
@@ -402,7 +425,7 @@ interface APICommand {
 /**
  * Handler function for an API command.
  */
-type APIHandler = (params: Record<string, any>, webContents: any) => Promise<{success: boolean, [key: string]: any}>;
+type APIHandler = (params: Record<string, any>, webContents: any) => Promise<{ success: boolean, [key: string]: any }>;
 
 /**
  * Definition of a single API command parameter.

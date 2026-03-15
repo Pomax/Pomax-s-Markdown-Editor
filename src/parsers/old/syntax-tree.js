@@ -61,7 +61,7 @@ export class SyntaxNode {
      * The raw text content (backing field for the `content` accessor).
      * @type {string}
      */
-    this._content = content;
+    this.__content = content;
 
     /**
      * Child nodes.  For inline-containing block types (paragraph,
@@ -114,12 +114,12 @@ export class SyntaxNode {
 
   /** @returns {string} */
   get content() {
-    return this._content;
+    return this.__content;
   }
 
   /** @param {string} val */
   set content(val) {
-    this._content = val;
+    this.__content = val;
     if (INLINE_CONTENT_TYPES.has(this.type)) {
       this.buildInlineChildren();
     }
@@ -132,8 +132,8 @@ export class SyntaxNode {
    */
   buildInlineChildren() {
     this.children = [];
-    if (!this._content) return;
-    const tokens = tokenizeInline(this._content);
+    if (!this.__content) return;
+    const tokens = tokenizeInline(this.__content);
     const segments = buildInlineTree(tokens);
     for (const seg of segments) {
       this.appendChild(SyntaxNode.segmentToNode(seg));
@@ -403,7 +403,7 @@ export class SyntaxNode {
       case `paragraph`:
       case `blockquote`:
       case `list-item`:
-        return SyntaxNode._inlineChildrenToText(this.children);
+        return SyntaxNode.inlineChildrenToText(this.children);
 
       case `code-block`:
         return this.content;
@@ -418,7 +418,7 @@ export class SyntaxNode {
           const cells = line
             .replace(/^\||\|$/g, ``)
             .split(`|`)
-            .map((c) => SyntaxNode._extractInlineText(c.trim()));
+            .map((c) => SyntaxNode.extractInlineText(c.trim()));
           textLines.push(cells.join(`\t`));
         }
         return textLines.join(`\n`);
@@ -439,7 +439,7 @@ export class SyntaxNode {
           this.children[0].attributes.bareText &&
           this.children[0].type === `paragraph`
         ) {
-          return SyntaxNode._inlineChildrenToText(this.children[0].children);
+          return SyntaxNode.inlineChildrenToText(this.children[0].children);
         }
 
         const parts = [];
@@ -451,7 +451,7 @@ export class SyntaxNode {
       }
 
       default:
-        return SyntaxNode._extractInlineText(this.content);
+        return SyntaxNode.extractInlineText(this.content);
     }
   }
 
@@ -463,10 +463,10 @@ export class SyntaxNode {
    * @param {string} content - Raw inline markdown content
    * @returns {string}
    */
-  static _extractInlineText(content) {
+  static extractInlineText(content) {
     const tokens = tokenizeInline(content);
     const segments = buildInlineTree(tokens);
-    return SyntaxNode._segmentsToText(segments);
+    return SyntaxNode.segmentsToText(segments);
   }
 
   /**
@@ -475,7 +475,7 @@ export class SyntaxNode {
    * @param {InlineSegment[]} segments
    * @returns {string}
    */
-  static _segmentsToText(segments) {
+  static segmentsToText(segments) {
     let result = ``;
     for (const seg of segments) {
       if (seg.type === `text`) {
@@ -485,7 +485,7 @@ export class SyntaxNode {
       } else if (seg.type === `image`) {
         // Images produce no visible text.
       } else if (seg.children) {
-        result += SyntaxNode._segmentsToText(seg.children);
+        result += SyntaxNode.segmentsToText(seg.children);
       }
     }
     return result;
@@ -499,17 +499,17 @@ export class SyntaxNode {
    * @param {SyntaxNode[]} children
    * @returns {string}
    */
-  static _inlineChildrenToText(children) {
+  static inlineChildrenToText(children) {
     let result = ``;
     for (const child of children) {
       if (child.type === `text`) {
-        result += child._content;
+        result += child.content;
       } else if (child.type === `inline-code`) {
-        result += child._content;
+        result += child.content;
       } else if (child.type === `inline-image`) {
         // Images produce no visible text.
       } else if (child.children.length > 0) {
-        result += SyntaxNode._inlineChildrenToText(child.children);
+        result += SyntaxNode.inlineChildrenToText(child.children);
       }
     }
     return result;
@@ -720,7 +720,7 @@ export class SyntaxTree {
     // Collapsed cursor (no selection): infer the target
     if (selStart === selEnd) {
       // If inside an existing format span, toggle it off.
-      const span = this._findFormatSpan(content, selStart, selStart, format);
+      const span = this.findFormatSpan(content, selStart, selStart, format);
       if (span) {
         const withoutClose =
           content.substring(0, span.closeStart) + content.substring(span.closeEnd);
@@ -730,14 +730,14 @@ export class SyntaxTree {
         return span.openStart + contentLen;
       }
       // Otherwise, find the word around the cursor and bold it.
-      const bounds = this._findWordBoundaries(content, startOffset);
+      const bounds = this.findWordBoundaries(content, startOffset);
       if (bounds.start === bounds.end) return startOffset; // no word
       selStart = bounds.start;
       selEnd = bounds.end;
     }
 
     // Toggle-off: check if the selection overlaps an existing span ─
-    const span = this._findFormatSpan(content, selStart, selEnd, format);
+    const span = this.findFormatSpan(content, selStart, selEnd, format);
     if (span) {
       // Remove closing delimiter first (higher offset) then opening,
       // so that removing the first doesn't shift the second's position.
@@ -752,7 +752,7 @@ export class SyntaxTree {
     // Mutual exclusion: sub ↔ sup — strip the opposite first
     if (format === `subscript` || format === `superscript`) {
       const opposite = format === `subscript` ? `superscript` : `subscript`;
-      const oppositeSpan = this._findFormatSpan(node.content, selStart, selEnd, opposite);
+      const oppositeSpan = this.findFormatSpan(node.content, selStart, selEnd, opposite);
       if (oppositeSpan) {
         // Remove the opposite wrapper, then re-wrap with the new format.
         const withoutClose =
@@ -829,7 +829,7 @@ export class SyntaxTree {
    * @returns {{ openStart: number, openEnd: number,
    *             closeStart: number, closeEnd: number } | null}
    */
-  _findFormatSpan(content, selStart, selEnd, format) {
+  findFormatSpan(content, selStart, selEnd, format) {
     const tokens = tokenizeInline(content);
 
     // Code is a single token, not a paired open/close
@@ -974,7 +974,7 @@ export class SyntaxTree {
    * @param {number} offset  - A raw offset within content
    * @returns {{ start: number, end: number }}
    */
-  _findWordBoundaries(content, offset) {
+  findWordBoundaries(content, offset) {
     const pos = Math.min(offset, content.length);
 
     // Scan backwards for start of word.
