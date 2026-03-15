@@ -243,6 +243,7 @@ export class MenuBuilder {
         { type: `separator` },
         {
           label: `Debug`,
+          accelerator: `F12`,
           click: () => this.handleDebug(),
         },
         { type: `separator` },
