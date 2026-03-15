@@ -274,6 +274,29 @@ class App {
         if (detailsIds.length > 0) {
           this.editor.renderNodesAndPlaceCursor({ updated: detailsIds });
         }
+
+        // Handle <style> element injection toggle
+        const enableStyleElements = !!detail.enableStyleElements;
+        this.editor.enableStyleElements = enableStyleElements;
+
+        if (!enableStyleElements) {
+          // Remove any previously injected <style> elements from the DOM
+          const injected = document.querySelectorAll(`[data-injected-style="true"]`);
+          for (const el of injected) el.remove();
+        }
+
+        // Re-render <style> html-block nodes so they inject or stop injecting
+        const styleIds = [];
+        if (this.editor.syntaxTree) {
+          for (const node of this.editor.syntaxTree.children) {
+            if (node.type === `html-block` && node.attributes.tagName === `style`) {
+              styleIds.push(node.id);
+            }
+          }
+        }
+        if (styleIds.length > 0) {
+          this.editor.renderNodesAndPlaceCursor({ updated: styleIds });
+        }
       }
     });
 
@@ -898,6 +921,17 @@ class App {
       }
     } catch {
       // Default is false (open)
+    }
+
+    try {
+      const result = await window.electronAPI.getSetting(`enableStyleElements`);
+      if (result.success && result.value !== undefined && result.value !== null) {
+        if (this.editor) {
+          this.editor.enableStyleElements = !!result.value;
+        }
+      }
+    } catch {
+      // Default is false (disabled)
     }
   }
 

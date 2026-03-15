@@ -104,6 +104,9 @@ export class Editor {
     /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in writing view. */
     this.detailsClosed = false;
 
+    /** @type {boolean} Whether &lt;style&gt; elements are injected into the DOM as real CSS. */
+    this.enableStyleElements = false;
+
     /**
      * Whether we are currently rendering (used to suppress input events).
      * @type {boolean}

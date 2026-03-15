@@ -55,6 +55,12 @@ const DEFAULT_ENSURE_LOCAL_PATHS = true;
 const DEFAULT_DETAILS_CLOSED = false;
 
 /**
+ * Default setting for whether &lt;style&gt; elements are injected into the DOM.
+ * @type {boolean}
+ */
+const DEFAULT_ENABLE_STYLE_ELEMENTS = false;
+
+/**
  * A modal dialog for editing application preferences.
  */
 export class PreferencesModal {
@@ -234,6 +240,13 @@ export class PreferencesModal {
                                 <span>Load &lt;details&gt; closed</span>
                             </label>
                             <p class="preferences-hint">When enabled, &lt;details&gt; blocks are initially collapsed in writing view. Click the disclosure triangle to expand or collapse them.</p>
+                        </div>
+                        <div class="content-settings-row">
+                            <label class="content-toggle">
+                                <input type="checkbox" id="enable-style-elements">
+                                <span>Enable &lt;style&gt; elements in document</span>
+                            </label>
+                            <p class="preferences-hint">When enabled, &lt;style&gt; blocks in the document are injected as real CSS that affects the page. When disabled, they are ignored.</p>
                         </div>
                     </fieldset>
                     </div>
@@ -655,6 +668,12 @@ export class PreferencesModal {
     );
     detailsClosedCb.checked = detailsClosed;
 
+    const enableStyleElements = await this.loadEnableStyleElements();
+    const enableStyleCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector(`#enable-style-elements`)
+    );
+    enableStyleCb.checked = enableStyleElements;
+
     this.dialog.showModal();
   }
 
@@ -832,6 +851,25 @@ export class PreferencesModal {
   }
 
   /**
+   * Loads the enable-style-elements setting from the settings database.
+   * @returns {Promise<boolean>}
+   */
+  async loadEnableStyleElements() {
+    if (!window.electronAPI) return DEFAULT_ENABLE_STYLE_ELEMENTS;
+
+    try {
+      const result = await window.electronAPI.getSetting(`enableStyleElements`);
+      if (result.success && result.value !== undefined && result.value !== null) {
+        return !!result.value;
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    return DEFAULT_ENABLE_STYLE_ELEMENTS;
+  }
+
+  /**
    * Saves the current form values to the settings store and applies them.
    */
   async save() {
@@ -892,6 +930,11 @@ export class PreferencesModal {
     );
     const detailsClosed = detailsClosedCb.checked;
 
+    const enableStyleCb = /** @type {HTMLInputElement} */ (
+      this.dialog.querySelector(`#enable-style-elements`)
+    );
+    const enableStyleElements = enableStyleCb.checked;
+
     // Persist to database
     if (window.electronAPI) {
       await window.electronAPI.setSetting(`defaultView`, defaultView);
@@ -902,6 +945,7 @@ export class PreferencesModal {
       await window.electronAPI.setSetting(`tocPosition`, tocPosition);
       await window.electronAPI.setSetting(`ensureLocalPaths`, ensureLocalPaths);
       await window.electronAPI.setSetting(`detailsClosed`, detailsClosed);
+      await window.electronAPI.setSetting(`enableStyleElements`, enableStyleElements);
     }
 
     // Apply to CSS immediately
@@ -926,7 +970,7 @@ export class PreferencesModal {
     // Notify listeners about content settings
     document.dispatchEvent(
       new CustomEvent(`content:settingsChanged`, {
-        detail: { detailsClosed },
+        detail: { detailsClosed, enableStyleElements },
       }),
     );
 
