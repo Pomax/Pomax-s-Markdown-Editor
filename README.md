@@ -13,8 +13,10 @@ See the [release notes](./RELEASE_NOTES.md) for what's new in this version.
 This editor is released as a standalone, installer-free executable for Windows, MacOS, and Linux. Current download links:
 
 - Windows exe: [Markdown.Editor.1.7.0.exe](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor.1.7.0.exe)
-- MacOS App (zipped): [Markdown.Editor-1.7.0-arm64-mac.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0-arm64-mac.zip)
+- MacOS dmg: [Markdown.Editor-1.7.0-arm64.dmg](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0-arm64.dmg)
 - Linux AppImage: [Markdown.Editor-1.7.0.AppImage](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0.AppImage)
+
+Note: Linux users will need to mark the AppImage as executable before first run: `chmod +x Markdown.Editor-1.7.0.AppImage`
 
 Previous versions can be found over on the [Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest) page.
 
