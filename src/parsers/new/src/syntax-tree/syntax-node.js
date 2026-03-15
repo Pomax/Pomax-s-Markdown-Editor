@@ -20,7 +20,7 @@ export class SyntaxNode {
    * @param {string} type - The node type (heading1-6, paragraph, etc.)
    * @param {string} content - The text content of the node
    */
-  constructor(type, content = "") {
+  constructor(type, content = ``) {
     /**
      * Unique identifier for this node.
      * @type {string}
@@ -63,7 +63,7 @@ export class SyntaxNode {
      * HTML tag name for html-element nodes.
      * @type {string}
      */
-    this.tagName = "";
+    this.tagName = ``;
 
     /**
      * Additional attributes for the node.
@@ -86,7 +86,7 @@ export class SyntaxNode {
 
     /**
      * Runtime-only data (not serialised).
-     * @type {Object}
+     * @type {NodeRuntime}
      */
     this.runtime = {};
 
@@ -136,9 +136,10 @@ export class SyntaxNode {
 
   /**
    * Converts this node to markdown.
-   * @returns {string}
+   * @returns {Promise<string>}
    */
-  toMarkdown() {
+  async toMarkdown() {
+    const { renderTreeToMarkdown } = await import(`../renderers/markdown.js`);
     return renderTreeToMarkdown(this);
   }
 
@@ -147,9 +148,10 @@ export class SyntaxNode {
    * `__st_node` property referencing this SyntaxNode.
    *
    * @param {Document} doc - The Document to create elements with.
-   * @returns {Element}
+   * @returns {Promise<Element>}
    */
-  toDOM(doc) {
-    return renderNodeToDOM(doc, this);
+  async toDOM(doc) {
+    const { renderTreeToDOM } = await import(`../renderers/dom.js`);
+    return renderTreeToDOM(doc, this);
   }
 }

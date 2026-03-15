@@ -515,7 +515,7 @@ interface InlineSegment {
 /**
  * The main editor class.
  */
-type Editor = import('./renderer/scripts/editor/index.js').Editor;
+type Editor = import('./web/scripts/editor/index.js').Editor;
 
 /**
  * A single node in the syntax tree.
@@ -530,27 +530,27 @@ type SyntaxTree = import('./parsers/old/syntax-tree.js').SyntaxTree;
 /**
  * Manages file operations (open, save, recent files).
  */
-type FileManager = import('./main/file-manager.js').FileManager;
+type FileManager = import('./electron/file-manager.js').FileManager;
 
 /**
  * The application menu builder.
  */
-type MenuBuilder = import('./main/menu-builder.js').MenuBuilder;
+type MenuBuilder = import('./electron/menu-builder.js').MenuBuilder;
 
 /**
  * The editor toolbar.
  */
-type Toolbar = import('./renderer/scripts/utility/toolbar/toolbar.js').Toolbar;
+type Toolbar = import('./web/scripts/utility/toolbar/toolbar.js').Toolbar;
 
 /**
  * Grouped editing operations (enter, backspace, delete, insert).
  */
-type EditOperations = import('./renderer/scripts/editor/edit-operations/index.js').EditOperations;
+type EditOperations = import('./web/scripts/editor/edit-operations/index.js').EditOperations;
 
 /**
  * Modal dialog for image insertion/editing.
  */
-type ImageModal = import('./renderer/scripts/editor/content-types/image/image-modal.js').ImageModal;
+type ImageModal = import('./web/scripts/editor/content-types/image/image-modal.js').ImageModal;
 
 interface Window {
     editorAPI?: EditorAPI;

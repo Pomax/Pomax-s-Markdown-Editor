@@ -23,7 +23,7 @@ import { DFAParser } from './dfa-parser.js';
  *   or null if the input is empty.
  */
 export function parseLine(text) {
-  if (text === '') return null;
+  if (text === ``) return null;
 
   const tokens = tokenize(text);
   const ctx = { tokens, pos: 0, line: 0 };
@@ -31,32 +31,30 @@ export function parseLine(text) {
 
   // Skip leading blank lines (shouldn't happen for single-line input,
   // but be defensive).
-  while (ctx.pos < tokens.length && tokens[ctx.pos].type === 'NEWLINE') {
+  while (ctx.pos < tokens.length && tokens[ctx.pos].type === `NEWLINE`) {
     ctx.line++;
     ctx.pos++;
   }
 
-  if (ctx.pos >= tokens.length || tokens[ctx.pos].type === 'EOF') {
+  if (ctx.pos >= tokens.length || tokens[ctx.pos].type === `EOF`) {
     return null;
   }
 
   const tok = tokens[ctx.pos];
 
-  // ── Heading ─────────────────────────────────────────────────
-  if (tok.type === 'HASH') {
+  if (tok.type === `HASH`) {
     const saved = ctx.pos;
     const node = parser.parseHeading(ctx);
     if (node) return node;
     ctx.pos = saved;
   }
 
-  // ── Code fence (3+ backticks) ──────────────────────────────
   // parseCodeBlock returns null when no NEWLINE follows the fence,
   // so bare ``` falls through to paragraph naturally.
   if (
-    tok.type === 'BACKTICK' &&
-    parser.lookType(ctx, 1) === 'BACKTICK' &&
-    parser.lookType(ctx, 2) === 'BACKTICK'
+    tok.type === `BACKTICK` &&
+    parser.lookType(ctx, 1) === `BACKTICK` &&
+    parser.lookType(ctx, 2) === `BACKTICK`
   ) {
     const saved = ctx.pos;
     const node = parser.parseCodeBlock(ctx);
@@ -64,47 +62,39 @@ export function parseLine(text) {
     ctx.pos = saved;
   }
 
-  // ── Blockquote ──────────────────────────────────────────────
-  if (tok.type === 'GT') {
+  if (tok.type === `GT`) {
     return parser.parseBlockquote(ctx);
   }
 
-  // ── Unordered list item ─────────────────────────────────────
   if (parser.isUnorderedListStart(ctx)) {
     return parser.parseUnorderedListItem(ctx);
   }
 
-  // ── Ordered list item ───────────────────────────────────────
   if (parser.isOrderedListStart(ctx)) {
     return parser.parseOrderedListItem(ctx);
   }
 
-  // ── Horizontal rule ─────────────────────────────────────────
   if (parser.isHorizontalRule(ctx)) {
     return parser.parseHorizontalRule(ctx);
   }
 
-  // ── Table (starts with PIPE) ────────────────────────────────
-  if (tok.type === 'PIPE') {
+  if (tok.type === `PIPE`) {
     return parser.parseTable(ctx);
   }
 
-  // ── Linked image: [![alt](src)](href) ───────────────────────
-  if (tok.type === 'LBRACKET' && parser.lookType(ctx, 1) === 'BANG') {
+  if (tok.type === `LBRACKET` && parser.lookType(ctx, 1) === `BANG`) {
     const saved = ctx.pos;
     const node = parser.tryParseLinkedImage(ctx);
     if (node) return node;
     ctx.pos = saved;
   }
 
-  // ── Image: ![alt](src) ─────────────────────────────────────
-  if (tok.type === 'BANG' && parser.lookType(ctx, 1) === 'LBRACKET') {
+  if (tok.type === `BANG` && parser.lookType(ctx, 1) === `LBRACKET`) {
     const saved = ctx.pos;
     const node = parser.tryParseImage(ctx);
     if (node) return node;
     ctx.pos = saved;
   }
 
-  // ── Default: paragraph ──────────────────────────────────────
   return parser.parseParagraph(ctx);
 }

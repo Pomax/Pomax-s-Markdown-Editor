@@ -1,7 +1,7 @@
 /**
  * @fileoverview Shared HTTP server for integration tests.
  * Serves files from the src/ directory over localhost on an ephemeral port.
- * The root URL serves src/renderer/index.html.
+ * The root URL serves src/web/index.html.
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const SRC_DIR = path.resolve(path.join(__dirname, `../../src`));
-const STATIC_DIR = path.join(SRC_DIR, `renderer`);
+const STATIC_DIR = path.join(SRC_DIR, `web`);
 
 /** @type {Record<string, string>} */
 const CONTENT_TYPES = {
@@ -31,7 +31,7 @@ export async function startServer(PORT = 0) {
   const server = createServer(async (req, res) => {
     let urlPath = new URL(req.url ?? `/`, `http://localhost`).pathname;
 
-    if (urlPath === `/`) urlPath = `/renderer/index.html`;
+    if (urlPath === `/`) urlPath = `/web/index.html`;
 
     if (urlPath.includes(`/src/parsers`)) {
       urlPath = urlPath.replace(`/src`, ``);

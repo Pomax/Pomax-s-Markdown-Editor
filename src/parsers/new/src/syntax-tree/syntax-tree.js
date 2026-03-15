@@ -1,15 +1,6 @@
-/**
- * @fileoverview Syntax Tree data structures.
- * Provides a tree structure for representing parsed markdown.
- */
+import { SyntaxNode } from './syntax-node.js';
 
-import { SyntaxNode } from "./syntax-node.js";
-
-import {
-  renderTreeToText,
-  renderTreeToMarkdown,
-  renderTreeToDOM,
-} from "../renderers/index.js";
+import { renderTreeToText, renderTreeToMarkdown, renderTreeToDOM } from '../renderers/index.js';
 
 /**
  * Represents the root of a syntax tree.
@@ -62,7 +53,7 @@ export class SyntaxTree {
 
   /**
    * Converts the tree to markdown.
-   * @returns {string}
+   * @returns {Promise<string>}
    */
   async toMarkdown() {
     return renderTreeToMarkdown(this);
@@ -73,8 +64,7 @@ export class SyntaxTree {
    * Every element gets an `__st_node` property referencing the
    * originating SyntaxNode.
    *
-   * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
-   * @returns {Element}
+   * @returns {Promise<Element>}
    */
   async toDOM() {
     if (!this.doc) {
@@ -85,11 +75,10 @@ export class SyntaxTree {
 
   /**
    * Converts the tree to an HTML string.
-   * @param {Document} [doc] - The Document to create elements with. Falls back to this.doc.
-   * @returns {string}
+   * @returns {Promise<string>}
    */
   async toHTML() {
-    return this.toDOM().outerHTML;
+    return (await this.toDOM()).outerHTML;
   }
 
   /**

@@ -4,7 +4,7 @@
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { MIN_WIDTH_PX, computeNewWidth } from '../../../src/renderer/scripts/editor/page-resize.js';
+import { MIN_WIDTH_PX, computeNewWidth } from '../../../src/web/scripts/editor/page-resize.js';
 
 describe(`computeNewWidth`, () => {
   const defaults = {

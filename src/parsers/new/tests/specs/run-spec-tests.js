@@ -15,23 +15,24 @@
  * parser API.
  */
 
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
-import { join, basename, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { parse } from "../../src/index.js";
-import { renderNodeToMarkdown } from "../../src/renderers/markdown.js";
-import { JSDOM } from "jsdom";
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parse } from '../../src/index.js';
+import { renderNodeToMarkdown } from '../../src/renderers/markdown.js';
+import { JSDOM } from 'jsdom';
+import { SyntaxTree } from '../../index.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const specDir = join(here, "files");
+const specDir = join(here, `files`);
 const filterFile = process.argv[2] || null;
 const filterCase = process.argv[3] ? Number(process.argv[3]) : null;
-let specFiles = readdirSync(specDir).filter((f) => f.endsWith(".md"));
+let specFiles = readdirSync(specDir).filter((f) => f.endsWith(`.md`));
 
 if (filterFile) {
-  const target = filterFile.endsWith(".md") ? filterFile : `${filterFile}.md`;
+  const target = filterFile.endsWith(`.md`) ? filterFile : `${filterFile}.md`;
   specFiles = specFiles.filter((f) => f === target);
   if (specFiles.length === 0) {
     console.log(`No spec file found matching "${filterFile}".`);
@@ -41,11 +42,11 @@ if (filterFile) {
 
 for (const file of specFiles) {
   const filePath = join(specDir, file);
-  const content = readFileSync(filePath, "utf-8");
+  const content = readFileSync(filePath, `utf-8`);
   const title = extractTitle(content);
   const testCases = extractTestCases(content);
 
-  describe(`${basename(file, ".md")}: ${title}`, () => {
+  describe(`${basename(file, `.md`)}: ${title}`, () => {
     testCases.forEach((testCase, i) => {
       if (filterCase !== null && i + 1 !== filterCase) return;
       const { markdown, syntaxTree, html } = testCase;
@@ -53,18 +54,18 @@ for (const file of specFiles) {
         const tree = await parse(markdown);
 
         // Compare the rendered tree text to the expected syntax tree.
-        assert.equal(tree.toString(), syntaxTree, "syntax tree mismatch");
+        assert.equal(tree.toString(), syntaxTree, `syntax tree mismatch`);
 
         // Verify that toMarkdown() round-trips back to the original markdown.
         const roundTrip = await tree.toMarkdown();
-        assert.equal(roundTrip, markdown, "toMarkdown() round-trip mismatch");
+        assert.equal(roundTrip, markdown, `toMarkdown() round-trip mismatch`);
 
         // Verify that toHTML() matches the expected HTML (after normalization).
         const domTree = await tree.toDOM();
         assert.equal(
           domTree.outerHTML.trim(),
           `<div>${normalizeHTML(html)}</div>`,
-          "toHTML() mismatch",
+          `toHTML() mismatch`,
         );
 
         // Verify that the bidirectional links between SyntaxNodes and DOM elements are correct.
@@ -84,7 +85,7 @@ for (const file of specFiles) {
  */
 function extractTitle(content) {
   const match = content.match(/^# (.+)$/m);
-  return match ? match[1].trim() : "(untitled)";
+  return match ? match[1].trim() : `(untitled)`;
 }
 
 /**
@@ -95,10 +96,10 @@ function extractTitle(content) {
  * @returns {{ markdown: string, syntaxTree: string, html: string }[]}
  */
 function extractTestCases(content) {
-  let input = content.replace(/\r\n/g, "\n");
+  let input = content.replace(/\r\n/g, `\n`);
 
   // Find the first "# markdown" and discard everything before the #.
-  const pos = input.indexOf("\n# markdown");
+  const pos = input.indexOf(`\n# markdown`);
   if (pos === -1) return [];
   input = input.substring(pos + 1);
 
@@ -106,27 +107,27 @@ function extractTestCases(content) {
   // then optionally a --- separator before the next case.
   const blockPattern = /^# [^\n]+\n\n(`{3,})\n([\s\S]*?)\1[ \t]*(?:\n|$)/;
   const cases = [];
-  const keys = ["markdown", "syntaxTree", "html"];
+  const keys = [`markdown`, `syntaxTree`, `html`];
 
   while (input.length > 0) {
     input = input.trim();
     if (input.length === 0) break;
 
-    const result = { markdown: "", syntaxTree: "", html: "" };
+    const result = { markdown: ``, syntaxTree: ``, html: `` };
     for (const key of keys) {
       input = input.trim();
       const match = input.match(blockPattern);
       if (!match) break;
-      result[key] = match[2];
+      /** @type {Record<string, string>} */ (result)[key] = match[2];
       input = input.substring(match[0].length);
     }
     cases.push(result);
 
     // Skip --- separator if present.
     input = input.trim();
-    if (input.startsWith("---")) {
-      const nlPos = input.indexOf("\n");
-      input = nlPos === -1 ? "" : input.substring(nlPos + 1);
+    if (input.startsWith(`---`)) {
+      const nlPos = input.indexOf(`\n`);
+      input = nlPos === -1 ? `` : input.substring(nlPos + 1);
     }
   }
 
@@ -143,7 +144,7 @@ function extractTestCases(content) {
 function normalizeHTML(html) {
   // JSDOM's HTML parser eats the first newline inside <textarea> (per spec).
   // Double it so the expected content survives parsing.
-  html = html.replace(/<textarea([^>]*)>\n/g, '<textarea$1>\n\n');
+  html = html.replace(/<textarea([^>]*)>\n/g, `<textarea$1>\n\n`);
   const dom = new JSDOM(`<!DOCTYPE html><html><body>${html}</body></html>`);
   const body = dom.window.document.body;
   stripWhitespaceNodes(body);
@@ -157,18 +158,19 @@ function normalizeHTML(html) {
  * textarea) whose whitespace is significant.
  * @param {Node} node
  */
-const RAW_CONTENT_ELEMENTS = new Set(['SCRIPT', 'STYLE', 'TEXTAREA']);
+const RAW_CONTENT_ELEMENTS = new Set([`SCRIPT`, `STYLE`, `TEXTAREA`]);
+/** @param {Node} node */
 function stripWhitespaceNodes(node) {
   if (RAW_CONTENT_ELEMENTS.has(node.nodeName)) return;
   const toRemove = [];
   for (const child of node.childNodes) {
     if (child.nodeType === 3) {
-      if (child.textContent.trim() === "") {
+      if (/** @type {string} */ (child.textContent).trim() === ``) {
         toRemove.push(child);
-      } else if (child.textContent.includes("\n")) {
-        child.textContent = child.textContent
-          .replace(/^\s*\n\s*/, "")
-          .replace(/\s*\n\s*$/, "");
+      } else if (/** @type {string} */ (child.textContent).includes(`\n`)) {
+        child.textContent = /** @type {string} */ (child.textContent)
+          .replace(/^\s*\n\s*/, ``)
+          .replace(/\s*\n\s*$/, ``);
       }
     } else if (child.nodeType === 1) {
       stripWhitespaceNodes(child);
@@ -182,18 +184,20 @@ function stripWhitespaceNodes(node) {
  * node whose `domNode` was set by the renderer points back correctly,
  * and vice-versa.
  *
- * @param {object} tree  - A SyntaxTree (has .children)
+ * @param {SyntaxTree} tree  - A SyntaxTree (has .children)
  * @param {Element} dom  - The root DOM element returned by toDOM()
  */
 function verifyBidirectionalLinks(tree, dom) {
   // Walk every SyntaxNode: if domNode is set, the DOM element
   // must point back to the same node.
   const visitedNodes = new Set();
+  /** @param {import('../../src/syntax-tree/syntax-node.js').SyntaxNode} node */
   function walkNode(node) {
     if (visitedNodes.has(node)) return;
     visitedNodes.add(node);
     if (node.domNode != null) {
       assert.strictEqual(
+        // @ts-ignore – dynamically attached
         node.domNode.__st_node,
         node,
         `node (${node.type}) .domNode.__st_node doesn't point back to the node`,
@@ -207,9 +211,12 @@ function verifyBidirectionalLinks(tree, dom) {
 
   // Walk every DOM element: if __st_node is set, the SyntaxNode
   // must point back to the same DOM element.
+  /** @param {Element} element */
   function walkDOM(element) {
+    // @ts-ignore – dynamically attached
     if (element.__st_node != null) {
       assert.strictEqual(
+        // @ts-ignore – dynamically attached
         element.__st_node.domNode,
         element,
         `DOM <${element.tagName?.toLowerCase()}> .__st_node.domNode doesn't point back to the element`,
@@ -228,15 +235,18 @@ function verifyBidirectionalLinks(tree, dom) {
  * content matches the node's markdown serialization, then toggles back
  * and checks the original element is restored with correct links.
  *
- * @param {object} tree  - A SyntaxTree (has .children)
+ * @param {SyntaxTree} tree  - A SyntaxTree (has .children)
  * @param {Element} dom  - The root DOM element returned by toDOM()
  */
 function verifyToggleView(tree, dom) {
   // Collect every block-level element that has a toggleView function.
+  /** @type {Element[]} */
   const elements = [];
+  /** @param {Element} parent */
   function collect(parent) {
     for (const child of parent.children) {
-      if (typeof child.toggleView === "function") {
+      // @ts-ignore – dynamically attached
+      if (typeof child.toggleView === `function`) {
         elements.push(child);
       }
       collect(child);
@@ -245,27 +255,23 @@ function verifyToggleView(tree, dom) {
   collect(dom);
 
   for (const element of elements) {
+    // @ts-ignore – dynamically attached
     const syntaxNode = element.__st_node;
-    assert.ok(
-      syntaxNode,
-      `element <${element.tagName.toLowerCase()}> has no __st_node`,
-    );
+    assert.ok(syntaxNode, `element <${element.tagName.toLowerCase()}> has no __st_node`);
 
     const expectedMarkdown = renderNodeToMarkdown(syntaxNode);
-    const parentElement = element.parentNode;
+    const parentElement = /** @type {Node} */ (element.parentNode);
 
     // Toggle to edit view.
+    // @ts-ignore – dynamically attached
     element.toggleView();
 
     // The element should have been replaced in its parent.
     const editDiv = syntaxNode.domNode;
-    assert.ok(
-      editDiv,
-      `after toggleView(), syntaxNode.domNode should be the edit div`,
-    );
+    assert.ok(editDiv, `after toggleView(), syntaxNode.domNode should be the edit div`);
     assert.strictEqual(
-      editDiv.getAttribute("contenteditable"),
-      "true",
+      editDiv.getAttribute(`contenteditable`),
+      `true`,
       `edit div should be contenteditable`,
     );
     assert.strictEqual(
@@ -274,20 +280,19 @@ function verifyToggleView(tree, dom) {
       `edit div content should match renderNodeToMarkdown() for ${syntaxNode.type}`,
     );
     assert.strictEqual(
+      // @ts-ignore – dynamically attached
       editDiv.__st_node,
       syntaxNode,
       `edit div __st_node should reference the syntax node`,
     );
-    assert.ok(
-      parentElement.contains(editDiv),
-      `parent should contain the edit div after toggle`,
-    );
+    assert.ok(parentElement.contains(editDiv), `parent should contain the edit div after toggle`);
     assert.ok(
       !parentElement.contains(element),
       `parent should no longer contain the original element after toggle`,
     );
 
     // Toggle back to rendered view.
+    // @ts-ignore – dynamically attached
     editDiv.toggleView();
 
     assert.strictEqual(
@@ -296,6 +301,7 @@ function verifyToggleView(tree, dom) {
       `after toggling back, syntaxNode.domNode should be the original element`,
     );
     assert.strictEqual(
+      // @ts-ignore – dynamically attached
       element.__st_node,
       syntaxNode,
       `after toggling back, element.__st_node should reference the syntax node`,

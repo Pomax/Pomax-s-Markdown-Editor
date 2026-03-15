@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { crc32 } from '../../../src/renderer/scripts/editor/crc32.js';
+import { crc32 } from '../../../src/web/scripts/editor/crc32.js';
 
 describe(`crc32`, () => {
   it(`returns a number`, () => {

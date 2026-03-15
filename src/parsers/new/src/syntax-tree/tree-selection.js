@@ -1,4 +1,3 @@
-// ── Tree Selection ───────────────────────────────────────────────────
 // Pure-function utilities for cursor and selection state.
 // All data structures are plain objects — no mutations to SyntaxTree.
 
@@ -17,6 +16,7 @@
  * @returns {TreePosition}
  */
 export function createPosition(nodeId, offset, extras) {
+  /** @type {TreePosition} */
   const pos = { nodeId, offset };
   if (extras) {
     if (extras.blockNodeId !== undefined) pos.blockNodeId = extras.blockNodeId;
@@ -117,8 +117,10 @@ export function containsPosition(selection, position) {
  * @returns {number[] | null}
  */
 export function getPathToCursor(tree, cursor) {
+  /** @type {number[]} */
   const path = [];
 
+  /** @param {import("./syntax-node.js").SyntaxNode[]} children */
   const search = (children) => {
     for (let i = 0; i < children.length; i++) {
       if (children[i].id === cursor.nodeId) {

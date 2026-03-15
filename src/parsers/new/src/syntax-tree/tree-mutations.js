@@ -1,23 +1,22 @@
-// ── Tree Mutations ──────────────────────────────────────────────────
 // Functions that mutate SyntaxTree / SyntaxNode structures.
 // Each mutation is synchronous and side-effect-free beyond the tree.
 
-import { parseInlineContent } from "../parser/parse-inline-content.js";
-import { tokenizeInline } from "../parser/inline-tokenizer.js";
-import { SyntaxNode } from "./syntax-node.js";
+import { parseInlineContent } from '../parser/parse-inline-content.js';
+import { tokenizeInline } from '../parser/inline-tokenizer.js';
+import { SyntaxNode } from './syntax-node.js';
 
 // Block types whose `content` should be parsed into inline children.
 const INLINE_CONTENT_TYPES = new Set([
-  "paragraph",
-  "heading1",
-  "heading2",
-  "heading3",
-  "heading4",
-  "heading5",
-  "heading6",
-  "blockquote",
-  "list-item",
-  "cell",
+  `paragraph`,
+  `heading1`,
+  `heading2`,
+  `heading3`,
+  `heading4`,
+  `heading5`,
+  `heading6`,
+  `blockquote`,
+  `list-item`,
+  `cell`,
 ]);
 
 /**
@@ -83,7 +82,7 @@ function reconcileChildren(parent, newChildren) {
   }
 }
 
-// ── Block-Level Mutations ───────────────────────────────────────────
+// Block-Level Mutations
 
 /**
  * Split a block node at `offset` within its `content`. The two resulting
@@ -175,8 +174,6 @@ export function changeNodeType(node, newType) {
   node.type = newType;
 }
 
-// ── List Mutations ──────────────────────────────────────────────────
-
 /**
  * Toggle a list node between "unordered", "ordered", and "checklist".
  * Mutates the list and its children in place — preserving node identity.
@@ -187,7 +184,7 @@ export function changeNodeType(node, newType) {
  */
 export function toggleListType(list, kind) {
   switch (kind) {
-    case "unordered": {
+    case `unordered`: {
       list.attributes.ordered = false;
       delete list.attributes.number;
       delete list.attributes.checked;
@@ -196,7 +193,7 @@ export function toggleListType(list, kind) {
       }
       break;
     }
-    case "ordered": {
+    case `ordered`: {
       list.attributes.ordered = true;
       list.attributes.number = 1;
       delete list.attributes.checked;
@@ -205,7 +202,7 @@ export function toggleListType(list, kind) {
       }
       break;
     }
-    case "checklist": {
+    case `checklist`: {
       list.attributes.ordered = false;
       delete list.attributes.number;
       list.attributes.checked = true;
@@ -231,33 +228,37 @@ export function renumberOrderedList(list) {
   list.attributes.number = 1;
 }
 
-// ── Format Operations ───────────────────────────────────────────────
+// Format Operations
 
 /** @type {Record<string, { open: string, close: string }>} */
 const FORMAT_DELIMITERS = {
-  bold: { open: "**", close: "**" },
-  italic: { open: "*", close: "*" },
-  code: { open: "`", close: "`" },
-  strikethrough: { open: "~~", close: "~~" },
-  subscript: { open: "<sub>", close: "</sub>" },
-  superscript: { open: "<sup>", close: "</sup>" },
+  bold: { open: `**`, close: `**` },
+  italic: { open: `*`, close: `*` },
+  code: { open: `\``, close: `\`` },
+  strikethrough: { open: `~~`, close: `~~` },
+  subscript: { open: `<sub>`, close: `</sub>` },
+  superscript: { open: `<sup>`, close: `</sup>` },
 };
 
-/** Maps format names to the token-type pairs emitted by the inline tokenizer. */
+/** Maps format names to the token-type pairs emitted by the inline tokenizer.
+ * @type {Record<string, { open: string, close: string, htmlTags: string[] }>}
+ */
 const TOKEN_TYPE_MAP = {
-  bold: { open: "bold-open", close: "bold-close", htmlTags: ["strong", "b"] },
-  italic: { open: "italic-open", close: "italic-close", htmlTags: ["em", "i"] },
+  bold: { open: `bold-open`, close: `bold-close`, htmlTags: [`strong`, `b`] },
+  italic: { open: `italic-open`, close: `italic-close`, htmlTags: [`em`, `i`] },
   strikethrough: {
-    open: "strikethrough-open",
-    close: "strikethrough-close",
-    htmlTags: ["del", "s"],
+    open: `strikethrough-open`,
+    close: `strikethrough-close`,
+    htmlTags: [`del`, `s`],
   },
 };
 
-/** Maps sub/sup format names to their HTML tag. */
+/** Maps sub/sup format names to their HTML tag.
+ * @type {Record<string, string>}
+ */
 const HTML_TAG_MAP = {
-  subscript: "sub",
-  superscript: "sup",
+  subscript: `sub`,
+  superscript: `sup`,
 };
 
 /**
@@ -273,13 +274,13 @@ const HTML_TAG_MAP = {
 function findFormatSpan(content, selStart, selEnd, format) {
   const tokens = tokenizeInline(content);
 
-  // ── Code: single token, not paired open/close ─────────────────
-  if (format === "code") {
+  // Code: single token, not paired open/close
+  if (format === `code`) {
     let rawPos = 0;
     for (const token of tokens) {
       const tokenStart = rawPos;
       rawPos += token.raw.length;
-      if (token.type === "code") {
+      if (token.type === `code`) {
         const contentStart = tokenStart + 1; // after opening `
         const contentEnd = rawPos - 1; // before closing `
         if (selStart <= contentEnd && selEnd >= contentStart) {
@@ -295,10 +296,10 @@ function findFormatSpan(content, selStart, selEnd, format) {
     return null;
   }
 
-  // ── Paired markdown delimiters: bold / italic / strikethrough ──
+  // Paired markdown delimiters: bold / italic / strikethrough ──
   const spec = TOKEN_TYPE_MAP[format];
 
-  // ── HTML-tag formats: subscript / superscript ─────────────────
+  // HTML-tag formats: subscript / superscript
   if (!spec) {
     const tagName = HTML_TAG_MAP[format];
     if (!tagName) return null; // link — no toggle
@@ -310,14 +311,10 @@ function findFormatSpan(content, selStart, selEnd, format) {
       const tokenStart = rawPos;
       rawPos += token.raw.length;
 
-      if (token.type === "html-open" && token.tag === tagName) {
+      if (token.type === `html-open` && token.tag === tagName) {
         htmlOpens.push({ rawStart: tokenStart, rawEnd: rawPos });
-      } else if (
-        token.type === "html-close" &&
-        token.tag === tagName &&
-        htmlOpens.length > 0
-      ) {
-        const open = htmlOpens.pop();
+      } else if (token.type === `html-close` && token.tag === tagName && htmlOpens.length > 0) {
+        const open = /** @type {{rawStart: number, rawEnd: number}} */ (htmlOpens.pop());
         if (selStart <= tokenStart && selEnd >= open.rawEnd) {
           return {
             openStart: open.rawStart,
@@ -331,7 +328,7 @@ function findFormatSpan(content, selStart, selEnd, format) {
     return null;
   }
 
-  // ── Markdown paired delimiters ────────────────────────────────
+  // Markdown paired delimiters
   let rawPos = 0;
   const opens = [];
 
@@ -342,7 +339,7 @@ function findFormatSpan(content, selStart, selEnd, format) {
     if (token.type === spec.open) {
       opens.push({ rawStart: tokenStart, rawEnd: rawPos });
     } else if (token.type === spec.close && opens.length > 0) {
-      const open = opens.pop();
+      const open = /** @type {{rawStart: number, rawEnd: number}} */ (opens.pop());
       if (selStart <= tokenStart && selEnd >= open.rawEnd) {
         return {
           openStart: open.rawStart,
@@ -354,7 +351,7 @@ function findFormatSpan(content, selStart, selEnd, format) {
     }
   }
 
-  // ── Fall back to HTML-tag equivalents (e.g. <strong> for bold) ──
+  // Fall back to HTML-tag equivalents (e.g. <strong> for bold) ──
   if (spec.htmlTags) {
     for (const tagName of spec.htmlTags) {
       let htmlPos = 0;
@@ -364,14 +361,10 @@ function findFormatSpan(content, selStart, selEnd, format) {
         const tokenStart = htmlPos;
         htmlPos += token.raw.length;
 
-        if (token.type === "html-open" && token.tag === tagName) {
+        if (token.type === `html-open` && token.tag === tagName) {
           htmlOpens.push({ rawStart: tokenStart, rawEnd: htmlPos });
-        } else if (
-          token.type === "html-close" &&
-          token.tag === tagName &&
-          htmlOpens.length > 0
-        ) {
-          const open = htmlOpens.pop();
+        } else if (token.type === `html-close` && token.tag === tagName && htmlOpens.length > 0) {
+          const open = /** @type {{rawStart: number, rawEnd: number}} */ (htmlOpens.pop());
           if (selStart <= tokenStart && selEnd >= open.rawEnd) {
             return {
               openStart: open.rawStart,
@@ -428,16 +421,14 @@ export function applyFormat(node, startOffset, endOffset, format) {
   let selStart = startOffset;
   let selEnd = endOffset;
 
-  // ── Collapsed cursor (no selection): infer the target ─────────
+  // Collapsed cursor (no selection): infer the target
   if (selStart === selEnd) {
     const span = findFormatSpan(node.content, selStart, selStart, format);
     if (span) {
       const withoutClose =
-        node.content.substring(0, span.closeStart) +
-        node.content.substring(span.closeEnd);
+        node.content.substring(0, span.closeStart) + node.content.substring(span.closeEnd);
       node.content =
-        withoutClose.substring(0, span.openStart) +
-        withoutClose.substring(span.openEnd);
+        withoutClose.substring(0, span.openStart) + withoutClose.substring(span.openEnd);
       const contentLen = span.closeStart - span.openEnd;
       const newOffset = span.openStart + contentLen;
       rebuildInlineChildren(node);
@@ -459,15 +450,12 @@ export function applyFormat(node, startOffset, endOffset, format) {
     selEnd = bounds.end;
   }
 
-  // ── Toggle-off: check if selection overlaps an existing span ──
+  // Toggle-off: check if selection overlaps an existing span ──
   const span = findFormatSpan(node.content, selStart, selEnd, format);
   if (span) {
     const withoutClose =
-      node.content.substring(0, span.closeStart) +
-      node.content.substring(span.closeEnd);
-    node.content =
-      withoutClose.substring(0, span.openStart) +
-      withoutClose.substring(span.openEnd);
+      node.content.substring(0, span.closeStart) + node.content.substring(span.closeEnd);
+    node.content = withoutClose.substring(0, span.openStart) + withoutClose.substring(span.openEnd);
     const contentLen = span.closeStart - span.openEnd;
     const newOffset = span.openStart + contentLen;
     rebuildInlineChildren(node);
@@ -477,15 +465,10 @@ export function applyFormat(node, startOffset, endOffset, format) {
     };
   }
 
-  // ── Mutual exclusion: sub ↔ sup ───────────────────────────────
-  if (format === "subscript" || format === "superscript") {
-    const opposite = format === "subscript" ? "superscript" : "subscript";
-    const oppositeSpan = findFormatSpan(
-      node.content,
-      selStart,
-      selEnd,
-      opposite,
-    );
+  // Mutual exclusion: sub ↔ sup
+  if (format === `subscript` || format === `superscript`) {
+    const opposite = format === `subscript` ? `superscript` : `subscript`;
+    const oppositeSpan = findFormatSpan(node.content, selStart, selEnd, opposite);
     if (oppositeSpan) {
       const withoutClose =
         node.content.substring(0, oppositeSpan.closeStart) +
@@ -494,24 +477,22 @@ export function applyFormat(node, startOffset, endOffset, format) {
         withoutClose.substring(0, oppositeSpan.openStart) +
         withoutClose.substring(oppositeSpan.openEnd);
       selStart = oppositeSpan.openStart;
-      selEnd =
-        oppositeSpan.openStart +
-        (oppositeSpan.closeStart - oppositeSpan.openEnd);
+      selEnd = oppositeSpan.openStart + (oppositeSpan.closeStart - oppositeSpan.openEnd);
     }
   }
 
-  // ── Toggle-on: wrap the selected text ─────────────────────────
+  // Toggle-on: wrap the selected text
   const before = node.content.substring(0, selStart);
   let selected = node.content.substring(selStart, selEnd);
   const after = node.content.substring(selEnd);
 
   // Trim trailing whitespace so delimiters hug the text
-  const trimmed = selected.replace(/\s+$/, "");
+  const trimmed = selected.replace(/\s+$/, ``);
   const trailingWS = selected.substring(trimmed.length);
   selected = trimmed;
 
   let formatted;
-  if (format === "link") {
+  if (format === `link`) {
     formatted = `[${selected}](url)`;
   } else {
     const delims = FORMAT_DELIMITERS[format];
@@ -528,7 +509,7 @@ export function applyFormat(node, startOffset, endOffset, format) {
   };
 }
 
-// ── Table Mutations ─────────────────────────────────────────────────
+// Table Mutations
 
 /**
  * Return the cell node at `(row, col)` within a table.
@@ -557,7 +538,7 @@ export function getTableCell(tableNode, row, col) {
  * @returns {{ renderHints: { updated: string[], added: string[], removed: string[] }, selection: any }}
  */
 export function setTableCellText(tableNode, row, col, text) {
-  const cell = getTableCell(tableNode, row, col);
+  const cell = /** @type {SyntaxNode} */ (getTableCell(tableNode, row, col));
   cell.content = text;
   rebuildInlineChildren(cell);
   return {
@@ -575,11 +556,11 @@ export function setTableCellText(tableNode, row, col, text) {
  */
 export function addTableRow(tableNode) {
   const colCount = tableNode.children[0].children.length;
-  const row = new SyntaxNode("row", "");
+  const row = new SyntaxNode(`row`, ``);
   const addedIds = [row.id];
 
   for (let i = 0; i < colCount; i++) {
-    const cell = new SyntaxNode("cell", "");
+    const cell = new SyntaxNode(`cell`, ``);
     row.appendChild(cell);
     addedIds.push(cell.id);
   }
@@ -603,7 +584,7 @@ export function addTableColumn(tableNode) {
   let headerCell = null;
 
   for (const rowNode of tableNode.children) {
-    const cell = new SyntaxNode("cell", "");
+    const cell = new SyntaxNode(`cell`, ``);
     rowNode.appendChild(cell);
     addedIds.push(cell.id);
     if (!headerCell) headerCell = cell;
@@ -611,7 +592,7 @@ export function addTableColumn(tableNode) {
 
   return {
     renderHints: { updated: [], added: addedIds, removed: [] },
-    selection: { nodeId: headerCell.id, offset: 0 },
+    selection: { nodeId: /** @type {SyntaxNode} */ (headerCell).id, offset: 0 },
   };
 }
 
@@ -673,7 +654,7 @@ export function removeTableColumn(tableNode, colIndex) {
   };
 }
 
-// ── Reparse ─────────────────────────────────────────────────────────
+// Reparse
 
 /**
  * Reconstruct the full markdown line for a node from its type, content,
@@ -686,36 +667,30 @@ export function removeTableColumn(tableNode, colIndex) {
  */
 function buildMarkdownLine(type, content, attributes) {
   switch (type) {
-    case "heading1":
+    case `heading1`:
       return `# ${content}`;
-    case "heading2":
+    case `heading2`:
       return `## ${content}`;
-    case "heading3":
+    case `heading3`:
       return `### ${content}`;
-    case "heading4":
+    case `heading4`:
       return `#### ${content}`;
-    case "heading5":
+    case `heading5`:
       return `##### ${content}`;
-    case "heading6":
+    case `heading6`:
       return `###### ${content}`;
-    case "blockquote":
+    case `blockquote`:
       return `> ${content}`;
-    case "list-item": {
-      const indent = "  ".repeat(attributes?.indent || 0);
-      const marker = attributes?.ordered
-        ? `${attributes?.number || 1}. `
-        : "- ";
+    case `list-item`: {
+      const indent = `  `.repeat(attributes?.indent || 0);
+      const marker = attributes?.ordered ? `${attributes?.number || 1}. ` : `- `;
       const checkbox =
-        typeof attributes?.checked === "boolean"
-          ? attributes.checked
-            ? "[x] "
-            : "[ ] "
-          : "";
+        typeof attributes?.checked === `boolean` ? (attributes.checked ? `[x] ` : `[ ] `) : ``;
       return `${indent}${marker}${checkbox}${content}`;
     }
-    case "image": {
+    case `image`: {
       const imgAlt = attributes?.alt ?? content;
-      const imgSrc = attributes?.url ?? "";
+      const imgSrc = attributes?.url ?? ``;
       if (attributes?.href) {
         return `[![${imgAlt}](${imgSrc})](${attributes.href})`;
       }
@@ -751,7 +726,7 @@ export function reparseLine(node, newContent, parseFn) {
   if (parsed) {
     // Suppress code-block fence conversion during typing — the fence
     // pattern (```) is converted on Enter, not while typing.
-    if (parsed.type === "code-block" && oldType !== "code-block") {
+    if (parsed.type === `code-block` && oldType !== `code-block`) {
       node.content = newContent;
       rebuildInlineChildren(node);
       return null;
@@ -759,7 +734,7 @@ export function reparseLine(node, newContent, parseFn) {
 
     // Suppress image block conversion during typing —
     // the inline tokenizer handles ![alt](src) within paragraphs.
-    if (parsed.type === "image" && oldType !== "image") {
+    if (parsed.type === `image` && oldType !== `image`) {
       node.content = newContent;
       rebuildInlineChildren(node);
       return null;
@@ -789,7 +764,7 @@ export function reparseLine(node, newContent, parseFn) {
   return null;
 }
 
-// ── Hint Utilities ──────────────────────────────────────────────────
+// Hint Utilities
 
 /**
  * Merge two render-hint objects. Unions each ID array and picks `b.selection`
@@ -802,13 +777,9 @@ export function reparseLine(node, newContent, parseFn) {
 export function mergeHints(a, b) {
   return {
     renderHints: {
-      updated: [
-        ...new Set([...a.renderHints.updated, ...b.renderHints.updated]),
-      ],
+      updated: [...new Set([...a.renderHints.updated, ...b.renderHints.updated])],
       added: [...new Set([...a.renderHints.added, ...b.renderHints.added])],
-      removed: [
-        ...new Set([...a.renderHints.removed, ...b.renderHints.removed]),
-      ],
+      removed: [...new Set([...a.renderHints.removed, ...b.renderHints.removed])],
     },
     selection: b.selection ?? a.selection,
   };

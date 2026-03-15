@@ -14,7 +14,7 @@ import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
 import {
   absoluteOffsetToCursor,
   cursorToAbsoluteOffset,
-} from '../../../src/renderer/scripts/editor/managers/cursor-persistence.js';
+} from '../../../src/web/scripts/editor/managers/cursor-persistence.js';
 
 /**
  * Mirrors Editor.getPrefixLength for use in tests.

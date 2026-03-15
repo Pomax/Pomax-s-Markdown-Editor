@@ -1,17 +1,16 @@
-// ── Tree Query Utilities ─────────────────────────────────────────────
 // Pure functions that query a SyntaxTree / SyntaxNode without mutating it.
 
 const INLINE_TYPES = new Set([
-  "text",
-  "bold",
-  "italic",
-  "bold-italic",
-  "strikethrough",
-  "inline-code",
-  "link",
-  "image",
-  "inline-image",
-  "html-element",
+  `text`,
+  `bold`,
+  `italic`,
+  `bold-italic`,
+  `strikethrough`,
+  `inline-code`,
+  `link`,
+  `image`,
+  `inline-image`,
+  `html-element`,
 ]);
 
 /**
@@ -50,8 +49,12 @@ export function findNodeById(root, id) {
 export function findNodeAtPosition(root, line, _col) {
   for (const child of root.children) {
     if (isInlineNode(child)) continue;
-    if (child.startLine != null && child.endLine != null &&
-        child.startLine <= line && line <= child.endLine) {
+    if (
+      child.startLine != null &&
+      child.endLine != null &&
+      child.startLine <= line &&
+      line <= child.endLine
+    ) {
       const deeper = findNodeAtPosition(child, line, _col);
       return deeper ?? child;
     }
@@ -69,7 +72,7 @@ export function getBlockParent(node) {
   let current = node.parent;
   while (current != null) {
     // If current is a SyntaxTree, the node is top-level — return null.
-    if (current.constructor.name === "SyntaxTree") return null;
+    if (current.constructor.name === `SyntaxTree`) return null;
     // If current is a block node, it's the block parent.
     if (!isInlineNode(current)) return current;
     current = current.parent;
@@ -85,9 +88,9 @@ export function getBlockParent(node) {
  */
 export function toBareText(node) {
   if (!node.children || node.children.length === 0) {
-    return node.content ?? "";
+    return /** @type {any} */ (node).content ?? ``;
   }
-  let result = "";
+  let result = ``;
   for (const child of node.children) {
     result += toBareText(child);
   }
@@ -119,6 +122,7 @@ export function getPathToNode(root, id) {
  */
 export function getNodeAtPath(root, path) {
   if (!path || path.length === 0) return null;
+  /** @type {import("./syntax-tree.js").SyntaxTree | import("./syntax-node.js").SyntaxNode} */
   let current = root;
   for (const index of path) {
     if (!current.children || index < 0 || index >= current.children.length) {
@@ -126,5 +130,5 @@ export function getNodeAtPath(root, path) {
     }
     current = current.children[index];
   }
-  return current;
+  return /** @type {import("./syntax-node.js").SyntaxNode} */ (current);
 }

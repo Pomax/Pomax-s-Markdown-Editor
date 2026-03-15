@@ -4,7 +4,7 @@
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { TableModal } from '../../../src/renderer/scripts/editor/content-types/table/table-modal.js';
+import { TableModal } from '../../../src/web/scripts/editor/content-types/table/table-modal.js';
 
 describe(`TableModal`, () => {
   describe(`parseTableContent`, () => {

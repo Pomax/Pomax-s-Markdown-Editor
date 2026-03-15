@@ -60,7 +60,7 @@ export async function launchApp(extraArgs = []) {
       electronApp = await electron.launch({
         args: [
           ...(process.platform === `linux` ? [`--no-sandbox`] : []),
-          path.join(projectRoot, `src`, `main`, `main.js`),
+          path.join(projectRoot, `src`, `electron`, `main.js`),
           ...extraArgs,
         ],
         env: { ...process.env, TESTING: `1` },

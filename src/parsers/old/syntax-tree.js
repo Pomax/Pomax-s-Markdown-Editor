@@ -1,8 +1,3 @@
-/**
- * @fileoverview Syntax Tree data structures.
- * Provides a tree structure for representing parsed markdown.
- */
-
 import { tokenizeInline } from './inline-tokenizer.js';
 import { SyntaxNode } from './syntax-node.js';
 

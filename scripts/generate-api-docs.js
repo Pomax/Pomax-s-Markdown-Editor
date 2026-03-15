@@ -32,7 +32,7 @@ async function generateAPIDocs() {
   console.log(`Generating API documentation...`);
 
   // Import the API registry to get command definitions
-  const { APIRegistry } = await import(`../src/main/api-registry.js`);
+  const { APIRegistry } = await import(`../src/electron/api-registry.js`);
   const registry = new APIRegistry();
   const commands = registry.getCommandList();
   const version = registry.getVersion();

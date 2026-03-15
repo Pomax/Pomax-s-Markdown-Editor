@@ -378,7 +378,7 @@ content, set view mode) rather than depending on prior tests. Module-level
 
 ## CSS Conventions
 
-- Editor styles are in `src/renderer/styles/editor.css`.
+- Editor styles are in `src/web/styles/editor.css`.
 - The fake details widget uses `.md-details`, `.md-details--open`,
   `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`,
   `.md-details-body` classes.

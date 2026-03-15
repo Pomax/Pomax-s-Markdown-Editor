@@ -1,4 +1,4 @@
-import { parser } from "./parser/dfa-parser.js";
+import { parser } from './parser/dfa-parser.js';
 
 /**
  * @param {string} markdown

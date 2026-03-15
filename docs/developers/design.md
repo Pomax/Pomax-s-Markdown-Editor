@@ -18,7 +18,7 @@ Each class has a single, well-defined responsibility:
 
 Every class is in its own file:
 ```
-src/renderer/scripts/editor/
+src/web/scripts/editor/
 ├── editor.js              # Editor class (coordinator)
 ├── cursor-manager.js      # CursorManager — DOM ↔ tree cursor sync
 ├── table-manager.js       # TableManager — table cell editing
@@ -93,7 +93,7 @@ array.filter(item => item.active);
 
 ```
 src/
-├── main/                      # Electron main process
+├── electron/                  # Electron main process
 │   ├── main.js               # Entry point, window creation, lifecycle
 │   ├── preload.cjs           # Secure IPC bridge (must be CommonJS)
 │   ├── menu-builder.js       # Application menu construction
@@ -102,7 +102,7 @@ src/
 │   ├── api-registry.js       # External scripting API
 │   └── settings-manager.js   # Settings persistence (SQLite)
 │
-├── renderer/                  # Electron renderer process
+├── web/                  # Electron renderer process
 │   ├── index.html            # HTML entry
 │   ├── icons/                # Lucide SVG icons
 │   ├── styles/               # CSS files

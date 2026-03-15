@@ -12,7 +12,7 @@
  *   console.log(tree.toHTML());
  */
 
-import { DFAParser } from "./src/dfa-parser.js";
+import { DFAParser } from './src/parser/dfa-parser.js';
 
 const parser = new DFAParser();
 
@@ -23,4 +23,6 @@ export async function parse(markdown) {
   return parser.parse(markdown);
 }
 
-export { parseLine } from "./src/parse-line.js";
+export { parseLine } from './src/parser/parse-line.js';
+export { SyntaxNode } from './src/syntax-tree/syntax-node.js';
+export { SyntaxTree } from './src/syntax-tree/syntax-tree.js';

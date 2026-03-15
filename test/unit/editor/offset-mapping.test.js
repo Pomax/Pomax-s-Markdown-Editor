@@ -14,7 +14,7 @@ import { describe, it } from 'node:test';
 import {
   rawOffsetToRenderedOffset,
   renderedOffsetToRawOffset,
-} from '../../../src/renderer/scripts/editor/offset-mapping.js';
+} from '../../../src/web/scripts/editor/offset-mapping.js';
 
 describe(`rawOffsetToRenderedOffset`, () => {
   it(`returns 0 for empty content`, () => {
