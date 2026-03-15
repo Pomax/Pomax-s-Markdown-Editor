@@ -4,24 +4,14 @@
  */
 
 /**
- * @typedef {Object} ShortcutConfig
- * @property {string} key - The key code
- * @property {boolean} [ctrl] - Whether Ctrl is required
- * @property {boolean} [shift] - Whether Shift is required
- * @property {boolean} [alt] - Whether Alt is required
- * @property {boolean} [meta] - Whether Meta (Cmd on Mac) is required
- * @property {string} action - The action to perform
- */
-
-/**
  * Handles keyboard shortcuts for the editor.
  */
 export class KeyboardHandler {
   /**
-   * @param {import('../index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /** @type {ShortcutConfig[]} */

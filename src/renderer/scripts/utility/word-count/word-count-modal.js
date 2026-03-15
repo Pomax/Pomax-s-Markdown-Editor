@@ -52,14 +52,8 @@ function stripInlineCode(text) {
 }
 
 /**
- * @typedef {Object} WordCountResult
- * @property {number} total - Total word count
- * @property {number} excludingCode - Word count excluding code blocks and inline code
- */
-
-/**
  * Counts words in a syntax tree.
- * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree | null} syntaxTree
+ * @param {SyntaxTree | null} syntaxTree
  * @returns {WordCountResult}
  */
 export function getWordCounts(syntaxTree) {
@@ -146,7 +140,7 @@ export class WordCountModal {
 
   /**
    * Opens the modal, displaying counts from the given syntax tree.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree | null} syntaxTree
+   * @param {SyntaxTree | null} syntaxTree
    */
   open(syntaxTree) {
     this.build();

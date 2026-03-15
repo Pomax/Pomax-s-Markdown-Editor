@@ -8,33 +8,12 @@
  * highlighting.
  */
 
-/**
- * @typedef {Object} SearchMatch
- * @property {number} docStart  - Start offset in the full document string
- * @property {number} docEnd    - End offset in the full document string
- */
-
-/**
- * @typedef {Object} NodeSegment
- * @property {string} nodeId
- * @property {number} startOffset  - Start within the node's text
- * @property {number} endOffset    - End within the node's text
- */
-
-/**
- * @typedef {Object} OffsetMapEntry
- * @property {string} nodeId
- * @property {number} docStart     - Where this node's text begins in the flat document
- * @property {number} docEnd       - Where this node's text ends in the flat document
- * @property {string} text         - The node's text (markdown or bare)
- */
-
 export class SearchBar {
   /**
-   * @param {import('../../editor/index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../../editor/index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /** @type {HTMLElement|null} */
@@ -367,7 +346,7 @@ export class SearchBar {
 
     /**
      * Recursively walks nodes and appends their text to the map.
-     * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
+     * @param {SyntaxNode[]} nodes
      * @param {boolean} isFirst - Whether we need to prepend a separator
      */
     const walk = (nodes, isFirst) => {

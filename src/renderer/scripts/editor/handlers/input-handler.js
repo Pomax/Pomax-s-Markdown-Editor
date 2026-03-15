@@ -14,10 +14,10 @@
  */
 export class InputHandler {
   /**
-   * @param {import('../index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
   }
 

@@ -48,7 +48,7 @@ describe(`TableModal`, () => {
 
   describe(`tableDateToMarkdown`, () => {
     it(`should generate markdown for a simple table`, () => {
-      /** @type {import('../../../src/renderer/scripts/editor/content-types/table/table-modal.js').TableData} */
+      /** @type {TableData} */
       const data = {
         rows: 1,
         columns: 2,
@@ -64,7 +64,7 @@ describe(`TableModal`, () => {
     });
 
     it(`should include separator after header`, () => {
-      /** @type {import('../../../src/renderer/scripts/editor/content-types/table/table-modal.js').TableData} */
+      /** @type {TableData} */
       const data = {
         rows: 1,
         columns: 2,

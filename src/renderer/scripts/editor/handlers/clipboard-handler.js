@@ -24,10 +24,10 @@ const HTML_CLOSE_RE = /<\/([a-z][a-z0-9]*)\s*>/gi;
  */
 export class ClipboardHandler {
   /**
-   * @param {import('../index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
   }
 
@@ -61,11 +61,10 @@ export class ClipboardHandler {
    * @returns {string}
    */
   getSelectedMarkdownSource() {
-    const { startNodeId, startOffset, endNodeId, endOffset } =
-      /** @type {import('../index.js').TreeRange} */ (this.editor.treeRange);
-    const tree = /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} */ (
-      this.editor.syntaxTree
+    const { startNodeId, startOffset, endNodeId, endOffset } = /** @type {TreeRange} */ (
+      this.editor.treeRange
     );
+    const tree = /** @type {SyntaxTree} */ (this.editor.syntaxTree);
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
@@ -99,11 +98,10 @@ export class ClipboardHandler {
    * @returns {string}
    */
   getSelectedMarkdownWriting() {
-    const { startNodeId, startOffset, endNodeId, endOffset } =
-      /** @type {import('../index.js').TreeRange} */ (this.editor.treeRange);
-    const tree = /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} */ (
-      this.editor.syntaxTree
+    const { startNodeId, startOffset, endNodeId, endOffset } = /** @type {TreeRange} */ (
+      this.editor.treeRange
     );
+    const tree = /** @type {SyntaxTree} */ (this.editor.syntaxTree);
 
     const startNode = tree.findNodeById(startNodeId);
     const endNode = tree.findNodeById(endNodeId);
@@ -148,7 +146,7 @@ export class ClipboardHandler {
    * markdown prefix / suffix that `node.toMarkdown()` would normally
    * produce, but using `content` instead of `node.content`.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {string} content — trimmed / repaired content
    * @returns {string}
    */

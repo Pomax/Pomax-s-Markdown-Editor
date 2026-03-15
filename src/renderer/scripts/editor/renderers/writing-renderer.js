@@ -3,10 +3,6 @@
  * Hides markdown syntax unless the cursor is on a specific element.
  */
 
-/**
- * @typedef {import('../../../../parsers/old/syntax-tree.js').NodeAttributes} NodeAttributes
- */
-
 import { buildInlineTree, tokenizeInline } from '../../../../parsers/old/inline-tokenizer.js';
 import { highlight } from '../syntax-highlighter/index.js';
 
@@ -15,10 +11,10 @@ import { highlight } from '../syntax-highlighter/index.js';
  */
 export class WritingRenderer {
   /**
-   * @param {import('../index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
   }
 
@@ -49,7 +45,7 @@ export class WritingRenderer {
 
   /**
    * Renders the syntax tree to the container.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} syntaxTree - The syntax tree to render
+   * @param {SyntaxTree} syntaxTree - The syntax tree to render
    * @param {HTMLElement} container - The container element
    */
   fullRender(syntaxTree, container) {
@@ -183,8 +179,8 @@ export class WritingRenderer {
    * Computes the 1-based visual position for an ordered list item within
    * its consecutive run of ordered items at the same indent level.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxTree} tree
+   * @param {SyntaxNode} node
    * @returns {number|undefined}
    */
   computeVisualNumber(tree, node) {
@@ -216,7 +212,7 @@ export class WritingRenderer {
    * a real SyntaxNode by {@link Editor#promotePhantomParagraph}.
    *
    * @param {HTMLElement} container
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
+   * @param {SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector(`.md-phantom-paragraph`);
@@ -240,7 +236,7 @@ export class WritingRenderer {
    * the corresponding DOM element in the container.
    *
    * @param {HTMLElement} container
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
+   * @param {SyntaxTree} tree
    * @param {string} nodeId
    * @param {boolean} isFocused
    */
@@ -260,7 +256,7 @@ export class WritingRenderer {
 
   /**
    * Renders a syntax tree node to an HTML element.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node - The node to render
+   * @param {SyntaxNode} node - The node to render
    * @param {boolean} isFocused - Whether this node has focus
    * @param {number} [visualNumber] - 1-based position for ordered list items
    * @returns {HTMLElement|null}
@@ -315,7 +311,7 @@ export class WritingRenderer {
 
   /**
    * Renders a heading node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -337,7 +333,7 @@ export class WritingRenderer {
 
   /**
    * Renders a paragraph node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -349,7 +345,7 @@ export class WritingRenderer {
 
   /**
    * Renders a blockquote node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -370,7 +366,7 @@ export class WritingRenderer {
 
   /**
    * Renders a code block node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -436,7 +432,7 @@ export class WritingRenderer {
 
   /**
    * Renders a list item node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @param {number} [visualNumber] - 1-based position within the list run
@@ -519,7 +515,7 @@ export class WritingRenderer {
 
   /**
    * Renders an image node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -552,7 +548,7 @@ export class WritingRenderer {
 
   /**
    * Renders a horizontal rule node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -565,7 +561,7 @@ export class WritingRenderer {
 
   /**
    * Renders a table node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -629,7 +625,7 @@ export class WritingRenderer {
    * child is rendered as a native `<summary>` element with editable
    * inline content.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element - The wrapper div with data-node-id
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -688,7 +684,7 @@ export class WritingRenderer {
    * is rendered as the summary row (with a clickable disclosure triangle).
    * All remaining children form the collapsible body.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @param {boolean} isFocused
    * @returns {HTMLElement}
@@ -716,9 +712,9 @@ export class WritingRenderer {
     const currentNodeId = this.editor.getBlockNodeId();
 
     // Split children into summary child and body children
-    /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} */
+    /** @type {SyntaxNode|null} */
     let summaryNode = null;
-    /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} */
+    /** @type {SyntaxNode[]} */
     const bodyChildren = [];
 
     for (const child of node.children) {
@@ -823,7 +819,7 @@ export class WritingRenderer {
    * Each formatting element gets a `data-node-id` attribute so the
    * cursor manager can resolve the cursor to the correct inline node.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node - The block-level node
+   * @param {SyntaxNode} node - The block-level node
    * @param {HTMLElement} container - The container element
    */
   renderInlineContent(node, container) {
@@ -872,7 +868,7 @@ export class WritingRenderer {
    * Formatting elements receive `data-node-id` so that cursor tracking
    * can resolve to the correct inline node.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} children
+   * @param {SyntaxNode[]} children
    * @param {HTMLElement} container
    */
   renderSyntaxNodeChildren(children, container) {
@@ -960,7 +956,7 @@ export class WritingRenderer {
   /**
    * Recursively walks an InlineSegment tree and appends DOM nodes.
    * Used as fallback when SyntaxNode children are not available.
-   * @param {import('../../../../parsers/old/inline-tokenizer.js').InlineSegment[]} segments
+   * @param {InlineSegment[]} segments
    * @param {HTMLElement} container
    */
   appendSegments(segments, container) {

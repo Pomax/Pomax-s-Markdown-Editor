@@ -9,13 +9,6 @@
 import { BaseModal } from '../../../utility/modal/base-modal.js';
 
 /**
- * @typedef {Object} TableData
- * @property {number} rows - Number of body rows (not counting the header)
- * @property {number} columns - Number of columns
- * @property {string[][]} cells - 2-D array [row][col] including the header row
- */
-
-/**
  * A modal dialog for inserting or editing tables.
  * @extends {BaseModal}
  */

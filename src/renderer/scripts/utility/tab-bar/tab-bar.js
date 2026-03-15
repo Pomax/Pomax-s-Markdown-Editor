@@ -4,15 +4,6 @@
  */
 
 /**
- * @typedef {object} TabInfo
- * @property {string} id - Unique identifier for the tab
- * @property {string} label - Display label (filename)
- * @property {string|null} filePath - Full file path, or null for untitled
- * @property {boolean} modified - Whether the tab has unsaved changes
- * @property {boolean} active - Whether the tab is currently active
- */
-
-/**
  * Extracts a filename from a full file path.
  * @param {string|null} filePath
  * @returns {string}

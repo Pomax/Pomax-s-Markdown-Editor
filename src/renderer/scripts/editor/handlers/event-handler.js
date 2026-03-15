@@ -13,10 +13,10 @@ import { CodeLanguageModal } from '../content-types/code-block/code-language/cod
  */
 export class EventHandler {
   /**
-   * @param {import('../index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /**
@@ -470,17 +470,14 @@ export class EventHandler {
    * Opens the code-language modal for a code-block node and applies
    * the result when the user submits.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    */
   async openCodeLanguageModal(node) {
     if (!this.codeLanguageModal) {
       this.codeLanguageModal = new CodeLanguageModal();
     }
 
-    const attrs =
-      /** @type {import('../../../../parsers/old/syntax-tree.js').NodeAttributes} */ (
-        node.attributes
-      );
+    const attrs = /** @type {NodeAttributes} */ (node.attributes);
     const currentLanguage = attrs.language || ``;
 
     // Save both the cursor and any active selection *before* the

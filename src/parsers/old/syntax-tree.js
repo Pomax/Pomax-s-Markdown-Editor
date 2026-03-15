@@ -23,29 +23,6 @@ const INLINE_CONTENT_TYPES = new Set([
 ]);
 
 /**
- * @typedef {Object} NodeAttributes
- * @property {string} [language] - Language for code blocks
- * @property {number} [fenceCount] - Number of backticks in the code fence (3 or more)
- * @property {number} [indent] - Indentation level for list items
- * @property {boolean} [ordered] - Whether a list is ordered
- * @property {number} [number] - Number for ordered list items
- * @property {string} [url] - URL for links and images
- * @property {string} [title] - Title for links and images
- * @property {string} [alt] - Alt text for images
- * @property {string} [href] - Link URL for linked images or link nodes
- * @property {string} [src] - Image source URL (for inline-image nodes)
- * @property {string} [tag] - HTML tag name (for inline HTML element nodes)
- * @property {string} [style] - Inline CSS style string for HTML images
- * @property {string} [tagName] - HTML tag name for html-block nodes
- * @property {string} [openingTag] - Full opening tag line for html-block nodes
- * @property {string} [closingTag] - Full closing tag line for html-block nodes
- * @property {string} [rawContent] - Verbatim body for raw content tags (script, style, textarea)
- * @property {boolean} [checked] - Whether a checklist item is checked
- * @property {boolean} [bareText] - Whether this node represents bare text inside an HTML container
- * @property {boolean} [detailsOpen] - Runtime-only toggle for fake details collapse state (not serialised)
- */
-
-/**
  * Counter for generating unique node IDs.
  * @type {number}
  */
@@ -165,7 +142,7 @@ export class SyntaxNode {
 
   /**
    * Converts an InlineSegment (from buildInlineTree) into a SyntaxNode.
-   * @param {import('./inline-tokenizer.js').InlineSegment} segment
+   * @param {InlineSegment} segment
    * @returns {SyntaxNode}
    */
   static segmentToNode(segment) {
@@ -495,7 +472,7 @@ export class SyntaxNode {
   /**
    * Recursively extracts plain text from an InlineSegment tree.
    *
-   * @param {import('./inline-tokenizer.js').InlineSegment[]} segments
+   * @param {InlineSegment[]} segments
    * @returns {string}
    */
   static _segmentsToText(segments) {
@@ -573,7 +550,7 @@ export class SyntaxTree {
 
     /**
      * Tree-based cursor position.
-     * @type {import('../../renderer/scripts/editor/index.js').TreeCursor|null}
+     * @type {TreeCursor|null}
      */
     this.treeCursor = null;
   }

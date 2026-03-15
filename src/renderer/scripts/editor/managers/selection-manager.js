@@ -3,29 +3,20 @@
  */
 
 /**
- * @typedef {Object} SelectionState
- * @property {number} startLine - Start line (0-based)
- * @property {number} startColumn - Start column (0-based)
- * @property {number} endLine - End line (0-based)
- * @property {number} endColumn - End column (0-based)
- * @property {boolean} isCollapsed - Whether the selection is collapsed (cursor only)
- */
-
-/**
  * Manages text selection within the editor.
  */
 export class SelectionManager {
   /**
-   * @param {import('../index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /** @type {SelectionState|null} */
     this.currentSelection = null;
 
-    /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} */
+    /** @type {SyntaxNode|null} */
     this.currentNode = null;
   }
 
@@ -154,7 +145,7 @@ export class SelectionManager {
 
   /**
    * Gets the current syntax tree node at the cursor.
-   * @returns {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null}
+   * @returns {SyntaxNode|null}
    */
   getCurrentNode() {
     return this.currentNode;

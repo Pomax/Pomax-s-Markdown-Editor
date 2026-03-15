@@ -8,7 +8,7 @@
 
 /**
  * Default view mode for the editor on startup.
- * @type {import('../../editor/index.js').ViewMode}
+ * @type {ViewMode}
  */
 const DEFAULT_VIEW_MODE = `writing`;
 
@@ -38,7 +38,7 @@ const DEFAULT_TOC_VISIBLE = true;
 
 /**
  * Default TOC sidebar position.
- * @type {import('../toc/toc.js').TocPosition}
+ * @type {TocPosition}
  */
 const DEFAULT_TOC_POSITION = `left`;
 
@@ -669,7 +669,7 @@ export class PreferencesModal {
 
   /**
    * Loads the default view mode from the settings database.
-   * @returns {Promise<import('../../editor/index.js').ViewMode>}
+   * @returns {Promise<ViewMode>}
    */
   async loadDefaultView() {
     if (!window.electronAPI) return DEFAULT_VIEW_MODE;
@@ -776,7 +776,7 @@ export class PreferencesModal {
 
   /**
    * Loads the TOC position setting from the settings database.
-   * @returns {Promise<import('../toc/toc.js').TocPosition>}
+   * @returns {Promise<TocPosition>}
    */
   async loadTocPosition() {
     if (!window.electronAPI) return DEFAULT_TOC_POSITION;

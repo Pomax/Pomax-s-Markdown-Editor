@@ -5,9 +5,6 @@
 
 import { DOUBLE_STRING, IDENT, NUMBER, PUNCTUATION, WHITESPACE, tryMatch } from './patterns.js';
 
-/** @typedef {import('./patterns.js').TokenType} TokenType */
-/** @typedef {import('./patterns.js').LangDef} LangDef */
-
 const JSON_PROPERTY_KEY = /"(?:[^"\\]|\\.)*"(?=\s*:)/y;
 
 /**

@@ -7,29 +7,18 @@
 /// <reference path="../../../../types.d.ts" />
 
 /**
- * @typedef {'left' | 'right'} TocPosition
- */
-
-/**
- * @typedef {Object} TocHeading
- * @property {string} id       - The syntax-tree node ID
- * @property {number} level    - 1, 2 or 3
- * @property {string} text     - Plain-text heading content
- */
-
-/**
  * Table of Contents sidebar component.
  */
 export class TableOfContents {
   /**
    * @param {HTMLElement} container - The TOC sidebar container element
-   * @param {import('../../editor/index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(container, editor) {
     /** @type {HTMLElement} */
     this.container = container;
 
-    /** @type {import('../../editor/index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /** @type {boolean} */
@@ -158,7 +147,7 @@ export class TableOfContents {
    * Recursively collects h1–h3 headings from a list of nodes.
    * Descends into container nodes (e.g. html-block) so that headings
    * nested inside HTML elements appear in the table of contents.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
+   * @param {SyntaxNode[]} nodes
    * @param {TocHeading[]} headings
    */
   collectHeadings(nodes, headings) {
@@ -206,7 +195,7 @@ export class TableOfContents {
     let currentHeadingId = ``;
 
     /**
-     * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
+     * @param {SyntaxNode[]} nodes
      */
     const walk = (nodes) => {
       for (const node of nodes) {

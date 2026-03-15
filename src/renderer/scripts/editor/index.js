@@ -35,38 +35,6 @@ import { SourceRenderer } from './renderers/source-renderer.js';
 import { WritingRenderer } from './renderers/writing-renderer.js';
 
 /**
- * @typedef {'source' | 'writing'} ViewMode
- */
-
-/**
- * @typedef {Object} TreeCursor
- * @property {string} nodeId - The ID of the node the cursor is in.  When the
- *     cursor is inside an inline formatting element (bold, italic, etc.),
- *     this is the inline child node's ID.  Otherwise it is the block
- *     node's ID.
- * @property {string} [blockNodeId] - The ID of the enclosing block-level
- *     node (paragraph, heading, list-item, etc.).  Set by DOM cursor sync
- *     when the cursor is inside an inline formatting element.  When absent,
- *     `nodeId` is itself the block node.
- * @property {number} offset - The character offset within the block node's
- *     raw content string (always relative to the block, not the inline).
- * @property {'opening'|'closing'} [tagPart] - If set, cursor is on an
- *     html-block container's opening or closing tag line (source view only).
- * @property {number} [cellRow] - Row index for table cell editing (0 = header).
- * @property {number} [cellCol] - Column index for table cell editing.
- */
-
-/**
- * Represents a non-collapsed selection range mapped to tree coordinates.
- * Both endpoints are expressed as (nodeId, offset) pairs.
- * @typedef {Object} TreeRange
- * @property {string} startNodeId - The ID of the node the range starts in
- * @property {number} startOffset - Character offset within the start node's content
- * @property {string} endNodeId - The ID of the node the range ends in
- * @property {number} endOffset - Character offset within the end node's content
- */
-
-/**
  * Main editor class that manages the markdown editing experience.
  */
 export class Editor {
@@ -554,7 +522,7 @@ export class Editor {
    *
    * @param {string} type
    * @param {string} content
-   * @param {import('../../../parsers/old/syntax-tree.js').NodeAttributes} attributes
+   * @param {NodeAttributes} attributes
    * @returns {string}
    */
   buildMarkdownLine(type, content, attributes) {
@@ -598,7 +566,7 @@ export class Editor {
    * E.g. heading1 → 2 (`# `), heading2 → 3 (`## `), paragraph → 0.
    *
    * @param {string} type
-   * @param {import('../../../parsers/old/syntax-tree.js').NodeAttributes} [attributes]
+   * @param {NodeAttributes} [attributes]
    * @returns {number}
    */
   getPrefixLength(type, attributes) {
@@ -762,10 +730,7 @@ export class Editor {
           // sourceEditText-relative to content-relative by
           // subtracting the opening-fence preamble length.
           if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
-            const attrs =
-              /** @type {import('../../../parsers/old/syntax-tree.js').NodeAttributes} */ (
-                child.attributes
-              );
+            const attrs = /** @type {NodeAttributes} */ (child.attributes);
             const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
             this.syntaxTree.treeCursor = {
               nodeId: child.id,
@@ -785,9 +750,7 @@ export class Editor {
         this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
       const node = this.syntaxTree.findNodeById(cursorBlockId);
       if (node?.type === `code-block`) {
-        const attrs = /** @type {import('../../../parsers/old/syntax-tree.js').NodeAttributes} */ (
-          node.attributes
-        );
+        const attrs = /** @type {NodeAttributes} */ (node.attributes);
         const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
         this.syntaxTree.treeCursor = {
           nodeId: node.id,
@@ -910,7 +873,7 @@ export class Editor {
   /**
    * Returns the shared ImageModal instance, creating it lazily.
    * Both the toolbar and editor use this to avoid duplicate dialogs.
-   * @returns {import('./content-types/image/image-modal.js').ImageModal}
+   * @returns {ImageModal}
    */
   getImageModal() {
     return this.imageHelper.getImageModal();
@@ -1052,7 +1015,7 @@ export class Editor {
 
     /**
      * Returns the list kind for a list-item node.
-     * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode} n
+     * @param {SyntaxNode} n
      * @returns {'unordered' | 'ordered' | 'checklist'}
      */
     const getListKind = (n) => {
@@ -1062,7 +1025,7 @@ export class Editor {
 
     /**
      * Applies list-item attributes for a given kind.
-     * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode} n
+     * @param {SyntaxNode} n
      * @param {'unordered' | 'ordered' | 'checklist'} k
      * @param {number} [num]
      */
@@ -1104,10 +1067,7 @@ export class Editor {
 
       if (htmlBlockParents.size > 0) {
         const tagNames = [...htmlBlockParents]
-          .map(
-            (p) =>
-              `<${/** @type {import('../../../parsers/old/syntax-tree.js').SyntaxNode} */ (p).attributes.tagName ?? `html`}>`,
-          )
+          .map((p) => `<${/** @type {SyntaxNode} */ (p).attributes.tagName ?? `html`}>`)
           .join(`, `);
         const result = await /** @type {any} */ (globalThis).electronAPI?.confirmDialog({
           type: `warning`,
@@ -1121,9 +1081,7 @@ export class Editor {
         if (!result || result.response !== 0) return;
 
         for (const htmlBlock of htmlBlockParents) {
-          const parent = /** @type {import('../../../parsers/old/syntax-tree.js').SyntaxNode} */ (
-            htmlBlock
-          );
+          const parent = /** @type {SyntaxNode} */ (htmlBlock);
           const treeChildren = this.syntaxTree.children;
           const idx = treeChildren.indexOf(parent);
           if (idx === -1) continue;
@@ -1230,9 +1188,9 @@ export class Editor {
    * Returns the contiguous run of `list-item` nodes surrounding `node`
    * within the given sibling list.
    *
-   * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]} siblings
-   * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode} node
-   * @returns {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]}
+   * @param {SyntaxNode[]} siblings
+   * @param {SyntaxNode} node
+   * @returns {SyntaxNode[]}
    */
   getContiguousListRun(siblings, node) {
     const idx = siblings.indexOf(node);
@@ -1248,7 +1206,7 @@ export class Editor {
    * `nearIndex` so they are sequential starting from 1.  Returns the
    * IDs of every node whose number was changed (for render hints).
    *
-   * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]} siblings
+   * @param {SyntaxNode[]} siblings
    * @param {number} nearIndex - Index of a node in or adjacent to the run
    * @returns {string[]} IDs of nodes that were renumbered
    */
@@ -1280,7 +1238,7 @@ export class Editor {
    *
    * @param {string} startId
    * @param {string} endId
-   * @returns {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]}
+   * @returns {SyntaxNode[]}
    */
   getNodesInRange(startId, endId) {
     if (!this.syntaxTree) return [];
@@ -1288,9 +1246,9 @@ export class Editor {
     /**
      * Walks children (recursing into html-block containers) and
      * collects all leaf block nodes between startId and endId.
-     * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]} children
+     * @param {SyntaxNode[]} children
      * @param {{collecting: boolean, done: boolean}} state
-     * @param {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]} result
+     * @param {SyntaxNode[]} result
      */
     const walk = (children, state, result) => {
       for (const child of children) {
@@ -1310,7 +1268,7 @@ export class Editor {
     };
 
     const state = { collecting: false, done: false };
-    /** @type {import('../../../parsers/old/syntax-tree.js').SyntaxNode[]} */
+    /** @type {SyntaxNode[]} */
     const result = [];
     walk(this.syntaxTree.children, state, result);
     return result;

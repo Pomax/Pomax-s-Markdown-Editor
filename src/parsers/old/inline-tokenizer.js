@@ -17,28 +17,6 @@
 /** @type {Set<string>} */
 const INLINE_HTML_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
-//  Token types
-
-/**
- * @typedef {'text'|'bold-open'|'bold-close'|'italic-open'|'italic-close'
- *   |'bold-italic-open'|'bold-italic-close'
- *   |'strikethrough-open'|'strikethrough-close'|'code'
- *   |'link-open'|'link-close'|'link-href'
- *   |'image'
- *   |'html-open'|'html-close'} TokenType
- */
-
-/**
- * @typedef {object} InlineToken
- * @property {TokenType} type
- * @property {string} raw      - The original source text of the token.
- * @property {string} [content] - Inner content (for code spans / text).
- * @property {string} [tag]     - HTML tag name (for html-open / html-close).
- * @property {string} [href]    - Link URL (for link-href).
- * @property {string} [alt]     - Alt text (for image tokens).
- * @property {string} [src]     - Image URL (for image tokens).
- */
-
 //  Tokenizer
 
 /**
@@ -431,14 +409,6 @@ function _findOpenIdx(openStack, closeType) {
 /**
  * An inline segment: either plain text, a code span, or a formatted
  * container with children.
- *
- * @typedef {object} InlineSegment
- * @property {'text'|'code'|'image'|'bold'|'italic'|'strikethrough'|'link'|string} type
- * @property {string} [text]     - Plain text content (type === 'text').
- * @property {string} [content]  - Code content (type === 'code').
- * @property {string} [href]     - Link URL (type === 'link'). * @property {string} [alt]     - Alt text (type === 'image').
- * @property {string} [src]     - Image URL (type === 'image'). * @property {string} [tag]      - HTML tag name (for html inline elements).
- * @property {InlineSegment[]} [children] - Child segments for containers.
  */
 
 /**

@@ -8,7 +8,7 @@ import { SyntaxNode } from '../../../../parsers/old/syntax-tree.js';
 
 /**
  * Handles the Enter key — splits the current node at the cursor.
- * @param {import('./index.js').EditOperations} ops
+ * @param {EditOperations} ops
  */
 export function handleEnterKey(ops) {
   ops.editor.syncCursorFromDOM();
@@ -131,7 +131,7 @@ export function handleEnterKey(ops) {
     // Split: current item keeps text before cursor,
     // new item gets text after cursor.
     node.content = contentBefore;
-    /** @type {import('../../../../parsers/old/syntax-tree.js').NodeAttributes} */
+    /** @type {NodeAttributes} */
     const newAttrs = {
       ordered: node.attributes.ordered,
       indent: node.attributes.indent || 0,

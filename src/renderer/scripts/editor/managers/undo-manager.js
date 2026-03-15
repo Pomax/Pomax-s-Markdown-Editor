@@ -4,14 +4,6 @@
  */
 
 /**
- * @typedef {Object} Change
- * @property {string} type - The type of change
- * @property {string} before - The content before the change
- * @property {string} after - The content after the change
- * @property {number} timestamp - When the change occurred
- */
-
-/**
  * Manages undo/redo history with unlimited capacity.
  */
 export class UndoManager {

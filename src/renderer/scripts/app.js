@@ -22,22 +22,6 @@ import { TableOfContents } from './utility/toc/toc.js';
 import { Toolbar } from './utility/toolbar/toolbar.js';
 
 /**
- * @typedef {Object} DocumentState
- * @property {string} content - The markdown content
- * @property {string|null} filePath - Full file path or null for untitled
- * @property {boolean} modified - Whether there are unsaved changes
- * @property {import('./editor/index.js').TreeCursor|null} cursor - Cursor position
- * @property {number} cursorOffset - Absolute character offset in markdown source
- * @property {number} contentHash - CRC32 hash of the markdown content
- * @property {import('../../parsers/old/syntax-tree.js').SyntaxTree|null} syntaxTree - The parsed syntax tree
- * @property {import('./editor/index.js').TreeRange|null} treeRange - Active text selection range
- * @property {number} scrollTop - Scroll position of the scroll container
- * @property {string|null} tocActiveHeadingId - The active ToC heading node ID
- * @property {any[]} undoStack - Undo history
- * @property {any[]} redoStack - Redo history
- */
-
-/**
  * Main application class.
  * Coordinates all editor components.
  */
@@ -938,7 +922,7 @@ class App {
       },
       getViewMode: () => this.editor?.getViewMode() ?? `source`,
       setViewMode: (/** @type {string} */ mode) => {
-        this.editor?.setViewMode(/** @type {import('./editor/index.js').ViewMode} */ (mode));
+        this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);
       },
       setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),

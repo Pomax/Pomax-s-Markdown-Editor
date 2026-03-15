@@ -9,11 +9,6 @@
 import { BaseModal } from '../../../../utility/modal/base-modal.js';
 
 /**
- * @typedef {Object} CodeLanguageData
- * @property {string} language - The language identifier (e.g. "js", "python")
- */
-
-/**
  * A modal dialog for setting or changing a code block's language tag.
  * @extends {BaseModal}
  */

@@ -12,10 +12,10 @@ import { SyntaxNode } from '../../../parsers/old/syntax-tree.js';
  */
 export class RangeOperations {
   /**
-   * @param {import('./index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('./index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /**

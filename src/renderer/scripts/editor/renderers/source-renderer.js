@@ -4,24 +4,20 @@
  */
 
 /**
- * @typedef {import('../../../../parsers/old/syntax-tree.js').NodeAttributes} NodeAttributes
- */
-
-/**
  * Renders the syntax tree in source view mode.
  */
 export class SourceRenderer {
   /**
-   * @param {import('../index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
   }
 
   /**
    * Renders the syntax tree to the container.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} syntaxTree - The syntax tree to render
+   * @param {SyntaxTree} syntaxTree - The syntax tree to render
    * @param {HTMLElement} container - The container element
    */
   fullRender(syntaxTree, container) {
@@ -80,7 +76,7 @@ export class SourceRenderer {
    * a real SyntaxNode by {@link Editor#promotePhantomParagraph}.
    *
    * @param {HTMLElement} container
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
+   * @param {SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector(`.md-phantom-paragraph`);
@@ -166,7 +162,7 @@ export class SourceRenderer {
    * re-rendered instead.
    *
    * @param {HTMLElement} container
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
+   * @param {SyntaxTree} tree
    * @param {string} nodeId
    */
   replaceNodeElement(container, tree, nodeId) {
@@ -199,7 +195,7 @@ export class SourceRenderer {
 
   /**
    * Renders a syntax tree node to an HTML element.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node - The node to render
+   * @param {SyntaxNode} node - The node to render
    * @returns {HTMLElement|null}
    */
   renderNode(node) {
@@ -247,7 +243,7 @@ export class SourceRenderer {
 
   /**
    * Renders a heading node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -271,7 +267,7 @@ export class SourceRenderer {
 
   /**
    * Renders a paragraph node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -282,7 +278,7 @@ export class SourceRenderer {
 
   /**
    * Renders a blockquote node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -315,7 +311,7 @@ export class SourceRenderer {
    * operate on that string.  When the cursor leaves the node (or the
    * view mode switches), the text is reparsed back into tree properties.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -336,7 +332,7 @@ export class SourceRenderer {
 
   /**
    * Renders a list item node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -362,7 +358,7 @@ export class SourceRenderer {
 
   /**
    * Renders an image node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -391,7 +387,7 @@ export class SourceRenderer {
 
   /**
    * Renders a horizontal rule node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -403,7 +399,7 @@ export class SourceRenderer {
 
   /**
    * Renders a table node.
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */
@@ -423,7 +419,7 @@ export class SourceRenderer {
    * Renders an HTML block container node in source view.
    * Shows the opening/closing tags and child nodes as raw markdown.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLElement} element
    * @returns {HTMLElement}
    */

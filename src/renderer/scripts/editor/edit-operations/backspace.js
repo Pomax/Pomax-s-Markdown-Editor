@@ -6,7 +6,7 @@
 
 /**
  * Handles the Backspace key.
- * @param {import('./index.js').EditOperations} ops
+ * @param {EditOperations} ops
  */
 export function handleBackspace(ops) {
   ops.editor.syncCursorFromDOM();

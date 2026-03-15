@@ -8,12 +8,6 @@
 import { BaseModal } from '../../../utility/modal/base-modal.js';
 
 /**
- * @typedef {Object} LinkData
- * @property {string} text - The visible link text
- * @property {string} url - The link URL
- */
-
-/**
  * A modal dialog for inserting or editing links.
  * @extends {BaseModal}
  */

@@ -15,13 +15,13 @@ import { settings } from './settings-manager.js';
 export class MenuBuilder {
   /**
    * @param {BrowserWindow} window - The main browser window
-   * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
+   * @param {FileManager} fileManager - The file manager instance
    */
   constructor(window, fileManager) {
     /** @type {BrowserWindow} */
     this.window = window;
 
-    /** @type {import('./file-manager.js').FileManager} */
+    /** @type {FileManager} */
     this.fileManager = fileManager;
 
     /** @type {boolean} Whether the context-menu listener has been registered */

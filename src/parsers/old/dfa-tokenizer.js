@@ -7,19 +7,6 @@
  */
 
 /**
- * @typedef {'TEXT'|'NEWLINE'|'HASH'|'SPACE'|'TAB'|'GT'|'DASH'|'STAR'
- *   |'UNDERSCORE'|'TILDE'|'BACKTICK'|'PIPE'|'BANG'|'LBRACKET'
- *   |'RBRACKET'|'LPAREN'|'RPAREN'|'LT'|'FSLASH'|'DIGIT'|'DOT'
- *   |'PLUS'|'COLON'|'EOF'} DFATokenType
- */
-
-/**
- * @typedef {object} DFAToken
- * @property {DFATokenType} type
- * @property {string} value  - The raw character(s).
- */
-
-/**
  * Maps a single character to its token type.  Characters that don't
  * have a dedicated type become part of a TEXT token.
  *

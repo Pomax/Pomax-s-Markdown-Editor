@@ -13,10 +13,10 @@ import { LinkModal } from './link-modal.js';
  */
 export class LinkHelper {
   /**
-   * @param {import('../../index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /**
@@ -31,7 +31,7 @@ export class LinkHelper {
    * from the clicked `<a>` element and, on submit, replaces it in the
    * node's raw content.
    *
-   * @param {import('../../../../../parsers/old/syntax-tree.js').SyntaxNode} node
+   * @param {SyntaxNode} node
    * @param {HTMLAnchorElement} anchor - The clicked `<a>` element
    */
   async openLinkModalForNode(node, anchor) {

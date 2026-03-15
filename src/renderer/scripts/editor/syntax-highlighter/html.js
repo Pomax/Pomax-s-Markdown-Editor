@@ -5,9 +5,6 @@
 
 import { DOUBLE_STRING, SINGLE_STRING, WHITESPACE, tryMatch } from './patterns.js';
 
-/** @typedef {import('./patterns.js').TokenType} TokenType */
-/** @typedef {import('./patterns.js').LangDef} LangDef */
-
 const HTML_COMMENT = /<!--[\s\S]*?-->/y;
 const HTML_TAG = /<\/?[\w-]+/y;
 const HTML_ATTR_NAME = /[\w-]+(?=\s*=)/y;

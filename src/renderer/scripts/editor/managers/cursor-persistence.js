@@ -17,10 +17,10 @@
  * `cursor.nodeId` is found, the final offset is the accumulated
  * position plus the node's prefix length plus the cursor offset.
  *
- * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
- * @param {import('../index.js').TreeCursor} cursor
- * @param {(type: string, content: string, attrs: import('../../../../parsers/old/syntax-tree.js').NodeAttributes) => string} buildMarkdownLine
- * @param {(type: string, attrs?: import('../../../../parsers/old/syntax-tree.js').NodeAttributes) => number} getPrefixLength
+ * @param {SyntaxTree} tree
+ * @param {TreeCursor} cursor
+ * @param {(type: string, content: string, attrs: NodeAttributes) => string} buildMarkdownLine
+ * @param {(type: string, attrs?: NodeAttributes) => number} getPrefixLength
  * @returns {number} Absolute offset, or -1 if the node was not found.
  */
 export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefixLength) {
@@ -30,7 +30,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
    * Recursively walks nodes following the same structure as
    * `SyntaxNode.toMarkdown()` / `SyntaxTree.toMarkdown()`.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
+   * @param {SyntaxNode[]} nodes
    * @param {string} separator
    * @returns {number} The absolute offset, or -1 if not found in this subtree.
    */
@@ -111,18 +111,18 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
  * subtracting each node's markdown length until the target offset
  * falls within the current node.
  *
- * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxTree} tree
+ * @param {SyntaxTree} tree
  * @param {number} absoluteOffset
- * @param {(type: string, attrs?: import('../../../../parsers/old/syntax-tree.js').NodeAttributes) => number} getPrefixLength
- * @returns {import('../index.js').TreeCursor|null} The cursor, or null if offset is out of range.
+ * @param {(type: string, attrs?: NodeAttributes) => number} getPrefixLength
+ * @returns {TreeCursor|null} The cursor, or null if offset is out of range.
  */
 export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
   let pos = 0;
 
   /**
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode[]} nodes
+   * @param {SyntaxNode[]} nodes
    * @param {string} separator
-   * @returns {import('../index.js').TreeCursor|null}
+   * @returns {TreeCursor|null}
    */
   function walk(nodes, separator) {
     for (let i = 0; i < nodes.length; i++) {

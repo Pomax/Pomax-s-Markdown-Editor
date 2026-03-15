@@ -8,30 +8,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 /**
- * @typedef {Object} APICommand
- * @property {string} name - The command name
- * @property {string} description - Description of what the command does
- * @property {string} category - Command category (file, document, view, element, etc.)
- * @property {Object<string, ParamDefinition>} params - Parameter definitions
- * @property {APIHandler} handler - The command handler function
- */
-
-/**
- * @callback APIHandler
- * @param {Record<string, any>} params - Command parameters
- * @param {Electron.WebContents} webContents - The web contents to send messages to
- * @returns {Promise<{success: boolean, [key: string]: any}>}
- */
-
-/**
- * @typedef {Object} ParamDefinition
- * @property {string} type - The parameter type (string, number, boolean, object)
- * @property {string} description - Description of the parameter
- * @property {boolean} required - Whether the parameter is required
- * @property {*} [defaultValue] - Default value if not provided
- */
-
-/**
  * Registry for external scripting API commands.
  */
 export class APIRegistry {

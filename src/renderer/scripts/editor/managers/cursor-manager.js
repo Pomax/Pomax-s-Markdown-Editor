@@ -12,10 +12,10 @@ import { rawOffsetToRenderedOffset, renderedOffsetToRawOffset } from '../offset-
  */
 export class CursorManager {
   /**
-   * @param {import('../index.js').Editor} editor
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
   }
 
@@ -80,7 +80,7 @@ export class CursorManager {
    *
    * @param {Node} domNode - The DOM node the position is in
    * @param {number} domOffset - The offset within `domNode`
-   * @returns {{ cursor: import('../index.js').TreeCursor } | null}
+   * @returns {{ cursor: TreeCursor } | null}
    */
   mapDOMPositionToTree(domNode, domOffset) {
     /** @type {string|null} */
@@ -122,7 +122,7 @@ export class CursorManager {
           }
 
           const offset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
-          /** @type {import('../index.js').TreeCursor} */
+          /** @type {TreeCursor} */
           const cursor = {
             nodeId: inlineNodeId ?? nodeId,
             blockNodeId: nodeId,

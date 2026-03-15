@@ -21,9 +21,6 @@ import {
   tryMatch,
 } from './patterns.js';
 
-/** @typedef {import('./patterns.js').TokenType} TokenType */
-/** @typedef {import('./patterns.js').LangDef} LangDef */
-
 import * as javascript from './javascript.js';
 import * as python from './python.js';
 import * as html from './html.js';

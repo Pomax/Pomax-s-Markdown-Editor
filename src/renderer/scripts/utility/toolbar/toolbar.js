@@ -7,27 +7,18 @@ import { TableModal } from '../../editor/content-types/table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
 
 /**
- * @typedef {Object} ButtonConfig
- * @property {string} id - Button identifier
- * @property {string} label - Display label
- * @property {string} icon - Icon or symbol
- * @property {string} action - Action to perform
- * @property {string[]} [applicableTo] - Element types this button applies to
- */
-
-/**
  * Toolbar component for the markdown editor.
  */
 export class Toolbar {
   /**
    * @param {HTMLElement} container - The toolbar container element
-   * @param {import('../../editor/index.js').Editor} editor - The editor instance
+   * @param {Editor} editor - The editor instance
    */
   constructor(container, editor) {
     /** @type {HTMLElement} */
     this.container = container;
 
-    /** @type {import('../../editor/index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
     /** @type {HTMLElement|null} */
@@ -434,7 +425,7 @@ export class Toolbar {
 
     button.addEventListener(`click`, () => {
       const newMode = this.editor.getViewMode() === `writing` ? `source` : `writing`;
-      this.editor.setViewMode(/** @type {import('../../editor/index.js').ViewMode} */ (newMode));
+      this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
     });
 
@@ -493,7 +484,7 @@ export class Toolbar {
 
     // Check if cursor is on an image node
     const currentNode = this.editor.getCurrentBlockNode();
-    /** @type {Partial<import('../../editor/content-types/image/image-modal.js').ImageData>|undefined} */
+    /** @type {Partial<ImageData>|undefined} */
     let existing;
 
     if (currentNode?.type === `image`) {
@@ -585,7 +576,7 @@ export class Toolbar {
     }
 
     const currentNode = this.editor.getCurrentBlockNode();
-    /** @type {import('../../editor/content-types/table/table-modal.js').TableData|null} */
+    /** @type {TableData|null} */
     let existing = null;
 
     if (currentNode?.type === `table`) {
@@ -638,7 +629,7 @@ export class Toolbar {
    * to determine block-level state (heading, list, etc.) and collect
    * the set of active inline formats along the way.
    *
-   * @param {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} node - The current node
+   * @param {SyntaxNode|null} node - The current node
    */
   updateButtonStates(node) {
     // Walk from the (potentially inline) node up to its block parent,
@@ -647,7 +638,7 @@ export class Toolbar {
     const activeFormats = new Set();
     let blockNode = node;
     if (node?.isInlineNode()) {
-      /** @type {import('../../../../parsers/old/syntax-tree.js').SyntaxNode|null} */
+      /** @type {SyntaxNode|null} */
       let walk = node;
       while (walk?.isInlineNode()) {
         const buttons = Toolbar.INLINE_TYPE_TO_BUTTONS[walk.type];

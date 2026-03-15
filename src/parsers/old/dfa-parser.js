@@ -166,7 +166,7 @@ export class DFAParser {
    * Determines what block element starts at the current position
    * and dispatches to the appropriate sub-parser.
    *
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode|null}
    */
   _parseBlock(ctx) {
@@ -258,7 +258,7 @@ export class DFAParser {
   // Heading
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode|null}
    */
   _parseHeading(ctx) {
@@ -295,7 +295,7 @@ export class DFAParser {
   // Code block
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode|null}
    */
   _parseCodeBlock(ctx) {
@@ -393,7 +393,7 @@ export class DFAParser {
   // Blockquote
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseBlockquote(ctx) {
@@ -422,7 +422,7 @@ export class DFAParser {
   /**
    * Checks if current position is start of unordered list item.
    * Pattern: optional spaces, then DASH/STAR/PLUS, then SPACE.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isUnorderedListStart(ctx) {
@@ -445,7 +445,7 @@ export class DFAParser {
   }
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseUnorderedListItem(ctx) {
@@ -491,7 +491,7 @@ export class DFAParser {
   /**
    * Checks if current position is start of ordered list item.
    * Pattern: optional spaces, then DIGIT(s), then DOT, then SPACE.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isOrderedListStart(ctx) {
@@ -517,7 +517,7 @@ export class DFAParser {
   }
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseOrderedListItem(ctx) {
@@ -564,7 +564,7 @@ export class DFAParser {
    * Checks if current position is a horizontal rule.
    * Three or more of the same character (DASH, STAR, UNDERSCORE)
    * with only optional trailing spaces before newline/EOF.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isHorizontalRule(ctx) {
@@ -587,7 +587,7 @@ export class DFAParser {
   }
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseHorizontalRule(ctx) {
@@ -606,7 +606,7 @@ export class DFAParser {
 
   /**
    * Tries to parse ![alt](src). Returns null if it doesn't match.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode|null}
    */
   _tryParseImage(ctx) {
@@ -673,7 +673,7 @@ export class DFAParser {
 
   /**
    * Tries to parse [![alt](src)](href). Returns null if no match.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode|null}
    */
   _tryParseLinkedImage(ctx) {
@@ -763,7 +763,7 @@ export class DFAParser {
 
   /**
    * Checks if current position is an <img ...> tag.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isHtmlImgTag(ctx) {
@@ -774,7 +774,7 @@ export class DFAParser {
   }
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseHtmlImage(ctx) {
@@ -868,7 +868,7 @@ export class DFAParser {
 
   /**
    * Checks if current position starts an HTML block tag.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isHtmlBlockStart(ctx) {
@@ -884,7 +884,7 @@ export class DFAParser {
   /**
    * Checks if current position has leading whitespace followed by
    * an HTML block tag.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isIndentedHtmlBlockStart(ctx) {
@@ -910,7 +910,7 @@ export class DFAParser {
   /**
    * Checks if current position has leading whitespace followed by
    * an HTML img tag.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isIndentedHtmlImgTag(ctx) {
@@ -930,7 +930,7 @@ export class DFAParser {
 
   /**
    * Skips whitespace tokens (SPACE, TAB) at current position.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    */
   _skipWhitespace(ctx) {
     while (
@@ -946,7 +946,7 @@ export class DFAParser {
    * to form a (possibly hyphenated) tag name. Returns the combined name
    * string and the number of tokens consumed, or null if the position
    * does not start with a TEXT token.
-   * @param {import('./dfa-tokenizer.js').DFAToken[]} tokens
+   * @param {DFAToken[]} tokens
    * @param {number} startIndex
    * @returns {{name: string, count: number}|null}
    */
@@ -989,7 +989,7 @@ export class DFAParser {
    * a valid HTML element (LT TEXT ...attributes... GT on the same line).
    * Excludes inline-only tags that the inline tokenizer handles.
    *
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @param {string} lower  Already-lowercased tag name.
    * @returns {boolean}
    */
@@ -1014,7 +1014,7 @@ export class DFAParser {
   /**
    * Checks whether `ctx.pos` points at a `LT BANG DASH DASH`
    * sequence, the token equivalent of `<!--`.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isHtmlCommentStart(ctx) {
@@ -1033,7 +1033,7 @@ export class DFAParser {
    * Consumes an HTML comment from `<!--` through `-->` (inclusive)
    * and returns an `html-block` node whose `openingTag` holds the
    * full verbatim comment text.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @param {number} startLine
    * @returns {SyntaxNode}
    */
@@ -1083,7 +1083,7 @@ export class DFAParser {
    * Peeks at the text token(s) immediately after a LT token to get
    * the tag name, including hyphenated custom element names.
    * Returns null if structure doesn't match.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {string|null}
    */
   _peekTextAfterLT(ctx) {
@@ -1097,7 +1097,7 @@ export class DFAParser {
    * Parses an HTML block element. Consumes everything from the opening
    * tag through the matching closing tag.
    *
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseHtmlBlock(ctx) {
@@ -1266,7 +1266,7 @@ export class DFAParser {
    * Tries to parse a self-closed HTML block on a single line.
    * E.g. <summary>Some text</summary>
    *
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @param {string} tagName
    * @param {string} openingTag
    * @param {number} startLine
@@ -1334,7 +1334,7 @@ export class DFAParser {
   /**
    * Checks if current position is a closing tag for the given name.
    * Pattern: LT FSLASH TEXT GT (where TEXT matches tagName).
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @param {string} tagName
    * @returns {boolean}
    */
@@ -1354,7 +1354,7 @@ export class DFAParser {
 
   /**
    * Consumes a closing tag and returns it as a string.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {string}
    */
   _consumeClosingTag(ctx) {
@@ -1402,7 +1402,7 @@ export class DFAParser {
   // Table
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseTable(ctx) {
@@ -1443,7 +1443,7 @@ export class DFAParser {
   // Paragraph
 
   /**
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {SyntaxNode}
    */
   _parseParagraph(ctx) {
@@ -1492,7 +1492,7 @@ export class DFAParser {
 
   /**
    * Returns the token type at pos + offset, or 'EOF'.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @param {number} offset
    * @returns {string}
    */
@@ -1505,7 +1505,7 @@ export class DFAParser {
   /**
    * Consumes tokens until NEWLINE or EOF and returns the collected text.
    * The NEWLINE itself is consumed and ctx.line is incremented.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number, line: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
    * @returns {string}
    */
   _consumeToEndOfLine(ctx) {
@@ -1529,7 +1529,7 @@ export class DFAParser {
   /**
    * Checks if the current position starts a block element.
    * Used for paragraph continuation checks.
-   * @param {{tokens: import('./dfa-tokenizer.js').DFAToken[], pos: number}} ctx
+   * @param {{tokens: DFAToken[], pos: number}} ctx
    * @returns {boolean}
    */
   _isBlockStart(ctx) {

@@ -10,15 +10,6 @@
 import { BaseModal } from '../../../utility/modal/base-modal.js';
 
 /**
- * @typedef {Object} ImageData
- * @property {string} alt - Alt text for the image
- * @property {string} src - Image file path or URL
- * @property {string} href - Optional link URL for linked images
- * @property {string} style - Optional inline CSS style string
- * @property {string} rename - New filename for the image (empty string if unchanged)
- */
-
-/**
  * A modal dialog for inserting or editing images.
  * @extends {BaseModal}
  */

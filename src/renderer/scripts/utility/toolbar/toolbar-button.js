@@ -6,10 +6,6 @@
 import { icons } from './icons.js';
 
 /**
- * @typedef {import('./toolbar.js').ButtonConfig} ButtonConfig
- */
-
-/**
  * Represents a single toolbar button.
  */
 export class ToolbarButton {

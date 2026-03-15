@@ -6,7 +6,7 @@
 
 /**
  * Handles the Delete key.
- * @param {import('./index.js').EditOperations} ops
+ * @param {EditOperations} ops
  */
 export function handleDelete(ops) {
   ops.editor.syncCursorFromDOM();

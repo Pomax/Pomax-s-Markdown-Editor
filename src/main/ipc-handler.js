@@ -15,10 +15,10 @@ import { settings } from './settings-manager.js';
  */
 export class IPCHandler {
   /**
-   * @param {import('./file-manager.js').FileManager} fileManager - The file manager instance
+   * @param {FileManager} fileManager - The file manager instance
    */
   constructor(fileManager) {
-    /** @type {import('./file-manager.js').FileManager} */
+    /** @type {FileManager} */
     this.fileManager = fileManager;
 
     /** @type {APIRegistry} */
@@ -61,7 +61,7 @@ export class IPCHandler {
 
   /**
    * Registers all IPC handlers.
-   * @param {import('./menu-builder.js').MenuBuilder} [menuBuilder] - The menu builder (for reload support)
+   * @param {MenuBuilder} [menuBuilder] - The menu builder (for reload support)
    */
   registerHandlers(menuBuilder) {
     this.menuBuilder = menuBuilder ?? null;
@@ -317,7 +317,10 @@ export class IPCHandler {
         // Check if the target already exists
         try {
           await fs.access(newPath);
-          return { success: false, message: `A file named "${newName}" already exists.` };
+          return {
+            success: false,
+            message: `A file named "${newName}" already exists.`,
+          };
         } catch {
           // Target doesn't exist, safe to rename
         }

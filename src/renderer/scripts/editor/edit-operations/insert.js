@@ -7,7 +7,7 @@
 /**
  * Inserts text at the current tree cursor position, re-parses the affected
  * line to detect type changes (e.g. `# ` → heading), and re-renders.
- * @param {import('./index.js').EditOperations} ops
+ * @param {EditOperations} ops
  * @param {string} text
  */
 export function insertTextAtCursor(ops, text) {

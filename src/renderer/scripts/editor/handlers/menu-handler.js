@@ -13,14 +13,14 @@ import { WordCountModal } from '../../utility/word-count/word-count-modal.js';
  */
 export class MenuHandler {
   /**
-   * @param {import('../index.js').Editor} editor - The editor instance
-   * @param {import('../../utility/toolbar/toolbar.js').Toolbar} toolbar - The toolbar instance
+   * @param {Editor} editor - The editor instance
+   * @param {Toolbar} toolbar - The toolbar instance
    */
   constructor(editor, toolbar) {
-    /** @type {import('../index.js').Editor} */
+    /** @type {Editor} */
     this.editor = editor;
 
-    /** @type {import('../../utility/toolbar/toolbar.js').Toolbar} */
+    /** @type {Toolbar} */
     this.toolbar = toolbar;
 
     /** @type {function|null} */

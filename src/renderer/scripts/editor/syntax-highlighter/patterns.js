@@ -3,24 +3,7 @@
  * syntax highlighter's per-language rule sets.
  */
 
-/**
- * @typedef {'keyword' | 'string' | 'comment' | 'number' | 'operator'
- *           | 'punctuation' | 'function' | 'type' | 'constant'
- *           | 'attribute' | 'tag' | 'text'} TokenType
- */
-
-/**
- * @typedef {Object} LangDef
- * @property {RegExp[]}    comments
- * @property {RegExp[]}    strings
- * @property {Set<string>} keywords
- * @property {Set<string>} types
- * @property {Set<string>} constants
- * @property {RegExp}      [extraBefore]
- * @property {TokenType}   [extraBeforeType]
- * @property {boolean}     [caseInsensitive]
- * @property {(code: string, lang: LangDef) => Array<{type: TokenType, text: string}>} [tokenise]
- */
+/// <reference path="../../../../types.d.ts" />
 
 /** Double-quoted string (with backslash escapes). */
 export const DOUBLE_STRING = /"(?:[^"\\]|\\.)*"/y;
