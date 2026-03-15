@@ -520,7 +520,7 @@ type Editor = import('./renderer/scripts/editor/index.js').Editor;
 /**
  * A single node in the syntax tree.
  */
-type SyntaxNode = import('./parsers/old/syntax-tree.js').SyntaxNode;
+type SyntaxNode = import('./parsers/old/syntax-node.js').SyntaxNode;
 
 /**
  * The full parsed syntax tree.

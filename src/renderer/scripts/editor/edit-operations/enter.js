@@ -4,7 +4,7 @@
 
 /// <reference path="../../../../types.d.ts" />
 
-import { SyntaxNode } from '../../../../parsers/old/syntax-tree.js';
+import { SyntaxNode } from '../../../../parsers/old/syntax-node.js';
 
 /**
  * Handles the Enter key — splits the current node at the cursor.

@@ -51,11 +51,13 @@ this **before** doing any work.
   make sure that `main` is up to date with respect to the origin.
 - **Always** run all commands and reasoning in the foreground
 - **ALways** use the active terminal to run any commands
+- **Never** use `_` as a naming prefix to mean "private". That is not
+  how JavaScript works. However, using `_` as prefix for unused but
+  required function arguments is allowed as the underscore is not use
+  to signify some kind of ownership or privacy.
+- **Never** use "// --- ...." sectioning comments in code.
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
   terminal invocation must be a single command.
-- **Never** run `echo` in the terminal — not for checking exit codes, not
-  for checking if the terminal is free, not for any reason. `echo` is an
-  illegal command.
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
 - When asked to offer multiple choices, **never** present option picking
@@ -91,7 +93,7 @@ this **before** doing any work.
   wrapping.
 - Note that any changes to this file should **always** be added to git
   commits. They should never be backed out or unstaged.
-- **Never** use vitest
+- **Do not** use vitest — the project does not use it.
 - **Never** use `npx` to run tools — always use the corresponding `npm run`
   script. To run a single spec file: `npm run test:integration -- path/to/file.spec.js`.
 - **ALways** update integrations test for UX that gets changed
@@ -100,3 +102,7 @@ this **before** doing any work.
   be running long, instead ask the user to tell you when they finish.
 - **Never** believe the output if it looks truncated, and instead assume
   the tests are still running, and ask the user to tell you when they finish.
+
+# AI Agent notes
+
+Always read the `ai-agent-notes.md` document for further information.

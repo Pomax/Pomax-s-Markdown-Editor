@@ -4,7 +4,8 @@
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { SyntaxNode, SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
+import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
+import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
 
 describe(`applyFormat with HTML tags`, () => {
   /**

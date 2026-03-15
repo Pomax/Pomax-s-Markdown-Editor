@@ -14,7 +14,8 @@
 /// <reference path="../../../types.d.ts" />
 
 import { parser } from '../../../parsers/old/dfa-parser.js';
-import { SyntaxNode, SyntaxTree } from '../../../parsers/old/syntax-tree.js';
+import { SyntaxNode } from '../../../parsers/old/syntax-node.js';
+import { SyntaxTree } from '../../../parsers/old/syntax-tree.js';
 
 import { ClipboardHandler } from './handlers/clipboard-handler.js';
 import { InputHandler } from './handlers/input-handler.js';

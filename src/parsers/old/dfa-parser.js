@@ -8,7 +8,8 @@
  */
 
 import { tokenize } from './dfa-tokenizer.js';
-import { SyntaxNode, SyntaxTree } from './syntax-tree.js';
+import { SyntaxNode } from './syntax-node.js';
+import { SyntaxTree } from './syntax-tree.js';
 
 // Block-level HTML tag set (GFM type 6)
 

@@ -5,7 +5,7 @@
 
 /// <reference path="../../../../types.d.ts" />
 
-import { SyntaxNode } from '../../../../parsers/old/syntax-tree.js';
+import { SyntaxNode } from '../../../../parsers/old/syntax-node.js';
 import { CodeLanguageModal } from '../content-types/code-block/code-language/code-language-modal.js';
 
 /**

@@ -4,7 +4,8 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { SyntaxNode, SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
+import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
+import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
 
 describe(`SyntaxNode`, () => {
   describe(`constructor`, () => {
@@ -143,7 +144,11 @@ describe(`SyntaxNode`, () => {
 
     it(`should convert linked image to markdown`, () => {
       const node = new SyntaxNode(`image`, `logo`);
-      node.attributes = { alt: `logo`, url: `logo.png`, href: `https://example.com` };
+      node.attributes = {
+        alt: `logo`,
+        url: `logo.png`,
+        href: `https://example.com`,
+      };
       assert.strictEqual(node.toMarkdown(), `[![logo](logo.png)](https://example.com)`);
     });
   });
