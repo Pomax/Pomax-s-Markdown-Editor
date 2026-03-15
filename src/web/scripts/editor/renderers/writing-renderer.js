@@ -646,6 +646,22 @@ export class WritingRenderer {
     const isComment = tagName === `!--`;
     const isVoid = attrs.closingTag === `` && node.children.length === 0;
     const isRawContent = attrs.rawContent !== undefined;
+
+    // If this is a <style> block and the user has enabled style injection,
+    // create a real <style> element so the CSS applies to the page.
+    // The rules are wrapped in @scope (#editor) so they only affect the
+    // document content and cannot leak into the ToC, toolbar, or tab bar.
+    if (tagName === `style` && isRawContent && this.editor.enableStyleElements) {
+      const styleEl = document.createElement(`style`);
+      styleEl.dataset.nodeId = node.id;
+      styleEl.dataset.injectedStyle = `true`;
+      const raw = attrs.rawContent || ``;
+      styleEl.textContent = `@scope (#editor) { ${raw} }`;
+      element.appendChild(styleEl);
+      element.hidden = true;
+      return element;
+    }
+
     if (isComment || isVoid || isRawContent) {
       element.hidden = true;
       return element;
