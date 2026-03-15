@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), `..`);
 
-const SCAN_DIRS = [`src`, `scripts`, `new-parser/src`, `new-parser/tests`, `test`];
+const SCAN_DIRS = [`src`, `scripts`, `test`];
 
 /**
  * Matches a comment line whose body is primarily a section separator:

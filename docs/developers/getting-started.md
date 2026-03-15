@@ -89,15 +89,18 @@ markdown-editor/
 │   └── developers/        # Developer guides (you are here)
 │
 ├── scripts/               # Build and utility scripts
+│   ├── clean-dist.js      # Removes intermediate build artifacts from dist/
 │   ├── copy-icons.js      # Copies Lucide SVG icons into src/web/icons
 │   ├── generate-api-docs.js
-│   └── clean-dist.js      # Removes intermediate build artifacts from dist/
+│   ├── lint-comments.js   # Flags visual divider comments
+│   └── parse-markdown.js  # CLI tool for testing parser output
 │
 ├── .github/workflows/     # GitHub Actions CI
 │   └── build.yml          # Builds executables for Win/Mac/Linux on push
 │
 ├── package.json
-├── biome.json             # Biome linter/formatter config
+├── backticks.config.js    # ESLint config for backtick-quote enforcement
+├── biome.json             # Biome formatter config
 ├── jsconfig.json          # TypeScript type-checking config (for JSDoc)
 └── playwright.config.js   # Playwright integration test config
 ```
@@ -115,9 +118,9 @@ markdown-editor/
 | `src/electron/api-registry.js` | External scripting API |
 | `src/web/scripts/app.js` | Renderer entry point, wires everything together |
 | `src/web/scripts/editor/editor.js` | Core editor class (coordinator) |
-| `old-parser/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
-| `old-parser/parser/dfa-parser.js` | Markdown → syntax tree |
-| `old-parser/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
+| `src/parsers/old/dfa-tokenizer.js` | DFA-based markdown tokenizer |
+| `src/parsers/old/dfa-parser.js` | Markdown → syntax tree |
+| `src/parsers/old/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
 | `src/types.d.ts` | Global TypeScript type declarations |
 
 ## Running Tests
@@ -158,16 +161,16 @@ This runs `lint` → `test:unit` → `test:integration` in sequence.
 
 ### Linting and Formatting
 
-We use Biome for linting and code formatting, and TypeScript for type checking via JSDoc annotations. The `lint` script runs all three:
+We use Biome for code formatting, ESLint for enforcing backtick quotes, and TypeScript for type checking via JSDoc annotations. The `lint` script runs all checks:
 
 ```sh
-# Run all checks (lint + format + type check)
+# Run all checks (codestyle + format + type check + codestyle)
 npm run lint
 
 # Individual steps:
-npm run lint:fix       # Biome lint with auto-fix
-npm run lint:format    # Biome format
-npm run lint:typing    # TypeScript type checking (tsc)
+npm run lint:codestyle  # Comment style + backtick quotes
+npm run lint:format     # Biome format
+npm run lint:typing     # TypeScript type checking (tsc)
 ```
 
 ## Building Executables
@@ -182,7 +185,7 @@ Or target a specific platform:
 
 ```sh
 npm run dist:win    # Windows portable .exe
-npm run dist:mac    # macOS .zip
+npm run dist:mac    # macOS .dmg
 npm run dist:linux  # Linux AppImage
 ```
 
@@ -218,9 +221,9 @@ Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.ym
 
 ### Adding a New Markdown Element
 
-1. Add block dispatch case in `DFAParser._parseBlock()` in `old-parser/parser/dfa-parser.js`
+1. Add block dispatch case in `DFAParser._parseBlock()` in `src/parsers/old/dfa-parser.js`
 2. Add sub-parser method in `DFAParser`
-3. Add `toMarkdown()` case in `SyntaxNode` (`old-parser/parser/syntax-tree.js`)
+3. Add `toMarkdown()` case in `SyntaxNode` (`src/parsers/old/syntax-tree.js`)
 4. Add rendering in both `SourceRenderer` and `WritingRenderer`
 5. Add tests for parser and rendering
 6. Update documentation

@@ -1,5 +1,21 @@
 # Release Log
 
+## v1.8.0
+
+### New Features
+
+- **Checklist support**: Full `- [ ]` / `- [x]` checklist editing. Toolbar button converts paragraphs to checklists; checkbox click toggles checked state in writing view; Enter creates a new unchecked item; Enter on an empty item exits to a paragraph. The three list buttons (unordered, ordered, checklist) are mutually exclusive — clicking a different kind converts in place. (#88)
+- **Code-block language tag UI**: Code blocks now show a clickable language tag at the top-right corner (and bottom-right for blocks of 20+ lines). Clicking opens a modal dialog to set or change the language. Untagged blocks show a dim "lang" placeholder.
+- **Code-block source editing**: In source view, clicking a code block enters a single-region editing mode covering the opening fence, language tag, content, and closing fence. Typing, backspace, delete, Enter, and selection all work within the fenced block. Re-parsing happens on defocus. (#95)
+- **Code-block syntax highlighting**: Lightweight syntax highlighting for 13 languages — JavaScript, Python, HTML, CSS, JSON, C, Java, Rust, Go, Ruby, Shell, SQL, and PHP. Unknown or empty languages fall back to plain text.
+- **Improved paste handling**: Paste in both source and writing views now re-parses pasted markdown to preserve structure, handles multi-line paste correctly, replaces active selections, and handles CRLF line endings. (#91)
+
+### Improvements
+
+- **"Focused" view renamed to "Writing" view**: The View menu now shows "Writing View" (Ctrl+2) instead of "Focused View", and the renderer class has been renamed to match.
+- **Toolbar active-state tracking**: Toolbar buttons now correctly reflect the formatting state at the current cursor position, walking up through inline formats and resolving the block parent for block-type buttons.
+- **macOS build target changed from zip to dmg**: Users can now mount the disk image and run the app directly without extracting an archive.
+
 ## v1.7.0
 
 ### New Features
