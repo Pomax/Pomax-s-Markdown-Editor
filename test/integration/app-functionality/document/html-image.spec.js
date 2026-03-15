@@ -98,6 +98,7 @@ test(`editing style via modal updates the parse tree`, async () => {
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
   const image = page.locator(`.md-image-preview`);
+  await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
   const dialog = page.locator(`.image-dialog`);
@@ -124,6 +125,7 @@ test(`clearing style converts HTML img to markdown syntax`, async () => {
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
   const image = page.locator(`.md-image-preview`);
+  await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
   const dialog = page.locator(`.image-dialog`);
