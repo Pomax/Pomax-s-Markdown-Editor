@@ -16,7 +16,7 @@ import { _electron as electron } from '@playwright/test';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const projectRoot = path.join(__dirname, '..', '..');
+export const projectRoot = path.join(__dirname, `..`, `..`);
 
 /** Standard viewport: 800 wide × 1132 tall (A4 portrait ratio). */
 export const VIEWPORT = { width: 800, height: 1132 };
@@ -25,20 +25,20 @@ export const VIEWPORT = { width: 800, height: 1132 };
  * Platform-aware modifier key: Meta on macOS, Control everywhere else.
  * Use this for shortcuts like copy/paste/undo (Ctrl+C on Windows → Meta+C on macOS).
  */
-const isMac = process.platform === 'darwin';
-export const MOD = isMac ? 'Meta' : 'Control';
+const isMac = process.platform === `darwin`;
+export const MOD = isMac ? `Meta` : `Control`;
 
 /**
  * Platform-aware Home key: Meta+ArrowLeft on macOS, Home everywhere else.
  * Moves the cursor to the beginning of the current line.
  */
-export const HOME = isMac ? 'Meta+ArrowLeft' : 'Home';
+export const HOME = isMac ? `Meta+ArrowLeft` : `Home`;
 
 /**
  * Platform-aware End key: Meta+ArrowRight on macOS, End everywhere else.
  * Moves the cursor to the end of the current line.
  */
-export const END = isMac ? 'Meta+ArrowRight' : 'End';
+export const END = isMac ? `Meta+ArrowRight` : `End`;
 
 /**
  * Launch the Electron app, wait for the window to be ready, and set a
@@ -59,16 +59,16 @@ export async function launchApp(extraArgs = []) {
     try {
       electronApp = await electron.launch({
         args: [
-          ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
-          path.join(projectRoot, 'src', 'main', 'main.js'),
+          ...(process.platform === `linux` ? [`--no-sandbox`] : []),
+          path.join(projectRoot, `src`, `electron`, `main.js`),
           ...extraArgs,
         ],
-        env: { ...process.env, TESTING: '1' },
+        env: { ...process.env, TESTING: `1` },
       });
       const page = await electronApp.firstWindow();
 
       // Wait for the renderer to be ready.
-      await page.waitForFunction(() => document.readyState === 'complete');
+      await page.waitForFunction(() => document.readyState === `complete`);
 
       // Force a consistent viewport so layout-sensitive tests pass on CI.
       await page.setViewportSize(VIEWPORT);
@@ -85,7 +85,7 @@ export async function launchApp(extraArgs = []) {
     }
   }
   // Unreachable, but satisfies the type checker.
-  throw new Error('launchApp: max attempts exceeded');
+  throw new Error(`launchApp: max attempts exceeded`);
 }
 
 /**
@@ -100,7 +100,7 @@ export async function loadContent(page, fixtureContent) {
     window.editorAPI?.setContent(content);
   }, fixtureContent);
   // Wait for the editor to re-render.
-  await page.waitForSelector('#editor .md-line');
+  await page.waitForSelector(`#editor .md-line`);
 }
 
 /**
@@ -136,7 +136,7 @@ export async function defocusEditor(page) {
  */
 export async function clickInEditor(page, locator) {
   const box = await locator.boundingBox();
-  if (!box) throw new Error('clickInEditor: element not visible');
+  if (!box) throw new Error(`clickInEditor: element not visible`);
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 
@@ -163,10 +163,10 @@ export async function clickQuerySelector(page, qs) {
  * @param {import('@playwright/test').Page} page
  */
 export async function setSourceView(page) {
-  const current = await page.locator('#editor').getAttribute('data-view-mode');
-  if (current === 'source') return;
-  await clickQuerySelector(page, '.toolbar-view-mode-toggle');
-  await page.locator('#editor[data-view-mode="source"]').waitFor();
+  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
+  if (current === `source`) return;
+  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
+  await page.locator(`#editor[data-view-mode="source"]`).waitFor();
 }
 
 /**
@@ -183,7 +183,7 @@ export async function closeApp(electronApp) {
   try {
     await Promise.race([
       electronApp.close(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('close timeout')), 5000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`close timeout`)), 5000)),
     ]);
   } catch {
     try {
@@ -201,8 +201,8 @@ export async function closeApp(electronApp) {
  * @param {import('@playwright/test').Page} page
  */
 export async function setWritingView(page) {
-  const current = await page.locator('#editor').getAttribute('data-view-mode');
-  if (current !== 'source') return;
-  await clickQuerySelector(page, '.toolbar-view-mode-toggle');
-  await page.locator('#editor[data-view-mode="writing"]').waitFor();
+  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
+  if (current !== `source`) return;
+  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
+  await page.locator(`#editor[data-view-mode="writing"]`).waitFor();
 }

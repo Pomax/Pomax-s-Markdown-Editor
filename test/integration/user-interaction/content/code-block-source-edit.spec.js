@@ -38,7 +38,7 @@ test.afterAll(async () => {
  * @returns {Promise<string>}
  */
 async function getMarkdown() {
-  return page.evaluate(() => window.editorAPI?.getContent() ?? '');
+  return page.evaluate(() => window.editorAPI?.getContent() ?? ``);
 }
 
 /**
@@ -56,9 +56,9 @@ async function getMarkdown() {
 async function setCursorInCodeBlock(pg, offset) {
   await pg.evaluate(
     ({ off }) => {
-      const editor = document.getElementById('editor');
-      const contentDiv = editor?.querySelector('.md-code-block .md-content');
-      if (!contentDiv) throw new Error('no .md-code-block .md-content found');
+      const editor = document.getElementById(`editor`);
+      const contentDiv = editor?.querySelector(`.md-code-block .md-content`);
+      if (!contentDiv) throw new Error(`no .md-code-block .md-content found`);
       // Walk into the first text node
       const walker = document.createTreeWalker(contentDiv, NodeFilter.SHOW_TEXT);
       /** @type {Text | null} */
@@ -70,7 +70,7 @@ async function setCursorInCodeBlock(pg, offset) {
       }
       if (!textNode) throw new Error(`offset ${off} exceeds text length`);
       const sel = window.getSelection();
-      if (!sel) throw new Error('no selection object');
+      if (!sel) throw new Error(`no selection object`);
       const range = document.createRange();
       range.setStart(textNode, remaining);
       range.collapse(true);
@@ -84,61 +84,57 @@ async function setCursorInCodeBlock(pg, offset) {
   );
 }
 
-// ── Basic rendering ─────────────────────────────────────────
-
-test.describe('Source-view code-block rendering', () => {
-  test('code block is rendered as a single editable region containing fences', async () => {
-    await loadContent(page, '```js\nconsole.log("hi")\n```');
+test.describe(`Source-view code-block rendering`, () => {
+  test(`code block is rendered as a single editable region containing fences`, async () => {
+    await loadContent(page, `\`\`\`js\nconsole.log("hi")\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     // The entire block should have one .md-content child containing
     // the fences and content as a single text node.
-    const contentDiv = codeBlock.locator('.md-content');
+    const contentDiv = codeBlock.locator(`.md-content`);
     await expect(contentDiv).toHaveCount(1);
 
     const text = await contentDiv.textContent();
-    expect(text).toContain('```js');
-    expect(text).toContain('console.log("hi")');
+    expect(text).toContain(`\`\`\`js`);
+    expect(text).toContain(`console.log("hi")`);
     // Closing fence
-    expect(text?.trim().endsWith('```')).toBe(true);
+    expect(text?.trim().endsWith(`\`\`\``)).toBe(true);
   });
 
-  test('no separate md-code-fence divs in source view', async () => {
-    await loadContent(page, '```py\nx = 1\n```');
+  test(`no separate md-code-fence divs in source view`, async () => {
+    await loadContent(page, `\`\`\`py\nx = 1\n\`\`\``);
     await setSourceView(page);
 
-    const fenceDivs = page.locator('#editor .md-code-fence');
+    const fenceDivs = page.locator(`#editor .md-code-fence`);
     await expect(fenceDivs).toHaveCount(0);
   });
 });
 
-// ── Typing into the language tag ────────────────────────────
-
-test.describe('Editing the language tag', () => {
-  test('can append to the language tag by typing after it', async () => {
-    await loadContent(page, '```py\nx = 1\n```');
+test.describe(`Editing the language tag`, () => {
+  test(`can append to the language tag by typing after it`, async () => {
+    await loadContent(page, `\`\`\`py\nx = 1\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor right after "```py" (offset 5)
     await setCursorInCodeBlock(page, 5);
-    await page.keyboard.type('thon');
+    await page.keyboard.type(`thon`);
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
-    expect(md).toContain('```python');
+    expect(md).toContain(`\`\`\`python`);
   });
 
-  test('can delete part of the language tag with backspace', async () => {
-    await loadContent(page, '```javascript\ncode\n```');
+  test(`can delete part of the language tag with backspace`, async () => {
+    await loadContent(page, `\`\`\`javascript\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at end of "```javascript" (offset 13)
@@ -146,95 +142,89 @@ test.describe('Editing the language tag', () => {
 
     // Backspace 4 times to remove "ript"
     for (let i = 0; i < 4; i++) {
-      await page.keyboard.press('Backspace');
+      await page.keyboard.press(`Backspace`);
     }
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
-    expect(md).toContain('```javas');
-    expect(md).not.toContain('```javascript');
+    expect(md).toContain(`\`\`\`javas`);
+    expect(md).not.toContain(`\`\`\`javascript`);
   });
 });
 
-// ── Editing the code content ────────────────────────────────
-
-test.describe('Editing code content in source view', () => {
-  test('typing inside the code content area works', async () => {
-    await loadContent(page, '```js\nhello\n```');
+test.describe(`Editing code content in source view`, () => {
+  test(`typing inside the code content area works`, async () => {
+    await loadContent(page, `\`\`\`js\nhello\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "hello": "```js\nhello" = 11 chars
     await setCursorInCodeBlock(page, 11);
-    await page.keyboard.type(' world');
+    await page.keyboard.type(` world`);
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
-    expect(md).toContain('hello world');
+    expect(md).toContain(`hello world`);
   });
 
-  test('Enter key inserts newline in source edit text', async () => {
-    await loadContent(page, '```js\nline1\n```');
+  test(`Enter key inserts newline in source edit text`, async () => {
+    await loadContent(page, `\`\`\`js\nline1\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "line1": "```js\nline1" = 11 chars
     await setCursorInCodeBlock(page, 11);
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('line2');
+    await page.keyboard.press(`Enter`);
+    await page.keyboard.type(`line2`);
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
-    expect(md).toContain('line1\nline2');
+    expect(md).toContain(`line1\nline2`);
   });
 });
 
-// ── Editing the fences ──────────────────────────────────────
-
-test.describe('Editing the code fences', () => {
-  test('adding a backtick at the start of the opening fence', async () => {
-    await loadContent(page, '```js\ncode\n```');
+test.describe(`Editing the code fences`, () => {
+  test(`adding a backtick at the start of the opening fence`, async () => {
+    await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at very start (offset 0)
     await setCursorInCodeBlock(page, 0);
-    await page.keyboard.type('`');
+    await page.keyboard.type(`\``);
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
     // The raw text should now contain four backticks somewhere
-    expect(md).toContain('````');
+    expect(md).toContain(`\`\`\`\``);
   });
 });
 
-// ── Backspace removes fence entirely ────────────────────────
-
-test.describe('Backspace after removing opening fence', () => {
-  test('backspace at offset 0 with no backticks on first line finalizes and merges', async () => {
-    await loadContent(page, 'previous\n\n```js\ncode\n```');
+test.describe(`Backspace after removing opening fence`, () => {
+  test(`backspace at offset 0 with no backticks on first line finalizes and merges`, async () => {
+    await loadContent(page, `previous\n\n\`\`\`js\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at offset 0 and delete "```js" (5 chars)
     await setCursorInCodeBlock(page, 0);
     for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('Delete');
+      await page.keyboard.press(`Delete`);
     }
     await page.waitForTimeout(200);
 
     // Now the first line has no backticks — cursor is at offset 0.
     // Pressing backspace should finalize the code block and merge
     // with the previous node.
-    await page.keyboard.press('Backspace');
+    await page.keyboard.press(`Backspace`);
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
@@ -242,23 +232,21 @@ test.describe('Backspace after removing opening fence', () => {
     // merged with the previous paragraph.  The closing fence (```)
     // may survive as a separate paragraph since it was part of the
     // original source edit text, but the content has merged.
-    expect(md).toContain('previouscode');
+    expect(md).toContain(`previouscode`);
   });
 });
 
-// ── View mode switch finalization ───────────────────────────
-
-test.describe('View mode switch finalization', () => {
-  test('switching to writing view finalizes source edit', async () => {
-    await loadContent(page, '```ts\ncontent\n```');
+test.describe(`View mode switch finalization`, () => {
+  test(`switching to writing view finalizes source edit`, async () => {
+    await loadContent(page, `\`\`\`ts\ncontent\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator('#editor .md-line.md-code-block');
+    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "```ts" (offset 5) and type "x"
     await setCursorInCodeBlock(page, 5);
-    await page.keyboard.type('x');
+    await page.keyboard.type(`x`);
     await page.waitForTimeout(200);
 
     // Switch to writing view — should finalize the edit
@@ -266,6 +254,6 @@ test.describe('View mode switch finalization', () => {
     await page.waitForTimeout(200);
 
     const md = await getMarkdown();
-    expect(md).toContain('```tsx');
+    expect(md).toContain(`\`\`\`tsx`);
   });
 });

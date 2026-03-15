@@ -40,7 +40,7 @@ This will launch the Electron application.
 ```
 markdown-editor/
 ├── src/                    # Source code
-│   ├── main/              # Electron main process
+│   ├── electron/          # Electron main process
 │   │   ├── main.js        # Application entry point
 │   │   ├── preload.cjs    # Secure IPC bridge (CommonJS)
 │   │   ├── menu-builder.js
@@ -49,7 +49,7 @@ markdown-editor/
 │   │   ├── settings-manager.js
 │   │   └── api-registry.js
 │   │
-│   └── renderer/          # Electron renderer process
+│   └── web/               # Electron renderer process
 │       ├── index.html
 │       ├── icons/         # Lucide SVG icons (copied at build time)
 │       ├── styles/
@@ -89,7 +89,7 @@ markdown-editor/
 │   └── developers/        # Developer guides (you are here)
 │
 ├── scripts/               # Build and utility scripts
-│   ├── copy-icons.js      # Copies Lucide SVG icons into src/renderer/icons
+│   ├── copy-icons.js      # Copies Lucide SVG icons into src/web/icons
 │   ├── generate-api-docs.js
 │   └── clean-dist.js      # Removes intermediate build artifacts from dist/
 │
@@ -106,18 +106,18 @@ markdown-editor/
 
 | File | Purpose |
 |------|---------|
-| `src/main/main.js` | Application entry point, window creation, lifecycle |
-| `src/main/preload.cjs` | Secure IPC bridge (must be CommonJS) |
-| `src/main/ipc-handler.js` | Registers all IPC handlers, routes messages |
-| `src/main/file-manager.js` | File load/save/recent files |
-| `src/main/menu-builder.js` | Application menu construction |
-| `src/main/settings-manager.js` | Settings persistence via SQLite |
-| `src/main/api-registry.js` | External scripting API |
-| `src/renderer/scripts/app.js` | Renderer entry point, wires everything together |
-| `src/renderer/scripts/editor/editor.js` | Core editor class (coordinator) |
-| `src/renderer/scripts/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
-| `src/renderer/scripts/parser/dfa-parser.js` | Markdown → syntax tree |
-| `src/renderer/scripts/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
+| `src/electron/main.js` | Application entry point, window creation, lifecycle |
+| `src/electron/preload.cjs` | Secure IPC bridge (must be CommonJS) |
+| `src/electron/ipc-handler.js` | Registers all IPC handlers, routes messages |
+| `src/electron/file-manager.js` | File load/save/recent files |
+| `src/electron/menu-builder.js` | Application menu construction |
+| `src/electron/settings-manager.js` | Settings persistence via SQLite |
+| `src/electron/api-registry.js` | External scripting API |
+| `src/web/scripts/app.js` | Renderer entry point, wires everything together |
+| `src/web/scripts/editor/editor.js` | Core editor class (coordinator) |
+| `old-parser/parser/dfa-tokenizer.js` | DFA-based markdown tokenizer |
+| `old-parser/parser/dfa-parser.js` | Markdown → syntax tree |
+| `old-parser/parser/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |
 | `src/types.d.ts` | Global TypeScript type declarations |
 
 ## Running Tests
@@ -211,41 +211,41 @@ Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.ym
 
 ### Adding a New Toolbar Button
 
-1. Add a new entry to `getButtonConfigs()` in `src/renderer/scripts/toolbar/toolbar.js`
-2. Add a Lucide SVG icon entry in `src/renderer/scripts/toolbar/icons.js`
-3. Add a button color rule in `src/renderer/styles/toolbar.css`
+1. Add a new entry to `getButtonConfigs()` in `src/web/scripts/toolbar/toolbar.js`
+2. Add a Lucide SVG icon entry in `src/web/scripts/toolbar/icons.js`
+3. Add a button color rule in `src/web/styles/toolbar.css`
 4. Handle the action in `Editor.applyFormat()` if needed
 
 ### Adding a New Markdown Element
 
-1. Add block dispatch case in `DFAParser._parseBlock()` in `src/renderer/scripts/parser/dfa-parser.js`
+1. Add block dispatch case in `DFAParser._parseBlock()` in `old-parser/parser/dfa-parser.js`
 2. Add sub-parser method in `DFAParser`
-3. Add `toMarkdown()` case in `SyntaxNode` (`src/renderer/scripts/parser/syntax-tree.js`)
+3. Add `toMarkdown()` case in `SyntaxNode` (`old-parser/parser/syntax-tree.js`)
 4. Add rendering in both `SourceRenderer` and `WritingRenderer`
 5. Add tests for parser and rendering
 6. Update documentation
 
 ### Adding a New API Command
 
-1. Add command in `APIRegistry.registerBuiltInCommands()` (`src/main/api-registry.js`)
+1. Add command in `APIRegistry.registerBuiltInCommands()` (`src/electron/api-registry.js`)
 2. Handle it in the renderer via `app.js` → `onExternalAPI` listener
 3. Update `docs/api/README.md` and `docs/api/api-v*.json`
 4. Add tests
 
 ### Adding a New Preference
 
-1. Add a default constant and UI (fieldset + controls) in `src/renderer/scripts/preferences/preferences-modal.js`
+1. Add a default constant and UI (fieldset + controls) in `src/web/scripts/preferences/preferences-modal.js`
 2. Add a nav link, a load method, and save logic with a custom event dispatch
-3. Add CSS styles in `src/renderer/styles/preferences.css`
-4. Wire the custom event listener in `src/renderer/scripts/app.js`
+3. Add CSS styles in `src/web/styles/preferences.css`
+4. Wire the custom event listener in `src/web/scripts/app.js`
 5. Persist via `setSetting` / `getSetting` IPC calls
 
 ### Modifying the Menu
 
-1. Open `src/main/menu-builder.js`
+1. Open `src/electron/menu-builder.js`
 2. Modify the appropriate menu section in `buildTemplate()`
 3. Menu actions are sent to the renderer via `menu:action` IPC channel
-4. Handle new actions in `src/renderer/scripts/handlers/menu-handler.js`
+4. Handle new actions in `src/web/scripts/handlers/menu-handler.js`
 
 ## Debugging
 

@@ -9,8 +9,8 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { closeApp, launchApp, projectRoot } from '../../test-utils.js';
 
-const readmePath = path.join(projectRoot, 'README.md');
-const readmeContent = fs.readFileSync(readmePath, 'utf-8');
+const readmePath = path.join(projectRoot, `README.md`);
+const readmeContent = fs.readFileSync(readmePath, `utf-8`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -26,12 +26,12 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('reload restores a saved file from disk', async () => {
+test(`reload restores a saved file from disk`, async () => {
   // Persist the README as the open file in the settings DB so that
   // reload has something to restore.
   await electronApp.evaluate((electron, rPath) => {
     const sm = /** @type {any} */ (globalThis).__settingsManager;
-    sm.set('openFiles', [
+    sm.set(`openFiles`, [
       {
         filePath: rPath,
         active: true,
@@ -50,7 +50,7 @@ test('reload restores a saved file from disk', async () => {
   // Wait for the page to fully reload and the editor to re-initialise
   await page.waitForFunction(
     () => {
-      return document.readyState === 'complete' && !!window.editorAPI;
+      return document.readyState === `complete` && !!window.editorAPI;
     },
     { timeout: 10000 },
   );
@@ -58,13 +58,13 @@ test('reload restores a saved file from disk', async () => {
   // Wait for the content to be restored from disk
   await page.waitForFunction(
     () => {
-      const content = window.editorAPI?.getContent() ?? '';
-      return content.includes('Markdown Editor');
+      const content = window.editorAPI?.getContent() ?? ``;
+      return content.includes(`Markdown Editor`);
     },
     { timeout: 10000 },
   );
 
   // Verify the content matches the on-disk file
-  const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? '');
-  expect(contentAfter).toContain("# Pomax's Markdown Editor");
+  const contentAfter = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
+  expect(contentAfter).toContain(`# Pomax's Markdown Editor`);
 });

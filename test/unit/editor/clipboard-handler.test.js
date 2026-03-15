@@ -4,99 +4,95 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ClipboardHandler } from '../../../src/renderer/scripts/editor/clipboard-handler.js';
-import { SyntaxNode } from '../../../src/renderer/scripts/parser/syntax-tree.js';
+import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
+import { ClipboardHandler } from '../../../src/web/scripts/editor/handlers/clipboard-handler.js';
 
-// ── _fixHtmlTags ───────────────────────────────────────────────────
-
-describe('ClipboardHandler._fixHtmlTags', () => {
-  it('returns the slice unchanged when there are no HTML tags', () => {
-    assert.equal(ClipboardHandler._fixHtmlTags('hello world'), 'hello world');
+describe(`ClipboardHandler.fixHtmlTags`, () => {
+  it(`returns the slice unchanged when there are no HTML tags`, () => {
+    assert.equal(ClipboardHandler.fixHtmlTags(`hello world`), `hello world`);
   });
 
-  it('returns the slice unchanged when all tags are balanced', () => {
-    assert.equal(ClipboardHandler._fixHtmlTags('<strong>bold</strong>'), '<strong>bold</strong>');
+  it(`returns the slice unchanged when all tags are balanced`, () => {
+    assert.equal(ClipboardHandler.fixHtmlTags(`<strong>bold</strong>`), `<strong>bold</strong>`);
   });
 
-  it('appends a missing closing tag', () => {
-    assert.equal(ClipboardHandler._fixHtmlTags('<strong>in'), '<strong>in</strong>');
+  it(`appends a missing closing tag`, () => {
+    assert.equal(ClipboardHandler.fixHtmlTags(`<strong>in`), `<strong>in</strong>`);
   });
 
-  it('prepends a missing opening tag', () => {
-    assert.equal(ClipboardHandler._fixHtmlTags('nd</strong>'), '<strong>nd</strong>');
+  it(`prepends a missing opening tag`, () => {
+    assert.equal(ClipboardHandler.fixHtmlTags(`nd</strong>`), `<strong>nd</strong>`);
   });
 
-  it('handles both missing opener and closer', () => {
+  it(`handles both missing opener and closer`, () => {
     // Slice from the middle of <em>…</em> text <strong>…</strong>
     assert.equal(
-      ClipboardHandler._fixHtmlTags('xt</em> and <strong>in'),
-      '<em>xt</em> and <strong>in</strong>',
+      ClipboardHandler.fixHtmlTags(`xt</em> and <strong>in`),
+      `<em>xt</em> and <strong>in</strong>`,
     );
   });
 
-  it('handles nested tags', () => {
+  it(`handles nested tags`, () => {
     assert.equal(
-      ClipboardHandler._fixHtmlTags('<strong><em>text'),
-      '<strong><em>text</em></strong>',
+      ClipboardHandler.fixHtmlTags(`<strong><em>text`),
+      `<strong><em>text</em></strong>`,
     );
   });
 
-  it('handles empty string', () => {
-    assert.equal(ClipboardHandler._fixHtmlTags(''), '');
+  it(`handles empty string`, () => {
+    assert.equal(ClipboardHandler.fixHtmlTags(``), ``);
   });
 
-  it('preserves self-contained tags amid unmatched ones', () => {
+  it(`preserves self-contained tags amid unmatched ones`, () => {
     assert.equal(
-      ClipboardHandler._fixHtmlTags('text</sub> and <sup>more'),
-      '<sub>text</sub> and <sup>more</sup>',
+      ClipboardHandler.fixHtmlTags(`text</sub> and <sup>more`),
+      `<sub>text</sub> and <sup>more</sup>`,
     );
   });
 });
 
-// ── _nodeToPartialMarkdown ─────────────────────────────────────────
-
-describe('ClipboardHandler._nodeToPartialMarkdown', () => {
-  it('wraps heading1 content with # prefix', () => {
-    const node = new SyntaxNode('heading1', 'full heading');
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'ading'), '# ading');
+describe(`ClipboardHandler.nodeToPartialMarkdown`, () => {
+  it(`wraps heading1 content with # prefix`, () => {
+    const node = new SyntaxNode(`heading1`, `full heading`);
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `ading`), `# ading`);
   });
 
-  it('wraps heading2 content with ## prefix', () => {
-    const node = new SyntaxNode('heading2', 'full heading');
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'partial'), '## partial');
+  it(`wraps heading2 content with ## prefix`, () => {
+    const node = new SyntaxNode(`heading2`, `full heading`);
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `partial`), `## partial`);
   });
 
-  it('returns paragraph content as-is', () => {
-    const node = new SyntaxNode('paragraph', 'some text');
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'me tex'), 'me tex');
+  it(`returns paragraph content as-is`, () => {
+    const node = new SyntaxNode(`paragraph`, `some text`);
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `me tex`), `me tex`);
   });
 
-  it('wraps blockquote content with > prefix', () => {
-    const node = new SyntaxNode('blockquote', 'quoted text');
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'oted'), '> oted');
+  it(`wraps blockquote content with > prefix`, () => {
+    const node = new SyntaxNode(`blockquote`, `quoted text`);
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `oted`), `> oted`);
   });
 
-  it('wraps unordered list-item with marker', () => {
-    const node = new SyntaxNode('list-item', 'item text');
+  it(`wraps unordered list-item with marker`, () => {
+    const node = new SyntaxNode(`list-item`, `item text`);
     node.attributes = { ordered: false, indent: 0 };
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'item'), '- item');
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `item`), `- item`);
   });
 
-  it('wraps ordered list-item with number marker', () => {
-    const node = new SyntaxNode('list-item', 'item text');
+  it(`wraps ordered list-item with number marker`, () => {
+    const node = new SyntaxNode(`list-item`, `item text`);
     node.attributes = { ordered: true, indent: 0, number: 3 };
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'text'), '3. text');
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `text`), `3. text`);
   });
 
-  it('wraps checklist item with checkbox prefix', () => {
-    const node = new SyntaxNode('list-item', 'todo item');
+  it(`wraps checklist item with checkbox prefix`, () => {
+    const node = new SyntaxNode(`list-item`, `todo item`);
     node.attributes = { ordered: false, indent: 0, checked: false };
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'todo'), '- [ ] todo');
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `todo`), `- [ ] todo`);
   });
 
-  it('wraps indented list-item with indent spaces', () => {
-    const node = new SyntaxNode('list-item', 'nested');
+  it(`wraps indented list-item with indent spaces`, () => {
+    const node = new SyntaxNode(`list-item`, `nested`);
     node.attributes = { ordered: false, indent: 2 };
-    assert.equal(ClipboardHandler._nodeToPartialMarkdown(node, 'nested'), '    - nested');
+    assert.equal(ClipboardHandler.nodeToPartialMarkdown(node, `nested`), `    - nested`);
   });
 });

@@ -279,7 +279,7 @@ Displays markdown with syntax highlighting:
 - Supports incremental rendering via `renderNodes()` (same interface as WritingRenderer)
 - Handles bare-text html-block children (e.g. `<summary>text</summary>`) by re-rendering the parent html-block
 - Maintains editability
-- **Code-block source edit mode**: when a code block receives focus, the renderer calls `node.enterSourceEditMode()` to store the full markdown (fences + language + content) in `_sourceEditText` and renders it as a single editable `<div>`. On defocus, `editor.finalizeCodeBlockSourceEdit(node)` re-parses the text and exits source edit mode. This allows editing fences and the language tag directly in source view.
+- **Code-block source edit mode**: when a code block receives focus, the renderer calls `node.enterSourceEditMode()` to store the full markdown (fences + language + content) in `sourceEditText` and renders it as a single editable `<div>`. On defocus, `editor.finalizeCodeBlockSourceEdit(node)` re-parses the text and exits source edit mode. This allows editing fences and the language tag directly in source view.
 
 #### WritingRenderer
 WYSIWYG-style display:
