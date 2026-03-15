@@ -74,7 +74,7 @@ export class EventHandler {
    * so the source-syntax decoration follows the cursor.
    * @param {MouseEvent} event
    */
-  handleClick(event) {
+  async handleClick(event) {
     this.editor.rangeOperations.resetSelectAllLevel();
 
     // If the click landed on the phantom paragraph (the view-only
@@ -186,7 +186,7 @@ export class EventHandler {
     if (oldBlockId && oldBlockId !== newBlockId) {
       const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
       if (oldNode?.type === `code-block` && oldNode.sourceEditText !== null) {
-        const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+        const hints = await this.editor.finalizeCodeBlockSourceEdit(oldNode);
         if (hints) {
           this.editor.renderNodes(hints);
         }
@@ -374,7 +374,7 @@ export class EventHandler {
   }
 
   /** Handles selection change events. */
-  handleSelectionChange() {
+  async handleSelectionChange() {
     if (this.editor.isRendering) return;
     if (document.activeElement === this.editor.container) {
       // If the selection is inside the phantom paragraph (no tree
@@ -424,7 +424,7 @@ export class EventHandler {
       if (oldBlockId && oldBlockId !== newBlockId) {
         const oldNode = this.editor.syntaxTree?.findNodeById(oldBlockId);
         if (oldNode?.type === `code-block` && oldNode.sourceEditText !== null) {
-          const hints = this.editor.finalizeCodeBlockSourceEdit(oldNode);
+          const hints = await this.editor.finalizeCodeBlockSourceEdit(oldNode);
           if (hints) {
             this.editor.renderNodes(hints);
           }

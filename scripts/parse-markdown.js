@@ -8,7 +8,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { DFAParser } from '../src/parsers/old/dfa-parser.js';
+import { parser } from '../src/parsers/old/dfa-parser.js';
 
 const args = process.argv.slice(2);
 
@@ -39,8 +39,7 @@ console.log(input);
 console.log();
 
 console.log(`=== Syntax Tree ===`);
-const parser = new DFAParser();
-const tree = parser.parse(input);
+const tree = await parser.parse(input);
 
 function printNode(/** @type {any} */ node, /** @type {string} */ indent) {
   const attrs =

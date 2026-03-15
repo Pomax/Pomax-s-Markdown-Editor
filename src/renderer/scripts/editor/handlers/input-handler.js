@@ -27,7 +27,7 @@ export class InputHandler {
    * the tree.  Paste is handled here as well.
    * @param {InputEvent} event
    */
-  handleBeforeInput(event) {
+  async handleBeforeInput(event) {
     if (this.editor.isRendering) {
       event.preventDefault();
       return;
@@ -49,7 +49,7 @@ export class InputHandler {
       event.preventDefault();
       const text = event.dataTransfer?.getData(`text/plain`) ?? ``;
       if (text) {
-        this.editor.editOperations.insertTextAtCursor(text);
+        await this.editor.editOperations.insertTextAtCursor(text);
       }
       return;
     }
@@ -79,7 +79,7 @@ export class InputHandler {
    * and instead the edit is applied to the tree, which is then re-rendered.
    * @param {KeyboardEvent} event
    */
-  handleKeyDown(event) {
+  async handleKeyDown(event) {
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
     this.editor.editorInteractionPending = true;
@@ -113,12 +113,12 @@ export class InputHandler {
     if (event.ctrlKey || event.metaKey) {
       if (event.key === `z` && !event.shiftKey) {
         event.preventDefault();
-        this.editor.undo();
+        await this.editor.undo();
         return;
       }
       if ((event.key === `z` && event.shiftKey) || event.key === `y`) {
         event.preventDefault();
-        this.editor.redo();
+        await this.editor.redo();
         return;
       }
 
@@ -140,20 +140,20 @@ export class InputHandler {
 
     if (event.key === `Backspace`) {
       event.preventDefault();
-      this.editor.editOperations.handleBackspace();
+      await this.editor.editOperations.handleBackspace();
       return;
     }
 
     if (event.key === `Delete`) {
       event.preventDefault();
-      this.editor.editOperations.handleDelete();
+      await this.editor.editOperations.handleDelete();
       return;
     }
 
     // A printable key is a single character that is not modified by Ctrl/Meta.
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
-      this.editor.editOperations.insertTextAtCursor(event.key);
+      await this.editor.editOperations.insertTextAtCursor(event.key);
       return;
     }
 

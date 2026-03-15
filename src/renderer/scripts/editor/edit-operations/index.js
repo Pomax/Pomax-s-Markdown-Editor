@@ -127,22 +127,22 @@ export class EditOperations {
    * line to detect type changes (e.g. `# ` → heading), and re-renders.
    * @param {string} text
    */
-  insertTextAtCursor(text) {
-    insertTextAtCursor(this, text);
+  async insertTextAtCursor(text) {
+    await insertTextAtCursor(this, text);
   }
 
   /**
    * Handles the Backspace key.
    */
-  handleBackspace() {
-    handleBackspace(this);
+  async handleBackspace() {
+    await handleBackspace(this);
   }
 
   /**
    * Handles the Delete key.
    */
-  handleDelete() {
-    handleDelete(this);
+  async handleDelete() {
+    await handleDelete(this);
   }
 
   /**

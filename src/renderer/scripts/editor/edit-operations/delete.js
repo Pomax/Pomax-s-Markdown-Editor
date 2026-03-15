@@ -8,7 +8,7 @@
  * Handles the Delete key.
  * @param {EditOperations} ops
  */
-export function handleDelete(ops) {
+export async function handleDelete(ops) {
   ops.editor.syncCursorFromDOM();
 
   // If there is a non-collapsed selection, delete the entire range
@@ -111,7 +111,7 @@ export function handleDelete(ops) {
     let newOffset;
     const wasBareText = !!node.attributes.bareText;
     const fullLine = ops.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-    const parsed = ops.editor.reparseLine(fullLine);
+    const parsed = await ops.editor.reparseLine(fullLine);
 
     if (parsed) {
       node.type = parsed.type;
@@ -140,7 +140,7 @@ export function handleDelete(ops) {
     // If this is a code-block in source-edit mode, finalize it
     // first so the tree is consistent before merging.
     if (node.type === `code-block` && node.sourceEditText !== null) {
-      ops.editor.finalizeCodeBlockSourceEdit(node);
+      await ops.editor.finalizeCodeBlockSourceEdit(node);
     }
 
     const siblings = ops.editor.getSiblings(node);

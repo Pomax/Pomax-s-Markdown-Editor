@@ -113,32 +113,16 @@ const RAW_CONTENT_TAGS = new Set([`script`, `style`, `textarea`]);
 /** @type {Set<string>} */
 const INLINE_ONLY_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
 
-// Helper: count newlines in a string
-
-/**
- * @param {string} s
- * @returns {number}
- */
-function countNewlines(s) {
-  let n = 0;
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] === `\n`) n++;
-  }
-  return n;
-}
-
-// DFA Parser
-
 /**
  * Parses markdown text into a syntax tree using a token-driven DFA.
  */
-export class DFAParser {
+class DFAParser {
   /**
    * Parses a full markdown document.
    * @param {string} markdown
-   * @returns {SyntaxTree}
+   * @returns {Promise<SyntaxTree>}
    */
-  parse(markdown) {
+  async parse(markdown) {
     const tokens = tokenize(markdown);
     const tree = new SyntaxTree();
     const ctx = { tokens, pos: 0, line: 0 };
@@ -151,7 +135,7 @@ export class DFAParser {
         continue;
       }
 
-      const node = this._parseBlock(ctx);
+      const node = await this._parseBlock(ctx);
       if (node) {
         tree.appendChild(node);
       }
@@ -167,9 +151,9 @@ export class DFAParser {
    * and dispatches to the appropriate sub-parser.
    *
    * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
-   * @returns {SyntaxNode|null}
+   * @returns {Promise<SyntaxNode|null>}
    */
-  _parseBlock(ctx) {
+  async _parseBlock(ctx) {
     const tok = ctx.tokens[ctx.pos];
 
     // Heading: one or more HASH at start of line, followed by a space
@@ -223,11 +207,11 @@ export class DFAParser {
 
     // HTML block: <tagname...> (possibly indented)
     if (tok.type === `LT` && this._isHtmlBlockStart(ctx)) {
-      return this._parseHtmlBlock(ctx);
+      return await this._parseHtmlBlock(ctx);
     }
     if ((tok.type === `SPACE` || tok.type === `TAB`) && this._isIndentedHtmlBlockStart(ctx)) {
       this._skipWhitespace(ctx);
-      return this._parseHtmlBlock(ctx);
+      return await this._parseHtmlBlock(ctx);
     }
 
     // Table: starts with PIPE
@@ -1098,9 +1082,9 @@ export class DFAParser {
    * tag through the matching closing tag.
    *
    * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
-   * @returns {SyntaxNode}
+   * @returns {Promise<SyntaxNode>}
    */
-  _parseHtmlBlock(ctx) {
+  async _parseHtmlBlock(ctx) {
     const startLine = ctx.line;
 
     // HTML comments: <!-- ... -->
@@ -1250,8 +1234,7 @@ export class DFAParser {
 
     // Re-parse the body as markdown to create child nodes
     if (bodyMarkdown.length > 0) {
-      const bodyParser = new DFAParser();
-      const bodyTree = bodyParser.parse(bodyMarkdown);
+      const bodyTree = await parser.parse(bodyMarkdown);
       const bodyStartLine = startLine + 1;
       for (const child of bodyTree.children) {
         this._adjustLineNumbers(child, bodyStartLine);
@@ -1574,3 +1557,5 @@ export class DFAParser {
     return false;
   }
 }
+
+export const parser = new DFAParser();

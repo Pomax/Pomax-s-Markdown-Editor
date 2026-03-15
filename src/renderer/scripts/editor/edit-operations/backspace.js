@@ -8,7 +8,7 @@
  * Handles the Backspace key.
  * @param {EditOperations} ops
  */
-export function handleBackspace(ops) {
+export async function handleBackspace(ops) {
   ops.editor.syncCursorFromDOM();
 
   // If there is a non-collapsed selection, delete the entire range
@@ -108,7 +108,7 @@ export function handleBackspace(ops) {
     let newOffset;
     const wasBareText = !!node.attributes.bareText;
     const fullLine = ops.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-    const parsed = ops.editor.reparseLine(fullLine);
+    const parsed = await ops.editor.reparseLine(fullLine);
 
     if (parsed) {
       node.type = parsed.type;
@@ -156,7 +156,7 @@ export function handleBackspace(ops) {
           return;
         }
         // Finalize: reparse into non-code-block nodes.
-        const finalizeHints = ops.editor.finalizeCodeBlockSourceEdit(node);
+        const finalizeHints = await ops.editor.finalizeCodeBlockSourceEdit(node);
         if (finalizeHints) {
           renderHints = finalizeHints;
         }

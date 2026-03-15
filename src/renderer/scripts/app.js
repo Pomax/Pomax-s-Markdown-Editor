@@ -197,13 +197,13 @@ class App {
     });
 
     // Handle File → New: create a new tab with an empty document
-    document.addEventListener(`file:new`, () => {
-      this.createNewTab(null, ``);
+    document.addEventListener(`file:new`, async () => {
+      await this.createNewTab(null, ``);
     });
 
     // Handle File → Load / Open Recent: open in a new tab (or switch
     // to an existing tab if the file is already open)
-    document.addEventListener(`file:loaded`, (e) => {
+    document.addEventListener(`file:loaded`, async (e) => {
       const detail = /** @type {CustomEvent} */ (e).detail;
       if (!detail) return;
       const filePath = detail.filePath || null;
@@ -219,9 +219,9 @@ class App {
       // If the active tab is a pristine empty document, reuse it
       // instead of opening a new tab alongside it
       if (this.isActiveTabPristine()) {
-        this.loadIntoCurrentTab(filePath, detail.content ?? ``);
+        await this.loadIntoCurrentTab(filePath, detail.content ?? ``);
       } else {
-        this.createNewTab(filePath, detail.content ?? ``);
+        await this.createNewTab(filePath, detail.content ?? ``);
       }
     });
 
@@ -288,10 +288,7 @@ class App {
     // Set up external API handler
     this.setupExternalAPIHandler();
 
-    // Load persisted settings (e.g. margins) and apply them
     await this.loadSettings();
-
-    console.log(`Markdown Editor initialized`);
   }
 
   /**
@@ -579,13 +576,13 @@ class App {
    * @param {string|null} filePath
    * @param {string} content
    */
-  loadIntoCurrentTab(filePath, content) {
+  async loadIntoCurrentTab(filePath, content) {
     if (!this.editor || !this.tabBar?.activeTabId) return;
 
     this.tabBar.updateTabPath(this.tabBar.activeTabId, filePath);
 
     this.editor.currentFilePath = filePath;
-    this.editor.loadMarkdown(content);
+    await this.editor.loadMarkdown(content);
 
     this.editor.updateWindowTitle();
 
@@ -597,7 +594,7 @@ class App {
    * @param {string|null} filePath - File path, or null for untitled
    * @param {string} content - Markdown content to load
    */
-  createNewTab(filePath, content) {
+  async createNewTab(filePath, content) {
     if (!this.editor || !this.tabBar || !this.scrollContainer) return;
 
     // Save the current tab's state before switching
@@ -625,7 +622,7 @@ class App {
 
     // Load the new content into the editor
     this.editor.currentFilePath = filePath;
-    this.editor.loadMarkdown(content);
+    await this.editor.loadMarkdown(content);
 
     // Re-attach the ToC observer to the new container so it picks
     // up the freshly rendered content.
@@ -825,7 +822,7 @@ class App {
     try {
       const result = await window.electronAPI.getSetting(`defaultView`);
       if (result.success && result.value) {
-        this.editor?.setViewMode(result.value);
+        await this.editor?.setViewMode(result.value);
         this.toolbar?.setViewMode(result.value);
       }
     } catch {
@@ -917,12 +914,12 @@ class App {
     window.editorAPI = {
       hasUnsavedChanges: () => this.editor?.hasUnsavedChanges ?? false,
       getContent: () => this.editor?.getMarkdown() ?? ``,
-      setContent: (content) => {
-        this.editor?.loadMarkdown(content);
+      setContent: async (content) => {
+        await this.editor?.loadMarkdown(content);
       },
       getViewMode: () => this.editor?.getViewMode() ?? `source`,
-      setViewMode: (/** @type {string} */ mode) => {
-        this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
+      setViewMode: async (/** @type {string} */ mode) => {
+        await this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);
       },
       setUnsavedChanges: (v) => this.editor?.setUnsavedChanges(v),
@@ -986,7 +983,7 @@ class App {
    * @param {string} method - The API method name
    * @param {any[]} args - The method arguments
    */
-  handleExternalAPI(method, args) {
+  async handleExternalAPI(method, args) {
     if (!this.editor || !this.menuHandler) {
       console.warn(`Editor or MenuHandler not initialized`);
       return;
@@ -994,7 +991,7 @@ class App {
 
     switch (method) {
       case `file:new`:
-        this.createNewTab(null, ``);
+        await this.createNewTab(null, ``);
         break;
       case `file:save`:
         this.menuHandler.handleSave();
@@ -1003,27 +1000,27 @@ class App {
         this.menuHandler.handleSaveAs();
         break;
       case `edit:undo`:
-        this.editor.undo();
+        await this.editor.undo();
         break;
       case `edit:redo`:
-        this.editor.redo();
+        await this.editor.redo();
         break;
       case `view:source`:
-        this.editor.setViewMode(`source`);
+        await this.editor.setViewMode(`source`);
         this.toolbar?.setViewMode(`source`);
         break;
       case `view:writing`:
-        this.editor.setViewMode(`writing`);
+        await this.editor.setViewMode(`writing`);
         this.toolbar?.setViewMode(`writing`);
         break;
       case `document:getContent`:
         // Response would be handled via IPC
         break;
       case `document:setContent`:
-        this.editor.loadMarkdown(args[0]);
+        await this.editor.loadMarkdown(args[0]);
         break;
       case `document:insertText`:
-        this.editor.insertText(args[0]);
+        await this.editor.insertText(args[0]);
         break;
       case `element:changeType`:
         this.editor.changeElementType(args[0]);

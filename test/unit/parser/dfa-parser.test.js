@@ -7,7 +7,7 @@
 
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
-import { DFAParser } from '../../../src/parsers/old/dfa-parser.js';
+import { parser } from '../../../src/parsers/old/dfa-parser.js';
 import { tokenize } from '../../../src/parsers/old/dfa-tokenizer.js';
 
 describe(`DFA Tokenizer`, () => {
@@ -76,28 +76,21 @@ describe(`DFA Tokenizer`, () => {
 });
 
 describe(`DFAParser`, () => {
-  /** @type {DFAParser} */
-  let parser;
-
-  beforeEach(() => {
-    parser = new DFAParser();
-  });
-
   describe(`parse`, () => {
-    it(`should return an empty tree for empty input`, () => {
-      const tree = parser.parse(``);
+    it(`should return an empty tree for empty input`, async () => {
+      const tree = await parser.parse(``);
       assert.strictEqual(tree.children.length, 0);
     });
 
-    it(`should parse a simple paragraph`, () => {
-      const tree = parser.parse(`Hello, world!`);
+    it(`should parse a simple paragraph`, async () => {
+      const tree = await parser.parse(`Hello, world!`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `paragraph`);
       assert.strictEqual(tree.children[0].content, `Hello, world!`);
     });
 
-    it(`should parse multiple paragraphs`, () => {
-      const tree = parser.parse(`First paragraph\n\nSecond paragraph`);
+    it(`should parse multiple paragraphs`, async () => {
+      const tree = await parser.parse(`First paragraph\n\nSecond paragraph`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].type, `paragraph`);
       assert.strictEqual(tree.children[0].content, `First paragraph`);
@@ -107,64 +100,64 @@ describe(`DFAParser`, () => {
   });
 
   describe(`headings`, () => {
-    it(`should parse heading level 1`, () => {
-      const tree = parser.parse(`# Heading 1`);
+    it(`should parse heading level 1`, async () => {
+      const tree = await parser.parse(`# Heading 1`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[0].content, `Heading 1`);
     });
 
-    it(`should parse heading level 2`, () => {
-      const tree = parser.parse(`## Heading 2`);
+    it(`should parse heading level 2`, async () => {
+      const tree = await parser.parse(`## Heading 2`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `heading2`);
       assert.strictEqual(tree.children[0].content, `Heading 2`);
     });
 
-    it(`should parse heading level 3`, () => {
-      const tree = parser.parse(`### Heading 3`);
+    it(`should parse heading level 3`, async () => {
+      const tree = await parser.parse(`### Heading 3`);
       assert.strictEqual(tree.children[0].type, `heading3`);
     });
 
-    it(`should parse heading level 4`, () => {
-      const tree = parser.parse(`#### Heading 4`);
+    it(`should parse heading level 4`, async () => {
+      const tree = await parser.parse(`#### Heading 4`);
       assert.strictEqual(tree.children[0].type, `heading4`);
     });
 
-    it(`should parse heading level 5`, () => {
-      const tree = parser.parse(`##### Heading 5`);
+    it(`should parse heading level 5`, async () => {
+      const tree = await parser.parse(`##### Heading 5`);
       assert.strictEqual(tree.children[0].type, `heading5`);
     });
 
-    it(`should parse heading level 6`, () => {
-      const tree = parser.parse(`###### Heading 6`);
+    it(`should parse heading level 6`, async () => {
+      const tree = await parser.parse(`###### Heading 6`);
       assert.strictEqual(tree.children[0].type, `heading6`);
     });
 
-    it(`should parse multiple headings`, () => {
-      const tree = parser.parse(`# First\n## Second\n### Third`);
+    it(`should parse multiple headings`, async () => {
+      const tree = await parser.parse(`# First\n## Second\n### Third`);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[1].type, `heading2`);
       assert.strictEqual(tree.children[2].type, `heading3`);
     });
 
-    it(`should preserve heading content with inline formatting`, () => {
-      const tree = parser.parse(`## Hello **world**`);
+    it(`should preserve heading content with inline formatting`, async () => {
+      const tree = await parser.parse(`## Hello **world**`);
       assert.strictEqual(tree.children[0].content, `Hello **world**`);
     });
   });
 
   describe(`blockquotes`, () => {
-    it(`should parse a blockquote`, () => {
-      const tree = parser.parse(`> This is a quote`);
+    it(`should parse a blockquote`, async () => {
+      const tree = await parser.parse(`> This is a quote`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `blockquote`);
       assert.strictEqual(tree.children[0].content, `This is a quote`);
     });
 
-    it(`should parse multi-line blockquotes`, () => {
-      const tree = parser.parse(`> Line 1\n> Line 2`);
+    it(`should parse multi-line blockquotes`, async () => {
+      const tree = await parser.parse(`> Line 1\n> Line 2`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `blockquote`);
       assert.ok(tree.children[0].content.includes(`Line 1`));
@@ -173,105 +166,105 @@ describe(`DFAParser`, () => {
   });
 
   describe(`code blocks`, () => {
-    it(`should parse a code block`, () => {
-      const tree = parser.parse(`\`\`\`\ncode here\n\`\`\``);
+    it(`should parse a code block`, async () => {
+      const tree = await parser.parse(`\`\`\`\ncode here\n\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].content, `code here`);
       assert.strictEqual(tree.children[0].attributes.fenceCount, 3);
     });
 
-    it(`should parse a code block with language`, () => {
-      const tree = parser.parse(`\`\`\`javascript\nconst x = 1;\n\`\`\``);
+    it(`should parse a code block with language`, async () => {
+      const tree = await parser.parse(`\`\`\`javascript\nconst x = 1;\n\`\`\``);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].attributes.language, `javascript`);
       assert.strictEqual(tree.children[0].content, `const x = 1;`);
     });
 
-    it(`should parse a multi-line code block`, () => {
-      const tree = parser.parse(`\`\`\`\nline 1\nline 2\nline 3\n\`\`\``);
+    it(`should parse a multi-line code block`, async () => {
+      const tree = await parser.parse(`\`\`\`\nline 1\nline 2\nline 3\n\`\`\``);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].content, `line 1\nline 2\nline 3`);
     });
 
-    it(`should parse a code block with empty language`, () => {
-      const tree = parser.parse(`\`\`\`\nfoo\n\`\`\``);
+    it(`should parse a code block with empty language`, async () => {
+      const tree = await parser.parse(`\`\`\`\nfoo\n\`\`\``);
       assert.strictEqual(tree.children[0].attributes.language, ``);
     });
 
-    it(`should preserve special characters inside code blocks`, () => {
-      const tree = parser.parse(`\`\`\`\n# not a heading\n> not a quote\n\`\`\``);
+    it(`should preserve special characters inside code blocks`, async () => {
+      const tree = await parser.parse(`\`\`\`\n# not a heading\n> not a quote\n\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.ok(tree.children[0].content.includes(`# not a heading`));
       assert.ok(tree.children[0].content.includes(`> not a quote`));
     });
 
-    it(`should parse a four-backtick code fence`, () => {
-      const tree = parser.parse(`\`\`\`\`\ncode\n\`\`\`\``);
+    it(`should parse a four-backtick code fence`, async () => {
+      const tree = await parser.parse(`\`\`\`\`\ncode\n\`\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].content, `code`);
       assert.strictEqual(tree.children[0].attributes.fenceCount, 4);
     });
 
-    it(`should parse a four-backtick fence with language`, () => {
-      const tree = parser.parse(`\`\`\`\`js\ncode\n\`\`\`\``);
+    it(`should parse a four-backtick fence with language`, async () => {
+      const tree = await parser.parse(`\`\`\`\`js\ncode\n\`\`\`\``);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].attributes.language, `js`);
       assert.strictEqual(tree.children[0].attributes.fenceCount, 4);
     });
 
-    it(`should treat three backticks inside a four-backtick fence as literal text`, () => {
-      const tree = parser.parse(`\`\`\`\`\n\`\`\`\nstill code\n\`\`\`\n\`\`\`\``);
+    it(`should treat three backticks inside a four-backtick fence as literal text`, async () => {
+      const tree = await parser.parse(`\`\`\`\`\n\`\`\`\nstill code\n\`\`\`\n\`\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].content, `\`\`\`\nstill code\n\`\`\``);
     });
 
-    it(`should require exact backtick count to close`, () => {
-      const tree = parser.parse(`\`\`\`\`\`\n\`\`\`\n\`\`\`\`\nstill code\n\`\`\`\`\``);
+    it(`should require exact backtick count to close`, async () => {
+      const tree = await parser.parse(`\`\`\`\`\`\n\`\`\`\n\`\`\`\`\nstill code\n\`\`\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[0].content, `\`\`\`\n\`\`\`\`\nstill code`);
       assert.strictEqual(tree.children[0].attributes.fenceCount, 5);
     });
 
-    it(`should not treat backticks at EOF as a code fence`, () => {
-      const tree = parser.parse(`\`\`\``);
+    it(`should not treat backticks at EOF as a code fence`, async () => {
+      const tree = await parser.parse(`\`\`\``);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `paragraph`);
     });
 
-    it(`should not treat backticks with language at EOF as a code fence`, () => {
-      const tree = parser.parse(`\`\`\`js`);
+    it(`should not treat backticks with language at EOF as a code fence`, async () => {
+      const tree = await parser.parse(`\`\`\`js`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `paragraph`);
     });
 
-    it(`should round-trip a four-backtick code block`, () => {
+    it(`should round-trip a four-backtick code block`, async () => {
       const md = `\`\`\`\`\ncode with \`\`\` inside\n\`\`\`\``;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a six-backtick code block`, () => {
+    it(`should round-trip a six-backtick code block`, async () => {
       const md = `\`\`\`\`\`\`\n\`\`\`\`\` inside\n\`\`\`\`\`\``;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse text after a closed four-backtick fence`, () => {
-      const tree = parser.parse(`\`\`\`\`\ncode\n\`\`\`\`\n\ntext after`);
+    it(`should parse text after a closed four-backtick fence`, async () => {
+      const tree = await parser.parse(`\`\`\`\`\ncode\n\`\`\`\`\n\ntext after`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[1].type, `paragraph`);
       assert.strictEqual(tree.children[1].content, `text after`);
     });
 
-    it(`issue #82 example 1: four-backtick fence with nested three-backtick literal text`, () => {
+    it(`issue #82 example 1: four-backtick fence with nested three-backtick literal text`, async () => {
       const md = `This is a paragraph of text.\n\n\`\`\`\`\ncode with \`\`\` in it\nand more \`\`\` here\n\`\`\`\`\n\nAnd this is regular text again.`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `paragraph`);
       assert.strictEqual(tree.children[1].type, `code-block`);
@@ -281,9 +274,9 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`issue #82 example 2: ten-backtick fence with nine-backtick literal text`, () => {
+    it(`issue #82 example 2: ten-backtick fence with nine-backtick literal text`, async () => {
       const md = `This is text\n\n\`\`\`\`\`\`\`\`\`\`\nThis is code, with \`\`\`\`\`\`\`\`\` in it\n\`\`\`\`\`\`\`\`\`\`\n\nBut this is text again.`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `paragraph`);
       assert.strictEqual(tree.children[1].type, `code-block`);
@@ -295,56 +288,56 @@ describe(`DFAParser`, () => {
   });
 
   describe(`lists`, () => {
-    it(`should parse an unordered list item with dash`, () => {
-      const tree = parser.parse(`- Item 1`);
+    it(`should parse an unordered list item with dash`, async () => {
+      const tree = await parser.parse(`- Item 1`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].content, `Item 1`);
       assert.strictEqual(tree.children[0].attributes.ordered, false);
     });
 
-    it(`should parse an unordered list item with star`, () => {
-      const tree = parser.parse(`* Item 1`);
+    it(`should parse an unordered list item with star`, async () => {
+      const tree = await parser.parse(`* Item 1`);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].attributes.ordered, false);
     });
 
-    it(`should parse an unordered list item with plus`, () => {
-      const tree = parser.parse(`+ Item 1`);
+    it(`should parse an unordered list item with plus`, async () => {
+      const tree = await parser.parse(`+ Item 1`);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].attributes.ordered, false);
     });
 
-    it(`should parse an ordered list item`, () => {
-      const tree = parser.parse(`1. Item 1`);
+    it(`should parse an ordered list item`, async () => {
+      const tree = await parser.parse(`1. Item 1`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].attributes.ordered, true);
       assert.strictEqual(tree.children[0].attributes.number, 1);
     });
 
-    it(`should parse ordered list items with different numbers`, () => {
-      const tree = parser.parse(`3. Third item`);
+    it(`should parse ordered list items with different numbers`, async () => {
+      const tree = await parser.parse(`3. Third item`);
       assert.strictEqual(tree.children[0].attributes.number, 3);
     });
 
-    it(`should parse indented list items`, () => {
-      const tree = parser.parse(`- Item 1\n  - Nested item`);
+    it(`should parse indented list items`, async () => {
+      const tree = await parser.parse(`- Item 1\n  - Nested item`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].attributes.indent, 0);
       assert.strictEqual(tree.children[1].attributes.indent, 1);
     });
 
-    it(`should parse multiple list items`, () => {
-      const tree = parser.parse(`- One\n- Two\n- Three`);
+    it(`should parse multiple list items`, async () => {
+      const tree = await parser.parse(`- One\n- Two\n- Three`);
       assert.strictEqual(tree.children.length, 3);
       for (const child of tree.children) {
         assert.strictEqual(child.type, `list-item`);
       }
     });
 
-    it(`should parse an unchecked checklist item`, () => {
-      const tree = parser.parse(`- [ ] Task`);
+    it(`should parse an unchecked checklist item`, async () => {
+      const tree = await parser.parse(`- [ ] Task`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].content, `Task`);
@@ -352,27 +345,27 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.checked, false);
     });
 
-    it(`should parse a checked checklist item with lowercase x`, () => {
-      const tree = parser.parse(`- [x] Done`);
+    it(`should parse a checked checklist item with lowercase x`, async () => {
+      const tree = await parser.parse(`- [x] Done`);
       assert.strictEqual(tree.children[0].content, `Done`);
       assert.strictEqual(tree.children[0].attributes.checked, true);
     });
 
-    it(`should parse a checked checklist item with uppercase X`, () => {
-      const tree = parser.parse(`- [X] Done`);
+    it(`should parse a checked checklist item with uppercase X`, async () => {
+      const tree = await parser.parse(`- [X] Done`);
       assert.strictEqual(tree.children[0].content, `Done`);
       assert.strictEqual(tree.children[0].attributes.checked, true);
     });
 
-    it(`should parse checklist items with star marker`, () => {
-      const tree = parser.parse(`* [ ] Star task`);
+    it(`should parse checklist items with star marker`, async () => {
+      const tree = await parser.parse(`* [ ] Star task`);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[0].content, `Star task`);
       assert.strictEqual(tree.children[0].attributes.checked, false);
     });
 
-    it(`should parse indented checklist items`, () => {
-      const tree = parser.parse(`- [ ] Top\n  - [x] Nested`);
+    it(`should parse indented checklist items`, async () => {
+      const tree = await parser.parse(`- [ ] Top\n  - [x] Nested`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].attributes.indent, 0);
       assert.strictEqual(tree.children[0].attributes.checked, false);
@@ -380,72 +373,72 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[1].attributes.checked, true);
     });
 
-    it(`should roundtrip checklist items through toMarkdown`, () => {
-      const tree = parser.parse(`- [ ] Unchecked\n- [x] Checked`);
+    it(`should roundtrip checklist items through toMarkdown`, async () => {
+      const tree = await parser.parse(`- [ ] Unchecked\n- [x] Checked`);
       assert.strictEqual(tree.children[0].toMarkdown(), `- [ ] Unchecked`);
       assert.strictEqual(tree.children[1].toMarkdown(), `- [x] Checked`);
     });
 
-    it(`should not treat regular list items as checklists`, () => {
-      const tree = parser.parse(`- Regular item`);
+    it(`should not treat regular list items as checklists`, async () => {
+      const tree = await parser.parse(`- Regular item`);
       assert.strictEqual(tree.children[0].attributes.checked, undefined);
     });
   });
 
   describe(`horizontal rules`, () => {
-    it(`should parse horizontal rule with dashes`, () => {
-      const tree = parser.parse(`---\n`);
+    it(`should parse horizontal rule with dashes`, async () => {
+      const tree = await parser.parse(`---\n`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `horizontal-rule`);
     });
 
-    it(`should parse horizontal rule with asterisks`, () => {
-      const tree = parser.parse(`***\n`);
+    it(`should parse horizontal rule with asterisks`, async () => {
+      const tree = await parser.parse(`***\n`);
       assert.strictEqual(tree.children[0].type, `horizontal-rule`);
     });
 
-    it(`should parse horizontal rule with underscores`, () => {
-      const tree = parser.parse(`___\n`);
+    it(`should parse horizontal rule with underscores`, async () => {
+      const tree = await parser.parse(`___\n`);
       assert.strictEqual(tree.children[0].type, `horizontal-rule`);
     });
 
-    it(`should parse horizontal rule with more than three chars`, () => {
-      const tree = parser.parse(`-----\n`);
+    it(`should parse horizontal rule with more than three chars`, async () => {
+      const tree = await parser.parse(`-----\n`);
       assert.strictEqual(tree.children[0].type, `horizontal-rule`);
     });
   });
 
   describe(`tables`, () => {
-    it(`should parse a simple table`, () => {
+    it(`should parse a simple table`, async () => {
       const markdown = `| A | B |\n|---|---|\n| 1 | 2 |`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `table`);
     });
 
-    it(`should preserve table content exactly`, () => {
+    it(`should preserve table content exactly`, async () => {
       const markdown = `| A | B |\n|---|---|\n| 1 | 2 |`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children[0].content, markdown);
     });
 
-    it(`should parse a table with multiple rows`, () => {
+    it(`should parse a table with multiple rows`, async () => {
       const markdown = `| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `table`);
       assert.strictEqual(tree.children[0].content, markdown);
     });
 
-    it(`should round-trip a table through toMarkdown`, () => {
+    it(`should round-trip a table through toMarkdown`, async () => {
       const markdown = `| A | B |\n|---|---|\n| 1 | 2 |`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children[0].toMarkdown(), markdown);
     });
 
-    it(`should parse a table among other elements`, () => {
+    it(`should parse a table among other elements`, async () => {
       const markdown = `# Title\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\nSome text`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[1].type, `table`);
@@ -454,8 +447,8 @@ describe(`DFAParser`, () => {
   });
 
   describe(`images`, () => {
-    it(`should parse a bare image`, () => {
-      const tree = parser.parse(`![alt text](image.png)`);
+    it(`should parse a bare image`, async () => {
+      const tree = await parser.parse(`![alt text](image.png)`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].content, `alt text`);
@@ -464,8 +457,8 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.href, undefined);
     });
 
-    it(`should parse an image with empty alt text`, () => {
-      const tree = parser.parse(`![](photo.jpg)`);
+    it(`should parse an image with empty alt text`, async () => {
+      const tree = await parser.parse(`![](photo.jpg)`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].content, ``);
@@ -473,8 +466,8 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.url, `photo.jpg`);
     });
 
-    it(`should parse a linked image`, () => {
-      const tree = parser.parse(`[![logo](logo.png)](https://example.com)`);
+    it(`should parse a linked image`, async () => {
+      const tree = await parser.parse(`[![logo](logo.png)](https://example.com)`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].content, `logo`);
@@ -483,35 +476,35 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.href, `https://example.com`);
     });
 
-    it(`should round-trip a bare image through toMarkdown`, () => {
+    it(`should round-trip a bare image through toMarkdown`, async () => {
       const markdown = `![alt text](image.png)`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children[0].toMarkdown(), markdown);
     });
 
-    it(`should round-trip a linked image through toMarkdown`, () => {
+    it(`should round-trip a linked image through toMarkdown`, async () => {
       const markdown = `[![logo](logo.png)](https://example.com)`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children[0].toMarkdown(), markdown);
     });
 
-    it(`should parse an image with a full URL`, () => {
-      const tree = parser.parse(`![photo](https://example.com/img.jpg)`);
+    it(`should parse an image with a full URL`, async () => {
+      const tree = await parser.parse(`![photo](https://example.com/img.jpg)`);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].attributes.url, `https://example.com/img.jpg`);
     });
 
-    it(`should parse an image among other elements`, () => {
+    it(`should parse an image among other elements`, async () => {
       const markdown = `# Title\n\n![photo](img.png)\n\nSome text`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[1].type, `image`);
       assert.strictEqual(tree.children[2].type, `paragraph`);
     });
 
-    it(`should parse an HTML img tag with src, alt and style`, () => {
-      const tree = parser.parse(`<img src="photo.png" alt="A photo" style="zoom: 80%;" />`);
+    it(`should parse an HTML img tag with src, alt and style`, async () => {
+      const tree = await parser.parse(`<img src="photo.png" alt="A photo" style="zoom: 80%;" />`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].attributes.url, `photo.png`);
@@ -519,8 +512,8 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.style, `zoom: 80%;`);
     });
 
-    it(`should parse an HTML img tag without style`, () => {
-      const tree = parser.parse(`<img src="pic.jpg" alt="test" />`);
+    it(`should parse an HTML img tag without style`, async () => {
+      const tree = await parser.parse(`<img src="pic.jpg" alt="test" />`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].attributes.url, `pic.jpg`);
@@ -528,30 +521,30 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.style, undefined);
     });
 
-    it(`should parse an HTML img tag without alt`, () => {
-      const tree = parser.parse(`<img src="pic.jpg" style="display: block;" />`);
+    it(`should parse an HTML img tag without alt`, async () => {
+      const tree = await parser.parse(`<img src="pic.jpg" style="display: block;" />`);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].attributes.url, `pic.jpg`);
       assert.strictEqual(tree.children[0].attributes.alt, ``);
       assert.strictEqual(tree.children[0].attributes.style, `display: block;`);
     });
 
-    it(`should parse a non-self-closing HTML img tag`, () => {
-      const tree = parser.parse(`<img src="pic.jpg" alt="test">`);
+    it(`should parse a non-self-closing HTML img tag`, async () => {
+      const tree = await parser.parse(`<img src="pic.jpg" alt="test">`);
       assert.strictEqual(tree.children[0].type, `image`);
       assert.strictEqual(tree.children[0].attributes.url, `pic.jpg`);
       assert.strictEqual(tree.children[0].attributes.alt, `test`);
     });
 
-    it(`should serialize an image without style as markdown syntax`, () => {
-      const tree = parser.parse(`<img src="pic.jpg" alt="test" />`);
+    it(`should serialize an image without style as markdown syntax`, async () => {
+      const tree = await parser.parse(`<img src="pic.jpg" alt="test" />`);
       assert.strictEqual(tree.children[0].toMarkdown(), `![test](pic.jpg)`);
     });
   });
 
   describe(`html blocks`, () => {
-    it(`should parse a self-closed HTML block`, () => {
-      const tree = parser.parse(`<summary>Some text</summary>`);
+    it(`should parse a self-closed HTML block`, async () => {
+      const tree = await parser.parse(`<summary>Some text</summary>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `summary`);
@@ -561,8 +554,8 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].children[0].attributes.bareText, true);
     });
 
-    it(`should parse a multi-line HTML block`, () => {
-      const tree = parser.parse(`<details>\n\n## Heading\n\nSome text\n\n</details>`);
+    it(`should parse a multi-line HTML block`, async () => {
+      const tree = await parser.parse(`<details>\n\n## Heading\n\nSome text\n\n</details>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `details`);
@@ -571,16 +564,16 @@ describe(`DFAParser`, () => {
       assert.ok(tree.children[0].children.length >= 2);
     });
 
-    it(`should parse nested HTML blocks (details with summary)`, () => {
+    it(`should parse nested HTML blocks (details with summary)`, async () => {
       const markdown = `<details>\n\n<summary>Title</summary>\n\n## Heading\n\nText\n\n</details>`;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `details`);
     });
 
-    it(`should recursively parse markdown inside HTML blocks`, () => {
-      const tree = parser.parse(`<div>\n\n# Title\n\nParagraph\n\n</div>`);
+    it(`should recursively parse markdown inside HTML blocks`, async () => {
+      const tree = await parser.parse(`<div>\n\n# Title\n\nParagraph\n\n</div>`);
       assert.strictEqual(tree.children[0].type, `html-block`);
       const children = tree.children[0].children;
       assert.strictEqual(children[0].type, `heading1`);
@@ -589,8 +582,8 @@ describe(`DFAParser`, () => {
       assert.strictEqual(children[1].content, `Paragraph`);
     });
 
-    it(`should parse a custom element with a hyphenated tag name`, () => {
-      const tree = parser.parse(`<my-component>\n\nHello\n\n</my-component>`);
+    it(`should parse a custom element with a hyphenated tag name`, async () => {
+      const tree = await parser.parse(`<my-component>\n\nHello\n\n</my-component>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `my-component`);
@@ -601,15 +594,15 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].children[0].content, `Hello`);
     });
 
-    it(`should parse a custom element with multiple hyphens`, () => {
-      const tree = parser.parse(`<my-cool-widget>\n\nContent\n\n</my-cool-widget>`);
+    it(`should parse a custom element with multiple hyphens`, async () => {
+      const tree = await parser.parse(`<my-cool-widget>\n\nContent\n\n</my-cool-widget>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `my-cool-widget`);
     });
 
-    it(`should parse a self-closed custom element`, () => {
-      const tree = parser.parse(`<app-header>Title text</app-header>`);
+    it(`should parse a self-closed custom element`, async () => {
+      const tree = await parser.parse(`<app-header>Title text</app-header>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `app-header`);
@@ -617,16 +610,16 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].children[0].attributes.bareText, true);
     });
 
-    it(`should parse custom elements with attributes`, () => {
-      const tree = parser.parse(`<my-element class="test">\n\nBody\n\n</my-element>`);
+    it(`should parse custom elements with attributes`, async () => {
+      const tree = await parser.parse(`<my-element class="test">\n\nBody\n\n</my-element>`);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `my-element`);
       assert.strictEqual(tree.children[0].attributes.openingTag, `<my-element class="test">`);
     });
 
-    it(`should treat an unknown tag as an HTML block when it has proper tag syntax`, () => {
-      const tree = parser.parse(`<notarealtag>\n\nText\n\n</notarealtag>`);
+    it(`should treat an unknown tag as an HTML block when it has proper tag syntax`, async () => {
+      const tree = await parser.parse(`<notarealtag>\n\nText\n\n</notarealtag>`);
       // "notarealtag" is not in HTML_BLOCK_TAGS and has no hyphen, but
       // the token stream forms a proper LT TEXT GT pattern so it is
       // promoted to an html-block.
@@ -634,17 +627,17 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.tagName, `notarealtag`);
     });
 
-    it(`should round-trip a custom element block`, () => {
+    it(`should round-trip a custom element block`, async () => {
       const md = `<my-component>\n\nSome content\n\n</my-component>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
   });
 
   describe(`void HTML elements`, () => {
-    it(`should parse a <link> tag without consuming following content`, () => {
+    it(`should parse a <link> tag without consuming following content`, async () => {
       const md = `<link rel="stylesheet" href="style.css">\n\n# Heading`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `link`);
@@ -657,15 +650,15 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[1].type, `heading1`);
     });
 
-    it(`should round-trip a void element`, () => {
+    it(`should round-trip a void element`, async () => {
       const md = `<link rel="stylesheet" href="style.css">`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse consecutive void elements without merging`, () => {
+    it(`should parse consecutive void elements without merging`, async () => {
       const md = `<link rel="stylesheet" href="a.css">\n<link rel="stylesheet" href="b.css">`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(
         tree.children[0].attributes.openingTag,
@@ -679,9 +672,9 @@ describe(`DFAParser`, () => {
   });
 
   describe(`raw content HTML tags`, () => {
-    it(`should parse a <script> tag with src attribute and preserve it`, () => {
+    it(`should parse a <script> tag with src attribute and preserve it`, async () => {
       const md = `<script type="module" src="./app.js" async></script>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `script`);
@@ -694,15 +687,15 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].children.length, 0);
     });
 
-    it(`should round-trip a <script> tag with attributes`, () => {
+    it(`should round-trip a <script> tag with attributes`, async () => {
       const md = `<script type="module" src="./app.js" async></script>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse a multi-line <script> with body content`, () => {
+    it(`should parse a multi-line <script> with body content`, async () => {
       const md = `<script>\n  const x = 1;\n  console.log(x);\n</script>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(
         tree.children[0].attributes.rawContent,
@@ -711,15 +704,15 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].children.length, 0);
     });
 
-    it(`should round-trip a multi-line <script>`, () => {
+    it(`should round-trip a multi-line <script>`, async () => {
       const md = `<script>\n  const x = 1;\n  console.log(x);\n</script>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse a <style> block and preserve CSS verbatim`, () => {
+    it(`should parse a <style> block and preserve CSS verbatim`, async () => {
       const md = `<style>\n  body { color: red; }\n  h1 > span { font-size: 2em; }\n</style>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `style`);
       assert.strictEqual(
@@ -728,9 +721,9 @@ describe(`DFAParser`, () => {
       );
     });
 
-    it(`should not re-parse CSS selectors as markdown headings`, () => {
+    it(`should not re-parse CSS selectors as markdown headings`, async () => {
       const md = `<style>\n  #heading { color: red; }\n  > .child { margin: 0; }\n</style>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(
@@ -739,9 +732,9 @@ describe(`DFAParser`, () => {
       );
     });
 
-    it(`should parse a <script> followed by other content`, () => {
+    it(`should parse a <script> followed by other content`, async () => {
       const md = `<script src="app.js"></script>\n\n# Heading\n\nParagraph`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[1].type, `heading1`);
@@ -750,43 +743,43 @@ describe(`DFAParser`, () => {
   });
 
   describe(`bare-text attribute preservation`, () => {
-    it(`should round-trip a <summary> with attributes`, () => {
+    it(`should round-trip a <summary> with attributes`, async () => {
       const md = `<summary class="title">Some text</summary>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
   });
 
   describe(`inline-only HTML tags`, () => {
     for (const tag of [`strong`, `em`, `del`, `s`, `sub`, `sup`, `b`, `i`]) {
-      it(`should not treat <${tag}> as a block-level HTML element`, () => {
+      it(`should not treat <${tag}> as a block-level HTML element`, async () => {
         const md = `<${tag}>text</${tag}>`;
-        const tree = parser.parse(md);
+        const tree = await parser.parse(md);
         assert.strictEqual(tree.children[0].type, `paragraph`);
       });
     }
   });
 
   describe(`unknown HTML tag fallback`, () => {
-    it(`should parse an unknown tag with attributes as html-block`, () => {
+    it(`should parse an unknown tag with attributes as html-block`, async () => {
       const md = `<noscript class="no-js">\n\nFallback\n\n</noscript>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `noscript`);
       assert.strictEqual(tree.children[0].attributes.openingTag, `<noscript class="no-js">`);
     });
 
-    it(`should round-trip an unknown tag block`, () => {
+    it(`should round-trip an unknown tag block`, async () => {
       const md = `<noscript>\n\nContent here\n\n</noscript>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
   });
 
   describe(`HTML comments`, () => {
-    it(`should parse a single-line HTML comment as html-block`, () => {
+    it(`should parse a single-line HTML comment as html-block`, async () => {
       const md = `<!-- a comment -->`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `!--`);
@@ -794,30 +787,30 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[0].attributes.closingTag, ``);
     });
 
-    it(`should round-trip a single-line HTML comment`, () => {
+    it(`should round-trip a single-line HTML comment`, async () => {
       const md = `<!-- a comment -->`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse a multi-line HTML comment`, () => {
+    it(`should parse a multi-line HTML comment`, async () => {
       const md = `<!--\nline one\nline two\n-->`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 1);
       assert.strictEqual(tree.children[0].type, `html-block`);
       assert.strictEqual(tree.children[0].attributes.tagName, `!--`);
       assert.strictEqual(tree.children[0].attributes.openingTag, `<!--\nline one\nline two\n-->`);
     });
 
-    it(`should round-trip a multi-line HTML comment`, () => {
+    it(`should round-trip a multi-line HTML comment`, async () => {
       const md = `<!--\nline one\nline two\n-->`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should parse a comment between paragraphs`, () => {
+    it(`should parse a comment between paragraphs`, async () => {
       const md = `Before\n\n<!-- comment -->\n\nAfter`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `paragraph`);
       assert.strictEqual(tree.children[1].type, `html-block`);
@@ -825,9 +818,9 @@ describe(`DFAParser`, () => {
       assert.strictEqual(tree.children[2].type, `paragraph`);
     });
 
-    it(`should parse adjacent comments as separate blocks`, () => {
+    it(`should parse adjacent comments as separate blocks`, async () => {
       const md = `<!-- first -->\n<!-- second -->`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].attributes.openingTag, `<!-- first -->`);
       assert.strictEqual(tree.children[1].attributes.openingTag, `<!-- second -->`);
@@ -835,7 +828,7 @@ describe(`DFAParser`, () => {
   });
 
   describe(`complex documents`, () => {
-    it(`should parse a document with mixed elements`, () => {
+    it(`should parse a document with mixed elements`, async () => {
       const markdown = `# Title
 
 This is a paragraph.
@@ -850,46 +843,46 @@ This is a paragraph.
 \`\`\`js
 code
 \`\`\``;
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       assert.ok(tree.children.length >= 6);
     });
 
-    it(`should handle consecutive headings without blanks`, () => {
-      const tree = parser.parse(`# One\n## Two\n### Three`);
+    it(`should handle consecutive headings without blanks`, async () => {
+      const tree = await parser.parse(`# One\n## Two\n### Three`);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[1].type, `heading2`);
       assert.strictEqual(tree.children[2].type, `heading3`);
     });
 
-    it(`should handle heading then paragraph`, () => {
-      const tree = parser.parse(`# Title\n\nSome body text here.`);
+    it(`should handle heading then paragraph`, async () => {
+      const tree = await parser.parse(`# Title\n\nSome body text here.`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].type, `heading1`);
       assert.strictEqual(tree.children[1].type, `paragraph`);
     });
 
-    it(`should handle code block then paragraph`, () => {
-      const tree = parser.parse(`\`\`\`\ncode\n\`\`\`\n\ntext after`);
+    it(`should handle code block then paragraph`, async () => {
+      const tree = await parser.parse(`\`\`\`\ncode\n\`\`\`\n\ntext after`);
       assert.strictEqual(tree.children.length, 2);
       assert.strictEqual(tree.children[0].type, `code-block`);
       assert.strictEqual(tree.children[1].type, `paragraph`);
     });
 
-    it(`should handle list items then paragraph`, () => {
-      const tree = parser.parse(`- a\n- b\n\nA paragraph`);
+    it(`should handle list items then paragraph`, async () => {
+      const tree = await parser.parse(`- a\n- b\n\nA paragraph`);
       assert.strictEqual(tree.children.length, 3);
       assert.strictEqual(tree.children[0].type, `list-item`);
       assert.strictEqual(tree.children[1].type, `list-item`);
       assert.strictEqual(tree.children[2].type, `paragraph`);
     });
 
-    it(`should preserve inline markdown in paragraph content`, () => {
-      const tree = parser.parse(`This has **bold** and *italic* text`);
+    it(`should preserve inline markdown in paragraph content`, async () => {
+      const tree = await parser.parse(`This has **bold** and *italic* text`);
       assert.strictEqual(tree.children[0].content, `This has **bold** and *italic* text`);
     });
 
-    it(`should handle the details fixture document`, () => {
+    it(`should handle the details fixture document`, async () => {
       const markdown = [
         `# This is a title`,
         ``,
@@ -912,7 +905,7 @@ code
         `wow`,
       ].join(`\n`);
 
-      const tree = parser.parse(markdown);
+      const tree = await parser.parse(markdown);
       // Should have: heading, paragraph, details block, paragraph, heading, paragraph
       assert.ok(tree.children.length >= 5);
       assert.strictEqual(tree.children[0].type, `heading1`);
@@ -921,57 +914,57 @@ code
   });
 
   describe(`round-trip (toMarkdown)`, () => {
-    it(`should round-trip a heading`, () => {
+    it(`should round-trip a heading`, async () => {
       const md = `## Hello World`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a paragraph`, () => {
+    it(`should round-trip a paragraph`, async () => {
       const md = `Just some text`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a blockquote`, () => {
+    it(`should round-trip a blockquote`, async () => {
       const md = `> Quoted text`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a code block`, () => {
+    it(`should round-trip a code block`, async () => {
       const md = `\`\`\`js\nconst x = 1;\n\`\`\``;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a four-backtick code block with nested three-backtick fence`, () => {
+    it(`should round-trip a four-backtick code block with nested three-backtick fence`, async () => {
       const md = `\`\`\`\`\n\`\`\`\nnested\n\`\`\`\n\`\`\`\``;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip an unordered list item`, () => {
+    it(`should round-trip an unordered list item`, async () => {
       const md = `- Item one`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip an ordered list item`, () => {
+    it(`should round-trip an ordered list item`, async () => {
       const md = `1. First item`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a horizontal rule`, () => {
+    it(`should round-trip a horizontal rule`, async () => {
       const md = `---`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
 
-    it(`should round-trip a self-closed HTML block`, () => {
+    it(`should round-trip a self-closed HTML block`, async () => {
       const md = `<summary>Some text</summary>`;
-      const tree = parser.parse(md);
+      const tree = await parser.parse(md);
       assert.strictEqual(tree.toMarkdown(), md);
     });
   });

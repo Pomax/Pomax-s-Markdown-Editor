@@ -10,7 +10,7 @@
  * @param {EditOperations} ops
  * @param {string} text
  */
-export function insertTextAtCursor(ops, text) {
+export async function insertTextAtCursor(ops, text) {
   ops.editor.syncCursorFromDOM();
 
   // If there is a non-collapsed selection, delete it first so the
@@ -127,7 +127,7 @@ export function insertTextAtCursor(ops, text) {
     const combined = mdPrefix + normalizedContent;
 
     // Parse into nodes via the currently active parser.
-    const parsedNodes = ops.editor.parseMultiLine(combined);
+    const parsedNodes = await ops.editor.parseMultiLine(combined);
 
     if (parsedNodes.length === 0) {
       // Edge case: everything was blank lines — empty paragraph
@@ -177,7 +177,7 @@ export function insertTextAtCursor(ops, text) {
   let newOffset;
   const wasBareText = !!node.attributes.bareText;
   const fullLine = ops.editor.buildMarkdownLine(node.type, newContent, node.attributes);
-  const parsed = ops.editor.reparseLine(fullLine);
+  const parsed = await ops.editor.reparseLine(fullLine);
 
   if (parsed) {
     // Suppress code-block fence conversion during typing — the

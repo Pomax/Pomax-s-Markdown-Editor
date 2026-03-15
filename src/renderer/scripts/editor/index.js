@@ -13,7 +13,7 @@
 
 /// <reference path="../../../types.d.ts" />
 
-import { DFAParser } from '../../../parsers/old/dfa-parser.js';
+import { parser } from '../../../parsers/old/dfa-parser.js';
 import { SyntaxNode, SyntaxTree } from '../../../parsers/old/syntax-tree.js';
 
 import { ClipboardHandler } from './handlers/clipboard-handler.js';
@@ -44,9 +44,6 @@ export class Editor {
   constructor(container) {
     /** @type {HTMLElement} */
     this.container = container;
-
-    /** @type {DFAParser} */
-    this.parser = new DFAParser();
 
     /** @type {SyntaxTree|null} */
     this.syntaxTree = null;
@@ -150,20 +147,20 @@ export class Editor {
    * Re-parses a single markdown line to detect type changes during
    * editing.
    * @param {string} text
-   * @returns {SyntaxNode|null}
+   * @returns {Promise<SyntaxNode|null>}
    */
-  reparseLine(text) {
-    return this.parser.parse(text).children[0] ?? null;
+  async reparseLine(text) {
+    return (await parser.parse(text)).children[0] ?? null;
   }
 
   /**
    * Parses a multi-line markdown string (e.g. from a paste) into an
    * array of nodes. Delegates to the appropriate parser API.
    * @param {string} combined - The full markdown string to parse.
-   * @returns {SyntaxNode[]}
+   * @returns {Promise<SyntaxNode[]>}
    */
-  parseMultiLine(combined) {
-    return [...this.parser.parse(combined).children];
+  async parseMultiLine(combined) {
+    return [...(await parser.parse(combined)).children];
   }
 
   /**
@@ -177,14 +174,14 @@ export class Editor {
    *   parser produces (possibly multiple nodes).
    *
    * @param {SyntaxNode} node - The code-block node to finalize.
-   * @returns {{ updated: string[], added?: string[], removed?: string[] } | null}
+   * @returns {Promise<{ updated: string[], added?: string[], removed?: string[] } | null>}
    *   Render hints, or null if the node was not in source-edit mode.
    */
-  finalizeCodeBlockSourceEdit(node) {
+  async finalizeCodeBlockSourceEdit(node) {
     const text = node.exitSourceEditMode();
     if (text === null) return null;
 
-    const parsed = this.parseMultiLine(text);
+    const parsed = await this.parseMultiLine(text);
 
     if (parsed.length === 1 && parsed[0].type === `code-block`) {
       // Still a valid code block — update attributes in place.
@@ -252,15 +249,17 @@ export class Editor {
     // when swapping to a different container element.
     this.boundHandlers = {
       keydown: /** @type {EventListener} */ (
-        this.inputHandler.handleKeyDown.bind(this.inputHandler)
+        /** @type {unknown} */ (this.inputHandler.handleKeyDown.bind(this.inputHandler))
       ),
       beforeinput: /** @type {EventListener} */ (
-        this.inputHandler.handleBeforeInput.bind(this.inputHandler)
+        /** @type {unknown} */ (this.inputHandler.handleBeforeInput.bind(this.inputHandler))
       ),
       mousedown: /** @type {EventListener} */ (
         this.eventHandler.handleMouseDown.bind(this.eventHandler)
       ),
-      click: /** @type {EventListener} */ (this.eventHandler.handleClick.bind(this.eventHandler)),
+      click: /** @type {EventListener} */ (
+        /** @type {unknown} */ (this.eventHandler.handleClick.bind(this.eventHandler))
+      ),
       focus: /** @type {EventListener} */ (this.eventHandler.handleFocus.bind(this.eventHandler)),
       blur: /** @type {EventListener} */ (this.eventHandler.handleBlur.bind(this.eventHandler)),
       cut: /** @type {EventListener} */ (
@@ -649,11 +648,11 @@ export class Editor {
    * Loads markdown content into the editor.
    * @param {string} markdown - The markdown content to load
    */
-  loadMarkdown(markdown) {
+  async loadMarkdown(markdown) {
     // Normalise excessive blank lines so that toMarkdown() / toBareText()
     // always produce exactly one blank line between blocks.
     const normalised = markdown.replace(/\n{3,}/g, `\n\n`);
-    this.syntaxTree = this.parser.parse(normalised);
+    this.syntaxTree = await parser.parse(normalised);
 
     // Ensure there is at least one node so the editor is never empty
     if (this.syntaxTree.children.length === 0) {
@@ -711,7 +710,7 @@ export class Editor {
    * Sets the view mode.
    * @param {ViewMode} mode
    */
-  setViewMode(mode) {
+  async setViewMode(mode) {
     if (mode !== `source` && mode !== `writing`) {
       console.warn(`Invalid view mode: ${mode}`);
       return;
@@ -737,7 +736,7 @@ export class Editor {
               offset: this.syntaxTree.treeCursor.offset - preamble,
             };
           }
-          this.finalizeCodeBlockSourceEdit(child);
+          await this.finalizeCodeBlockSourceEdit(child);
         }
       }
     }
@@ -831,10 +830,10 @@ export class Editor {
   }
 
   /** Undoes the last action. */
-  undo() {
+  async undo() {
     const change = this.undoManager.undo();
     if (change) {
-      this.syntaxTree = this.parser.parse(change.before);
+      this.syntaxTree = await parser.parse(change.before);
       if (this.syntaxTree.children.length === 0) {
         const node = new SyntaxNode(`paragraph`, ``);
         this.syntaxTree.appendChild(node);
@@ -847,16 +846,19 @@ export class Editor {
   }
 
   /** Redoes the last undone action. */
-  redo() {
+  async redo() {
     const change = this.undoManager.redo();
     if (change) {
-      this.syntaxTree = this.parser.parse(change.after);
+      this.syntaxTree = await parser.parse(change.after);
       if (this.syntaxTree.children.length === 0) {
         const node = new SyntaxNode(`paragraph`, ``);
         this.syntaxTree.appendChild(node);
       }
       const last = this.syntaxTree.children[this.syntaxTree.children.length - 1];
-      this.syntaxTree.treeCursor = { nodeId: last.id, offset: last.content.length };
+      this.syntaxTree.treeCursor = {
+        nodeId: last.id,
+        offset: last.content.length,
+      };
       this.fullRenderAndPlaceCursor();
       this.setUnsavedChanges(true);
     }
@@ -866,8 +868,8 @@ export class Editor {
    * Inserts text at the current cursor position (public API).
    * @param {string} text
    */
-  insertText(text) {
-    this.editOperations.insertTextAtCursor(text);
+  async insertText(text) {
+    await this.editOperations.insertTextAtCursor(text);
   }
 
   /**

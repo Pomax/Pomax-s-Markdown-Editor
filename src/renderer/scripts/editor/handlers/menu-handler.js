@@ -55,7 +55,7 @@ export class MenuHandler {
    * @param {string} action - The action identifier
    * @param {...any} args - Additional arguments
    */
-  handleMenuAction(action, ...args) {
+  async handleMenuAction(action, ...args) {
     switch (action) {
       case `file:new`:
         this.handleNew();
@@ -76,16 +76,16 @@ export class MenuHandler {
         this.handleWordCount();
         break;
       case `edit:undo`:
-        this.handleUndo();
+        await this.handleUndo();
         break;
       case `edit:redo`:
-        this.handleRedo();
+        await this.handleRedo();
         break;
       case `view:source`:
-        this.handleViewSource();
+        await this.handleViewSource();
         break;
       case `view:writing`:
-        this.handleViewWriting();
+        await this.handleViewWriting();
         break;
       case `edit:preferences`:
         this.handlePreferences();
@@ -167,30 +167,30 @@ export class MenuHandler {
   /**
    * Handles the Undo action.
    */
-  handleUndo() {
-    this.editor.undo();
+  async handleUndo() {
+    await this.editor.undo();
   }
 
   /**
    * Handles the Redo action.
    */
-  handleRedo() {
-    this.editor.redo();
+  async handleRedo() {
+    await this.editor.redo();
   }
 
   /**
    * Handles switching to Source view.
    */
-  handleViewSource() {
-    this.editor.setViewMode(`source`);
+  async handleViewSource() {
+    await this.editor.setViewMode(`source`);
     this.toolbar.setViewMode(`source`);
   }
 
   /**
    * Handles switching to Writing view.
    */
-  handleViewWriting() {
-    this.editor.setViewMode(`writing`);
+  async handleViewWriting() {
+    await this.editor.setViewMode(`writing`);
     this.toolbar.setViewMode(`writing`);
   }
 

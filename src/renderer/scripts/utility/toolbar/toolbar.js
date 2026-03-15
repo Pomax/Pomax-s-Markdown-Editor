@@ -423,9 +423,9 @@ export class Toolbar {
     const currentMode = this.editor.getViewMode();
     button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
-    button.addEventListener(`click`, () => {
+    button.addEventListener(`click`, async () => {
       const newMode = this.editor.getViewMode() === `writing` ? `source` : `writing`;
-      this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
+      await this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
     });
 
