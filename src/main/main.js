@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
+import { BrowserWindow, Menu, app, dialog, ipcMain, screen } from 'electron';
 import { FileManager } from './file-manager.js';
 import { IPCHandler } from './ipc-handler.js';
 import { MenuBuilder } from './menu-builder.js';
@@ -34,7 +34,10 @@ let menuBuilder;
 let boundsDebounce = null;
 
 /**
- * Saves the current window bounds and maximized state to the database.
+ * Saves the current window bounds as screen-relative ratios so that the
+ * window position translates correctly across monitors of different sizes
+ * (e.g. switching from a large desktop to a small remote-desktop session).
+ *
  * Called on move/resize (debounced) and before close.
  */
 function saveWindowBounds() {
@@ -45,9 +48,13 @@ function saveWindowBounds() {
   // non-maximized size/position for the next launch.
   const bounds = isMaximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
 
-  settings.set('windowBounds', {
-    x: bounds.x,
-    y: bounds.y,
+  // Use the work area of the display the window is currently on.
+  const display = screen.getDisplayMatching(bounds);
+  const work = display.workArea;
+
+  settings.set(`windowBounds`, {
+    xRatio: (bounds.x - work.x) / work.width,
+    yRatio: (bounds.y - work.y) / work.height,
     width: bounds.width,
     height: bounds.height,
     isMaximized,
@@ -69,7 +76,7 @@ function debounceSaveWindowBounds() {
  */
 function saveOpenFiles() {
   if (!menuBuilder) {
-    settings.delete('openFiles');
+    settings.delete(`openFiles`);
     return;
   }
 
@@ -90,9 +97,9 @@ function saveOpenFiles() {
     );
 
   if (entries.length === 0) {
-    settings.delete('openFiles');
+    settings.delete(`openFiles`);
   } else {
-    settings.set('openFiles', entries);
+    settings.set(`openFiles`, entries);
   }
 }
 
@@ -105,17 +112,35 @@ function createWindow() {
   const defaultWidth = 800;
   const defaultHeight = Math.round(defaultWidth * Math.SQRT2);
 
-  // Load saved window bounds from settings
-  const saved = settings.get('windowBounds');
+  // Load saved window bounds (stored as screen-relative ratios) and
+  // convert them back to absolute pixels for the current display.
+  const saved = settings.get(`windowBounds`);
+  const work = screen.getPrimaryDisplay().workArea;
+
+  const restoredWidth = saved?.width ?? defaultWidth;
+  const restoredHeight = saved?.height ?? defaultHeight;
+  /** @type {number|undefined} */
+  let restoredX;
+  /** @type {number|undefined} */
+  let restoredY;
+
+  if (saved?.xRatio != null && saved?.yRatio != null) {
+    restoredX = Math.round(saved.xRatio * work.width) + work.x;
+    restoredY = Math.round(saved.yRatio * work.height) + work.y;
+
+    // Clamp so the window is never completely off-screen.
+    restoredX = Math.max(work.x, Math.min(restoredX, work.x + work.width - restoredWidth));
+    restoredY = Math.max(work.y, Math.min(restoredY, work.y + work.height - restoredHeight));
+  }
 
   /** @type {Electron.BrowserWindowConstructorOptions} */
   const windowOptions = {
-    width: saved?.width ?? defaultWidth,
-    height: saved?.height ?? defaultHeight,
+    width: restoredWidth,
+    height: restoredHeight,
     minWidth: 600,
     minHeight: 848,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, `preload.cjs`),
       contextIsolation: true,
       nodeIntegration: false,
       // Allow the renderer to load file:// resources (e.g. images)
@@ -126,9 +151,9 @@ function createWindow() {
   };
 
   // Only set position if we have saved values (otherwise let the OS decide)
-  if (saved?.x != null && saved?.y != null) {
-    windowOptions.x = saved.x;
-    windowOptions.y = saved.y;
+  if (restoredX != null && restoredY != null) {
+    windowOptions.x = restoredX;
+    windowOptions.y = restoredY;
   }
 
   mainWindow = new BrowserWindow(windowOptions);
@@ -138,21 +163,21 @@ function createWindow() {
     mainWindow.maximize();
   }
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, `..`, `renderer`, `index.html`));
 
   const win = mainWindow;
 
-  win.once('ready-to-show', () => {
+  win.once(`ready-to-show`, () => {
     if (!process.env.TESTING) {
       win.show();
     }
   });
 
   // Persist window bounds on move/resize (debounced)
-  win.on('resize', debounceSaveWindowBounds);
-  win.on('move', debounceSaveWindowBounds);
+  win.on(`resize`, debounceSaveWindowBounds);
+  win.on(`move`, debounceSaveWindowBounds);
 
-  win.on('close', async (event) => {
+  win.on(`close`, async (event) => {
     // Flush any pending debounced save immediately
     if (boundsDebounce) {
       clearTimeout(boundsDebounce);
@@ -169,11 +194,11 @@ function createWindow() {
     }
 
     // Ask the renderer to flush cursor/state data for all tabs,
-    // then persist it.  The renderer's _notifyOpenFiles() sends an
+    // then persist it.  The renderer's notifyOpenFiles() sends an
     // IPC that updates menuBuilder.openFiles synchronously, so by
     // the time executeJavaScript resolves we have fresh data.
     try {
-      await win.webContents.executeJavaScript('window.__flushOpenFiles?.()');
+      await win.webContents.executeJavaScript(`window.__flushOpenFiles?.()`);
     } catch {
       // If the renderer is gone, fall through to stale data
     }
@@ -181,7 +206,7 @@ function createWindow() {
     saveOpenFiles();
 
     const hasUnsavedChanges = await win.webContents.executeJavaScript(
-      'window.editorAPI?.hasUnsavedChanges() ?? false',
+      `window.editorAPI?.hasUnsavedChanges() ?? false`,
     );
 
     if (hasUnsavedChanges) {
@@ -191,7 +216,7 @@ function createWindow() {
     }
   });
 
-  win.on('closed', () => {
+  win.on(`closed`, () => {
     mainWindow = null;
   });
 
@@ -205,17 +230,17 @@ function createWindow() {
  */
 async function handleUnsavedChangesOnClose(window) {
   const result = await dialog.showMessageBox(window, {
-    type: 'warning',
-    buttons: ['Save', 'Save As...', 'Discard', 'Cancel'],
+    type: `warning`,
+    buttons: [`Save`, `Save As...`, `Discard`, `Cancel`],
     defaultId: 0,
     cancelId: 3,
-    title: 'Unsaved Changes',
-    message: 'You have unsaved changes. What would you like to do?',
+    title: `Unsaved Changes`,
+    message: `You have unsaved changes. What would you like to do?`,
   });
 
   // Get current content from renderer
   const content = await window.webContents.executeJavaScript(
-    'window.editorAPI?.getContent() ?? ""',
+    `window.editorAPI?.getContent() ?? ""`,
   );
 
   switch (result.response) {
@@ -282,7 +307,7 @@ function getFilePathFromArgs() {
   const entryScript = path.resolve(__filename);
 
   for (const arg of userArgs) {
-    if (arg.startsWith('-')) continue;
+    if (arg.startsWith(`-`)) continue;
     const resolved = path.resolve(arg);
     if (resolved === entryScript) continue;
     try {
@@ -303,7 +328,7 @@ function getFilePathFromArgs() {
 async function loadFileFromPath(window, filePath) {
   const result = await fileManager.loadRecent(filePath);
   if (result.success) {
-    window.webContents.send('menu:action', 'file:loaded', result);
+    window.webContents.send(`menu:action`, `file:loaded`, result);
     menuBuilder.refreshMenu();
   }
 }
@@ -358,7 +383,7 @@ async function restoreOpenFiles(window, entries) {
   // Send remaining files as loaded events so the renderer creates
   // additional tabs for each one
   for (let i = 1; i < loaded.length; i++) {
-    window.webContents.send('menu:action', 'file:loaded', {
+    window.webContents.send(`menu:action`, `file:loaded`, {
       success: true,
       content: loaded[i].content,
       filePath: loaded[i].filePath,
@@ -370,7 +395,7 @@ async function restoreOpenFiles(window, entries) {
   // first one — because subsequent file:loaded events may have
   // changed which tab the renderer considers active.
   const activeEntry = loaded.find((e) => e.active) || first;
-  window.webContents.send('menu:action', 'view:switchFile', {
+  window.webContents.send(`menu:action`, `view:switchFile`, {
     filePath: activeEntry.filePath,
   });
 
@@ -386,7 +411,7 @@ async function restoreOpenFiles(window, entries) {
       tocHeadingPath: e.tocHeadingPath,
     }));
   if (restoreEntries.length > 0) {
-    window.webContents.send('menu:action', 'session:restore', restoreEntries);
+    window.webContents.send(`menu:action`, `session:restore`, restoreEntries);
   }
 
   menuBuilder.refreshMenu();
@@ -416,37 +441,37 @@ app.whenReady().then(async () => {
   // that was open when the app was last closed.
   const cliFilePath = getFilePathFromArgs();
   if (cliFilePath) {
-    window.webContents.once('did-finish-load', () => {
+    window.webContents.once(`did-finish-load`, () => {
       loadFileFromPath(window, cliFilePath);
     });
   } else if (!process.env.TESTING) {
-    const openFiles = settings.get('openFiles', null);
+    const openFiles = settings.get(`openFiles`, null);
     if (Array.isArray(openFiles) && openFiles.length > 0) {
       // Filter to files that still exist on disk
       const valid = openFiles.filter(
         /** @param {{filePath: string}} f */ (f) => f.filePath && fs.existsSync(f.filePath),
       );
       if (valid.length > 0) {
-        window.webContents.once('did-finish-load', () => {
+        window.webContents.once(`did-finish-load`, () => {
           restoreOpenFiles(window, valid);
         });
       }
     }
   }
 
-  app.on('activate', () => {
+  app.on(`activate`, () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
+app.on(`window-all-closed`, () => {
   settings.close();
   app.quit();
 });
 
 // Run with unlimited memory
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=0');
+app.commandLine.appendSwitch(`js-flags`, `--max-old-space-size=0`);
 
 export { mainWindow, fileManager };

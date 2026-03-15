@@ -23,8 +23,8 @@ import {
   setWritingView,
 } from '../../test-utils.js';
 
-const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'bold-button.md');
-const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
+const fixturePath = path.join(projectRoot, `test`, `fixtures`, `bold-button.md`);
+const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -50,7 +50,7 @@ test.afterAll(async () => {
  * @param {string} word - The word to target (used to compute the x offset)
  * @param {'first'|'middle'|'last'} which - Which occurrence to click
  */
-async function dblclickWord(pg, lineLocator, word, which = 'first') {
+async function dblclickWord(pg, lineLocator, word, which = `first`) {
   // Use the DOM Range API to get the exact pixel coordinates of the
   // target word.  This avoids the unreliable "fraction of box width"
   // approach — .md-line is a block element that fills the full editor
@@ -58,12 +58,12 @@ async function dblclickWord(pg, lineLocator, word, which = 'first') {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -105,7 +105,7 @@ async function dblclickWord(pg, lineLocator, word, which = 'first') {
  * @param {import('@playwright/test').Page} pg
  */
 async function clickBoldButton(pg) {
-  await pg.locator('[data-button-id="bold"]').click();
+  await pg.locator(`[data-button-id="bold"]`).click();
   // Let the render settle.
   await pg.waitForTimeout(200);
 }
@@ -117,136 +117,126 @@ async function clickBoldButton(pg) {
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator('#editor .md-line').nth(index).innerText();
+  return pg.locator(`#editor .md-line`).nth(index).innerText();
 }
 
-// ─── Problem 1: bold first word, paragraph 1, then toggle off ───────
-
-test.describe('Problem 1 — bold first word, toggle off', () => {
-  test('bolding first word produces correct markdown', async () => {
+test.describe(`Problem 1 — bold first word, toggle off`, () => {
+  test(`bolding first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('**text1** text1 text1');
+    expect(line).toBe(`**text1** text1 text1`);
   });
 
-  test('toggling bold off restores plain text', async () => {
+  test(`toggling bold off restores plain text`, async () => {
     // Content after previous test: first line is "**text1** text1 text1"
     // Reload and apply bold, then toggle off.
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
     // Apply bold to first word.
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
     // Now dblclick the bolded word and un-bold it.
-    const firstLineAgain = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLineAgain, 'text1', 'first');
+    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLineAgain, `text1`, `first`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });
 
-// ─── Problem 2: bold middle word, paragraph 1 ──────────────────────
-
-test.describe('Problem 2 — bold middle word, paragraph 1', () => {
-  test('bolding middle word produces correct markdown', async () => {
+test.describe(`Problem 2 — bold middle word, paragraph 1`, () => {
+  test(`bolding middle word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 **text1** text1');
+    expect(line).toBe(`text1 **text1** text1`);
   });
 
-  test('toggling bold off middle word restores plain text', async () => {
+  test(`toggling bold off middle word restores plain text`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
     // Apply bold.
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     // Toggle off.
-    const firstLineAgain = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLineAgain, 'text1', 'middle');
+    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLineAgain, `text1`, `middle`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });
 
-// ─── Problem 3: bold first word, paragraph 2 ───────────────────────
-
-test.describe('Problem 3 — bold first word, paragraph 2', () => {
-  test('bolding first word of second paragraph produces correct markdown', async () => {
+test.describe(`Problem 3 — bold first word, paragraph 2`, () => {
+  test(`bolding first word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
     // The second paragraph is the second .md-line in writing view.
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'first');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `first`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     // First paragraph must be untouched.
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     // Second paragraph should have bold on first word.
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('**text2** text2 text2');
+    expect(line1).toBe(`**text2** text2 text2`);
   });
 });
 
-// ─── Problem 4: bold middle word, paragraph 2 ──────────────────────
-
-test.describe('Problem 4 — bold middle word, paragraph 2', () => {
-  test('bolding middle word of second paragraph produces correct markdown', async () => {
+test.describe(`Problem 4 — bold middle word, paragraph 2`, () => {
+  test(`bolding middle word of second paragraph produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator('#editor .md-line').nth(1);
-    await dblclickWord(page, secondLine, 'text2', 'middle');
+    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickBoldButton(page);
 
     await setSourceView(page);
     // First paragraph must be untouched.
     const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe('text1 text1 text1');
+    expect(line0).toBe(`text1 text1 text1`);
     // Second paragraph should have bold on middle word.
     const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe('text2 **text2** text2');
+    expect(line1).toBe(`text2 **text2** text2`);
   });
 });
 
-// ─── Cursor position after bolding ─────────────────────────────────
-
-test.describe('Cursor position after bold', () => {
-  test('cursor is at end of bolded word, not start of line', async () => {
+test.describe(`Cursor position after bold`, () => {
+  test(`cursor is at end of bolded word, not start of line`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
     // Double-click middle word and bold it.
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     // In writing view the cursor should be collapsed right after the
@@ -257,7 +247,7 @@ test.describe('Cursor position after bold', () => {
       const range = sel.getRangeAt(0);
       // Walk up to the .md-line element to compute the total text
       // offset from the start of the line.
-      const line = range.startContainer.parentElement?.closest('.md-line');
+      const line = range.startContainer.parentElement?.closest(`.md-line`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -282,19 +272,19 @@ test.describe('Cursor position after bold', () => {
     expect(cursorInfo?.offset).toBe(11);
   });
 
-  test('cursor is at end of first bolded word', async () => {
+  test(`cursor is at end of first bolded word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator('#editor .md-line').first();
-    await dblclickWord(page, firstLine, 'text1', 'first');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest('.md-line');
+      const line = range.startContainer.parentElement?.closest(`.md-line`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -319,8 +309,6 @@ test.describe('Cursor position after bold', () => {
   });
 });
 
-// ─── Collapsed cursor: bold word under caret / unbold ───────────────
-
 /**
  * Single-click inside a word to place a collapsed cursor.
  * Uses the DOM Range API to get exact pixel coordinates.
@@ -330,16 +318,16 @@ test.describe('Cursor position after bold', () => {
  * @param {string} word - The word to click inside
  * @param {'first'|'middle'|'last'} which - Which occurrence
  */
-async function clickInsideWord(pg, lineLocator, word, which = 'first') {
+async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   const coords = await lineLocator.evaluate(
     (el, args) => {
       const [targetWord, occurrence] = args;
-      const text = el.textContent || '';
+      const text = el.textContent || ``;
 
       let startIdx;
-      if (occurrence === 'first') {
+      if (occurrence === `first`) {
         startIdx = text.indexOf(targetWord);
-      } else if (occurrence === 'middle') {
+      } else if (occurrence === `middle`) {
         const firstEnd = text.indexOf(targetWord) + targetWord.length;
         startIdx = text.indexOf(targetWord, firstEnd);
       } else {
@@ -375,38 +363,38 @@ async function clickInsideWord(pg, lineLocator, word, which = 'first') {
   await pg.waitForTimeout(200);
 }
 
-test.describe('Collapsed cursor — bold word under caret', () => {
-  test('clicking bold with cursor on a plain word bolds that word', async () => {
+test.describe(`Collapsed cursor — bold word under caret`, () => {
+  test(`clicking bold with cursor on a plain word bolds that word`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
     // Place a collapsed cursor inside the middle "text1".
-    const firstLine = page.locator('#editor .md-line').first();
-    await clickInsideWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     // Switch to source view and verify.
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 **text1** text1');
+    expect(line).toBe(`text1 **text1** text1`);
   });
 
-  test('clicking bold with cursor inside bold text removes bold', async () => {
+  test(`clicking bold with cursor inside bold text removes bold`, async () => {
     // Start with the middle word already bold.
-    const boldContent = 'text1 **text1** text1\n\ntext2 text2 text2\n';
+    const boldContent = `text1 **text1** text1\n\ntext2 text2 text2\n`;
     await loadContent(page, boldContent);
     await setWritingView(page);
 
     // In writing view the bold word renders without ** markers.
     // The rendered line shows "text1 text1 text1" with the middle
     // word in a <strong> tag.  Click inside that bold word.
-    const firstLine = page.locator('#editor .md-line').first();
-    await clickInsideWord(page, firstLine, 'text1', 'middle');
+    const firstLine = page.locator(`#editor .md-line`).first();
+    await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     // Switch to source view and verify bold markers removed.
     await setSourceView(page);
     const line = await getSourceLineText(page, 0);
-    expect(line).toBe('text1 text1 text1');
+    expect(line).toBe(`text1 text1 text1`);
   });
 });

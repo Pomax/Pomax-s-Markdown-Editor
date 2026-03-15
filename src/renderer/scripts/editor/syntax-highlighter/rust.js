@@ -1,0 +1,92 @@
+/**
+ * @fileoverview Rust language definition for the syntax highlighter.
+ */
+
+import {
+  BLOCK_COMMENT,
+  DOUBLE_STRING,
+  LINE_COMMENT,
+  SINGLE_STRING,
+  defineLang,
+} from './patterns.js';
+
+const KEYWORDS = new Set([
+  `as`,
+  `async`,
+  `await`,
+  `break`,
+  `const`,
+  `continue`,
+  `crate`,
+  `dyn`,
+  `else`,
+  `enum`,
+  `extern`,
+  `fn`,
+  `for`,
+  `if`,
+  `impl`,
+  `in`,
+  `let`,
+  `loop`,
+  `match`,
+  `mod`,
+  `move`,
+  `mut`,
+  `pub`,
+  `ref`,
+  `return`,
+  `self`,
+  `Self`,
+  `static`,
+  `struct`,
+  `super`,
+  `trait`,
+  `type`,
+  `unsafe`,
+  `use`,
+  `where`,
+  `while`,
+  `yield`,
+]);
+
+const TYPES = new Set([
+  `i8`,
+  `i16`,
+  `i32`,
+  `i64`,
+  `i128`,
+  `isize`,
+  `u8`,
+  `u16`,
+  `u32`,
+  `u64`,
+  `u128`,
+  `usize`,
+  `f32`,
+  `f64`,
+  `bool`,
+  `char`,
+  `str`,
+  `String`,
+  `Vec`,
+  `Box`,
+  `Rc`,
+  `Arc`,
+  `Option`,
+  `Result`,
+  `HashMap`,
+  `HashSet`,
+  `BTreeMap`,
+  `BTreeSet`,
+]);
+
+export const definition = defineLang({
+  comments: [BLOCK_COMMENT, LINE_COMMENT],
+  strings: [DOUBLE_STRING, SINGLE_STRING],
+  keywords: KEYWORDS,
+  types: TYPES,
+  constants: new Set([`true`, `false`]),
+});
+
+export const aliases = [`rust`, `rs`];

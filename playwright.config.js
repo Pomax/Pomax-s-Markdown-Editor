@@ -14,13 +14,13 @@ const config = {
   workers: 8,
 };
 
-if (platform === "darwin") {
+if (platform === `darwin`) {
   Object.assign(config, {
     retries: 1,
     timeout: 60_000,
     workers: 2
   });
-} else if (platform === "linux") {
+} else if (platform === `linux`) {
   Object.assign(config, {
     workers: 4,
   });
@@ -28,18 +28,18 @@ if (platform === "darwin") {
 
 export default defineConfig({
   ...config,
-  testDir: "./test/integration",
-  testMatch: "**/*.spec.js",
+  testDir: `./test/integration`,
+  testMatch: `**/*.spec.js`,
   fullyParallel: true,
-  reporter: "list",
+  reporter: `list`,
   projects: [
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      name: `firefox`,
+      use: { ...devices[`Desktop Firefox`] },
     },
   ],
   use: {
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    trace: `on-first-retry`,
+    screenshot: `only-on-failure`,
   },
 });

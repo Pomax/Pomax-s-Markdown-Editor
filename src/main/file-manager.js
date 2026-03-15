@@ -37,7 +37,7 @@ export class FileManager {
      */
     this.recentFiles = [];
 
-    this._loadRecentFiles();
+    this.loadRecentFiles();
   }
 
   /**
@@ -48,20 +48,20 @@ export class FileManager {
   async load(window) {
     try {
       const result = await dialog.showOpenDialog(window, {
-        title: 'Load Markdown File',
+        title: `Load Markdown File`,
         filters: [
-          { name: 'Markdown Files', extensions: ['md', 'markdown'] },
-          { name: 'All Files', extensions: ['*'] },
+          { name: `Markdown Files`, extensions: [`md`, `markdown`] },
+          { name: `All Files`, extensions: [`*`] },
         ],
-        properties: ['openFile'],
+        properties: [`openFile`],
       });
 
       if (result.canceled || result.filePaths.length === 0) {
-        return { success: false, message: 'Load canceled' };
+        return { success: false, message: `Load canceled` };
       }
 
       const filePath = result.filePaths[0];
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, `utf-8`);
 
       this.currentFilePath = filePath;
       this.hasUnsavedChanges = false;
@@ -94,7 +94,7 @@ export class FileManager {
     }
 
     try {
-      await fs.writeFile(this.currentFilePath, content, 'utf-8');
+      await fs.writeFile(this.currentFilePath, content, `utf-8`);
       this.hasUnsavedChanges = false;
 
       return {
@@ -119,26 +119,26 @@ export class FileManager {
   async saveAs(window, content) {
     try {
       const result = await dialog.showSaveDialog(window, {
-        title: 'Save Markdown File',
-        defaultPath: this.currentFilePath || 'untitled.md',
+        title: `Save Markdown File`,
+        defaultPath: this.currentFilePath || `untitled.md`,
         filters: [
-          { name: 'Markdown Files', extensions: ['md'] },
-          { name: 'All Files', extensions: ['*'] },
+          { name: `Markdown Files`, extensions: [`md`] },
+          { name: `All Files`, extensions: [`*`] },
         ],
       });
 
       if (result.canceled || !result.filePath) {
-        return { success: false, message: 'Save canceled' };
+        return { success: false, message: `Save canceled` };
       }
 
       let filePath = result.filePath;
 
       // Ensure .md extension if not present
       if (!path.extname(filePath)) {
-        filePath += '.md';
+        filePath += `.md`;
       }
 
-      await fs.writeFile(filePath, content, 'utf-8');
+      await fs.writeFile(filePath, content, `utf-8`);
 
       this.currentFilePath = filePath;
       this.hasUnsavedChanges = false;
@@ -211,7 +211,7 @@ export class FileManager {
       this.recentFiles = this.recentFiles.slice(0, MAX_RECENT_FILES);
     }
 
-    this._saveRecentFiles();
+    this.saveRecentFiles();
   }
 
   /**
@@ -227,7 +227,7 @@ export class FileManager {
    */
   clearRecentFiles() {
     this.recentFiles = [];
-    this._saveRecentFiles();
+    this.saveRecentFiles();
   }
 
   /**
@@ -237,7 +237,7 @@ export class FileManager {
    */
   async loadRecent(filePath) {
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, `utf-8`);
 
       this.currentFilePath = filePath;
       this.hasUnsavedChanges = false;
@@ -252,7 +252,7 @@ export class FileManager {
       const error = /** @type {Error} */ (err);
       // Remove from recents if the file no longer exists
       this.recentFiles = this.recentFiles.filter((f) => f !== filePath);
-      this._saveRecentFiles();
+      this.saveRecentFiles();
       return {
         success: false,
         message: `Failed to load file: ${error.message}`,
@@ -262,11 +262,10 @@ export class FileManager {
 
   /**
    * Loads the recent files list from the settings database.
-   * @private
    */
-  _loadRecentFiles() {
+  loadRecentFiles() {
     try {
-      const stored = settings.get('recentFiles', []);
+      const stored = settings.get(`recentFiles`, []);
       if (Array.isArray(stored)) {
         this.recentFiles = stored;
       }
@@ -279,9 +278,12 @@ export class FileManager {
    * Saves the recent files list to the settings database.
    * @private
    */
-  _saveRecentFiles() {
+  /**
+   * Saves the recent files list to the settings database.
+   */
+  saveRecentFiles() {
     try {
-      settings.set('recentFiles', this.recentFiles);
+      settings.set(`recentFiles`, this.recentFiles);
     } catch {
       // Ignore write errors for recent files
     }

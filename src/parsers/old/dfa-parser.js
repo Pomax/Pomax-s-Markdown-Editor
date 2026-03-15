@@ -1,0 +1,1560 @@
+/**
+ * @fileoverview DFA-based markdown parser.
+ *
+ * Consumes a token stream produced by {@link tokenize} and walks a
+ * deterministic finite automaton to build a {@link SyntaxTree}.
+ * No regex is used.  Newlines are tokens like any other character;
+ * the input is never split into lines.
+ */
+
+import { tokenize } from './dfa-tokenizer.js';
+import { SyntaxNode, SyntaxTree } from './syntax-tree.js';
+
+// Block-level HTML tag set (GFM type 6)
+
+/** @type {Set<string>} */
+const HTML_BLOCK_TAGS = new Set([
+  `address`,
+  `article`,
+  `aside`,
+  `base`,
+  `basefont`,
+  `blockquote`,
+  `body`,
+  `caption`,
+  `center`,
+  `col`,
+  `colgroup`,
+  `dd`,
+  `details`,
+  `dialog`,
+  `dir`,
+  `div`,
+  `dl`,
+  `dt`,
+  `fieldset`,
+  `figcaption`,
+  `figure`,
+  `footer`,
+  `form`,
+  `frame`,
+  `frameset`,
+  `h1`,
+  `h2`,
+  `h3`,
+  `h4`,
+  `h5`,
+  `h6`,
+  `head`,
+  `header`,
+  `hr`,
+  `html`,
+  `iframe`,
+  `legend`,
+  `li`,
+  `link`,
+  `main`,
+  `menu`,
+  `menuitem`,
+  `nav`,
+  `noframes`,
+  `ol`,
+  `optgroup`,
+  `option`,
+  `p`,
+  `param`,
+  `search`,
+  `script`,
+  `section`,
+  `source`,
+  `style`,
+  `summary`,
+  `table`,
+  `tbody`,
+  `td`,
+  `tfoot`,
+  `th`,
+  `thead`,
+  `title`,
+  `tr`,
+  `track`,
+  `ul`,
+]);
+
+// Void HTML elements (never have a closing tag)
+
+/** @type {Set<string>} */
+const VOID_HTML_ELEMENTS = new Set([
+  `area`,
+  `base`,
+  `basefont`,
+  `br`,
+  `col`,
+  `embed`,
+  `frame`,
+  `hr`,
+  `img`,
+  `input`,
+  `link`,
+  `meta`,
+  `param`,
+  `source`,
+  `track`,
+  `wbr`,
+]);
+
+// Raw content HTML tags (body is not markdown)
+
+/** @type {Set<string>} */
+const RAW_CONTENT_TAGS = new Set([`script`, `style`, `textarea`]);
+
+// Inline-only HTML tags (never treated as block-level)
+
+/** @type {Set<string>} */
+const INLINE_ONLY_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
+
+/**
+ * Parses markdown text into a syntax tree using a token-driven DFA.
+ */
+class DFAParser {
+  /**
+   * Parses a full markdown document.
+   * @param {string} markdown
+   * @returns {Promise<SyntaxTree>}
+   */
+  async parse(markdown) {
+    const tokens = tokenize(markdown);
+    const tree = new SyntaxTree();
+    const ctx = { tokens, pos: 0, line: 0 };
+
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      // Skip blank lines between blocks
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        ctx.line++;
+        ctx.pos++;
+        continue;
+      }
+
+      const node = await this.parseBlock(ctx);
+      if (node) {
+        tree.appendChild(node);
+      }
+    }
+
+    return tree;
+  }
+
+  // Block dispatch
+
+  /**
+   * Determines what block element starts at the current position
+   * and dispatches to the appropriate sub-parser.
+   *
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {Promise<SyntaxNode|null>}
+   */
+  async parseBlock(ctx) {
+    const tok = ctx.tokens[ctx.pos];
+
+    // Heading: one or more HASH at start of line, followed by a space
+    if (tok.type === `HASH`) {
+      const saved = ctx.pos;
+      const node = this.parseHeading(ctx);
+      if (node) return node;
+      ctx.pos = saved;
+    }
+
+    // Code fence: three or more BACKTICK tokens
+    if (
+      tok.type === `BACKTICK` &&
+      this.lookType(ctx, 1) === `BACKTICK` &&
+      this.lookType(ctx, 2) === `BACKTICK`
+    ) {
+      const saved = ctx.pos;
+      const node = this.parseCodeBlock(ctx);
+      if (node) return node;
+      ctx.pos = saved;
+    }
+
+    // Blockquote: GT at start
+    if (tok.type === `GT`) {
+      return this.parseBlockquote(ctx);
+    }
+
+    // Unordered list: DASH/STAR/PLUS followed by SPACE, or indented
+    if (this.isUnorderedListStart(ctx)) {
+      return this.parseUnorderedListItem(ctx);
+    }
+
+    // Ordered list: DIGIT(s) DOT SPACE
+    if (this.isOrderedListStart(ctx)) {
+      return this.parseOrderedListItem(ctx);
+    }
+
+    // Horizontal rule: three or more DASH/STAR/UNDERSCORE
+    if (this.isHorizontalRule(ctx)) {
+      return this.parseHorizontalRule(ctx);
+    }
+
+    // HTML img tag: <img ...> (possibly indented)
+    if (tok.type === `LT` && this.isHtmlImgTag(ctx)) {
+      return this.parseHtmlImage(ctx);
+    }
+    if ((tok.type === `SPACE` || tok.type === `TAB`) && this.isIndentedHtmlImgTag(ctx)) {
+      this.skipWhitespace(ctx);
+      return this.parseHtmlImage(ctx);
+    }
+
+    // HTML block: <tagname...> (possibly indented)
+    if (tok.type === `LT` && this.isHtmlBlockStart(ctx)) {
+      return await this.parseHtmlBlock(ctx);
+    }
+    if ((tok.type === `SPACE` || tok.type === `TAB`) && this.isIndentedHtmlBlockStart(ctx)) {
+      this.skipWhitespace(ctx);
+      return await this.parseHtmlBlock(ctx);
+    }
+
+    // Table: starts with PIPE
+    if (tok.type === `PIPE`) {
+      return this.parseTable(ctx);
+    }
+
+    // Linked image: [![alt](src)](href)
+    if (tok.type === `LBRACKET` && this.lookType(ctx, 1) === `BANG`) {
+      const saved = ctx.pos;
+      const node = this.tryParseLinkedImage(ctx);
+      if (node) return node;
+      ctx.pos = saved;
+    }
+
+    // Image: ![alt](src)
+    if (tok.type === `BANG` && this.lookType(ctx, 1) === `LBRACKET`) {
+      const saved = ctx.pos;
+      const node = this.tryParseImage(ctx);
+      if (node) return node;
+      ctx.pos = saved;
+    }
+
+    // Default: paragraph
+    return this.parseParagraph(ctx);
+  }
+
+  // Heading
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode|null}
+   */
+  parseHeading(ctx) {
+    const startLine = ctx.line;
+    let level = 0;
+
+    // Count hashes
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `HASH`) {
+      level++;
+      ctx.pos++;
+    }
+
+    // A space after the hashes is required for a valid heading
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `SPACE`) {
+      return null;
+    }
+
+    if (level > 6) level = 6;
+
+    // Skip all spaces after hashes
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
+      ctx.pos++;
+    }
+
+    // Collect content until NEWLINE or EOF
+    const content = this.consumeToEndOfLine(ctx);
+
+    const node = new SyntaxNode(`heading${level}`, content);
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  // Code block
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode|null}
+   */
+  parseCodeBlock(ctx) {
+    const startLine = ctx.line;
+
+    // Count consecutive backticks (must be 3 or more)
+    let fenceCount = 0;
+    while (
+      ctx.pos + fenceCount < ctx.tokens.length &&
+      ctx.tokens[ctx.pos + fenceCount].type === `BACKTICK`
+    ) {
+      fenceCount++;
+    }
+    ctx.pos += fenceCount;
+
+    // Collect language identifier (until NEWLINE or EOF)
+    let language = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      language += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    language = language.trim();
+
+    // The opening fence MUST be followed by a NEWLINE — EOF is not valid
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `NEWLINE`) {
+      return null;
+    }
+    ctx.line++;
+    ctx.pos++;
+
+    // Collect body until closing fence (exact same backtick count at start of line)
+    let content = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      // Check for closing fence: exactly fenceCount backticks
+      let closingCount = 0;
+      while (
+        ctx.pos + closingCount < ctx.tokens.length &&
+        ctx.tokens[ctx.pos + closingCount].type === `BACKTICK`
+      ) {
+        closingCount++;
+      }
+      if (closingCount === fenceCount) {
+        // Verify the rest of the line is only whitespace or newline/EOF
+        let afterFence = ctx.pos + closingCount;
+        let validClose = true;
+        while (
+          afterFence < ctx.tokens.length &&
+          ctx.tokens[afterFence].type !== `NEWLINE` &&
+          ctx.tokens[afterFence].type !== `EOF`
+        ) {
+          if (ctx.tokens[afterFence].type !== `SPACE`) {
+            validClose = false;
+          }
+          afterFence++;
+        }
+        if (validClose) {
+          // Closing fence found — skip the backticks and trailing content
+          ctx.pos = afterFence;
+          // Skip the newline after closing fence
+          if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+            ctx.line++;
+            ctx.pos++;
+          }
+          break;
+        }
+      }
+
+      // Not a closing fence — consume as content
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        content += `\n`;
+        ctx.line++;
+      } else {
+        content += ctx.tokens[ctx.pos].value;
+      }
+      ctx.pos++;
+    }
+
+    // Remove trailing newline from content if present
+    if (content.endsWith(`\n`)) {
+      content = content.slice(0, -1);
+    }
+
+    const node = new SyntaxNode(`code-block`, content);
+    node.attributes = { language, fenceCount };
+    node.startLine = startLine;
+    node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
+    return node;
+  }
+
+  // Blockquote
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseBlockquote(ctx) {
+    const startLine = ctx.line;
+    const contentLines = [];
+
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
+      // Skip GT
+      ctx.pos++;
+      // Skip optional space after >
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
+        ctx.pos++;
+      }
+      // Collect to end of line
+      contentLines.push(this.consumeToEndOfLine(ctx));
+    }
+
+    const node = new SyntaxNode(`blockquote`, contentLines.join(`\n`));
+    node.startLine = startLine;
+    node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
+    return node;
+  }
+
+  // List items
+
+  /**
+   * Checks if current position is start of unordered list item.
+   * Pattern: optional spaces, then DASH/STAR/PLUS, then SPACE.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isUnorderedListStart(ctx) {
+    let i = ctx.pos;
+    // Skip leading spaces
+    while (
+      i < ctx.tokens.length &&
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
+    ) {
+      i++;
+    }
+    // Must be DASH, STAR, or PLUS
+    if (i >= ctx.tokens.length) return false;
+    const t = ctx.tokens[i].type;
+    if (t !== `DASH` && t !== `STAR` && t !== `PLUS`) return false;
+    // Followed by SPACE
+    i++;
+    if (i >= ctx.tokens.length) return false;
+    return ctx.tokens[i].type === `SPACE`;
+  }
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseUnorderedListItem(ctx) {
+    const startLine = ctx.line;
+
+    // Count leading spaces for indent
+    let spaces = 0;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
+    ) {
+      spaces += ctx.tokens[ctx.pos].type === `TAB` ? 2 : 1;
+      ctx.pos++;
+    }
+    const indent = Math.floor(spaces / 2);
+
+    // Skip the marker (DASH/STAR/PLUS)
+    ctx.pos++;
+    // Skip the SPACE after marker
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
+      ctx.pos++;
+    }
+
+    const content = this.consumeToEndOfLine(ctx);
+
+    const node = new SyntaxNode(`list-item`, content);
+    node.attributes = { ordered: false, indent };
+
+    // Detect checklist syntax: [ ] or [x]/[X] at the start of content
+    if (content.startsWith(`[ ] `)) {
+      node.attributes.checked = false;
+      node.content = content.slice(4);
+    } else if (content.startsWith(`[x] `) || content.startsWith(`[X] `)) {
+      node.attributes.checked = true;
+      node.content = content.slice(4);
+    }
+
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  /**
+   * Checks if current position is start of ordered list item.
+   * Pattern: optional spaces, then DIGIT(s), then DOT, then SPACE.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isOrderedListStart(ctx) {
+    let i = ctx.pos;
+    // Skip leading spaces
+    while (
+      i < ctx.tokens.length &&
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
+    ) {
+      i++;
+    }
+    // Must have at least one DIGIT
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `DIGIT`) return false;
+    while (i < ctx.tokens.length && ctx.tokens[i].type === `DIGIT`) {
+      i++;
+    }
+    // Then DOT
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `DOT`) return false;
+    i++;
+    // Then SPACE
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `SPACE`) return false;
+    return true;
+  }
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseOrderedListItem(ctx) {
+    const startLine = ctx.line;
+
+    // Count leading spaces for indent
+    let spaces = 0;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
+    ) {
+      spaces += ctx.tokens[ctx.pos].type === `TAB` ? 2 : 1;
+      ctx.pos++;
+    }
+    const indent = Math.floor(spaces / 2);
+
+    // Collect digit chars for the number
+    let numStr = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `DIGIT`) {
+      numStr += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    const number = Number.parseInt(numStr, 10);
+
+    // Skip DOT
+    ctx.pos++;
+    // Skip SPACE
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
+      ctx.pos++;
+    }
+
+    const content = this.consumeToEndOfLine(ctx);
+
+    const node = new SyntaxNode(`list-item`, content);
+    node.attributes = { ordered: true, number, indent };
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  // Horizontal rule
+
+  /**
+   * Checks if current position is a horizontal rule.
+   * Three or more of the same character (DASH, STAR, UNDERSCORE)
+   * with only optional trailing spaces before newline/EOF.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isHorizontalRule(ctx) {
+    const t = ctx.tokens[ctx.pos].type;
+    if (t !== `DASH` && t !== `STAR` && t !== `UNDERSCORE`) return false;
+
+    let i = ctx.pos;
+    let count = 0;
+    while (i < ctx.tokens.length && ctx.tokens[i].type === t) {
+      count++;
+      i++;
+    }
+    if (count < 3) return false;
+
+    // Only spaces allowed after the run, then NEWLINE (not EOF)
+    while (i < ctx.tokens.length && ctx.tokens[i].type === `SPACE`) {
+      i++;
+    }
+    return i < ctx.tokens.length && ctx.tokens[i].type === `NEWLINE`;
+  }
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseHorizontalRule(ctx) {
+    const startLine = ctx.line;
+
+    // Consume all the markers and trailing spaces
+    this.consumeToEndOfLine(ctx);
+
+    const node = new SyntaxNode(`horizontal-rule`, ``);
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  // Images
+
+  /**
+   * Tries to parse ![alt](src). Returns null if it doesn't match.
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode|null}
+   */
+  tryParseImage(ctx) {
+    const startLine = ctx.line;
+
+    // Expect BANG LBRACKET
+    if (ctx.tokens[ctx.pos].type !== `BANG`) return null;
+    ctx.pos++;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
+    ctx.pos++;
+
+    // Collect alt text until RBRACKET
+    let alt = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `RBRACKET` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      alt += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
+    ctx.pos++; // skip ]
+
+    // Expect LPAREN
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
+    ctx.pos++;
+
+    // Collect src until RPAREN
+    let src = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      src += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
+    ctx.pos++; // skip )
+
+    // Must be end of line for a block-level image
+    if (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      return null;
+    }
+    // Skip newline
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    const node = new SyntaxNode(`image`, alt);
+    node.attributes = { alt, url: src };
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  /**
+   * Tries to parse [![alt](src)](href). Returns null if no match.
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode|null}
+   */
+  tryParseLinkedImage(ctx) {
+    const startLine = ctx.line;
+
+    // Expect [ ! [
+    if (ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
+    ctx.pos++;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `BANG`) return null;
+    ctx.pos++;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LBRACKET`) return null;
+    ctx.pos++;
+
+    // Collect alt until ]
+    let alt = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `RBRACKET` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      alt += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
+    ctx.pos++; // ]
+
+    // Expect (
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
+    ctx.pos++;
+
+    // Collect src until )
+    let src = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      src += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
+    ctx.pos++; // )
+
+    // Expect ] (
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RBRACKET`) return null;
+    ctx.pos++;
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `LPAREN`) return null;
+    ctx.pos++;
+
+    // Collect href until )
+    let href = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `RPAREN` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      href += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type !== `RPAREN`) return null;
+    ctx.pos++; // )
+
+    // Must be end of line for block-level
+    if (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      return null;
+    }
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    const node = new SyntaxNode(`image`, alt);
+    node.attributes = { alt, url: src, href };
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  // HTML image
+
+  /**
+   * Checks if current position is an <img ...> tag.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isHtmlImgTag(ctx) {
+    // LT then "img" (case-insensitive)
+    const after = this.peekTextAfterLT(ctx);
+    if (!after) return false;
+    return after.toLowerCase() === `img`;
+  }
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseHtmlImage(ctx) {
+    const startLine = ctx.line;
+
+    // Consume everything until GT (the closing >)
+    let raw = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      raw += ctx.tokens[ctx.pos].value;
+      if (ctx.tokens[ctx.pos].type === `GT` && raw.length > 1) {
+        ctx.pos++;
+        break;
+      }
+      ctx.pos++;
+    }
+
+    // Skip newline
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    // Extract attributes by scanning the raw string character by character
+    const src = this.extractAttr(raw, `src`);
+    const alt = this.extractAttr(raw, `alt`);
+    const style = this.extractAttr(raw, `style`);
+
+    const node = new SyntaxNode(`image`, alt);
+    node.attributes = { alt, url: src };
+    if (style) {
+      node.attributes.style = style;
+    }
+    node.startLine = startLine;
+    node.endLine = startLine;
+    return node;
+  }
+
+  /**
+   * Extracts an attribute value from an HTML tag string without regex.
+   * Scans for `name="value"` or `name='value'` patterns.
+   * @param {string} raw
+   * @param {string} name
+   * @returns {string}
+   */
+  extractAttr(raw, name) {
+    const lower = raw.toLowerCase();
+    const search = name.toLowerCase();
+    let i = 0;
+
+    while (i < lower.length) {
+      const idx = lower.indexOf(search, i);
+      if (idx === -1) return ``;
+
+      // Check this is actually an attribute name boundary
+      let j = idx + search.length;
+
+      // Skip whitespace around =
+      while (j < lower.length && (lower[j] === ` ` || lower[j] === `\t`)) j++;
+      if (j >= lower.length || lower[j] !== `=`) {
+        i = idx + 1;
+        continue;
+      }
+      j++; // skip =
+      while (j < lower.length && (lower[j] === ` ` || lower[j] === `\t`)) j++;
+
+      // Expect quote
+      if (j >= lower.length) return ``;
+      const quote = raw[j];
+      if (quote !== `"` && quote !== `'`) {
+        i = idx + 1;
+        continue;
+      }
+      j++; // skip opening quote
+
+      // Collect until closing quote
+      let value = ``;
+      while (j < raw.length && raw[j] !== quote) {
+        value += raw[j];
+        j++;
+      }
+      return value;
+    }
+    return ``;
+  }
+
+  // HTML block
+
+  /**
+   * Checks if current position starts an HTML block tag.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isHtmlBlockStart(ctx) {
+    // HTML comments: <!-- ... -->
+    if (this.isHtmlCommentStart(ctx)) return true;
+    const tagName = this.peekTextAfterLT(ctx);
+    if (!tagName) return false;
+    const lower = tagName.toLowerCase();
+    if (HTML_BLOCK_TAGS.has(lower) || this.isValidCustomElement(lower)) return true;
+    return this.isUnknownHtmlTag(ctx, lower);
+  }
+
+  /**
+   * Checks if current position has leading whitespace followed by
+   * an HTML block tag.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isIndentedHtmlBlockStart(ctx) {
+    let i = ctx.pos;
+    while (
+      i < ctx.tokens.length &&
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
+    ) {
+      i++;
+    }
+    if (i >= ctx.tokens.length || i === ctx.pos) return false;
+    if (ctx.tokens[i].type !== `LT`) return false;
+    // HTML comments: <!-- ... -->
+    if (this.isHtmlCommentStart({ tokens: ctx.tokens, pos: i })) return true;
+    const result = this.peekTagName(ctx.tokens, i + 1);
+    if (!result) return false;
+    const lower = result.name.toLowerCase();
+    if (HTML_BLOCK_TAGS.has(lower) || this.isValidCustomElement(lower)) return true;
+    // Build a temporary ctx at the LT position for the unknown-tag check
+    return this.isUnknownHtmlTag({ tokens: ctx.tokens, pos: i }, lower);
+  }
+
+  /**
+   * Checks if current position has leading whitespace followed by
+   * an HTML img tag.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isIndentedHtmlImgTag(ctx) {
+    let i = ctx.pos;
+    while (
+      i < ctx.tokens.length &&
+      (ctx.tokens[i].type === `SPACE` || ctx.tokens[i].type === `TAB`)
+    ) {
+      i++;
+    }
+    if (i >= ctx.tokens.length || i === ctx.pos) return false;
+    if (ctx.tokens[i].type !== `LT`) return false;
+    const next = i + 1;
+    if (next >= ctx.tokens.length || ctx.tokens[next].type !== `TEXT`) return false;
+    return ctx.tokens[next].value.toLowerCase() === `img`;
+  }
+
+  /**
+   * Skips whitespace tokens (SPACE, TAB) at current position.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   */
+  skipWhitespace(ctx) {
+    while (
+      ctx.pos < ctx.tokens.length &&
+      (ctx.tokens[ctx.pos].type === `SPACE` || ctx.tokens[ctx.pos].type === `TAB`)
+    ) {
+      ctx.pos++;
+    }
+  }
+
+  /**
+   * Starting from a given index, reads consecutive TEXT and DASH tokens
+   * to form a (possibly hyphenated) tag name. Returns the combined name
+   * string and the number of tokens consumed, or null if the position
+   * does not start with a TEXT token.
+   * @param {DFAToken[]} tokens
+   * @param {number} startIndex
+   * @returns {{name: string, count: number}|null}
+   */
+  peekTagName(tokens, startIndex) {
+    if (startIndex >= tokens.length || tokens[startIndex].type !== `TEXT`) {
+      return null;
+    }
+    let name = tokens[startIndex].value;
+    let count = 1;
+    let i = startIndex + 1;
+    // Collect alternating DASH TEXT sequences
+    while (i + 1 < tokens.length && tokens[i].type === `DASH` && tokens[i + 1].type === `TEXT`) {
+      name += `-${tokens[i + 1].value}`;
+      count += 2;
+      i += 2;
+    }
+    return { name, count };
+  }
+
+  /**
+   * Validates that a tag name is a legal custom element name.
+   * Rules: must start with a letter, contain at least one hyphen
+   * followed by a letter, no consecutive hyphens, must not end
+   * with a hyphen.
+   * @param {string} name
+   * @returns {boolean}
+   */
+  isValidCustomElement(name) {
+    const parts = name.split(`-`);
+    if (parts.length < 2) return false;
+    for (const part of parts) {
+      if (part.length === 0) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks whether the tokens at the current position form a complete
+   * HTML tag that is not in any predefined list but still looks like
+   * a valid HTML element (LT TEXT ...attributes... GT on the same line).
+   * Excludes inline-only tags that the inline tokenizer handles.
+   *
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @param {string} lower  Already-lowercased tag name.
+   * @returns {boolean}
+   */
+  isUnknownHtmlTag(ctx, lower) {
+    if (INLINE_ONLY_TAGS.has(lower)) return false;
+    // Verify this is purely lowercase ASCII letters (standard tag shape).
+    for (let i = 0; i < lower.length; i++) {
+      const c = lower.charCodeAt(i);
+      if (c < 97 || c > 122) return false;
+    }
+    // Walk forward from LT looking for a GT on the same line.
+    let j = ctx.pos + 1;
+    while (j < ctx.tokens.length) {
+      const t = ctx.tokens[j].type;
+      if (t === `GT`) return true;
+      if (t === `NEWLINE` || t === `EOF`) return false;
+      j++;
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether `ctx.pos` points at a `LT BANG DASH DASH`
+   * sequence, the token equivalent of `<!--`.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isHtmlCommentStart(ctx) {
+    const t = ctx.tokens;
+    const p = ctx.pos;
+    return (
+      p + 3 < t.length &&
+      t[p].type === `LT` &&
+      t[p + 1].type === `BANG` &&
+      t[p + 2].type === `DASH` &&
+      t[p + 3].type === `DASH`
+    );
+  }
+
+  /**
+   * Consumes an HTML comment from `<!--` through `-->` (inclusive)
+   * and returns an `html-block` node whose `openingTag` holds the
+   * full verbatim comment text.
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @param {number} startLine
+   * @returns {SyntaxNode}
+   */
+  parseHtmlComment(ctx, startLine) {
+    let text = ``;
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      // Look for closing sequence: DASH DASH GT
+      if (
+        ctx.tokens[ctx.pos].type === `DASH` &&
+        ctx.pos + 2 < ctx.tokens.length &&
+        ctx.tokens[ctx.pos + 1].type === `DASH` &&
+        ctx.tokens[ctx.pos + 2].type === `GT`
+      ) {
+        text += `-->`;
+        ctx.pos += 3;
+        break;
+      }
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        text += `\n`;
+        ctx.line++;
+      } else {
+        text += ctx.tokens[ctx.pos].value;
+      }
+      ctx.pos++;
+    }
+
+    const endLine = ctx.line;
+
+    // Skip trailing newline
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    const node = new SyntaxNode(`html-block`, ``);
+    node.attributes = {
+      tagName: `!--`,
+      openingTag: text,
+      closingTag: ``,
+    };
+    node.startLine = startLine;
+    node.endLine = endLine;
+    return node;
+  }
+
+  /**
+   * Peeks at the text token(s) immediately after a LT token to get
+   * the tag name, including hyphenated custom element names.
+   * Returns null if structure doesn't match.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {string|null}
+   */
+  peekTextAfterLT(ctx) {
+    if (ctx.tokens[ctx.pos].type !== `LT`) return null;
+    const result = this.peekTagName(ctx.tokens, ctx.pos + 1);
+    if (!result) return null;
+    return result.name;
+  }
+
+  /**
+   * Parses an HTML block element. Consumes everything from the opening
+   * tag through the matching closing tag.
+   *
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {Promise<SyntaxNode>}
+   */
+  async parseHtmlBlock(ctx) {
+    const startLine = ctx.line;
+
+    // HTML comments: <!-- ... -->
+    if (this.isHtmlCommentStart(ctx)) {
+      return this.parseHtmlComment(ctx, startLine);
+    }
+
+    // Consume the opening tag line (everything up to and including the first >)
+    let openingTag = ``;
+    const tagName = this.peekTextAfterLT(ctx);
+    const lowerTagName = tagName ? tagName.toLowerCase() : ``;
+
+    // Read the entire opening tag up to GT
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `GT` &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      openingTag += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    // Include the GT
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
+      openingTag += `>`;
+      ctx.pos++;
+    }
+
+    // Void elements: no body, no closing tag
+    if (VOID_HTML_ELEMENTS.has(lowerTagName)) {
+      // Skip trailing newline
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        ctx.line++;
+        ctx.pos++;
+      }
+      const node = new SyntaxNode(`html-block`, ``);
+      node.attributes = {
+        tagName: lowerTagName,
+        openingTag,
+        closingTag: ``,
+      };
+      node.startLine = startLine;
+      node.endLine = startLine;
+      return node;
+    }
+
+    // Raw content tags: body is stored verbatim
+    if (RAW_CONTENT_TAGS.has(lowerTagName)) {
+      // Skip newline after opening tag
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        ctx.line++;
+        ctx.pos++;
+      }
+
+      let rawBody = ``;
+      let closingTag = ``;
+      while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+        if (this.isClosingTag(ctx, lowerTagName)) {
+          closingTag = this.consumeClosingTag(ctx);
+          break;
+        }
+        if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+          rawBody += `\n`;
+          ctx.line++;
+        } else {
+          rawBody += ctx.tokens[ctx.pos].value;
+        }
+        ctx.pos++;
+      }
+      // Strip leading/trailing newlines
+      while (rawBody.startsWith(`\n`)) rawBody = rawBody.slice(1);
+      while (rawBody.endsWith(`\n`)) rawBody = rawBody.slice(0, -1);
+
+      const endLine = ctx.line;
+
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        ctx.line++;
+        ctx.pos++;
+      }
+
+      const node = new SyntaxNode(`html-block`, ``);
+      node.attributes = {
+        tagName: lowerTagName,
+        openingTag,
+        closingTag,
+        rawContent: rawBody,
+      };
+      node.startLine = startLine;
+      node.endLine = endLine;
+      return node;
+    }
+
+    // Check if this is a self-closed tag on one line: <tag>content</tag>
+    // Look ahead to see if there's content then a closing tag on same line
+    const selfClosedResult = this.trySelfClosedHtmlBlock(ctx, lowerTagName, openingTag, startLine);
+    if (selfClosedResult) {
+      return selfClosedResult;
+    }
+
+    // Skip newline after opening tag
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    // Collect body content until we find the closing tag </tagname>
+    let bodyMarkdown = ``;
+    let closingTag = ``;
+
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      // Check for closing tag: LT FSLASH TEXT(tagname) GT
+      if (this.isClosingTag(ctx, lowerTagName)) {
+        closingTag = this.consumeClosingTag(ctx);
+        break;
+      }
+
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        bodyMarkdown += `\n`;
+        ctx.line++;
+      } else {
+        bodyMarkdown += ctx.tokens[ctx.pos].value;
+      }
+      ctx.pos++;
+    }
+
+    // Remove leading/trailing newlines from body
+    while (bodyMarkdown.startsWith(`\n`)) bodyMarkdown = bodyMarkdown.slice(1);
+    while (bodyMarkdown.endsWith(`\n`)) bodyMarkdown = bodyMarkdown.slice(0, -1);
+
+    const endLine = ctx.line;
+
+    // Skip newline after closing tag
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    // Create the container node
+    const node = new SyntaxNode(`html-block`, ``);
+    node.attributes = {
+      tagName: lowerTagName,
+      openingTag,
+      closingTag,
+    };
+    node.startLine = startLine;
+    node.endLine = endLine;
+
+    // Re-parse the body as markdown to create child nodes
+    if (bodyMarkdown.length > 0) {
+      const bodyTree = await parser.parse(bodyMarkdown);
+      const bodyStartLine = startLine + 1;
+      for (const child of bodyTree.children) {
+        this.adjustLineNumbers(child, bodyStartLine);
+        node.appendChild(child);
+      }
+    }
+
+    return node;
+  }
+
+  /**
+   * Tries to parse a self-closed HTML block on a single line.
+   * E.g. <summary>Some text</summary>
+   *
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @param {string} tagName
+   * @param {string} openingTag
+   * @param {number} startLine
+   * @returns {SyntaxNode|null}
+   */
+  trySelfClosedHtmlBlock(ctx, tagName, openingTag, startLine) {
+    // Save position in case this isn't self-closed
+    const savedPos = ctx.pos;
+    const savedLine = ctx.line;
+
+    // Collect content until NEWLINE or EOF, looking for </tagname>
+    let content = ``;
+    let closingFound = false;
+
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      // Check for closing tag
+      if (this.isClosingTag(ctx, tagName)) {
+        closingFound = true;
+        // Don't consume the closing tag yet
+        break;
+      }
+      content += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+
+    if (!closingFound) {
+      // Not self-closed — restore position
+      ctx.pos = savedPos;
+      ctx.line = savedLine;
+      return null;
+    }
+
+    // Skip the closing tag
+    this.consumeClosingTag(ctx);
+
+    // Skip newline
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+
+    // Build the node structure matching the existing parser's output
+    const node = new SyntaxNode(`html-block`, ``);
+    node.attributes = {
+      tagName,
+      openingTag,
+      closingTag: `</${tagName}>`,
+    };
+    node.startLine = startLine;
+    node.endLine = startLine;
+
+    const child = new SyntaxNode(`paragraph`, content.trim());
+    child.attributes = { bareText: true };
+    child.startLine = startLine;
+    child.endLine = startLine;
+    node.appendChild(child);
+
+    return node;
+  }
+
+  /**
+   * Checks if current position is a closing tag for the given name.
+   * Pattern: LT FSLASH TEXT GT (where TEXT matches tagName).
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @param {string} tagName
+   * @returns {boolean}
+   */
+  isClosingTag(ctx, tagName) {
+    const i = ctx.pos;
+    if (i >= ctx.tokens.length || ctx.tokens[i].type !== `LT`) return false;
+    if (i + 1 >= ctx.tokens.length || ctx.tokens[i + 1].type !== `FSLASH`) return false;
+    const result = this.peekTagName(ctx.tokens, i + 2);
+    if (!result) return false;
+    if (result.name.toLowerCase() !== tagName) return false;
+    // Check for optional space then GT
+    let j = i + 2 + result.count;
+    while (j < ctx.tokens.length && ctx.tokens[j].type === `SPACE`) j++;
+    if (j >= ctx.tokens.length || ctx.tokens[j].type !== `GT`) return false;
+    return true;
+  }
+
+  /**
+   * Consumes a closing tag and returns it as a string.
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {string}
+   */
+  consumeClosingTag(ctx) {
+    let tag = ``;
+    // LT
+    tag += ctx.tokens[ctx.pos].value;
+    ctx.pos++;
+    // FSLASH
+    tag += ctx.tokens[ctx.pos].value;
+    ctx.pos++;
+    // Tag name (TEXT and possibly DASH TEXT pairs)
+    const result = this.peekTagName(ctx.tokens, ctx.pos);
+    if (result) {
+      for (let n = 0; n < result.count; n++) {
+        tag += ctx.tokens[ctx.pos].value;
+        ctx.pos++;
+      }
+    }
+    // Optional spaces
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `SPACE`) {
+      tag += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    // GT
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `GT`) {
+      tag += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    return tag;
+  }
+
+  /**
+   * Recursively adjusts line numbers on a node and its children.
+   * @param {SyntaxNode} node
+   * @param {number} offset
+   */
+  adjustLineNumbers(node, offset) {
+    node.startLine += offset;
+    node.endLine += offset;
+    for (const child of node.children) {
+      this.adjustLineNumbers(child, offset);
+    }
+  }
+
+  // Table
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseTable(ctx) {
+    const startLine = ctx.line;
+    const lines = [];
+
+    // Collect lines that start with PIPE or look like separator rows
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      // Check if this line starts with PIPE
+      if (ctx.tokens[ctx.pos].type !== `PIPE`) break;
+
+      // Collect entire line
+      let line = ``;
+      while (
+        ctx.pos < ctx.tokens.length &&
+        ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+        ctx.tokens[ctx.pos].type !== `EOF`
+      ) {
+        line += ctx.tokens[ctx.pos].value;
+        ctx.pos++;
+      }
+      lines.push(line);
+
+      // Skip newline
+      if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        ctx.line++;
+        ctx.pos++;
+      }
+    }
+
+    const content = lines.join(`\n`);
+    const node = new SyntaxNode(`table`, content);
+    node.startLine = startLine;
+    node.endLine = startLine + lines.length - 1;
+    return node;
+  }
+
+  // Paragraph
+
+  /**
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {SyntaxNode}
+   */
+  parseParagraph(ctx) {
+    const startLine = ctx.line;
+    let content = ``;
+    let consecutiveNewlines = 0;
+
+    while (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type !== `EOF`) {
+      if (ctx.tokens[ctx.pos].type === `NEWLINE`) {
+        consecutiveNewlines++;
+        ctx.line++;
+        ctx.pos++;
+
+        // Double newline ends paragraph
+        if (consecutiveNewlines >= 2) {
+          break;
+        }
+
+        // Single newline — peek at next line to see if it starts a block
+        if (this.isBlockStart(ctx)) {
+          break;
+        }
+
+        // Continuation line — add the newline to content
+        content += `\n`;
+        continue;
+      }
+
+      consecutiveNewlines = 0;
+      content += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+
+    // Trim trailing newlines from content
+    while (content.endsWith(`\n`)) {
+      content = content.slice(0, -1);
+    }
+
+    const node = new SyntaxNode(`paragraph`, content);
+    node.startLine = startLine;
+    node.endLine = ctx.line > startLine ? ctx.line - 1 : startLine;
+    return node;
+  }
+
+  // Lookahead helpers
+
+  /**
+   * Returns the token type at pos + offset, or 'EOF'.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @param {number} offset
+   * @returns {string}
+   */
+  lookType(ctx, offset) {
+    const i = ctx.pos + offset;
+    if (i >= ctx.tokens.length) return `EOF`;
+    return ctx.tokens[i].type;
+  }
+
+  /**
+   * Consumes tokens until NEWLINE or EOF and returns the collected text.
+   * The NEWLINE itself is consumed and ctx.line is incremented.
+   * @param {{tokens: DFAToken[], pos: number, line: number}} ctx
+   * @returns {string}
+   */
+  consumeToEndOfLine(ctx) {
+    let text = ``;
+    while (
+      ctx.pos < ctx.tokens.length &&
+      ctx.tokens[ctx.pos].type !== `NEWLINE` &&
+      ctx.tokens[ctx.pos].type !== `EOF`
+    ) {
+      text += ctx.tokens[ctx.pos].value;
+      ctx.pos++;
+    }
+    // Skip the newline
+    if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].type === `NEWLINE`) {
+      ctx.line++;
+      ctx.pos++;
+    }
+    return text;
+  }
+
+  /**
+   * Checks if the current position starts a block element.
+   * Used for paragraph continuation checks.
+   * @param {{tokens: DFAToken[], pos: number}} ctx
+   * @returns {boolean}
+   */
+  isBlockStart(ctx) {
+    if (ctx.pos >= ctx.tokens.length || ctx.tokens[ctx.pos].type === `EOF`) return true;
+    if (ctx.tokens[ctx.pos].type === `NEWLINE`) return true;
+
+    const t = ctx.tokens[ctx.pos].type;
+
+    // Heading
+    if (t === `HASH`) return true;
+
+    // Code fence (three or more backticks)
+    if (
+      t === `BACKTICK` &&
+      this.lookType(ctx, 1) === `BACKTICK` &&
+      this.lookType(ctx, 2) === `BACKTICK`
+    )
+      return true;
+
+    // Blockquote
+    if (t === `GT`) return true;
+
+    // List items
+    if (this.isUnorderedListStart(ctx)) return true;
+    if (this.isOrderedListStart(ctx)) return true;
+
+    // Horizontal rule
+    if (this.isHorizontalRule(ctx)) return true;
+
+    // HTML block
+    if (t === `LT` && (this.isHtmlBlockStart(ctx) || this.isHtmlImgTag(ctx))) return true;
+
+    // Table
+    if (t === `PIPE`) return true;
+
+    // Image
+    if (t === `BANG` && this.lookType(ctx, 1) === `LBRACKET`) return true;
+
+    // Linked image
+    if (t === `LBRACKET` && this.lookType(ctx, 1) === `BANG`) return true;
+
+    return false;
+  }
+}
+
+export const parser = new DFAParser();

@@ -28,8 +28,8 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('underscore emphasis _text_ renders as <em> when unfocused', async () => {
-  const markdown = 'This has _italic_ text\n\nSecond paragraph';
+test(`underscore emphasis _text_ renders as <em> when unfocused`, async () => {
+  const markdown = `This has _italic_ text\n\nSecond paragraph`;
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, markdown);
@@ -38,32 +38,32 @@ test('underscore emphasis _text_ renders as <em> when unfocused', async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node also renders formatted output.
-  const firstLine = page.locator('#editor .md-line').first();
+  const firstLine = page.locator(`#editor .md-line`).first();
   const focusedText = await firstLine.innerText();
-  expect(focusedText).toContain('italic');
-  expect(focusedText).not.toContain('_italic_');
+  expect(focusedText).toContain(`italic`);
+  expect(focusedText).not.toContain(`_italic_`);
 
   // The <em> element should be present even when the node is focused.
-  const emElement = firstLine.locator('em');
+  const emElement = firstLine.locator(`em`);
   await expect(emElement).toBeVisible();
-  expect(await emElement.textContent()).toBe('italic');
+  expect(await emElement.textContent()).toBe(`italic`);
 
   // Move focus to the second paragraph.
-  const secondLine = page.locator('#editor .md-line').nth(1);
+  const secondLine = page.locator(`#editor .md-line`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
   const unfocusedText = await firstLine.innerText();
-  expect(unfocusedText).toContain('italic');
-  expect(unfocusedText).not.toContain('_italic_');
+  expect(unfocusedText).toContain(`italic`);
+  expect(unfocusedText).not.toContain(`_italic_`);
 
-  const emElementUnfocused = firstLine.locator('em');
+  const emElementUnfocused = firstLine.locator(`em`);
   await expect(emElementUnfocused).toBeVisible();
-  expect(await emElementUnfocused.textContent()).toBe('italic');
+  expect(await emElementUnfocused.textContent()).toBe(`italic`);
 });
 
-test('double underscore __text__ renders as <em> when unfocused', async () => {
-  const markdown = 'This has __emphasis__ text\n\nSecond paragraph';
+test(`double underscore __text__ renders as <em> when unfocused`, async () => {
+  const markdown = `This has __emphasis__ text\n\nSecond paragraph`;
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, markdown);
@@ -72,33 +72,33 @@ test('double underscore __text__ renders as <em> when unfocused', async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node also renders formatted output.
-  const firstLine = page.locator('#editor .md-line').first();
+  const firstLine = page.locator(`#editor .md-line`).first();
   const focusedText = await firstLine.innerText();
-  expect(focusedText).toContain('emphasis');
-  expect(focusedText).not.toContain('__emphasis__');
+  expect(focusedText).toContain(`emphasis`);
+  expect(focusedText).not.toContain(`__emphasis__`);
 
   // __ is emphasis, not bold — should be <em>, not <strong>.
-  const emElement = firstLine.locator('em');
+  const emElement = firstLine.locator(`em`);
   await expect(emElement).toBeVisible();
-  expect(await emElement.textContent()).toBe('emphasis');
-  expect(await firstLine.locator('strong').count()).toBe(0);
+  expect(await emElement.textContent()).toBe(`emphasis`);
+  expect(await firstLine.locator(`strong`).count()).toBe(0);
 
-  const secondLine = page.locator('#editor .md-line').nth(1);
+  const secondLine = page.locator(`#editor .md-line`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
   const unfocusedText = await firstLine.innerText();
-  expect(unfocusedText).toContain('emphasis');
-  expect(unfocusedText).not.toContain('__emphasis__');
+  expect(unfocusedText).toContain(`emphasis`);
+  expect(unfocusedText).not.toContain(`__emphasis__`);
 
-  const emElementUnfocused = firstLine.locator('em');
+  const emElementUnfocused = firstLine.locator(`em`);
   await expect(emElementUnfocused).toBeVisible();
-  expect(await emElementUnfocused.textContent()).toBe('emphasis');
-  expect(await firstLine.locator('strong').count()).toBe(0);
+  expect(await emElementUnfocused.textContent()).toBe(`emphasis`);
+  expect(await firstLine.locator(`strong`).count()).toBe(0);
 });
 
-test('nested **_text_** renders as bold+italic when unfocused', async () => {
-  const markdown = 'This is **_both_** styled\n\nSecond paragraph';
+test(`nested **_text_** renders as bold+italic when unfocused`, async () => {
+  const markdown = `This is **_both_** styled\n\nSecond paragraph`;
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, markdown);
@@ -107,37 +107,37 @@ test('nested **_text_** renders as bold+italic when unfocused', async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node renders formatted output.
-  const firstLine = page.locator('#editor .md-line').first();
+  const firstLine = page.locator(`#editor .md-line`).first();
   const focusedText = await firstLine.innerText();
-  expect(focusedText).toContain('both');
-  expect(focusedText).not.toContain('**');
-  expect(focusedText).not.toContain('_both_');
+  expect(focusedText).toContain(`both`);
+  expect(focusedText).not.toContain(`**`);
+  expect(focusedText).not.toContain(`_both_`);
 
   // Outer <strong>, inner <em> — even when focused.
-  const strong = firstLine.locator('strong');
+  const strong = firstLine.locator(`strong`);
   await expect(strong).toBeVisible();
-  const em = strong.locator('em');
+  const em = strong.locator(`em`);
   await expect(em).toBeVisible();
-  expect(await em.textContent()).toBe('both');
+  expect(await em.textContent()).toBe(`both`);
 
-  const secondLine = page.locator('#editor .md-line').nth(1);
+  const secondLine = page.locator(`#editor .md-line`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
   const unfocusedText = await firstLine.innerText();
-  expect(unfocusedText).toContain('both');
-  expect(unfocusedText).not.toContain('**');
-  expect(unfocusedText).not.toContain('_both_');
+  expect(unfocusedText).toContain(`both`);
+  expect(unfocusedText).not.toContain(`**`);
+  expect(unfocusedText).not.toContain(`_both_`);
 
-  const strongUnfocused = firstLine.locator('strong');
+  const strongUnfocused = firstLine.locator(`strong`);
   await expect(strongUnfocused).toBeVisible();
-  const emUnfocused = strongUnfocused.locator('em');
+  const emUnfocused = strongUnfocused.locator(`em`);
   await expect(emUnfocused).toBeVisible();
-  expect(await emUnfocused.textContent()).toBe('both');
+  expect(await emUnfocused.textContent()).toBe(`both`);
 });
 
-test('nested _**text**_ renders as italic+bold when unfocused', async () => {
-  const markdown = 'This is _**both**_ styled\n\nSecond paragraph';
+test(`nested _**text**_ renders as italic+bold when unfocused`, async () => {
+  const markdown = `This is _**both**_ styled\n\nSecond paragraph`;
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, markdown);
@@ -146,31 +146,31 @@ test('nested _**text**_ renders as italic+bold when unfocused', async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node renders formatted output.
-  const firstLine = page.locator('#editor .md-line').first();
+  const firstLine = page.locator(`#editor .md-line`).first();
   const focusedText = await firstLine.innerText();
-  expect(focusedText).toContain('both');
-  expect(focusedText).not.toContain('**');
-  expect(focusedText).not.toContain('_');
+  expect(focusedText).toContain(`both`);
+  expect(focusedText).not.toContain(`**`);
+  expect(focusedText).not.toContain(`_`);
 
   // Outer <em>, inner <strong> — even when focused.
-  const em = firstLine.locator('em');
+  const em = firstLine.locator(`em`);
   await expect(em).toBeVisible();
-  const strong = em.locator('strong');
+  const strong = em.locator(`strong`);
   await expect(strong).toBeVisible();
-  expect(await strong.textContent()).toBe('both');
+  expect(await strong.textContent()).toBe(`both`);
 
-  const secondLine = page.locator('#editor .md-line').nth(1);
+  const secondLine = page.locator(`#editor .md-line`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
   const unfocusedText = await firstLine.innerText();
-  expect(unfocusedText).toContain('both');
-  expect(unfocusedText).not.toContain('**');
-  expect(unfocusedText).not.toContain('_');
+  expect(unfocusedText).toContain(`both`);
+  expect(unfocusedText).not.toContain(`**`);
+  expect(unfocusedText).not.toContain(`_`);
 
-  const emUnfocused = firstLine.locator('em');
+  const emUnfocused = firstLine.locator(`em`);
   await expect(emUnfocused).toBeVisible();
-  const strongUnfocused = emUnfocused.locator('strong');
+  const strongUnfocused = emUnfocused.locator(`strong`);
   await expect(strongUnfocused).toBeVisible();
-  expect(await strongUnfocused.textContent()).toBe('both');
+  expect(await strongUnfocused.textContent()).toBe(`both`);
 });

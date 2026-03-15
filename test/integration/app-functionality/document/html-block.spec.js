@@ -12,8 +12,8 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { clickInEditor, closeApp, launchApp, loadContent, projectRoot } from '../../test-utils.js';
 
-const fixturePath = path.join(projectRoot, 'test', 'fixtures', 'nested.md');
-const fixtureContent = fs.readFileSync(fixturePath, 'utf-8');
+const fixturePath = path.join(projectRoot, `test`, `fixtures`, `nested.md`);
+const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -32,43 +32,43 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test('ToC includes heading nested inside an HTML block', async () => {
+test(`ToC includes heading nested inside an HTML block`, async () => {
   // The TOC should list both h2 headings: the one inside the <div>
   // ("and this an h2") and the one outside ("with another heading").
-  const tocLinks = page.locator('#toc-sidebar .toc-link');
+  const tocLinks = page.locator(`#toc-sidebar .toc-link`);
 
   // There should be at least 3 TOC entries: the h1 title plus 2 h2s.
   await expect(tocLinks).toHaveCount(3);
 
   const texts = await tocLinks.allInnerTexts();
-  expect(texts).toContain('and this an h2');
-  expect(texts).toContain('with another heading');
+  expect(texts).toContain(`and this an h2`);
+  expect(texts).toContain(`with another heading`);
 });
 
-test('toolbar flags heading inside HTML block as h2', async () => {
+test(`toolbar flags heading inside HTML block as h2`, async () => {
   // Click on the heading inside the <div>.
-  const nestedHeading = page.locator('#editor .md-heading2', {
-    hasText: 'and this an h2',
+  const nestedHeading = page.locator(`#editor .md-heading2`, {
+    hasText: `and this an h2`,
   });
   await clickInEditor(page, nestedHeading);
   await page.waitForTimeout(200);
 
   // The h2 toolbar button should be active (not greyed out).
-  const h2Button = page.locator('[data-button-id="heading2"]');
+  const h2Button = page.locator(`[data-button-id="heading2"]`);
   await expect(h2Button).not.toBeDisabled();
   await expect(h2Button).toHaveClass(/active/);
 });
 
-test('toolbar flags heading after HTML block as h2', async () => {
+test(`toolbar flags heading after HTML block as h2`, async () => {
   // Click on the heading that comes after the </div>.
-  const trailingHeading = page.locator('#editor .md-heading2', {
-    hasText: 'with another heading',
+  const trailingHeading = page.locator(`#editor .md-heading2`, {
+    hasText: `with another heading`,
   });
   await clickInEditor(page, trailingHeading);
   await page.waitForTimeout(200);
 
   // The h2 toolbar button should be active (not greyed out).
-  const h2Button = page.locator('[data-button-id="heading2"]');
+  const h2Button = page.locator(`[data-button-id="heading2"]`);
   await expect(h2Button).not.toBeDisabled();
   await expect(h2Button).toHaveClass(/active/);
 });
