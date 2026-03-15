@@ -95,8 +95,10 @@ test(`editing style via modal updates the parse tree`, async () => {
   await loadContent(page, HTML_IMG);
   await setWritingView(page);
 
-  // Click the image to open the edit modal
-  const image = page.locator(`.md-line.md-image`);
+  // Click the image preview element directly — the event handler requires
+  // event.target to be the <img>, not the wrapper div.
+  const image = page.locator(`.md-image-preview`);
+  await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
   const dialog = page.locator(`.image-dialog`);
@@ -120,8 +122,10 @@ test(`clearing style converts HTML img to markdown syntax`, async () => {
   await loadContent(page, HTML_IMG);
   await setWritingView(page);
 
-  // Click the image to open the edit modal
-  const image = page.locator(`.md-line.md-image`);
+  // Click the image preview element directly — the event handler requires
+  // event.target to be the <img>, not the wrapper div.
+  const image = page.locator(`.md-image-preview`);
+  await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
   const dialog = page.locator(`.image-dialog`);
