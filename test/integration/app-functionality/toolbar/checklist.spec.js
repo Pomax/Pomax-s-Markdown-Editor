@@ -58,7 +58,7 @@ test(`writing view renders checkbox for checklist item`, async () => {
   await loadContent(page, `- [ ] My task\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
+  const checkbox = page.locator(`#editor .md-list-item input[type="checkbox"]`);
   await expect(checkbox).toBeVisible();
   await expect(checkbox).not.toBeChecked();
 });
@@ -67,7 +67,7 @@ test(`writing view renders checked checkbox for checked checklist item`, async (
   await loadContent(page, `- [x] Done task\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
+  const checkbox = page.locator(`#editor .md-list-item input[type="checkbox"]`);
   await expect(checkbox).toBeVisible();
   await expect(checkbox).toBeChecked();
 });
@@ -186,7 +186,7 @@ test(`clicking checkbox in writing view toggles checked state`, async () => {
   await loadContent(page, `- [ ] Toggle me\n`);
   await setWritingView(page);
 
-  const checkbox = page.locator(`#editor .md-checklist-checkbox`);
+  const checkbox = page.locator(`#editor .md-list-item input[type="checkbox"]`);
   await expect(checkbox).not.toBeChecked();
 
   // Use mousedown guard approach: get bounding box and use mouse steps
@@ -205,7 +205,7 @@ test(`clicking checkbox in writing view toggles checked state`, async () => {
   await page.waitForTimeout(200);
 
   // Verify checked state changed
-  const checkboxAfter = page.locator(`#editor .md-checklist-checkbox`);
+  const checkboxAfter = page.locator(`#editor .md-list-item input[type="checkbox"]`);
   await expect(checkboxAfter).toBeChecked();
 
   // Verify markdown roundtrip

@@ -53,8 +53,8 @@ These are structural, state, or styling classes that will remain as classes rega
 
 ### Widget/wrapper elements
 
-- `md-checklist-checkbox` — the checkbox input element
-- `md-checklist-checkbox-wrapper` — wrapper around the checkbox
+- ~~`md-checklist-checkbox`~~ — removed (use `.md-list-item input[type="checkbox"]`)
+- ~~`md-checklist-checkbox-wrapper`~~ — removed (use `.md-list-item span[contenteditable="false"]`)
 - `md-image-preview` — the rendered `<img>` element
 - `md-html-container` — wrapper div for HTML block rendering
 - `md-details-triangle` — clickable ▶/▼ disclosure arrow

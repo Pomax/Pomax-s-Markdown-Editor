@@ -459,7 +459,6 @@ export class WritingRenderer {
 
       checkbox = document.createElement(`input`);
       checkbox.type = `checkbox`;
-      checkbox.className = `md-checklist-checkbox`;
       if (attrs.checked) {
         checkbox.setAttribute(`checked`, `checked`);
       }
@@ -507,7 +506,6 @@ export class WritingRenderer {
     if (checkbox) {
       const wrapper = document.createElement(`span`);
       wrapper.contentEditable = `false`;
-      wrapper.className = `md-checklist-checkbox-wrapper`;
       wrapper.appendChild(checkbox);
       element.appendChild(wrapper);
     }

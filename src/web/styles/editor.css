@@ -236,7 +236,7 @@
 }
 
 /* ========== Checklist ========== */
-.md-checklist-checkbox-wrapper {
+.md-list-item span[contenteditable="false"] {
     position: absolute;
     left: -1.4em;
     top: 50%;
@@ -244,7 +244,7 @@
     user-select: none;
 }
 
-.md-checklist-checkbox {
+.md-list-item input[type="checkbox"] {
     cursor: pointer;
     margin: 0;
 }
