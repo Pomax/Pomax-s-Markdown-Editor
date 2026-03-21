@@ -62,7 +62,7 @@ test(`pressing Enter after summary text and typing " a a" preserves leading spac
       const details = document.querySelector(`#editor .md-details`);
       if (!details) return null;
       // The new paragraph is the one that is currently focused.
-      const para = details.querySelector(`.md-paragraph.md-focused`);
+      const para = details.querySelector(`.md-paragraph[data-has-focus]`);
       return para ? para.textContent : null;
     });
 

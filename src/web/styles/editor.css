@@ -331,12 +331,12 @@
     display: none;
 }
 
-.writing-view .md-focused .md-syntax {
+.writing-view [data-has-focus] .md-syntax {
     display: inline;
     color: var(--color-syntax);
 }
 
-.writing-view [data-node-id].md-focused {
+.writing-view [data-node-id][data-has-focus] {
     background-color: rgba(13, 110, 253, 0.05);
     border-radius: 4px;
     margin-left: -4px;
@@ -347,7 +347,7 @@
 
 /* List items set their own margin-left via inline styles; the generic
    focused-line offsets must not interfere. */
-.writing-view .md-list-item.md-focused {
+.writing-view .md-list-item[data-has-focus] {
     margin-left: unset;
     padding-left: unset;
     margin-right: unset;

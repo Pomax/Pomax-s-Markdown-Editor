@@ -267,7 +267,7 @@ export class WritingRenderer {
     element.dataset.nodeId = node.id;
 
     if (isFocused) {
-      element.classList.add(`md-focused`);
+      element.dataset.hasFocus = ``;
     }
 
     switch (node.type) {

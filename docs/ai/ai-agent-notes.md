@@ -381,4 +381,4 @@ content, set view mode) rather than depending on prior tests. Module-level
   `.md-details-body` classes.
 - Collapse is achieved via `.md-details:not(.md-details--open) .md-details-body { display: none; }`.
 - Checklist items use `.md-checklist-item` (on the line) and `.md-checklist-checkbox` (the `<input>` element). They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
-- `.writing-view .md-list-item.md-focused` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.
+- `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

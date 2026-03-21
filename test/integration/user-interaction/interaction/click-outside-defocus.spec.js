@@ -78,16 +78,16 @@ test(`clicking outside the editor preserves active-node highlight in writing mod
   expect(focusedText).not.toContain(`#`);
   expect(focusedText).toContain(`My Heading`);
 
-  // The heading should have the md-focused class.
-  await expect(heading).toHaveClass(/md-focused/);
+  // The heading should have the data-has-focus attribute.
+  await expect(heading).toHaveAttribute(`data-has-focus`, ``);
 
   // Blur the editor (simulates clicking the editor-container padding
   // or switching to another app).
   await defocusEditor(page);
 
-  // The active node should retain its md-focused class — blur does
+  // The active node should retain its data-has-focus attribute — blur does
   // not clear tree state or re-render.
-  const focusedNodes = page.locator(`#editor .md-focused`);
+  const focusedNodes = page.locator(`#editor [data-has-focus]`);
   expect(await focusedNodes.count()).toBe(1);
 
   // The heading should still show its formatted text.
