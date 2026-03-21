@@ -46,10 +46,10 @@ These are structural, state, or styling classes that will remain as classes rega
 
 - `md-code-content` — the code text area
 - `md-code-fence` — the backtick fence lines
-- `md-code-language-tag` — language label UI element
-- `md-code-language-tag--top` — top position variant
-- `md-code-language-tag--bottom` — bottom position variant
-- `md-code-language-tag--empty` — placeholder when no language is set
+- ~~`md-code-language-tag`~~ — replaced by `[data-lang]` attribute
+- ~~`md-code-language-tag--top`~~ — replaced by `[data-lang].top`
+- ~~`md-code-language-tag--bottom`~~ — replaced by `[data-lang].bottom`
+- ~~`md-code-language-tag--empty`~~ — replaced by `[data-lang].empty`
 
 ### Widget/wrapper elements
 

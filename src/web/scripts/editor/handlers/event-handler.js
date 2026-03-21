@@ -63,7 +63,7 @@ export class EventHandler {
       event.target instanceof HTMLElement && event.target.tagName === `A` ? event.target : null;
 
     this.mouseDownLanguageTag =
-      event.target instanceof HTMLElement && event.target.classList.contains(`md-code-language-tag`)
+      event.target instanceof HTMLElement && event.target.hasAttribute(`data-lang`)
         ? event.target
         : null;
   }
@@ -123,7 +123,7 @@ export class EventHandler {
     if (this.editor.viewMode === `writing`) {
       const langTag =
         (event.target instanceof HTMLElement &&
-          event.target.classList.contains(`md-code-language-tag`) &&
+          event.target.hasAttribute(`data-lang`) &&
           event.target) ||
         this.mouseDownLanguageTag;
       this.mouseDownLanguageTag = null;

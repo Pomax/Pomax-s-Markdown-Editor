@@ -383,13 +383,15 @@ export class WritingRenderer {
     // selectionchange → re-render → destroy the span before click
     // arrives, and would overwrite the user's cursor offset.
     const tagTop = document.createElement(`span`);
-    tagTop.className = `md-code-language-tag md-code-language-tag--top`;
+    tagTop.className = `top`;
+    tagTop.dataset.lang = ``;
     tagTop.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
     });
     const tagBottom = document.createElement(`span`);
-    tagBottom.className = `md-code-language-tag md-code-language-tag--bottom`;
+    tagBottom.className = `bottom`;
+    tagBottom.dataset.lang = ``;
     tagBottom.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -400,8 +402,8 @@ export class WritingRenderer {
     } else {
       tagTop.textContent = `lang`;
       tagBottom.textContent = `lang`;
-      tagTop.classList.add(`md-code-language-tag--empty`);
-      tagBottom.classList.add(`md-code-language-tag--empty`);
+      tagTop.classList.add(`empty`);
+      tagBottom.classList.add(`empty`);
     }
 
     const codeContent = document.createElement(`pre`);

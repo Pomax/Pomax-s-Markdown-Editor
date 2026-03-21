@@ -66,6 +66,10 @@ this **before** doing any work.
 - **Never** start modifying files without asking whether what you thought
   up makes sense or whether assumptions made during the reasoning step
   missed anything.
+- **Never** treat a response as plan approval unless it **explicitly**
+  approves the plan (e.g. "yes", "looks good", "go ahead"). If the user's
+  reply addresses something else (corrects a remark, asks a question, makes
+  a comment), that is **not** approval — re-ask or wait.
 - **Never** issue tool calls (file edits, terminal commands, or any other
   action) in the same response as a question. Ask the question, stop, and
   wait for the user's answer before taking any action. A question followed

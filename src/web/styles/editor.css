@@ -138,12 +138,12 @@
     overflow-x: auto;
     position: relative;
 
-    &.tall .md-code-language-tag--bottom {
+    &.tall [data-lang].bottom {
         display: block;
     }
 }
 
-.writing-view .md-code-language-tag {
+.writing-view [data-lang] {
     position: absolute;
     right: 0.5em;
     font-family: var(--font-family-mono);
@@ -157,26 +157,26 @@
     z-index: 1;
 }
 
-.writing-view .md-code-language-tag:hover {
+.writing-view [data-lang]:hover {
     opacity: 1;
     background-color: var(--color-bg-secondary);
 }
 
-.writing-view .md-code-language-tag--top {
+.writing-view [data-lang].top {
     top: 0.25em;
 }
 
-.writing-view .md-code-language-tag--bottom {
+.writing-view [data-lang].bottom {
     bottom: 0.25em;
     display: none;
 }
 
-.writing-view .md-code-language-tag--empty {
+.writing-view [data-lang].empty {
     opacity: 0.35;
     font-style: italic;
 }
 
-.writing-view .md-code-language-tag--empty:hover {
+.writing-view [data-lang].empty:hover {
     opacity: 0.8;
 }
 

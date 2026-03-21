@@ -287,7 +287,7 @@ WYSIWYG-style display:
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
 - Reveals raw markdown syntax on element focus (click to edit)
 - Supports click-to-focus on non-text elements like images and horizontal rules
-- **Code-block language tags**: renders two `<span class="md-code-language-tag">` elements (top-right and bottom-right) showing the language (or a dim "lang" placeholder when empty). Bottom tag only visible when the block has >= 20 lines (`.tall` class). Mousedown guard prevents caret movement; click opens the `CodeLanguageModal` via `EventHandler._openCodeLanguageModal()`.
+- **Code-block language tags**: renders two `<span data-lang>` elements (top-right and bottom-right) showing the language (or a dim "lang" placeholder when empty). Bottom tag only visible when the block has >= 20 lines (`.tall` class). Mousedown guard prevents caret movement; click opens the `CodeLanguageModal` via `EventHandler._openCodeLanguageModal()`.
 
 ### UndoManager
 
@@ -339,7 +339,7 @@ Abstract base class for modal dialogs (`modal/base-modal.js`):
 
 Modal for editing a code block's language tag (`code-language/code-language-modal.js`):
 - Single text input pre-filled with the current language (or empty for bare code blocks)
-- Opened by `EventHandler._openCodeLanguageModal()` when the user clicks a `.md-code-language-tag` span in writing view
+- Opened by `EventHandler._openCodeLanguageModal()` when the user clicks a `[data-lang]` span in writing view
 - Styled in `code-language.css`
 - The caller saves and restores both `treeCursor` and `treeRange` around the dialog open/close to prevent the focus-steal selectionchange from corrupting editor state
 
