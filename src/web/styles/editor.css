@@ -180,12 +180,6 @@
     opacity: 0.8;
 }
 
-.md-code-fence {
-    color: var(--color-syntax);
-    font-family: var(--font-family-mono);
-    font-size: 0.9em;
-}
-
 .md-code-content {
     font-family: var(--font-family-mono);
     font-size: 0.9em;

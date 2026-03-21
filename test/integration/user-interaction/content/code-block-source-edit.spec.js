@@ -103,14 +103,6 @@ test.describe(`Source-view code-block rendering`, () => {
     // Closing fence
     expect(text?.trim().endsWith(`\`\`\``)).toBe(true);
   });
-
-  test(`no separate md-code-fence divs in source view`, async () => {
-    await loadContent(page, `\`\`\`py\nx = 1\n\`\`\``);
-    await setSourceView(page);
-
-    const fenceDivs = page.locator(`#editor .md-code-fence`);
-    await expect(fenceDivs).toHaveCount(0);
-  });
 });
 
 test.describe(`Editing the language tag`, () => {

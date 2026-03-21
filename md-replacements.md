@@ -45,7 +45,7 @@ These are structural, state, or styling classes that will remain as classes rega
 ### Code block internals
 
 - `md-code-content` — the code text area
-- `md-code-fence` — the backtick fence lines
+- ~~`md-code-fence`~~ — removed (dead CSS, never applied)
 - ~~`md-code-language-tag`~~ — replaced by `[data-lang]` attribute
 - ~~`md-code-language-tag--top`~~ — replaced by `[data-lang].top`
 - ~~`md-code-language-tag--bottom`~~ — replaced by `[data-lang].bottom`
