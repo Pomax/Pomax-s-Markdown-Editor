@@ -44,7 +44,7 @@ test(`switching to writing mode hides heading syntax on unfocused headings`, asy
   await setSourceView(page);
 
   // Sanity-check: in source view the first line should contain the `#` prefix.
-  const firstLineSource = page.locator(`#editor .md-line`).first();
+  const firstLineSource = page.locator(`#editor [data-node-id]`).first();
   const sourceText = await firstLineSource.innerText();
   expect(sourceText).toContain(`# Pomax's Markdown Editor`);
 
@@ -52,13 +52,13 @@ test(`switching to writing mode hides heading syntax on unfocused headings`, asy
   // In WYSIWYG mode ALL nodes render formatted output — even the active one.
   await setWritingView(page);
 
-  const firstLineFocusedOnH1 = page.locator(`#editor .md-line`).first();
+  const firstLineFocusedOnH1 = page.locator(`#editor [data-node-id]`).first();
   const focusedOnH1Text = await firstLineFocusedOnH1.innerText();
   expect(focusedOnH1Text).not.toContain(`#`);
   expect(focusedOnH1Text).toContain(`Pomax's Markdown Editor`);
 
   // The second line (a paragraph) should NOT show any source syntax.
-  const secondLineFocused = page.locator(`#editor .md-line`).nth(1);
+  const secondLineFocused = page.locator(`#editor [data-node-id]`).nth(1);
   const secondLineFocusedText = await secondLineFocused.innerText();
   expect(secondLineFocusedText).not.toContain(`#`);
 
@@ -66,7 +66,7 @@ test(`switching to writing mode hides heading syntax on unfocused headings`, asy
   await defocusEditor(page);
 
   // The first line (h1) should still NOT contain the `#` prefix.
-  const firstLineAfterClick = page.locator(`#editor .md-line`).first();
+  const firstLineAfterClick = page.locator(`#editor [data-node-id]`).first();
   const afterClickText = await firstLineAfterClick.innerText();
 
   expect(afterClickText).not.toContain(`#`);
@@ -75,7 +75,7 @@ test(`switching to writing mode hides heading syntax on unfocused headings`, asy
   // Switch back to source view — all headings must show their `#` prefixes.
   await setSourceView(page);
 
-  const firstLineBackToSource = page.locator(`#editor .md-line`).first();
+  const firstLineBackToSource = page.locator(`#editor [data-node-id]`).first();
   const backToSourceText = await firstLineBackToSource.innerText();
 
   expect(backToSourceText).toContain(`# Pomax's Markdown Editor`);

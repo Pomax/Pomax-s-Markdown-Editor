@@ -38,7 +38,7 @@ test(`underscore emphasis _text_ renders as <em> when unfocused`, async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node also renders formatted output.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await firstLine.innerText();
   expect(focusedText).toContain(`italic`);
   expect(focusedText).not.toContain(`_italic_`);
@@ -49,7 +49,7 @@ test(`underscore emphasis _text_ renders as <em> when unfocused`, async () => {
   expect(await emElement.textContent()).toBe(`italic`);
 
   // Move focus to the second paragraph.
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
@@ -72,7 +72,7 @@ test(`double underscore __text__ renders as <em> when unfocused`, async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node also renders formatted output.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await firstLine.innerText();
   expect(focusedText).toContain(`emphasis`);
   expect(focusedText).not.toContain(`__emphasis__`);
@@ -83,7 +83,7 @@ test(`double underscore __text__ renders as <em> when unfocused`, async () => {
   expect(await emElement.textContent()).toBe(`emphasis`);
   expect(await firstLine.locator(`strong`).count()).toBe(0);
 
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
@@ -107,7 +107,7 @@ test(`nested **_text_** renders as bold+italic when unfocused`, async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node renders formatted output.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await firstLine.innerText();
   expect(focusedText).toContain(`both`);
   expect(focusedText).not.toContain(`**`);
@@ -120,7 +120,7 @@ test(`nested **_text_** renders as bold+italic when unfocused`, async () => {
   await expect(em).toBeVisible();
   expect(await em.textContent()).toBe(`both`);
 
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
@@ -146,7 +146,7 @@ test(`nested _**text**_ renders as italic+bold when unfocused`, async () => {
   await page.waitForTimeout(200);
 
   // In WYSIWYG mode the focused node renders formatted output.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await firstLine.innerText();
   expect(focusedText).toContain(`both`);
   expect(focusedText).not.toContain(`**`);
@@ -159,7 +159,7 @@ test(`nested _**text**_ renders as italic+bold when unfocused`, async () => {
   await expect(strong).toBeVisible();
   expect(await strong.textContent()).toBe(`both`);
 
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 

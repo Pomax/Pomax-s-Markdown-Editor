@@ -33,6 +33,10 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await page.goto(`about:blank`);
+});
+
 /**
  * Reads the lorem ipsum fixture file.
  * @returns {Promise<string>}
@@ -43,7 +47,7 @@ async function loadLoremFixture() {
 
 test(`placing the cursor on an off-screen node scrolls it into view`, async ({ page }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Click into the editor to initialise it
   const editor = page.locator(`#editor`);
@@ -52,7 +56,7 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
   // Load the lorem fixture so most of the document is off-screen
   const content = await loadLoremFixture();
   await page.evaluate((md) => window.editorAPI?.setContent(md), content);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Scroll to the very top to ensure the target line is off-screen
   await page.evaluate(() => {
@@ -62,7 +66,7 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
   await page.waitForTimeout(100);
 
   // Verify the target line is NOT visible before we place the cursor
-  const targetLocator = page.locator(`#editor .md-line`, {
+  const targetLocator = page.locator(`#editor [data-node-id]`, {
     hasText: TARGET_TEXT,
   });
   const beforeRect =
@@ -83,7 +87,7 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
   // Programmatically place the cursor on the target node, simulating
   // what session restore does.
   await page.evaluate((target) => {
-    const lines = document.querySelectorAll(`#editor .md-line`);
+    const lines = document.querySelectorAll(`#editor [data-node-id]`);
     for (const line of lines) {
       if (line.textContent?.includes(target)) {
         const nodeId = line.getAttribute(`data-node-id`);
@@ -115,7 +119,7 @@ test(`placing the cursor on an off-screen node in source view scrolls it into vi
   page,
 }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Click into the editor, switch to source view
   const editor = page.locator(`#editor`);
@@ -131,7 +135,7 @@ test(`placing the cursor on an off-screen node in source view scrolls it into vi
   // Load the lorem fixture
   const content = await loadLoremFixture();
   await page.evaluate((md) => window.editorAPI?.setContent(md), content);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Scroll to the very top
   await page.evaluate(() => {
@@ -142,7 +146,7 @@ test(`placing the cursor on an off-screen node in source view scrolls it into vi
 
   // Programmatically place cursor on the target node
   await page.evaluate((target) => {
-    const lines = document.querySelectorAll(`#editor .md-line`);
+    const lines = document.querySelectorAll(`#editor [data-node-id]`);
     for (const line of lines) {
       if (line.textContent?.includes(target)) {
         const nodeId = line.getAttribute(`data-node-id`);
@@ -158,7 +162,7 @@ test(`placing the cursor on an off-screen node in source view scrolls it into vi
   await page.waitForTimeout(200);
 
   // The target should now be visible
-  const targetLocator = page.locator(`#editor .md-line`, { hasText: TARGET_TEXT });
+  const targetLocator = page.locator(`#editor [data-node-id]`, { hasText: TARGET_TEXT });
   const afterRect =
     /** @type {NonNullable<Awaited<ReturnType<import('@playwright/test').Locator['boundingBox']>>>} */ (
       await targetLocator.boundingBox()

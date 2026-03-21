@@ -17,7 +17,7 @@ test(`images in a loaded markdown file resolve and load successfully`, async () 
   const { electronApp, page } = await launchApp([testFile]);
 
   // Wait for the editor to finish rendering the loaded document.
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // The app defaults to writing mode, so unfocused image nodes render
   // as <img class="md-image-preview"> elements.  Wait for at least one

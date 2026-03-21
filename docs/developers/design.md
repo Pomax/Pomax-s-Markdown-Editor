@@ -502,8 +502,8 @@ Use CSS custom properties for theming:
 ### BEM-like Naming
 
 ```css
-.md-line { }              /* Block */
-.md-line.md-heading1 { }  /* Block with modifier */
+[data-node-id] { }        /* Block (any node with a node ID) */
+.md-heading1 { }          /* Block type modifier */
 .md-heading-marker { }    /* Element within context */
 ```
 

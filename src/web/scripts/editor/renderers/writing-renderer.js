@@ -98,7 +98,7 @@ export class WritingRenderer {
     // If empty, add a placeholder paragraph
     if (syntaxTree.children.length === 0) {
       const placeholder = document.createElement(`div`);
-      placeholder.className = `md-line md-paragraph writing-placeholder`;
+      placeholder.className = `md-paragraph writing-placeholder`;
       placeholder.appendChild(document.createElement(`br`));
       fragment.appendChild(placeholder);
     }
@@ -222,7 +222,7 @@ export class WritingRenderer {
 
     if (needsPhantom && !existing) {
       const phantom = document.createElement(`div`);
-      phantom.className = `md-line md-paragraph md-phantom-paragraph`;
+      phantom.className = `md-paragraph md-phantom-paragraph`;
       phantom.setAttribute(`contenteditable`, `true`);
       phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
@@ -263,7 +263,7 @@ export class WritingRenderer {
    */
   renderNode(node, isFocused, visualNumber) {
     const element = document.createElement(`div`);
-    element.className = `md-line md-${node.type}`;
+    element.className = `md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     if (isFocused) {

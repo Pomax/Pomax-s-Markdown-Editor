@@ -100,7 +100,7 @@ export async function loadContent(page, fixtureContent) {
     window.editorAPI?.setContent(content);
   }, fixtureContent);
   // Wait for the editor to re-render.
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 }
 
 /**

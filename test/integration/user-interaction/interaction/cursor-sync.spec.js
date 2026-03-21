@@ -141,7 +141,7 @@ test(`cursors sync after backspace merges paragraphs`, async () => {
   await page.waitForTimeout(100);
 
   // Click the second line, go to start, backspace to merge
-  const secondLine = editor.locator(`.md-line:nth-child(2)`);
+  const secondLine = editor.locator(`[data-node-id]:nth-child(2)`);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(100);
   await page.keyboard.press(`Home`);

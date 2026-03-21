@@ -63,7 +63,7 @@ test(`clicking toggle switches editor to source mode`, async () => {
   await expect(editor).toHaveAttribute(`data-view-mode`, `source`);
 
   // In source mode, headings always show their `#` syntax.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`# Pomax's Markdown Editor`);
 });
@@ -86,7 +86,7 @@ test(`clicking toggle again switches editor back to writing mode`, async () => {
   await defocusEditor(page);
 
   // In writing mode, unfocused headings hide their `#` syntax.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).not.toContain(`#`);
   expect(text).toContain(`Pomax's Markdown Editor`);

@@ -49,7 +49,7 @@ test(`loading content gives the editor DOM focus so defocus works without a prio
   expect(hasFocus, `editor should have DOM focus after loadContent`).toBe(true);
 
   // In WYSIWYG mode the heading never shows the raw `#` prefix.
-  const heading = page.locator(`#editor .md-line`).first();
+  const heading = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await heading.innerText();
   expect(focusedText).not.toContain(`#`);
   expect(focusedText).toContain(`My Heading`);
@@ -58,7 +58,7 @@ test(`loading content gives the editor DOM focus so defocus works without a prio
   // had real focus.  The heading should still show formatted text.
   await defocusEditor(page);
 
-  const defocusedText = await page.locator(`#editor .md-line`).first().innerText();
+  const defocusedText = await page.locator(`#editor [data-node-id]`).first().innerText();
   expect(defocusedText).not.toContain(`#`);
   expect(defocusedText).toContain(`My Heading`);
 });
@@ -69,7 +69,7 @@ test(`clicking outside the editor preserves active-node highlight in writing mod
   await setWritingView(page);
 
   // Click on the heading to make it the active node.
-  const heading = page.locator(`#editor .md-line`).first();
+  const heading = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, heading);
   await page.waitForTimeout(200);
 
@@ -91,7 +91,7 @@ test(`clicking outside the editor preserves active-node highlight in writing mod
   expect(await focusedNodes.count()).toBe(1);
 
   // The heading should still show its formatted text.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const defocusedText = await firstLine.innerText();
   expect(defocusedText).not.toContain(`#`);
   expect(defocusedText).toContain(`My Heading`);
@@ -104,13 +104,13 @@ test(`clicking back into the editor after defocus restores cursor`, async () => 
   await defocusEditor(page);
 
   // Click on the paragraph (second line) to re-focus.
-  const paragraph = page.locator(`#editor .md-line`).nth(1);
+  const paragraph = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, paragraph);
   await page.waitForTimeout(200);
 
   // The paragraph should now be the active node.  The heading (first
   // line) should still be unfocused and hide its `#` prefix.
-  const headingText = await page.locator(`#editor .md-line`).first().innerText();
+  const headingText = await page.locator(`#editor [data-node-id]`).first().innerText();
   expect(headingText).not.toContain(`#`);
   expect(headingText).toContain(`My Heading`);
 
@@ -125,7 +125,7 @@ test(`defocus is a no-op in source view`, async () => {
   await setSourceView(page);
 
   // Click the heading to place the cursor there.
-  const heading = page.locator(`#editor .md-line`).first();
+  const heading = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, heading);
   await page.waitForTimeout(200);
 
@@ -137,6 +137,6 @@ test(`defocus is a no-op in source view`, async () => {
   await defocusEditor(page);
 
   // The `#` should still be visible — source view never hides syntax.
-  const afterText = await page.locator(`#editor .md-line`).first().innerText();
+  const afterText = await page.locator(`#editor [data-node-id]`).first().innerText();
   expect(afterText).toContain(`# My Heading`);
 });

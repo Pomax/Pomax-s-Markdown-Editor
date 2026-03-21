@@ -30,7 +30,7 @@ test(`single click on a link in an unfocused paragraph opens the edit modal`, as
   await loadContent(page, CONTENT);
 
   // Click the first paragraph so the second one is definitely unfocused.
-  const firstParagraph = page.locator(`.md-line.md-paragraph`).first();
+  const firstParagraph = page.locator(`[data-node-id].md-paragraph`).first();
   await clickInEditor(page, firstParagraph);
 
   // Verify the first paragraph is now the focused node.
@@ -46,7 +46,7 @@ test(`single click on a link in an unfocused paragraph opens the edit modal`, as
   // delay to allow the browser to fire selectionchange after mousedown,
   // which is what causes the bug in the real app (the editor re-renders on
   // selectionchange, destroying the <a> element before click fires).
-  const link = page.locator(`.md-line.md-paragraph >> nth=1 >> a`);
+  const link = page.locator(`[data-node-id].md-paragraph >> nth=1 >> a`);
   const box = await link.boundingBox();
   if (!box) throw new Error(`link bounding box not found`);
   const cx = box.x + box.width / 2;

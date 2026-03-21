@@ -34,7 +34,7 @@ test(`typing ![alt](src) in writing view renders an inline image`, async () => {
   await loadContent(page, `hello`);
 
   // Click on the paragraph to focus it
-  const line = page.locator(`#editor .md-line`, { hasText: `hello` });
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `hello` });
   await line.click();
 
   // Move to end of line and type image syntax
@@ -42,7 +42,7 @@ test(`typing ![alt](src) in writing view renders an inline image`, async () => {
   await page.keyboard.type(` ![photo](./test.png)`);
 
   // The node should stay a paragraph (not become a block-level image)
-  const paragraph = page.locator(`#editor .md-line.md-paragraph`);
+  const paragraph = page.locator(`#editor [data-node-id].md-paragraph`);
   await expect(paragraph).toBeVisible();
 
   // An inline <img> should be rendered inside the paragraph
@@ -56,14 +56,14 @@ test(`typing standalone ![alt](src) suppresses block-level image conversion`, as
   await loadContent(page, ``);
 
   // Click in the editor to focus
-  const line = page.locator(`#editor .md-line`).first();
+  const line = page.locator(`#editor [data-node-id]`).first();
   await line.click();
 
   // Type a full image syntax as the only content
   await page.keyboard.type(`![my image](picture.png)`);
 
   // Should stay a paragraph, not become a block-level image node
-  const paragraph = page.locator(`#editor .md-line.md-paragraph`);
+  const paragraph = page.locator(`#editor [data-node-id].md-paragraph`);
   await expect(paragraph).toBeVisible();
 
   // Should contain an inline <img>
@@ -76,19 +76,19 @@ test(`image syntax round-trips through source view correctly`, async () => {
   await loadContent(page, `before ![alt](img.png) after`);
 
   // In writing view, the paragraph should contain an inline image
-  const paragraph = page.locator(`#editor .md-line.md-paragraph`);
+  const paragraph = page.locator(`#editor [data-node-id].md-paragraph`);
   await expect(paragraph).toBeVisible();
   const img = paragraph.locator(`img.md-image-preview`);
   await expect(img).toBeVisible();
 
   // Switch to source view — should show raw markdown
   await setSourceView(page);
-  const srcLine = page.locator(`#editor .md-line`, { hasText: `![alt](img.png)` });
+  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](img.png)` });
   await expect(srcLine).toBeVisible();
 
   // Switch back to writing view — image should still render
   await setWritingView(page);
-  const imgAfter = page.locator(`#editor .md-line.md-paragraph img.md-image-preview`);
+  const imgAfter = page.locator(`#editor [data-node-id].md-paragraph img.md-image-preview`);
   await expect(imgAfter).toBeVisible();
 });
 
@@ -96,32 +96,32 @@ test(`removing ! in source view converts inline image to link`, async () => {
   // Type the image syntax so it stays a paragraph (block conversion suppressed)
   await setWritingView(page);
   await loadContent(page, ``);
-  const line = page.locator(`#editor .md-line`).first();
+  const line = page.locator(`#editor [data-node-id]`).first();
   await line.click();
   await page.keyboard.type(`![alt](url)`);
 
   // Verify it's still a paragraph with an inline image
-  const paragraph = page.locator(`#editor .md-line.md-paragraph`);
+  const paragraph = page.locator(`#editor [data-node-id].md-paragraph`);
   await expect(paragraph).toBeVisible();
 
   // Switch to source view
   await setSourceView(page);
 
   // Click on the line and move to beginning, then delete the '!'
-  const srcLine = page.locator(`#editor .md-line`, { hasText: `![alt](url)` });
+  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](url)` });
   await expect(srcLine).toBeVisible();
   await srcLine.click();
   await page.keyboard.press(`Home`);
   await page.keyboard.press(`Delete`);
 
   // Now the line should be [alt](url) — a link
-  const updated = page.locator(`#editor .md-line`, { hasText: `[alt](url)` });
+  const updated = page.locator(`#editor [data-node-id]`, { hasText: `[alt](url)` });
   await expect(updated).toBeVisible();
 
   // Switch to writing view — should render as a link, not an image
   await setWritingView(page);
-  const link = page.locator(`#editor .md-line.md-paragraph a`);
+  const link = page.locator(`#editor [data-node-id].md-paragraph a`);
   await expect(link).toBeVisible();
-  const noImg = page.locator(`#editor .md-line.md-paragraph img.md-image-preview`);
+  const noImg = page.locator(`#editor [data-node-id].md-paragraph img.md-image-preview`);
   await expect(noImg).toHaveCount(0);
 });

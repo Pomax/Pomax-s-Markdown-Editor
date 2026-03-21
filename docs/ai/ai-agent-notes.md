@@ -53,9 +53,7 @@ care about instead.
 
 ### Locator specificity
 
-Selectors like `locator('#editor .md-line', { hasText: 'foo' })` can match
-**parent** container elements whose descendant text includes `'foo'`. Use
-pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
+Selectors like `locator('#editor [data-node-id]', { hasText: 'foo' })` can match **parent** container elements whose descendant text includes `'foo'`. Use pseudo-selectors (`:has()`, `:not()`, `:scope >`) or the direct child combinator (`#editor > [data-node-id]`) to be precise.
 
 ## Architecture Quick Reference
 
@@ -171,22 +169,21 @@ html-block (type: 'html-block', tagName: 'details')
   tag (e.g., `<summary>text</summary>`) and is rendered without markdown
   block-level syntax in source view (no `#`, `>`, etc. prefix — just the
   raw tag + text).
-- In **source view**, each line is rendered independently; the opening tag,
-  child lines, and closing tag are separate `.md-line` elements.
+- In **source view**, each line is rendered independently; the opening tag, child lines, and closing tag are separate `[data-node-id]` elements.
 - In **writing view**, the `<details>` block is rendered as a **fake
   disclosure widget** using `<div>` elements (never a real `<details>`
   element — the native element caused too many quirks):
 
   ```
-  div.md-line.md-html-block
+  div.md-html-block[data-node-id]
     div.md-html-container.md-details(.md-details--open)
       div.md-details-summary
         span.md-details-triangle   ← clickable ▶/▼
         div.md-details-summary-content
-          div.md-line.md-paragraph
+          div.md-paragraph[data-node-id]
       div.md-details-body
-        div.md-line.md-heading2
-        div.md-line.md-paragraph
+        div.md-heading2[data-node-id]
+        div.md-paragraph[data-node-id]
   ```
 
 - Collapse/expand state is stored as `node.attributes.detailsOpen`
@@ -339,7 +336,7 @@ Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably f
 ```js
 async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
   // 1. Click inside the editor to ensure focus
-  const startLine = page.locator('.md-line', { hasText: startText }).first();
+  const startLine = page.locator('[data-node-id]', { hasText: startText }).first();
   await startLine.click();
 
   // 2. Set DOM Range + treeRange programmatically

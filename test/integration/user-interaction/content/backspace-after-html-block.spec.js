@@ -55,12 +55,12 @@ test(`source view: backspace at start of paragraph after </details> does not del
   await setSourceView(page);
 
   // Find the line that contains "And then this is the main doc again."
-  const targetLine = page.locator(`#editor .md-line`, {
+  const targetLine = page.locator(`#editor [data-node-id]`, {
     hasText: `And then this is the main doc again.`,
   });
   // There may be a parent wrapper that also matches; narrow to the
-  // innermost .md-line that has no .md-line children.
-  const innerTarget = targetLine.locator(`:scope:not(:has(.md-line))`).first();
+  // innermost [data-node-id] that has no [data-node-id] children.
+  const innerTarget = targetLine.locator(`:scope:not(:has([data-node-id]))`).first();
   await clickInEditor(page, innerTarget);
   await page.waitForTimeout(100);
 
@@ -73,16 +73,16 @@ test(`source view: backspace at start of paragraph after </details> does not del
   await page.waitForTimeout(300);
 
   // The line must still exist with its full content.
-  const afterLine = page.locator(`#editor .md-line`, {
+  const afterLine = page.locator(`#editor [data-node-id]`, {
     hasText: `And then this is the main doc again.`,
   });
-  const count = await afterLine.locator(`:scope:not(:has(.md-line))`).count();
+  const count = await afterLine.locator(`:scope:not(:has([data-node-id]))`).count();
   expect(
     count,
     `paragraph should still exist after backspace in source view`,
   ).toBeGreaterThanOrEqual(1);
 
-  const text = await afterLine.locator(`:scope:not(:has(.md-line))`).first().innerText();
+  const text = await afterLine.locator(`:scope:not(:has([data-node-id]))`).first().innerText();
   expect(text).toContain(`And then this is the main doc again.`);
 });
 
@@ -94,7 +94,7 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   await setWritingView(page);
 
   // Click on "And then this is the main doc again."
-  const targetLine = page.locator(`#editor .md-line`, {
+  const targetLine = page.locator(`#editor [data-node-id]`, {
     hasText: `And then this is the main doc again.`,
   });
   await clickInEditor(page, targetLine.first());
@@ -110,7 +110,7 @@ test(`writing view: backspace at start of paragraph after </details> merges with
 
   // The merged text should now be "betterAnd then this is the main doc again."
   // located inside the fake details block.
-  const mergedLine = page.locator(`#editor .md-details .md-line`, {
+  const mergedLine = page.locator(`#editor .md-details [data-node-id]`, {
     hasText: `betterAnd then this is the main doc again.`,
   });
   const mergedCount = await mergedLine.count();
@@ -119,7 +119,7 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   // The standalone paragraph should no longer exist outside details.
   // Use :not(.md-html-block) to exclude the html-block wrapper whose
   // descendant text now includes the merged content.
-  const standaloneLine = page.locator(`#editor > .md-line:not(.md-html-block)`, {
+  const standaloneLine = page.locator(`#editor > [data-node-id]:not(.md-html-block)`, {
     hasText: `And then this is the main doc again.`,
   });
   const standaloneCount = await standaloneLine.count();

@@ -88,7 +88,7 @@ test(`image node displays raw syntax in source mode`, async () => {
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, `![Test Image](test-image.png)`);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
   await setSourceView(page);
 
   const imageNode = page.locator(`.md-image .md-content`);
@@ -105,11 +105,11 @@ test(`clicking image button on existing image opens edit modal with pre-filled d
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, `some text\n\n![Test Image](test-image.png)`);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
   await setWritingView(page);
 
   // Click on the first paragraph (safe), then arrow down to the image line.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.keyboard.press(`ArrowDown`);
   await page.waitForTimeout(100);

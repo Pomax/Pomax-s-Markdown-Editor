@@ -164,7 +164,9 @@ test.describe(`style element injection`, () => {
     await page.waitForTimeout(200);
 
     // The <style> tag should be visible as text content.
-    const styleTagText = page.locator(`#editor .md-html-tag`, { hasText: `<style>` });
+    const styleTagText = page.locator(`#editor .md-html-tag`, {
+      hasText: `<style>`,
+    });
     await expect(styleTagText).toBeVisible();
 
     // The raw CSS line should be visible as text.
@@ -315,7 +317,6 @@ test.describe(`style injection does not wreck the ToC sidebar`, () => {
         navHTML: nav?.innerHTML.substring(0, 500) ?? ``,
       };
     });
-    console.log(`DEBUG ToC BEFORE:`, JSON.stringify(tocBefore, null, 2));
 
     // Enable style injection.
     await page.evaluate(() => {
@@ -345,7 +346,6 @@ test.describe(`style injection does not wreck the ToC sidebar`, () => {
         titleText: title?.textContent ?? ``,
       };
     });
-    console.log(`DEBUG ToC AFTER:`, JSON.stringify(tocAfter, null, 2));
 
     // The sidebar must still be visible.
     expect(tocAfter.sidebarExists).toBe(true);

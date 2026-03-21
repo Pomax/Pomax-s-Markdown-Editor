@@ -39,7 +39,7 @@ test(`flushing open files saves the current cursorPath`, async () => {
   await clickInEditor(page, editor);
 
   await page.evaluate((md) => window.editorAPI?.setContent(md), content);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Place the cursor on "Section 15" (a heading roughly in the middle)
   await page.evaluate(() => {
@@ -87,7 +87,7 @@ test(`flushing open files saves the active ToC heading path`, async () => {
   // Scroll so that "Section 20" fills most of the viewport
   await page.evaluate((text) => {
     const container = document.getElementById(`editor-container`);
-    const lines = document.querySelectorAll(`#editor > .md-line`);
+    const lines = document.querySelectorAll(`#editor > [data-node-id]`);
     for (const line of lines) {
       if (line.textContent?.includes(text)) {
         const containerRect = container?.getBoundingClientRect();
@@ -178,7 +178,7 @@ test(`reopening the app restores cursor position and ToC heading`, async () => {
   // Scroll so that "Section 15" content is visible (triggers ToC highlight)
   await page1.evaluate((text) => {
     const container = document.getElementById(`editor-container`);
-    const lines = document.querySelectorAll(`#editor > .md-line`);
+    const lines = document.querySelectorAll(`#editor > [data-node-id]`);
     for (const line of lines) {
       if (line.textContent?.includes(text)) {
         const containerRect = container?.getBoundingClientRect();

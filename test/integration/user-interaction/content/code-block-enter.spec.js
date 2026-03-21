@@ -35,7 +35,7 @@ test.afterAll(async () => {
 test.describe(`Code-block early conversion — writing view`, () => {
   test(`typing \`\`\` + Enter creates an empty code block`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -44,7 +44,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
     await page.keyboard.type(`\`\`\``);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -53,7 +53,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
 
   test(`typing \`\`\`js + Enter creates a code block with language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -62,7 +62,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
     await page.keyboard.type(`\`\`\`js`);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -71,7 +71,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
 
   test(`typing \`\`\`\` + Enter creates a code block with fenceCount 4`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -80,7 +80,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
     await page.keyboard.type(`\`\`\`\``);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -89,7 +89,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
 
   test(`typing \`\`\`\`\`\`js + Enter creates a code block with fenceCount 6 and language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -98,7 +98,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
     await page.keyboard.type(`\`\`\`\`\`\`js`);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -107,7 +107,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
 
   test(`Enter inside a code block inserts a newline`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -122,13 +122,13 @@ test.describe(`Code-block early conversion — writing view`, () => {
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
     expect(markdown).toContain(`line one\nline two`);
 
-    const codeBlocks = editor.locator(`.md-line.md-code-block`);
+    const codeBlocks = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlocks).toHaveCount(1);
   });
 
   test(`backtick fence text is not converted until Enter`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setWritingView(page);
 
     const editor = page.locator(`#editor`);
@@ -136,10 +136,10 @@ test.describe(`Code-block early conversion — writing view`, () => {
 
     await page.keyboard.type(`\`\`\``);
 
-    const paragraph = editor.locator(`.md-line.md-paragraph`);
+    const paragraph = editor.locator(`[data-node-id].md-paragraph`);
     await expect(paragraph).toBeVisible();
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toHaveCount(0);
   });
 });
@@ -147,7 +147,7 @@ test.describe(`Code-block early conversion — writing view`, () => {
 test.describe(`Code-block early conversion — source view`, () => {
   test(`typing \`\`\` + Enter creates an empty code block`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setSourceView(page);
 
     const editor = page.locator(`#editor`);
@@ -156,7 +156,7 @@ test.describe(`Code-block early conversion — source view`, () => {
     await page.keyboard.type(`\`\`\``);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -165,7 +165,7 @@ test.describe(`Code-block early conversion — source view`, () => {
 
   test(`typing \`\`\`js + Enter creates a code block with language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setSourceView(page);
 
     const editor = page.locator(`#editor`);
@@ -174,7 +174,7 @@ test.describe(`Code-block early conversion — source view`, () => {
     await page.keyboard.type(`\`\`\`js`);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -183,7 +183,7 @@ test.describe(`Code-block early conversion — source view`, () => {
 
   test(`typing \`\`\`\` + Enter creates a code block with fenceCount 4`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setSourceView(page);
 
     const editor = page.locator(`#editor`);
@@ -192,7 +192,7 @@ test.describe(`Code-block early conversion — source view`, () => {
     await page.keyboard.type(`\`\`\`\``);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -201,7 +201,7 @@ test.describe(`Code-block early conversion — source view`, () => {
 
   test(`typing \`\`\`\`\`\`js + Enter creates a code block with fenceCount 6 and language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setSourceView(page);
 
     const editor = page.locator(`#editor`);
@@ -210,7 +210,7 @@ test.describe(`Code-block early conversion — source view`, () => {
     await page.keyboard.type(`\`\`\`\`\`\`js`);
     await page.keyboard.press(`Enter`);
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
@@ -219,7 +219,7 @@ test.describe(`Code-block early conversion — source view`, () => {
 
   test(`backtick fence text is not converted until Enter`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
     await setSourceView(page);
 
     const editor = page.locator(`#editor`);
@@ -227,10 +227,10 @@ test.describe(`Code-block early conversion — source view`, () => {
 
     await page.keyboard.type(`\`\`\`\``);
 
-    const paragraph = editor.locator(`.md-line.md-paragraph`);
+    const paragraph = editor.locator(`[data-node-id].md-paragraph`);
     await expect(paragraph).toBeVisible();
 
-    const codeBlock = editor.locator(`.md-line.md-code-block`);
+    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
     await expect(codeBlock).toHaveCount(0);
   });
 });
@@ -239,7 +239,7 @@ test.describe(`Code-block parsing — issue #82 examples`, () => {
   test(`loading markdown with four-backtick fence preserves nested three-backtick fences`, async () => {
     const md = `\`\`\`\`\n\`\`\`\nnested\n\`\`\`\n\`\`\`\``;
     await page.evaluate((content) => window.editorAPI?.setContent(content), md);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
     expect(markdown).toBe(md);
@@ -261,7 +261,7 @@ test.describe(`Code-block parsing — issue #82 examples`, () => {
     ].join(`\n`);
 
     await page.evaluate((content) => window.editorAPI?.setContent(content), md);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
     expect(markdown).toBe(md);
@@ -285,7 +285,7 @@ test.describe(`Code-block parsing — issue #82 examples`, () => {
     ].join(`\n`);
 
     await page.evaluate((content) => window.editorAPI?.setContent(content), md);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
     expect(markdown).toBe(md);

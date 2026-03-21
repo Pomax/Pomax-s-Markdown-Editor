@@ -21,13 +21,17 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await page.goto(`about:blank`);
+});
+
 test(`typing "# main" letter by letter creates a heading with correct content`, async ({
   page,
 }) => {
   await page.goto(baseURL);
 
   // Wait for the editor to initialize and render its first line
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);

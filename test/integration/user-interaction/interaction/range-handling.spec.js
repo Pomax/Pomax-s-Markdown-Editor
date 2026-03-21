@@ -23,6 +23,10 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await page.goto(`about:blank`);
+});
+
 /**
  * Types a string character by character, waits for editor to settle.
  * @param {import('@playwright/test').Page} page
@@ -53,7 +57,7 @@ async function editorText(page) {
 
 /**
  * Creates a cross-node DOM selection programmatically.
- * Finds .md-line elements whose textContent includes the given strings
+ * Finds [data-node-id] elements whose textContent includes the given strings
  * and builds a Range from startOffset in the first match to endOffset
  * in the second.
  *
@@ -105,7 +109,7 @@ async function setCrossNodeSelection(page, startText, startOff, endText, endOff)
 test.describe(`Type with selection`, () => {
   test(`typing with a selection replaces the selected text (single node)`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -125,7 +129,7 @@ test.describe(`Type with selection`, () => {
 
   test(`typing replaces a partial selection within a node`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -148,7 +152,7 @@ test.describe(`Type with selection`, () => {
 test.describe(`Backspace with selection`, () => {
   test(`backspace deletes the entire selection`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -165,7 +169,7 @@ test.describe(`Backspace with selection`, () => {
 
   test(`backspace with partial selection deletes only selected text`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -189,7 +193,7 @@ test.describe(`Backspace with selection`, () => {
 test.describe(`Delete with selection`, () => {
   test(`delete key removes the entire selection`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -207,7 +211,7 @@ test.describe(`Delete with selection`, () => {
 test.describe(`Enter with selection`, () => {
   test(`enter replaces selection and splits at cursor`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -227,7 +231,7 @@ test.describe(`Enter with selection`, () => {
     await page.keyboard.press(`Enter`);
 
     // Should now have two lines: "ab" and "ef"
-    const lines = editor.locator(`.md-line`);
+    const lines = editor.locator(`[data-node-id]`);
     const count = await lines.count();
     expect(count).toBeGreaterThanOrEqual(2);
 
@@ -241,7 +245,7 @@ test.describe(`Enter with selection`, () => {
 test.describe(`Ctrl+A context-restricted select-all`, () => {
   test(`Ctrl+A selects only the current paragraph, not the whole document`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -266,7 +270,7 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A on a heading selects only the heading content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -290,7 +294,7 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then type replaces the entire node content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -305,7 +309,7 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then delete empties the node`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -322,7 +326,7 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 test.describe(`Cross-node selection deletion`, () => {
   test(`selecting across two paragraphs and deleting merges them`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -344,7 +348,7 @@ test.describe(`Cross-node selection deletion`, () => {
 
   test(`typing with cross-node selection replaces all selected content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -368,7 +372,7 @@ test.describe(`Cross-node selection deletion`, () => {
 test.describe(`Paste with selection`, () => {
   test(`pasting with a selection replaces the selected text`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -404,7 +408,7 @@ test.describe(`Paste with selection`, () => {
 test.describe(`Cut`, () => {
   test(`cut removes selected text and puts it on clipboard`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -438,7 +442,7 @@ test.describe(`Cut`, () => {
 test.describe(`Writing-view copy`, () => {
   test(`cross-node copy produces markdown with block prefixes`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     // Load multi-node content: heading + paragraph
     await page.evaluate(() => {
@@ -473,7 +477,7 @@ test.describe(`Writing-view copy`, () => {
 
   test(`single-node copy in heading preserves # prefix`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     await page.evaluate(() => {
       /** @type {any} */ (window).editorAPI.setContent(`# heading`);
@@ -500,7 +504,7 @@ test.describe(`Writing-view copy`, () => {
 
   test(`copy repairs sliced HTML inline tags`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     await page.evaluate(() => {
       /** @type {any} */ (window).editorAPI.setContent(`and <strong>inline</strong> html`);
@@ -534,7 +538,7 @@ test.describe(`Writing-view copy`, () => {
 test.describe(`Writing-view cut`, () => {
   test(`cross-node cut copies markdown and removes content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     // Load: heading + paragraph + another paragraph
     await page.evaluate(() => {
@@ -596,7 +600,7 @@ test.describe(`Writing-view cut`, () => {
 test.describe(`Undo after range operations`, () => {
   test(`undo restores content after select-all and type`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor .md-line`);
+    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);

@@ -43,7 +43,7 @@ async function loadAndDefocusFirstLine(markdown) {
   await page.waitForTimeout(200);
 
   // Click the second paragraph to defocus the first line.
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 }
@@ -52,7 +52,7 @@ test(`<sub> renders as subscript when unfocused`, async () => {
   const markdown = `H<sub>2</sub>O is water\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`H`);
   expect(text).toContain(`2`);
@@ -68,7 +68,7 @@ test(`<sup> renders as superscript when unfocused`, async () => {
   const markdown = `x<sup>2</sup> + y<sup>2</sup>\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).not.toContain(`<sup>`);
   expect(text).not.toContain(`</sup>`);
@@ -83,7 +83,7 @@ test(`<mark> renders as highlighted text when unfocused`, async () => {
   const markdown = `This is <mark>highlighted</mark> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`highlighted`);
   expect(text).not.toContain(`<mark>`);
@@ -98,7 +98,7 @@ test(`<u> renders as underlined text when unfocused`, async () => {
   const markdown = `This is <u>underlined</u> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`underlined`);
   expect(text).not.toContain(`<u>`);
@@ -113,7 +113,7 @@ test(`<s> renders as strikethrough when unfocused`, async () => {
   const markdown = `This is <s>struck</s> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`struck`);
   expect(text).not.toContain(`<s>`);
@@ -128,7 +128,7 @@ test(`HTML <strong> renders like markdown bold when unfocused`, async () => {
   const markdown = `HTML <strong>bold</strong> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`bold`);
   expect(text).not.toContain(`<strong>`);
@@ -143,7 +143,7 @@ test(`HTML <em> renders like markdown italic when unfocused`, async () => {
   const markdown = `HTML <em>italic</em> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`italic`);
   expect(text).not.toContain(`<em>`);
@@ -158,7 +158,7 @@ test(`HTML <del> renders like markdown strikethrough when unfocused`, async () =
   const markdown = `HTML <del>deleted</del> text\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`deleted`);
   expect(text).not.toContain(`<del>`);
@@ -173,7 +173,7 @@ test(`<b> and <i> render correctly when unfocused`, async () => {
   const markdown = `Use <b>bold</b> and <i>italic</i> tags\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).not.toContain(`<b>`);
   expect(text).not.toContain(`<i>`);
@@ -191,7 +191,7 @@ test(`nested markdown inside HTML tag renders correctly`, async () => {
   const markdown = `Text <mark>**bold** inside</mark> here\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const mark = firstLine.locator(`mark`);
   await expect(mark).toBeVisible();
 
@@ -212,7 +212,7 @@ test(`focused line renders inline HTML as WYSIWYG elements`, async () => {
   await page.waitForTimeout(200);
 
   // Click the first line so it IS focused — should still render WYSIWYG.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.waitForTimeout(200);
 
@@ -230,13 +230,13 @@ test(`clicking <strong> text does not destroy the content`, async () => {
   await page.waitForTimeout(200);
 
   // Defocus first: click the second paragraph.
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
   // Now click directly on the <strong> element in the first line,
   // using discrete mouse steps so selectionchange can interleave.
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const strong = firstLine.locator(`strong`);
   await expect(strong).toBeVisible();
   const box = await strong.boundingBox();
@@ -262,11 +262,11 @@ test(`clicking <em> text does not destroy the content`, async () => {
   await setWritingView(page);
   await page.waitForTimeout(200);
 
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, secondLine);
   await page.waitForTimeout(200);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const em = firstLine.locator(`em`);
   await expect(em).toBeVisible();
   const emBox = await em.boundingBox();
@@ -288,7 +288,7 @@ test(`mixed markdown and HTML inline tags render correctly`, async () => {
   const markdown = `Water is H<sub>2</sub>O and **bold** with \`code\`\n\nSecond paragraph`;
   await loadAndDefocusFirstLine(markdown);
 
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
 
   const sub = firstLine.locator(`sub`);
   await expect(sub).toBeVisible();
@@ -311,7 +311,7 @@ test(`cursor offset is correct after view-mode switch with inline HTML`, async (
   await setWritingView(page);
 
   // Click on the last paragraph
-  const lastLine = page.locator(`#editor .md-line`).last();
+  const lastLine = page.locator(`#editor [data-node-id]`).last();
   await clickInEditor(page, lastLine);
   await page.waitForTimeout(200);
 

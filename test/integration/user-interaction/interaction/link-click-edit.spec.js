@@ -34,11 +34,11 @@ test.describe(`Link click-to-edit`, () => {
 
   test(`clicking a link in writing mode opens the edit modal`, async () => {
     // Click the paragraph to focus it (renders as WYSIWYG with <a>)
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
     // Now click the rendered <a> element
-    const link = page.locator(`.md-line.md-paragraph a`);
+    const link = page.locator(`[data-node-id].md-paragraph a`);
     await clickInEditor(page, link);
 
     // The link modal should appear
@@ -67,10 +67,10 @@ test.describe(`Link click-to-edit`, () => {
 
   test(`editing a link via the modal updates the parse tree`, async () => {
     // Click paragraph then the link
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
-    const link = page.locator(`.md-line.md-paragraph a`);
+    const link = page.locator(`[data-node-id].md-paragraph a`);
     await clickInEditor(page, link);
 
     const dialog = page.locator(`.link-dialog`);
@@ -93,10 +93,10 @@ test.describe(`Link click-to-edit`, () => {
 
   test(`cancelling the modal does not change the link`, async () => {
     // Click paragraph then the link
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
-    const link = page.locator(`.md-line.md-paragraph a`);
+    const link = page.locator(`[data-node-id].md-paragraph a`);
     await clickInEditor(page, link);
 
     const dialog = page.locator(`.link-dialog`);
@@ -115,10 +115,10 @@ test.describe(`Link click-to-edit`, () => {
 
   test(`clicking a link does not navigate away`, async () => {
     // Click paragraph then the link
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
-    const link = page.locator(`.md-line.md-paragraph a`);
+    const link = page.locator(`[data-node-id].md-paragraph a`);
     await clickInEditor(page, link);
 
     // We should still be on the same page (modal opens, not navigated away)
@@ -143,11 +143,11 @@ test.describe(`Link with nested formatting`, () => {
   });
 
   test(`clicking bold text inside a link does not open the link modal`, async () => {
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
     // Click the <strong> inside the <a> — this is what a real user hits.
-    const bold = page.locator(`.md-line.md-paragraph a strong`);
+    const bold = page.locator(`[data-node-id].md-paragraph a strong`);
     await clickInEditor(page, bold);
 
     // The link modal should NOT appear — the user clicked the bold text,
@@ -160,10 +160,10 @@ test.describe(`Link with nested formatting`, () => {
     // Load content with a non-bold link so we can click the <a> directly.
     await loadContent(page, `Click [plain link](https://bold.com) here.`);
 
-    const paragraph = page.locator(`.md-line.md-paragraph`);
+    const paragraph = page.locator(`[data-node-id].md-paragraph`);
     await clickInEditor(page, paragraph);
 
-    const link = page.locator(`.md-line.md-paragraph a`);
+    const link = page.locator(`[data-node-id].md-paragraph a`);
     await clickInEditor(page, link);
 
     const dialog = page.locator(`.link-dialog`);

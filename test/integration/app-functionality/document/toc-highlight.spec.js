@@ -31,6 +31,10 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await page.goto(`about:blank`);
+});
+
 /**
  * Reads the lorem ipsum fixture file.
  * @returns {Promise<string>}
@@ -49,7 +53,7 @@ async function loadManySectionsFixture() {
 
 test(`ToC highlights the heading whose section fills most of the viewport`, async ({ page }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
@@ -78,7 +82,7 @@ test(`ToC highlights the heading whose section fills most of the viewport`, asyn
   // Now scroll so that Chapter 5 content fills most of the viewport.
   await page.evaluate((text) => {
     const container = document.getElementById(`editor-container`);
-    const lines = document.querySelectorAll(`#editor > .md-line`);
+    const lines = document.querySelectorAll(`#editor > [data-node-id]`);
     for (const line of lines) {
       if (line.textContent?.includes(text)) {
         const containerRect = container?.getBoundingClientRect();
@@ -100,7 +104,7 @@ test(`ToC highlights the heading whose section fills most of the viewport`, asyn
 
 test(`ToC highlight updates when scrolling between sections`, async ({ page }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
@@ -127,7 +131,7 @@ test(`ToC highlight updates when scrolling between sections`, async ({ page }) =
 
 test(`active ToC link is scrolled to the vertical center of the sidebar`, async ({ page }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);

@@ -57,7 +57,7 @@ test(`typing a character on the summary line in source view inserts it without r
   // The bareText path renders it as a .md-paragraph (not .md-html-block)
   // with .md-html-tag syntax spans.  Use a precise selector so we don't
   // also match the outer html-block container that wraps it.
-  const summaryLine = page.locator(`#editor .md-line.md-paragraph:has(.md-html-tag)`);
+  const summaryLine = page.locator(`#editor [data-node-id].md-paragraph:has(.md-html-tag)`);
   const lineCountBefore = await summaryLine.count();
   expect(lineCountBefore, `should have exactly one summary line before edit`).toBe(1);
 
@@ -86,7 +86,7 @@ test(`typing a character on the summary line in source view inserts it without r
   await page.waitForTimeout(300);
 
   // Step 6: verify the summary line still exists as a single line.
-  const summaryLineAfter = page.locator(`#editor .md-line.md-paragraph:has(.md-html-tag)`);
+  const summaryLineAfter = page.locator(`#editor [data-node-id].md-paragraph:has(.md-html-tag)`);
   const lineCountAfter = await summaryLineAfter.count();
   expect(lineCountAfter, `should still have exactly one summary line after edit`).toBe(1);
 

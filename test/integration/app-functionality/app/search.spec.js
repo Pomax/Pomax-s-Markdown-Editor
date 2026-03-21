@@ -398,7 +398,7 @@ test(`initial match is closest to cursor position`, async () => {
   await setSourceView(page);
 
   // Place cursor at the start of "## Another heading" by clicking it.
-  const secondHeading = page.locator(`#editor .md-line`, {
+  const secondHeading = page.locator(`#editor [data-node-id]`, {
     hasText: `Another heading`,
   });
   await secondHeading.click();

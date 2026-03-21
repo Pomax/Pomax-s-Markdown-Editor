@@ -66,6 +66,10 @@ this **before** doing any work.
 - **Never** start modifying files without asking whether what you thought
   up makes sense or whether assumptions made during the reasoning step
   missed anything.
+- **Never** issue tool calls (file edits, terminal commands, or any other
+  action) in the same response as a question. Ask the question, stop, and
+  wait for the user's answer before taking any action. A question followed
+  by an immediate tool call is not asking — it is ignoring the user.
 - **After starting a test run**, do **nothing** — no terminal commands, no
   file reads, no edits — until the **user explicitly says the tests have
   finished** and provides results. Terminal output may be truncated or
@@ -77,8 +81,11 @@ this **before** doing any work.
 - **Always** be explicit about remote and branch when pushing:
   `git push origin <branchname>`. Never use bare `git push` or
   `--set-upstream`.
-- Do not consider the work done until a final full test suite run passes:
-  you run the test suite, but you wait for the user to tell you the result.
+- Do not consider the work done until a final full test suite run passes
+  with **zero failures**. It does not matter *why* a test fails — infrastructure
+  errors, flaky teardown, assertion mismatches — any failure means things are
+  broken and must be investigated. You run the test suite, but you wait for
+  the user to tell you the result.
 - After the work has been completed **ask the user to manually test the work**.
 - After testing finishes, update the docs to ensure they're still correct
   with respect to the current code.
