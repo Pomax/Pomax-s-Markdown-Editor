@@ -15,6 +15,7 @@ import { expect, test } from '@playwright/test';
 import {
   HOME,
   MOD,
+  clickInEditor,
   closeApp,
   launchApp,
   loadContent,
@@ -459,4 +460,34 @@ test(`multi-select across html-block aborts on cancel`, async () => {
   for (const text of allText) {
     expect(text).not.toMatch(/^- \[[ x]\] /);
   }
+});
+
+test(`typing x into checkbox brackets in source view checks the item`, async () => {
+  await loadContent(page, ``);
+  await setWritingView(page);
+
+  const editor = page.locator(`#editor`);
+  await clickInEditor(page, editor);
+  await page.waitForTimeout(100);
+
+  await page.keyboard.type(`- [ ] cake`);
+  await page.waitForTimeout(200);
+  await page.keyboard.press(`Enter`);
+  await page.waitForTimeout(200);
+  await page.keyboard.press(`Enter`);
+  await page.waitForTimeout(200);
+
+  await setSourceView(page);
+  await page.waitForTimeout(200);
+
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press(`ArrowLeft`);
+  }
+  await page.waitForTimeout(100);
+
+  await page.keyboard.type(`x`);
+  await page.waitForTimeout(200);
+
+  const md = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
+  expect(md).toBe(`- [x] cake\n\n`);
 });
