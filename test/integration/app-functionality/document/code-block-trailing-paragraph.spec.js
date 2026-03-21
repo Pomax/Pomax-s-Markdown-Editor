@@ -40,7 +40,7 @@ test(`loading a document that ends in a code block appends a phantom paragraph i
   await setWritingView(page);
 
   // A phantom paragraph should exist in the DOM after the code block.
-  const phantom = page.locator(`#editor > .md-phantom-paragraph`);
+  const phantom = page.locator(`#editor > [data-is-phantom]`);
   await expect(phantom).toBeVisible();
 
   // The phantom should be empty (no visible text).
@@ -57,7 +57,7 @@ test(`typing in the phantom paragraph promotes it to a real tree node`, async ()
   await setWritingView(page);
 
   // Click the phantom to place the cursor there.
-  const phantom = page.locator(`#editor > .md-phantom-paragraph`);
+  const phantom = page.locator(`#editor > [data-is-phantom]`);
   await clickInEditor(page, phantom);
   await page.waitForTimeout(200);
 
@@ -65,7 +65,7 @@ test(`typing in the phantom paragraph promotes it to a real tree node`, async ()
   await page.waitForTimeout(200);
 
   // The phantom should no longer exist — it was promoted to a real node.
-  await expect(page.locator(`#editor > .md-phantom-paragraph`)).toHaveCount(0);
+  await expect(page.locator(`#editor > [data-is-phantom]`)).toHaveCount(0);
 
   const content = await page.evaluate(() => window.editorAPI?.getContent());
   expect(content).toContain(`New content after code block`);
@@ -81,7 +81,7 @@ test(`source view: loading a document that ends in a code block appends a phanto
   await loadContent(page, markdownEndingInCodeBlock);
   await setSourceView(page);
 
-  const phantom = page.locator(`#editor > .md-phantom-paragraph`);
+  const phantom = page.locator(`#editor > [data-is-phantom]`);
   await expect(phantom).toBeVisible();
 
   const text = await phantom.innerText();
@@ -95,14 +95,14 @@ test(`source view: typing in the phantom paragraph promotes it to a real tree no
   await loadContent(page, markdownEndingInCodeBlock);
   await setSourceView(page);
 
-  const phantom = page.locator(`#editor > .md-phantom-paragraph`);
+  const phantom = page.locator(`#editor > [data-is-phantom]`);
   await clickInEditor(page, phantom);
   await page.waitForTimeout(200);
 
   await page.keyboard.type(`New content after code block`);
   await page.waitForTimeout(200);
 
-  await expect(page.locator(`#editor > .md-phantom-paragraph`)).toHaveCount(0);
+  await expect(page.locator(`#editor > [data-is-phantom]`)).toHaveCount(0);
 
   const content = await page.evaluate(() => window.editorAPI?.getContent());
   expect(content).toContain(`New content after code block`);

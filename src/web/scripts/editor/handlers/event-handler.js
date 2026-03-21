@@ -400,7 +400,7 @@ export class EventHandler {
       // If the selection is inside the phantom paragraph (no tree
       // node), skip all cursor syncing — handleClick will promote
       // it when the click event arrives.
-      const phantom = this.editor.container.querySelector(`.md-phantom-paragraph`);
+      const phantom = this.editor.container.querySelector(`[data-is-phantom]`);
       if (phantom) {
         const sel = window.getSelection();
         if (sel?.anchorNode) {

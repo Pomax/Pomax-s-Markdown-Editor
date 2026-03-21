@@ -215,14 +215,15 @@ export class WritingRenderer {
    * @param {SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
-    const existing = container.querySelector(`.md-phantom-paragraph`);
+    const existing = container.querySelector(`[data-is-phantom]`);
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
     const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
       const phantom = document.createElement(`div`);
-      phantom.className = `md-paragraph md-phantom-paragraph`;
+      phantom.className = `md-paragraph`;
+      phantom.dataset.isPhantom = ``;
       phantom.setAttribute(`contenteditable`, `true`);
       phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
