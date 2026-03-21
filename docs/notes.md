@@ -167,7 +167,7 @@ html-block (type: 'html-block', tagName: 'details')
 
   ```
   div.md-html-element[data-node-id]
-    div.md-html-container.md-details(.md-details--open)
+    div.md-html-container.md-details([data-open])
       div.md-details-summary
         span.md-details-triangle   ← clickable ▶/▼
         div.md-details-summary-content
@@ -360,9 +360,9 @@ content, set view mode) rather than depending on prior tests. Module-level
 ## CSS Conventions
 
 - Editor styles are in `src/web/styles/editor.css`.
-- The fake details widget uses `.md-details`, `.md-details--open`,
+- The fake details widget uses `.md-details`, `[data-open]`,
   `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`,
   `.md-details-body` classes.
-- Collapse is achieved via `.md-details:not(.md-details--open) .md-details-body { display: none; }`.
+- Collapse is achieved via `.md-details:not([data-open]) .md-details-body { display: none; }`.
 - Checklist items use `.md-checklist-item` (on the line) and `.md-checklist-checkbox` (the `<input>` element). They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
 - `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

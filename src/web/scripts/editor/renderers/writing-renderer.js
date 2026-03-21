@@ -720,7 +720,7 @@ export class WritingRenderer {
     const container = document.createElement(`div`);
     container.className = `md-html-container md-details`;
     if (isOpen) {
-      container.classList.add(`md-details--open`);
+      container.dataset.open = ``;
     }
 
     // Copy any extra attributes from the original opening tag

@@ -382,12 +382,12 @@
 }
 
 /* When collapsed, the summary gets bottom-radius too */
-.md-details:not(.md-details--open) .md-details-summary {
+.md-details:not([data-open]) .md-details-summary {
     border-radius: 6px;
 }
 
 /* When open, separate summary from body */
-.md-details--open .md-details-summary {
+.md-details[data-open] .md-details-summary {
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -422,7 +422,7 @@
     overflow: hidden;
 }
 
-.md-details:not(.md-details--open) .md-details-body {
+.md-details:not([data-open]) .md-details-body {
     display: none;
 }
 

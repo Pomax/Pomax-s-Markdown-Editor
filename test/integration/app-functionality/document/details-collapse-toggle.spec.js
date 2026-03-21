@@ -39,7 +39,7 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   await detailsBlock.waitFor({ state: `visible` });
 
   // The details body should start open (default preference is open).
-  await expect(detailsBlock).toHaveClass(/md-details--open/);
+  await expect(detailsBlock).toHaveAttribute(`data-open`, ``);
 
   // We measure the .md-details element's own height rather than the
   // editor's scrollHeight, because the editor has a large min-height
@@ -63,8 +63,8 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   await page.mouse.click(tx, ty);
   await page.waitForTimeout(300);
 
-  // The details block should no longer have the open class.
-  await expect(detailsBlock).not.toHaveClass(/md-details--open/);
+  // The details block should no longer have the data-open attribute.
+  await expect(detailsBlock).not.toHaveAttribute(`data-open`, ``);
 
   // The body should now be hidden.
   const detailsBody = page.locator(`#editor .md-details-body`);
@@ -89,7 +89,7 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   await page.waitForTimeout(300);
 
   // The details block should be open again.
-  await expect(detailsBlock).toHaveClass(/md-details--open/);
+  await expect(detailsBlock).toHaveAttribute(`data-open`, ``);
 
   // The body should be visible again.
   await expect(detailsBody).toBeVisible();
