@@ -28,7 +28,7 @@ These are structural, state, or styling classes that will remain as classes rega
 
 - ~~`md-focused`~~ — replaced by `data-has-focus` attribute
 - ~~`md-phantom-paragraph`~~ — replaced by `data-is-phantom` attribute
-- `md-checklist-item` — modifier on a list-item indicating it has a checkbox
+- ~~`md-checklist-item`~~ — removed (moved `position: relative` to `.md-list-item`)
 - ~~`md-details--open`~~ — replaced by `data-open` attribute
 - ~~`md-image-preview--inert`~~ — removed (dead CSS, never applied)
 

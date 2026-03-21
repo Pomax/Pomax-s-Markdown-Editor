@@ -454,7 +454,6 @@ export class WritingRenderer {
       element.style.listStyleType = `none`;
       element.style.display = `block`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-      element.classList.add(`md-checklist-item`);
 
       checkbox = document.createElement(`input`);
       checkbox.type = `checkbox`;

@@ -223,6 +223,7 @@
 /* ========== Lists ========== */
 .md-list-item {
     margin-bottom: var(--spacing-xs);
+    position: relative;
 }
 
 /* Space at list boundaries: between a non-list element and the first/last
@@ -241,10 +242,6 @@
 }
 
 /* ========== Checklist ========== */
-.md-checklist-item {
-    position: relative;
-}
-
 .md-checklist-checkbox-wrapper {
     position: absolute;
     left: -1.4em;
