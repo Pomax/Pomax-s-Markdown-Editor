@@ -117,6 +117,12 @@ this **before** doing any work.
   specific change. Make sure to also note that the PR closes the issue
   number, if the work was part of addressing an issue.
 
+- **Never** roll back or unstage files that are in the `git status` list
+  that you didn't touch. Those changes were made by the user and must
+  **always** be retained as part of the commit. **Never** unstage them,
+  **never** roll them back, **never** edit them as part of forming a
+  commit.
+
 - **Never** hard-wrap markdown text at a fixed column width. Write each
   paragraph or list item as a single long line and let the viewer handle
   wrapping.
