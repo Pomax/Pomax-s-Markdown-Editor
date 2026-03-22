@@ -34,85 +34,122 @@ this **before** doing any work.
 
 ## Working Environment
 
-- **OS**: Windows. Default shell is `cmd.exe`.
-- **Shell rule**: If you are not already in the standard command prompt, run
-  `cmd` first. Then check whether you are already in the project directory —
-  `cd` is almost never necessary because the terminal usually opens in the
-  workspace root already. **Do not blindly prepend `cd …` to commands.**
-- **Never** use `2>&1` in terminal commands.
-- The project root is the workspace folder (the one containing `package.json`).
-- **Never** modify `package.json` version manually. Versioning is done with
-  `npm version` — that command handles `package.json`, `package-lock.json`,
-  the git tag, and the commit all in one step.
+- If we're on windows, you should be using the `cmd` shell, not powershell. If
+  a new terminal starts up as powershell, issue the `cmd` command first, to
+  switch it to the proper command prompt.
+
+- The project root is the workspace folder (the one containing `REALEASE_LOG.md`).
 
 ## Doing work
 
+- You are almost certainly already in the correct directory, do not use `cd`
+  unless you absolutely have to.
+
+- **Never** use `2>&1` in terminal commands, stdout and stderr already log
+  to the console, there is no point in forcing stderr into stdout. It's
+  already right there.
+
+- **Never** roll a new version, the user will do this themselves.
+
 - **Always** create a new git branch off of `main` for any new work, and
-  make sure that `main` is up to date with respect to the origin.
-- **Always** run all commands and reasoning in the foreground
-- **ALways** use the active terminal to run any commands
-- **Never** use `_` as a naming prefix to mean "private". That is not
-  how JavaScript works. However, using `_` as prefix for unused but
-  required function arguments is allowed as the underscore is not use
-  to signify some kind of ownership or privacy.
-- **Never** use "// --- ...." sectioning comments in code.
+  make sure that `main` is up to date with respect to the origin, unless
+  the user tells you they have already created a branch for you.
+
+- **Always** run all commands and reasoning in the foreground, using the
+  active terminal. Do not create new terminals if you have access to an
+  existing terminal.
+
 - **Never** issue compound commands — no `;`, no `&&`, no `||`. Each
   terminal invocation must be a single command.
+
 - **Never** wrap commands in `cmd /c "..."`, **always** run `cmd` on its
   own first if you're not already in cmd.
-- When asked to offer multiple choices, **never** present option picking
-  UI, instead ask what option to select and wait for the user to type
-  the answer.
+
+- When asking questions, **never** use specialized UII for that, ask
+  the questions you want answered in normal text. If the user responses
+  do not cover all questions asked, get answers for every question before
+  continuing.
+
 - **Never** start modifying files without asking whether what you thought
   up makes sense or whether assumptions made during the reasoning step
   missed anything.
+
 - **Never** treat a response as plan approval unless it **explicitly**
   approves the plan (e.g. "yes", "looks good", "go ahead"). If the user's
   reply addresses something else (corrects a remark, asks a question, makes
-  a comment), that is **not** approval — re-ask or wait.
+  a comment), ask for permission to go ahead with the work after addressing
+  the user's concerns.
+
 - **Never** issue tool calls (file edits, terminal commands, or any other
-  action) in the same response as a question. Ask the question, stop, and
-  wait for the user's answer before taking any action. A question followed
-  by an immediate tool call is not asking — it is ignoring the user.
-- **After starting a test run**, do **nothing** — no terminal commands, no
-  file reads, no edits — until the **user explicitly says the tests have
-  finished** and provides results. Terminal output may be truncated or
-  returned before the command completes; never assume tests are done based
-  on partial output alone.
-- **Never** use multiline strings in terminal commands. `cmd.exe` treats
-  each line as a separate command. Git commit messages must be a single
-  line: `git commit -m "one line summary"`.
-- **Always** be explicit about remote and branch when pushing:
-  `git push origin <branchname>`. Never use bare `git push` or
-  `--set-upstream`.
+  action) at the same time as you are asking a question. Instead **always**
+  ask the question first, and then wait for the user's answer before running
+  any tool calls.
+
+- **Always** run tests. However, if the output seems truncated, **never**
+  run commands to check whether things have finished. Instead, ask the user
+  to confirm whether tests have finished. Running commands will **break**
+  the test run, wasting precious time and money. **Never** interrupt tests.
+
+- **Never** use multiline strings in terminal commands. Assume the terminal
+  will instead execute each line as its own command. Instead, issue commands
+  one by one.
+
+- **Always** be explicit about remotes and branch names when pushing. Use
+  `git push origin <branchname>`. Never use bare `git push` or `--set-upstream`.
+
 - Do not consider the work done until a final full test suite run passes
-  with **zero failures**. It does not matter *why* a test fails — infrastructure
+  with **zero failures**. It does not matter _why_ a test fails — infrastructure
   errors, flaky teardown, assertion mismatches — any failure means things are
-  broken and must be investigated. You run the test suite, but you wait for
-  the user to tell you the result.
-- After the work has been completed **ask the user to manually test the work**.
-- After testing finishes, update the docs to ensure they're still correct
-  with respect to the current code.
+  broken and must be investigated.
+
+- After the work has been completed, ask the user to manually test the work
+  and describe how they can best test the specific thing that got changed.
+
+- After the work is done (bearing the previous rules in mind), always update
+  the docs to ensure they're still correct with respect to the current code.
+
+- Do not form a commit until both code, tests, and docs have been finalized.
+
 - Once code, tests, and docs are all done, form a final commit and write
   a PR comment **in raw markdown source code** inside a fenced code block
   (` ```markdown ... ``` `), **never** as styled / rendered text, that
   documents what was wrong, how it got changed and why it needed that
   specific change. Make sure to also note that the PR closes the issue
   number, if the work was part of addressing an issue.
+
 - **Never** hard-wrap markdown text at a fixed column width. Write each
   paragraph or list item as a single long line and let the viewer handle
   wrapping.
-- Note that any changes to this file should **always** be added to git
-  commits. They should never be backed out or unstaged.
-- **Do not** use vitest — the project does not use it.
+
 - **Never** use `npx` to run tools — always use the corresponding `npm run`
-  script. To run a single spec file: `npm run test:integration -- path/to/file.spec.js`.
+  script.
+
+- To run invididual tests, use the `npm` task with appropriate `--` so that
+  arguments get forwarded to the correct target.
+
 - **ALways** update integrations test for UX that gets changed
+
 - **Always** write new integration tests for new UX
-- **Never** interrupt the full suite or integration tests if they seem to
-  be running long, instead ask the user to tell you when they finish.
-- **Never** believe the output if it looks truncated, and instead assume
-  the tests are still running, and ask the user to tell you when they finish.
+
+## Code style
+
+- **Never** use `_` as a naming prefix to mean "private". That is not
+  how JavaScript works. However, using `_` as prefix for unused but
+  required function arguments is allowed as the underscore is not use
+  to signify some kind of ownership or privacy.
+
+- **Never** use "// --- ...." sectioning comments in code.
+
+- **Always** use JSDoc for functions
+
+- **Never** declare functions inside of other functions. Instead, declare
+  them at the top level and call them with appropriate arguments.
+
+- **Always** use backticks for strings, even if the string does not make
+  use of a templating tag or templating content.
+
+- **Never** use inline type defs, instead declare the types in the
+  `types.d.ts` file and pull types from that as a docs reference import
 
 # AI Agent notes
 

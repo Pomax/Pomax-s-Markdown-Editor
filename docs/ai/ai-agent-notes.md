@@ -1,13 +1,14 @@
 ## Test Runners
 
-| Kind        | Command                    | Framework                  |
-| ----------- | -------------------------- | -------------------------- |
-| Full suite  | `npm test`                 |                            |
-| Linting     | `npm run lint`             | Biome and TSC linting      |
-| Unit        | `npm run test:unit`        | Node.js native test runner |
-| Integration | `npm run test:integration` | Playwright + Firefox       |
+The following test runners are available:
 
-
+| Kind        | Command                    | Framework                    |
+| ----------- | -------------------------- | ---------------------------- |
+| Full suite  | `npm test`                 |                              |
+| Linting     | `npm run lint`             | Biome and TSC linting        |
+| Formatting  | `npm run format`           | ESLint and custom formatting |
+| Unit        | `npm run test:unit`        | Node.js native test runner   |
+| Integration | `npm run test:integration` | Playwright + Firefox         |
 
 ## Playwright Pitfalls
 
@@ -59,9 +60,12 @@ Selectors like `locator('#editor [data-node-id]', { hasText: 'foo' })` can match
 
 ### Editing model
 
-- The **parse tree** (`SyntaxTree`) is the single source of truth.
-- The DOM is **never** the source of truth; all mutations go through the
-  tree, then the renderer rebuilds the DOM.
+- The syntax tree is the single source of truth in terms of content,
+  cursor position, selections, etc. The DOM is purely a visual
+  representation of the syntax tree's state, and all operations
+  should run through the syntax tree, then lead to an update to
+  only those parts of the DOM that map to parts of the tree that
+  changed.
 - There are two render paths:
   - `fullRender()` — clears the entire container and rebuilds every node
     from scratch. Used for initial load, view-mode switches, and a few
@@ -77,17 +81,6 @@ Selectors like `locator('#editor [data-node-id]', { hasText: 'foo' })` can match
 When the user **switches tabs**, the DOM container and syntax tree are preserved in `documentStates` — nothing changes. The only action needed is placing the browser selection. **Do NOT re-render or re-parse anything on tab switch.** The `restoreState` method restores `treeRange` (text selection) from the saved state, sets `editor.isRendering = true` around `focus()` + `placeSelection()`/`placeCursor()` to suppress the `selectionchange` handler, which would otherwise trigger a spurious re-render. If a `treeRange` exists, `placeSelection()` is called to restore the full selection; otherwise `placeCursor()` places a collapsed caret.
 
 When the app **relaunches** (session restore), the DOM is rebuilt from scratch, so `fullRenderAndPlaceCursor()` is correct there.
-
-### Inline children model
-
-Block-level nodes that contain inline formatting (`paragraph`, `heading1`–`heading6`, `blockquote`, `list-item`) automatically build inline child `SyntaxNode` instances when their `content` is set. The `content` property is a getter/setter — setting it triggers `buildInlineChildren()` which tokenizes the raw markdown and converts the segments into a tree of inline nodes (types: `text`, `inline-code`, `inline-image`, `bold`, `italic`, `bold-italic`, `strikethrough`, `link`, plus HTML inline tags like `sub`/`sup`).
-
-Inline children have helper methods:
-
-- `node.isInlineNode()` — returns `true` if this node is an inline child (i.e. `getBlockParent() !== this`).
-- `node.getBlockParent()` — walks `.parent` to find the nearest block-level ancestor.
-
-In **writing mode**, the renderer places `data-node-id` attributes on the inline formatting elements (`<strong>`, `<em>`, `<del>`, `<code>`, `<a>`, `<sub>`, `<sup>`, etc.) so the cursor manager can detect which inline node the cursor is inside.
 
 ### Toolbar active states
 
@@ -108,7 +101,8 @@ nodes. The ToC sidebar **also** sets `data-node-id` on its `<a>` link
 elements (same IDs). Any query like
 `document.querySelector('[data-node-id="…"]')` may match the ToC link
 or an inline element instead of the block editor element. **Always** scope
-queries to the editor container: `this.editor.container.querySelector(…)`.
+queries to the editor container if the intent is to find elements in the
+document rather than the ToC: `this.editor.container.querySelector(…)`.
 
 ### Cursor model
 
@@ -116,12 +110,12 @@ The cursor state lives on the `SyntaxTree` instance as `syntaxTree.treeCursor` (
 
 ```
 syntaxTree.treeCursor = {
-  nodeId: string,        // inline or block node id
-  blockNodeId?: string,  // always block-level; present when nodeId is inline
+  nodeId: string,        // the id for the node that the cursor is currently in
+  blockNodeId?: string,  // the id for the block-level node the cursor is in, if the real cursor location is in an inline node
   offset: number,        // character offset relative to block content
   tagPart?: string,
-  cellRow?: number,
-  cellCol?: number,
+  cellRow?: number,      // if the cursor is in a table cell, which row?
+  cellCol?: number,      // if the cursor is in a table cell, which column?
 }
 ```
 
@@ -139,57 +133,7 @@ syntaxTree.treeCursor = {
 - `getBlockNodeId()` — returns `blockNodeId ?? nodeId` as a string.
 - `resolveBlockId(nodeId)` — resolves any node ID (inline or block) to its block parent's ID via `node.getBlockParent().id`. Used by `EventHandler` when comparing the current node against `lastRenderedNodeId` to decide whether a re-render is needed.
 
-**Rule of thumb:** code that _reads_ the cursor to detect formatting uses `getCurrentNode()` (to see the inline node); code that _mutates_ content or checks block type uses `getCurrentBlockNode()`.
-
 Node IDs are ephemeral (regenerated on every parse), so cursor and ToC heading positions are persisted as **index paths** — arrays of zero-based child indices that walk the tree from root to the target node. For cursors the final element is the character offset. Methods: `getPathToCursor()` / `setCursorPath()` for cursors, `getPathToNode()` / `getNodeAtPath()` for arbitrary nodes (e.g. the active ToC heading).
-
-### Checklist (checkmark list) model
-
-Checklist items are regular `list-item` nodes distinguished by `attributes.checked` (a boolean). When `checked` is `undefined`, the item is an ordinary bullet or ordered list item. When `checked` is `false` or `true`, the item is a checklist item and serializes with `- [ ] ` or `- [x] ` prefix.
-
-- **Parser**: `_parseUnorderedListItem` detects `[ ] ` / `[x] ` / `[X] ` after the list marker, strips it from content, and sets `attributes.checked`.
-- **Writing renderer**: checklist items render an `<input type="checkbox">` with the mousedown guard. The click handler toggles `node.attributes.checked`, records an undo snapshot, and calls `renderNodesAndPlaceCursor`.
-- **Source renderer**: the checkbox prefix is included in the prefix `<span>`.
-- **Enter key**: pressing Enter inside a checklist item creates a new item with `checked: false` (not inherited from the parent item's state).
-- **`toggleList(kind)`**: converts between the three list kinds. When switching to `'checklist'`, sets `checked = false`; when switching away, deletes `checked`.
-- **Multi-select across html-block boundaries**: `toggleList` is `async`. When `treeRange` spans nodes that include html-block containers, a `dialog:confirm` prompt asks the user whether to lift the children out of the html-block. On cancel, the operation aborts and the selection is preserved. The `dialog:confirm` IPC channel is registered in `ipc-handler.js` → `registerDialogHandlers()` and exposed via `window.electronAPI.confirmDialog(message)` in `preload.cjs`.
-- **`getNodesInRange()`**: recursively enters html-block children so that all leaf nodes within the range are collected, not just the html-block wrapper.
-
-### HTML block model (details/summary)
-
-```
-html-block (type: 'html-block', tagName: 'details')
-  ├── html-block (tagName: 'summary')
-  │     └── paragraph (bareText: true)   ← "This is a paragraph"
-  ├── heading2                           ← "## and this an h2"
-  └── paragraph                          ← "better"
-```
-
-- `bareText: true` means the node's text was originally wrapped in an HTML
-  tag (e.g., `<summary>text</summary>`) and is rendered without markdown
-  block-level syntax in source view (no `#`, `>`, etc. prefix — just the
-  raw tag + text).
-- In **source view**, each line is rendered independently; the opening tag, child lines, and closing tag are separate `[data-node-id]` elements.
-- In **writing view**, the `<details>` block is rendered as a **fake
-  disclosure widget** using `<div>` elements (never a real `<details>`
-  element — the native element caused too many quirks):
-
-  ```
-  div.md-html-block[data-node-id]
-    div.md-html-container.md-details([data-open])
-      div.md-details-summary
-        span.md-details-triangle   ← clickable ▶/▼
-        div.md-details-summary-content
-          div.md-paragraph[data-node-id]
-      div.md-details-body
-        div.md-heading2[data-node-id]
-        div.md-paragraph[data-node-id]
-  ```
-
-- Collapse/expand state is stored as `node.attributes.detailsOpen`
-  (runtime-only — not serialized to markdown).
-- Default open/closed state is controlled by a user preference
-  (`detailsClosed` setting in the Content preferences section).
 
 ### The `mousedown` guard
 
@@ -300,7 +244,7 @@ Returns `{ before, hints }` where `before` is the pre-edit tree snapshot and
 - **Cross-node**: trims start/end nodes, splices out intermediates, merges
   the end-node remainder into the start node.
 
-**Critical**: when `deleteSelectedRange()` is called as a *sub-step* of
+**Critical**: when `deleteSelectedRange()` is called as a _sub-step_ of
 another operation (e.g., `insertTextAtCursor`, `handleEnterKey`), the caller
 must propagate `hints.removed` into the final render hints. Failing to do
 so causes stale DOM nodes to remain after re-render.
@@ -334,33 +278,44 @@ to find the block parent for `blockNodeId` and offset computation.
 Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably for cross-node selection in writing mode because the editor re-renders when the cursor moves between nodes, destroying the selection. Use a programmatic helper that sets both the DOM `Range` and `editor.treeRange` directly:
 
 ```js
-async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
+async function setCrossNodeSelection(
+  page,
+  startText,
+  startOff,
+  endText,
+  endOff,
+) {
   // 1. Click inside the editor to ensure focus
-  const startLine = page.locator('[data-node-id]', { hasText: startText }).first();
+  const startLine = page
+    .locator("[data-node-id]", { hasText: startText })
+    .first();
   await startLine.click();
 
   // 2. Set DOM Range + treeRange programmatically
-  await page.evaluate(({ sText, sOff, eText, eOff }) => {
-    const editor = document.getElementById('editor');
-    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
-    let startNode, endNode;
-    while (walker.nextNode()) {
-      if (!startNode && walker.currentNode.textContent.includes(sText))
-        startNode = walker.currentNode;
-      if (walker.currentNode.textContent.includes(eText))
-        endNode = walker.currentNode;
-    }
-    const range = document.createRange();
-    range.setStart(startNode, sOff);
-    range.setEnd(endNode, eOff);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+  await page.evaluate(
+    ({ sText, sOff, eText, eOff }) => {
+      const editor = document.getElementById("editor");
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+      let startNode, endNode;
+      while (walker.nextNode()) {
+        if (!startNode && walker.currentNode.textContent.includes(sText))
+          startNode = walker.currentNode;
+        if (walker.currentNode.textContent.includes(eText))
+          endNode = walker.currentNode;
+      }
+      const range = document.createRange();
+      range.setStart(startNode, sOff);
+      range.setEnd(endNode, eOff);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
 
-    // Set treeRange directly since syncCursorFromDOM may not fire reliably
-    const api = window.__editor;
-    api.syncCursorFromDOM();
-  }, { sText: startText, sOff: startOff, eText: endText, eOff: endOff });
+      // Set treeRange directly since syncCursorFromDOM may not fire reliably
+      const api = window.__editor;
+      api.syncCursorFromDOM();
+    },
+    { sText: startText, sOff: startOff, eText: endText, eOff: endOff },
+  );
 }
 ```
 
