@@ -1,0 +1,16 @@
+/**
+ * Source-view styles — plain-text presentation.
+ * Syntax markers are always visible; rich formatting is suppressed.
+ */
+
+.source-view {
+    .md-syntax {
+        display: inline;
+    }
+
+    .md-code-block {
+        background-color: unset;
+        margin: 0.25em;
+        background: #3331;
+    }
+}

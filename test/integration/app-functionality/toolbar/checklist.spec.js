@@ -488,6 +488,17 @@ test(`typing x into checkbox brackets in source view checks the item`, async () 
   await page.keyboard.type(`x`);
   await page.waitForTimeout(200);
 
+  await page.keyboard.press(`Delete`);
+  await page.waitForTimeout(200);
+
   const md = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
   expect(md).toBe(`- [x] cake\n\n`);
+
+  // Verify cursor stayed in place (right after the x, before the ]).
+  // Typing another character here should insert between x and ].
+  await page.keyboard.type(`!`);
+  await page.waitForTimeout(200);
+
+  const md2 = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
+  expect(md2).toBe(`- [x!] cake\n\n`);
 });
