@@ -32,7 +32,7 @@ test.describe(`Linked image click-to-edit`, () => {
   test(`clicking a linked image opens the image edit modal`, async () => {
     // Click the image preview element directly — the event handler requires
     // event.target to be the <img>, not the wrapper div.
-    const image = page.locator(`.md-image-preview`);
+    const image = page.locator(`#editor .md-image img`);
     await clickInEditor(page, image);
 
     // The image modal should appear (not the link modal)
@@ -54,7 +54,7 @@ test.describe(`Linked image click-to-edit`, () => {
   test(`editing a linked image preserves the href`, async () => {
     // Click the image preview element directly — the event handler requires
     // event.target to be the <img>, not the wrapper div.
-    const image = page.locator(`.md-image-preview`);
+    const image = page.locator(`#editor .md-image img`);
     await clickInEditor(page, image);
 
     const dialog = page.locator(`.image-dialog`);

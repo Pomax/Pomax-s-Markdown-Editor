@@ -39,7 +39,7 @@ test(`HTML img tag is parsed as an image node in writing mode`, async () => {
   await expect(imageNode).toBeVisible();
 
   // The rendered <img> element should exist
-  const img = page.locator(`.md-image-preview`);
+  const img = page.locator(`.md-image img`);
   await expect(img).toBeVisible();
 });
 
@@ -97,7 +97,7 @@ test(`editing style via modal updates the parse tree`, async () => {
 
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
-  const image = page.locator(`.md-image-preview`);
+  const image = page.locator(`.md-image img`);
   await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
@@ -124,7 +124,7 @@ test(`clearing style converts HTML img to markdown syntax`, async () => {
 
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
-  const image = page.locator(`.md-image-preview`);
+  const image = page.locator(`.md-image img`);
   await expect(image).toBeVisible();
   await clickInEditor(page, image);
 

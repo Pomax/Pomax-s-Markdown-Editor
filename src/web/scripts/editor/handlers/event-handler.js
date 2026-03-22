@@ -86,14 +86,10 @@ export class EventHandler {
     // Check this before any cursor syncing — void elements like <img>
     // don't hold text selections, so syncCursorFromDOM would resolve
     // to a neighbouring node instead.
-    if (
-      this.editor.viewMode === `writing` &&
-      event.target instanceof HTMLImageElement &&
-      event.target.classList.contains(`md-image-preview`)
-    ) {
-      const imgEl = event.target;
+    const target = /** @type {HTMLElement} */ (event.target);
+    if (this.editor.viewMode === `writing` && target.tagName === `IMG`) {
       // Walk up to find the nearest data-node-id
-      let el = /** @type {HTMLElement|null} */ (imgEl.parentElement);
+      let el = /** @type {HTMLElement|null} */ (target.parentElement);
       while (el && el !== this.editor.container) {
         if (el.dataset?.nodeId) break;
         el = el.parentElement;

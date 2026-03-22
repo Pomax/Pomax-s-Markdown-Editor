@@ -10,7 +10,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from '../../test-utils.js';
+import { clickInEditor, resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,7 +32,7 @@ test.afterAll(async () => {
 });
 
 test.afterEach(async ({ page }) => {
-  await page.goto(`about:blank`);
+  await resetPage(page);
 });
 
 /**

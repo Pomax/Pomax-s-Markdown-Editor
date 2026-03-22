@@ -153,4 +153,9 @@ this **before** doing any work.
 
 # AI Agent notes
 
-Always read the `ai-agent-notes.md` document for further information.
+- **Always** read the `ai-agent-notes.md` document for further information
+
+- **Never** start performing file system mutations (creating/deleting files,
+  editing files, etc.) without first rereading both this document and any
+  other documents this document tells you to read, so that you can refresh
+  your memory on procedures and work- and acceptance criteria.

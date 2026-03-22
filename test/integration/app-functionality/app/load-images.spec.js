@@ -20,9 +20,9 @@ test(`images in a loaded markdown file resolve and load successfully`, async () 
   await page.waitForSelector(`#editor [data-node-id]`);
 
   // The app defaults to writing mode, so unfocused image nodes render
-  // as <img class="md-image-preview"> elements.  Wait for at least one
-  // to appear (the document has many images).
-  const images = page.locator(`img.md-image-preview`);
+  // as <img> elements.  Wait for at least one to appear (the document
+  // has many images).
+  const images = page.locator(`#editor img`);
   await expect(images.first()).toBeVisible({ timeout: 10_000 });
 
   const count = await images.count();
@@ -32,7 +32,7 @@ test(`images in a loaded markdown file resolve and load successfully`, async () 
   // check naturalWidth — images loaded via file:// still need time.
   await page.evaluate(() =>
     Promise.all(
-      [...document.querySelectorAll(`img.md-image-preview`)].map((img) =>
+      [...document.querySelectorAll(`#editor img`)].map((img) =>
         /** @type {HTMLImageElement} */ (img).complete
           ? Promise.resolve()
           : new Promise((r) => {

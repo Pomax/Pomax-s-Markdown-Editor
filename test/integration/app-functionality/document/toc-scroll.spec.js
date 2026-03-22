@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
@@ -22,7 +23,7 @@ test.afterAll(async () => {
 });
 
 test.afterEach(async ({ page }) => {
-  await page.goto(`about:blank`);
+  await resetPage(page);
 });
 
 test(`clicking a TOC link scrolls the heading to the top of the editor container`, async ({

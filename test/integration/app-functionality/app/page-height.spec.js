@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from '../../test-utils.js';
+import { clickInEditor, resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
@@ -23,7 +23,7 @@ test.afterAll(async () => {
 });
 
 test.afterEach(async ({ page }) => {
-  await page.goto(`about:blank`);
+  await resetPage(page);
 });
 
 test(`editor page height grows when content exceeds initial min-height`, async ({ page }) => {

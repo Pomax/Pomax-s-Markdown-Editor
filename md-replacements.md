@@ -55,7 +55,7 @@ These are structural, state, or styling classes that will remain as classes rega
 
 - ~~`md-checklist-checkbox`~~ — removed (use `.md-list-item input[type="checkbox"]`)
 - ~~`md-checklist-checkbox-wrapper`~~ — removed (use `.md-list-item span[contenteditable="false"]`)
-- `md-image-preview` — the rendered `<img>` element
+- ~~`md-image-preview`~~ — removed (use `#editor img` in CSS, `event.target.tagName === 'IMG'` in JS)
 - `md-html-container` — wrapper div for HTML block rendering
 - `md-details-triangle` — clickable ▶/▼ disclosure arrow
 - `md-details-summary-content` — content area of summary row

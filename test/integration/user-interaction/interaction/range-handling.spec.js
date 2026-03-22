@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { END, HOME, MOD, clickInEditor } from '../../test-utils.js';
+import { END, HOME, MOD, clickInEditor, resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
@@ -24,7 +24,7 @@ test.afterAll(async () => {
 });
 
 test.afterEach(async ({ page }) => {
-  await page.goto(`about:blank`);
+  await resetPage(page);
 });
 
 /**

@@ -526,7 +526,6 @@ export class WritingRenderer {
 
     // Always show rendered image (WYSIWYG)
     const img = document.createElement(`img`);
-    img.className = `md-image-preview`;
     img.src = this.resolveImageSrc(src);
     img.alt = alt;
     img.title = alt;
@@ -904,7 +903,6 @@ export class WritingRenderer {
         case `inline-image`: {
           const img = document.createElement(`img`);
           img.dataset.nodeId = child.id;
-          img.className = `md-image-preview`;
           img.alt = child.attributes.alt ?? ``;
           img.src = this.resolveImageSrc(child.attributes.src ?? ``);
           container.appendChild(img);
@@ -1028,7 +1026,6 @@ export class WritingRenderer {
         }
         case `image`: {
           const img = document.createElement(`img`);
-          img.className = `md-image-preview`;
           img.alt = seg.alt ?? ``;
           img.src = this.resolveImageSrc(seg.src ?? ``);
           container.appendChild(img);

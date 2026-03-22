@@ -195,6 +195,22 @@ export async function closeApp(electronApp) {
 }
 
 /**
+ * Navigate the page to about:blank to clean up browser state between tests.
+ * Wrapped in a try/catch because Firefox occasionally throws a
+ * "browserContext.close" protocol error during teardown.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function resetPage(page) {
+  try {
+    await page.goto(`about:blank`);
+    await page.waitForTimeout(100);
+  } catch {
+    /* Firefox teardown glitch — safe to ignore */
+  }
+}
+
+/**
  * Switch the editor to writing view by clicking the toolbar toggle.
  * If already in writing view, this is a no-op.
  *

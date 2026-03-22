@@ -46,7 +46,7 @@ test(`typing ![alt](src) in writing view renders an inline image`, async () => {
   await expect(paragraph).toBeVisible();
 
   // An inline <img> should be rendered inside the paragraph
-  const img = paragraph.locator(`img.md-image-preview`);
+  const img = paragraph.locator(`img`);
   await expect(img).toBeVisible();
   await expect(img).toHaveAttribute(`alt`, `photo`);
 });
@@ -67,7 +67,7 @@ test(`typing standalone ![alt](src) suppresses block-level image conversion`, as
   await expect(paragraph).toBeVisible();
 
   // Should contain an inline <img>
-  const img = paragraph.locator(`img.md-image-preview`);
+  const img = paragraph.locator(`img`);
   await expect(img).toBeVisible();
 });
 
@@ -78,7 +78,7 @@ test(`image syntax round-trips through source view correctly`, async () => {
   // In writing view, the paragraph should contain an inline image
   const paragraph = page.locator(`#editor [data-node-id].md-paragraph`);
   await expect(paragraph).toBeVisible();
-  const img = paragraph.locator(`img.md-image-preview`);
+  const img = paragraph.locator(`img`);
   await expect(img).toBeVisible();
 
   // Switch to source view — should show raw markdown
@@ -88,7 +88,7 @@ test(`image syntax round-trips through source view correctly`, async () => {
 
   // Switch back to writing view — image should still render
   await setWritingView(page);
-  const imgAfter = page.locator(`#editor [data-node-id].md-paragraph img.md-image-preview`);
+  const imgAfter = page.locator(`#editor [data-node-id].md-paragraph img`);
   await expect(imgAfter).toBeVisible();
 });
 
@@ -122,6 +122,6 @@ test(`removing ! in source view converts inline image to link`, async () => {
   await setWritingView(page);
   const link = page.locator(`#editor [data-node-id].md-paragraph a`);
   await expect(link).toBeVisible();
-  const noImg = page.locator(`#editor [data-node-id].md-paragraph img.md-image-preview`);
+  const noImg = page.locator(`#editor [data-node-id].md-paragraph img`);
   await expect(noImg).toHaveCount(0);
 });
