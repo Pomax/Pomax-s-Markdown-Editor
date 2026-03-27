@@ -34,7 +34,7 @@ These are structural, state, or styling classes that will remain as classes rega
 
 ### Syntax/content structure (spans inside a block)
 
-- `md-syntax` — delimiter text (hidden in unfocused writing view)
+- `md-syntax` — delimiter text (hidden in writing view)
 - `md-content` — editable content region within a block element
 - `md-heading-marker` — the `# ` prefix span
 - `md-blockquote-marker` — the `> ` prefix span
@@ -44,7 +44,7 @@ These are structural, state, or styling classes that will remain as classes rega
 
 ### Code block internals
 
-- `md-code-content` — the code text area
+- ~~`md-code-content`~~ — removed (use `.md-code-block .md-content`)
 - ~~`md-code-fence`~~ — removed (dead CSS, never applied)
 - ~~`md-code-language-tag`~~ — replaced by `[data-lang]` attribute
 - ~~`md-code-language-tag--top`~~ — replaced by `[data-lang].top`

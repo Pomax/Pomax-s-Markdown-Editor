@@ -9,8 +9,6 @@
     }
 
     .md-code-block {
-        background-color: unset;
-        margin: 0.25em;
-        background: #3331;
+        white-space: pre
     }
 }

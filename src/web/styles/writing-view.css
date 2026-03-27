@@ -25,15 +25,6 @@
         padding-right: 4px;
     }
 
-    /* List items set their own margin-left via inline styles; the generic
-       focused-line offsets must not interfere. */
-    .md-list-item[data-has-focus] {
-        margin-left: unset;
-        padding-left: unset;
-        margin-right: unset;
-        padding-right: unset;
-    }
-
     /* Headings */
     .md-heading1,
     .md-heading2,
@@ -88,17 +79,17 @@
         color: var(--color-blockquote);
         font-style: italic;
         margin: var(--spacing-md) 0;
-    }
 
-    .md-blockquote-marker {
-        color: var(--color-syntax);
+        .md-blockquote-marker {
+            color: var(--color-syntax);
+        }
     }
 
     /* Code blocks */
     .md-code-block {
         background-color: var(--color-code-bg);
         border-radius: 4px;
-        padding: 0;
+        padding: 1em;
         margin: 0;
         overflow-x: auto;
         position: relative;
@@ -106,55 +97,55 @@
         &.tall [data-lang].bottom {
             display: block;
         }
-    }
 
-    [data-lang] {
-        position: absolute;
-        right: 0.5em;
-        font-family: var(--font-family-mono);
-        font-size: 0.75em;
-        color: var(--color-text-secondary);
-        opacity: 0.6;
-        cursor: pointer;
-        user-select: none;
-        padding: 0 0.25em;
-        border-radius: 2px;
-        z-index: 1;
-
-        &:hover {
-            opacity: 1;
-            background-color: var(--color-bg-secondary);
-        }
-
-        &.top {
-            top: 0.25em;
-        }
-
-        &.bottom {
-            bottom: 0.25em;
-            display: none;
-        }
-
-        &.empty {
-            opacity: 0.35;
-            font-style: italic;
+        [data-lang] {
+            position: absolute;
+            right: 0.5em;
+            font-family: var(--font-family-mono);
+            font-size: 0.75em;
+            color: var(--color-text-secondary);
+            opacity: 0.6;
+            cursor: pointer;
+            user-select: none;
+            padding: 0 0.25em;
+            border-radius: 2px;
+            z-index: 1;
 
             &:hover {
-                opacity: 0.8;
+                opacity: 1;
+                background-color: var(--color-bg-secondary);
+            }
+
+            &.top {
+                top: 0.25em;
+            }
+
+            &.bottom {
+                bottom: 0.25em;
+                display: none;
+            }
+
+            &.empty {
+                opacity: 0.35;
+                font-style: italic;
+
+                &:hover {
+                    opacity: 0.8;
+                }
             }
         }
-    }
 
-    .md-code-content {
-        font-family: var(--font-family-mono);
-        font-size: 0.9em;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
+        .md-content {
+            font-family: var(--font-family-mono);
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-break: break-word;
 
-    .md-code-content code {
-        background: none;
-        padding: 0;
+            code {
+                background: none;
+                padding: 0;
+            }
+        }
     }
 
     /* Code syntax highlighting */
@@ -170,33 +161,61 @@
     .sh-attribute  { color: var(--sh-attribute); }
     .sh-tag        { color: var(--sh-tag); font-weight: 600; }
 
-    /* Inline code */
-    .md-inline.md-code {
-        background-color: var(--color-code-bg);
-        padding: 0.1em 0.3em;
-        border-radius: 3px;
-        font-family: var(--font-family-mono);
-        font-size: 0.9em;
+    /* Inline formatting */
+    .md-inline {
+        &.md-code {
+            background-color: var(--color-code-bg);
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            font-family: var(--font-family-mono);
+            font-size: 0.9em;
+        }
+
+        &.md-bold {
+            font-weight: bold;
+        }
+
+        &.md-italic {
+            font-style: italic;
+        }
+
+        &.md-strikethrough {
+            text-decoration: line-through;
+        }
+
+        &.md-link {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
     }
 
-    /* List marker */
-    .md-list-marker {
-        color: var(--color-syntax);
-        font-family: var(--font-family-mono);
-    }
+    /* List items — focused-line offsets must not interfere with
+       margin-left set via inline styles. */
+    .md-list-item {
+        &[data-has-focus] {
+            margin-left: unset;
+            padding-left: unset;
+            margin-right: unset;
+            padding-right: unset;
+        }
 
-    /* Checklist checkbox positioning */
-    .md-list-item span[contenteditable="false"] {
-        position: absolute;
-        left: -1.4em;
-        top: 50%;
-        transform: translateY(-50%);
-        user-select: none;
-    }
+        .md-list-marker {
+            color: var(--color-syntax);
+            font-family: var(--font-family-mono);
+        }
 
-    .md-list-item input[type="checkbox"] {
-        cursor: pointer;
-        margin: 0;
+        span[contenteditable="false"] {
+            position: absolute;
+            left: -1.4em;
+            top: 50%;
+            transform: translateY(-50%);
+            user-select: none;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+            margin: 0;
+        }
     }
 
     /* Horizontal rule */
@@ -237,24 +256,6 @@
         font-size: 0.9em;
     }
 
-    /* Inline formatting */
-    .md-inline.md-bold {
-        font-weight: bold;
-    }
-
-    .md-inline.md-italic {
-        font-style: italic;
-    }
-
-    .md-inline.md-strikethrough {
-        text-decoration: line-through;
-    }
-
-    .md-inline.md-link {
-        color: var(--color-primary);
-        text-decoration: underline;
-    }
-
     /* Placeholder for empty content */
     .writing-placeholder::before {
         content: 'Start typing...';
@@ -280,6 +281,23 @@
         &:not([data-open]) > div:not(.html-summary) {
             display: none;
         }
+
+        > div:not(.html-summary) {
+            overflow: hidden;
+
+            > [data-node-id] {
+                padding: 0 var(--spacing-md);
+                margin-bottom: 0;
+
+                &:first-child {
+                    padding-top: var(--spacing-sm);
+                }
+
+                &:last-child {
+                    padding-bottom: var(--spacing-sm);
+                }
+            }
+        }
     }
 
     .html-summary {
@@ -289,6 +307,16 @@
         background: color-mix(in srgb, var(--color-border) 30%, transparent);
         border-radius: 6px 6px 0 0;
         padding: var(--spacing-sm) var(--spacing-md);
+
+        > div {
+            flex: 1;
+            min-width: 0;
+            font-weight: 600;
+
+            [data-node-id] {
+                margin-bottom: 0;
+            }
+        }
     }
 
     .dropdown {
@@ -302,33 +330,6 @@
 
         &:hover {
             color: var(--color-text);
-        }
-    }
-
-    .html-summary > div {
-        flex: 1;
-        min-width: 0;
-        font-weight: 600;
-
-        [data-node-id] {
-            margin-bottom: 0;
-        }
-    }
-
-    .html-details > div:not(.html-summary) {
-        overflow: hidden;
-
-        > [data-node-id] {
-            padding: 0 var(--spacing-md);
-            margin-bottom: 0;
-
-            &:first-child {
-                padding-top: var(--spacing-sm);
-            }
-
-            &:last-child {
-                padding-bottom: var(--spacing-sm);
-            }
         }
     }
 }

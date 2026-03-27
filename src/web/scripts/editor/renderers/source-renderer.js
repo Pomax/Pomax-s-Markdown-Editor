@@ -317,7 +317,7 @@ export class SourceRenderer {
     node.enterSourceEditMode();
 
     const codeContent = document.createElement(`div`);
-    codeContent.className = `md-code-content md-content`;
+    codeContent.className = `md-content`;
     // Append an extra newline so trailing empty lines have visual
     // height (same reason as the old per-section render).
     codeContent.textContent = `${node.sourceEditText}\n`;

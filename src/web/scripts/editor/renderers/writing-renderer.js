@@ -407,7 +407,7 @@ export class WritingRenderer {
     }
 
     const codeContent = document.createElement(`pre`);
-    codeContent.className = `md-code-content md-content`;
+    codeContent.className = `md-content`;
 
     const code = document.createElement(`code`);
     if (isFocused) {

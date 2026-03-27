@@ -173,7 +173,7 @@ test.describe(`Code-block language tag dialog`, () => {
     await setWritingView(page);
     // Click inside the code block content and press Home to ensure
     // the cursor is at offset 0 (start of the code body).
-    await page.locator(`#editor .md-code-block .md-code-content`).click();
+    await page.locator(`#editor .md-code-block .md-content`).click();
     await page.keyboard.press(`Home`);
     // Change the language from "js" to "python" via the dialog.
     await page.locator(`#editor [data-lang].top`).click();
@@ -219,7 +219,7 @@ test.describe(`Code-block language tag dialog`, () => {
 
     // Click inside the code content using real mouse coordinates,
     // the same way a user would — no keyboard navigation.
-    const codeContent = page.locator(`#editor .md-code-block .md-code-content`);
+    const codeContent = page.locator(`#editor .md-code-block .md-content`);
     const box = /** @type {NonNullable<Awaited<ReturnType<typeof codeContent.boundingBox>>>} */ (
       await codeContent.boundingBox()
     );
@@ -251,7 +251,7 @@ test.describe(`Code-block language tag dialog`, () => {
     await setWritingView(page);
 
     // Click inside the code content to place the cursor first.
-    const codeContent = page.locator(`#editor .md-code-block .md-code-content`);
+    const codeContent = page.locator(`#editor .md-code-block .md-content`);
     const box = /** @type {NonNullable<Awaited<ReturnType<typeof codeContent.boundingBox>>>} */ (
       await codeContent.boundingBox()
     );
