@@ -196,7 +196,7 @@ export class SourceRenderer {
    */
   renderNode(node) {
     const element = document.createElement(`div`);
-    element.className = `md-${node.type}`;
+    element.className = node.type === `html-block` ? `html-element` : `md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     switch (node.type) {

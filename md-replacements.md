@@ -11,7 +11,7 @@ These are used as `className` on a `<div>` where the div should eventually becom
 - `md-list-item` → `<li>`
 - `md-horizontal-rule` → `<hr>`
 - `md-table` → `<table>`
-- `md-html-block` → no direct semantic equivalent (container for arbitrary HTML)
+- ~~`md-html-block`~~ → replaced by `html-element`
 - `md-html-tag` → source-view line for an HTML opening/closing tag
 - `md-html-raw` → source-view line for raw HTML content (e.g. `<script>` body)
 - `md-image` → `<figure>` or `<img>`
@@ -56,7 +56,7 @@ These are structural, state, or styling classes that will remain as classes rega
 - ~~`md-checklist-checkbox`~~ — removed (use `.md-list-item input[type="checkbox"]`)
 - ~~`md-checklist-checkbox-wrapper`~~ — removed (use `.md-list-item span[contenteditable="false"]`)
 - ~~`md-image-preview`~~ — removed (use `#editor img` in CSS, `event.target.tagName === 'IMG'` in JS)
-- `md-html-container` — wrapper div for HTML block rendering
+- ~~`md-html-container`~~ — removed (container div eliminated; attributes now applied directly to outer `.html-element`)
 - ~~`md-details-triangle`~~ — replaced by `dropdown`
 - ~~`md-details-summary-content`~~ — removed (use `.html-summary > div`)
 - `writing-placeholder` — empty editor placeholder (no `md-` prefix)

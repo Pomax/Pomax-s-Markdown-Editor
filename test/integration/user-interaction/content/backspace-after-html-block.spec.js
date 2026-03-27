@@ -117,9 +117,9 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   expect(mergedCount, `merged line should exist inside details`).toBe(1);
 
   // The standalone paragraph should no longer exist outside details.
-  // Use :not(.md-html-block) to exclude the html-block wrapper whose
+  // Use :not(.html-element) to exclude the html-block wrapper whose
   // descendant text now includes the merged content.
-  const standaloneLine = page.locator(`#editor > [data-node-id]:not(.md-html-block)`, {
+  const standaloneLine = page.locator(`#editor > [data-node-id]:not(.html-element)`, {
     hasText: `And then this is the main doc again.`,
   });
   const standaloneCount = await standaloneLine.count();

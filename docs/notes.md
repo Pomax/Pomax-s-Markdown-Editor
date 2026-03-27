@@ -166,15 +166,14 @@ html-block (type: 'html-block', tagName: 'details')
   element — the native element caused too many quirks):
 
   ```
-  div.md-html-element[data-node-id]
-    div.md-html-container.html-details([data-open])
-      div.html-summary
-        span.dropdown   ← clickable ▶/▼
-        div
-          div.md-paragraph[data-node-id]
+  div.html-element.html-details[data-node-id]([data-open])
+    div.html-summary
+      span.dropdown   ← clickable ▶/▼
       div
-        div.md-heading2[data-node-id]
         div.md-paragraph[data-node-id]
+    div
+      div.md-heading2[data-node-id]
+      div.md-paragraph[data-node-id]
   ```
 
 - Collapse/expand state is stored as `node.runtime.detailsOpen`

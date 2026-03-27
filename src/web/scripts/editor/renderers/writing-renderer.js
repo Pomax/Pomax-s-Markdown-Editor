@@ -264,7 +264,7 @@ export class WritingRenderer {
    */
   renderNode(node, isFocused, visualNumber) {
     const element = document.createElement(`div`);
-    element.className = `md-${node.type}`;
+    element.className = node.type === `html-block` ? `html-element` : `md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     if (isFocused) {
@@ -666,11 +666,11 @@ export class WritingRenderer {
       return element;
     }
 
-    // Create the actual HTML container element
+    // Create the actual semantic element so tags like <iframe>, <section>,
+    // <nav>, etc. render with their native behaviour.
     const container = document.createElement(tagName);
-    container.className = `md-html-container`;
 
-    // Copy attributes from the opening tag onto the container element
+    // Copy attributes from the opening tag onto the semantic element
     this.applyHtmlAttributes(container, attrs.openingTag || ``);
 
     // Determine which child (if any) is focused
@@ -715,14 +715,13 @@ export class WritingRenderer {
     }
     const isOpen = !!node.attributes.detailsOpen;
 
-    const container = document.createElement(`div`);
-    container.className = `md-html-container html-details`;
+    element.classList.add(`html-details`);
     if (isOpen) {
-      container.dataset.open = ``;
+      element.dataset.open = ``;
     }
 
     // Copy any extra attributes from the original opening tag
-    this.applyHtmlAttributes(container, attrs.openingTag || ``);
+    this.applyHtmlAttributes(element, attrs.openingTag || ``);
 
     const currentNodeId = this.editor.getBlockNodeId();
 
@@ -778,7 +777,7 @@ export class WritingRenderer {
         if (scEl) summaryContent.appendChild(scEl);
       }
       summaryRow.appendChild(summaryContent);
-      container.appendChild(summaryRow);
+      element.appendChild(summaryRow);
     }
 
     // Collapsible body
@@ -796,8 +795,7 @@ export class WritingRenderer {
       body.appendChild(document.createElement(`br`));
     }
 
-    container.appendChild(body);
-    element.appendChild(container);
+    element.appendChild(body);
     return element;
   }
 

@@ -54,7 +54,7 @@ test(`typing a character on the summary line in source view inserts it without r
   await setSourceView(page);
 
   // The summary should be rendered as a single line in source view.
-  // The bareText path renders it as a .md-paragraph (not .md-html-block)
+  // The bareText path renders it as a .md-paragraph (not .html-element)
   // with .md-html-tag syntax spans.  Use a precise selector so we don't
   // also match the outer html-block container that wraps it.
   const summaryLine = page.locator(`#editor [data-node-id].md-paragraph:has(.md-html-tag)`);
