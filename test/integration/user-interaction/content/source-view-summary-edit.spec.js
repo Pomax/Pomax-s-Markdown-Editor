@@ -41,7 +41,7 @@ test.afterAll(async () => {
 
 test(`typing a character on the summary line in source view inserts it without rewriting the line`, async () => {
   // Step 1: click on the summary text in writing view to position the cursor.
-  const summaryParagraph = page.locator(`#editor .md-details-summary-content .md-paragraph`);
+  const summaryParagraph = page.locator(`#editor .html-summary > div .md-paragraph`);
   await summaryParagraph.waitFor({ state: `visible` });
   await clickInEditor(page, summaryParagraph);
   await page.waitForTimeout(200);

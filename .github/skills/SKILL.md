@@ -42,6 +42,11 @@ this **before** doing any work.
 
 ## Doing work
 
+- **Never** start performing file system mutations (creating/deleting files,
+  editing files, etc.) without first rereading both this document and any
+  other documents this document tells you to read, so that you can refresh
+  your memory on procedures and work- and acceptance criteria.
+
 - You are almost certainly already in the correct directory, do not use `cd`
   unless you absolutely have to.
 
@@ -156,12 +161,3 @@ this **before** doing any work.
 
 - **Never** use inline type defs, instead declare the types in the
   `types.d.ts` file and pull types from that as a docs reference import
-
-# AI Agent notes
-
-- **Always** read the `ai-agent-notes.md` document for further information
-
-- **Never** start performing file system mutations (creating/deleting files,
-  editing files, etc.) without first rereading both this document and any
-  other documents this document tells you to read, so that you can refresh
-  your memory on procedures and work- and acceptance criteria.

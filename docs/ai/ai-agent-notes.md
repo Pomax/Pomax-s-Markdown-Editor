@@ -335,7 +335,7 @@ content, set view mode) rather than depending on prior tests. Module-level
   - `src/web/styles/writing-view.css` — all rich presentation nested under `.writing-view { }` (headings, blockquotes, code blocks with syntax highlighting, tables, inline formatting, syntax marker show/hide, focus highlighting, placeholder, details widget).
   - `src/web/styles/source-view.css` — plain-text overrides nested under `.source-view { }` (syntax markers always visible, code block background unset).
 - Source view intentionally shows plain text with no presentation styling — no bold headings, no italic blockquotes, no borders, no font-size changes. Only a subtle background tint on code blocks.
-- The fake details widget uses `.md-details`, `[data-open]`, `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`, `.md-details-body` classes.
-- Collapse is achieved via `.md-details:not([data-open]) .md-details-body { display: none; }`.
+- The fake details widget uses `.html-details`, `[data-open]`, `.html-summary`, `.dropdown` classes. The summary content and body divs are targeted positionally (`.html-summary > div` and `.html-details > div:not(.html-summary)`).
+- Collapse is achieved via `.html-details:not([data-open]) > div:not(.html-summary) { display: none; }`.
 - Checklist items use `.md-list-item input[type="checkbox"]` for styling. They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
 - `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

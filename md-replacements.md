@@ -16,9 +16,9 @@ These are used as `className` on a `<div>` where the div should eventually becom
 - `md-html-raw` → source-view line for raw HTML content (e.g. `<script>` body)
 - `md-image` → `<figure>` or `<img>`
 - `md-table-row` → source-view line for a table row
-- `md-details` → rendered as a fake `<details>` widget
-- `md-details-summary` → `<summary>`
-- `md-details-body` → content inside `<details>`
+- ~~`md-details`~~ → replaced by `html-details`
+- ~~`md-details-summary`~~ → replaced by `html-summary`
+- ~~`md-details-body`~~ → removed (use `.html-details > div:not(.html-summary)`)
 
 ## Classes that are NOT standing in for HTML elements
 
@@ -57,6 +57,6 @@ These are structural, state, or styling classes that will remain as classes rega
 - ~~`md-checklist-checkbox-wrapper`~~ — removed (use `.md-list-item span[contenteditable="false"]`)
 - ~~`md-image-preview`~~ — removed (use `#editor img` in CSS, `event.target.tagName === 'IMG'` in JS)
 - `md-html-container` — wrapper div for HTML block rendering
-- `md-details-triangle` — clickable ▶/▼ disclosure arrow
-- `md-details-summary-content` — content area of summary row
+- ~~`md-details-triangle`~~ — replaced by `dropdown`
+- ~~`md-details-summary-content`~~ — removed (use `.html-summary > div`)
 - `writing-placeholder` — empty editor placeholder (no `md-` prefix)

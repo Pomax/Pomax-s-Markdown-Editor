@@ -263,26 +263,26 @@
     }
 
     /* Details/summary disclosure widget */
-    .md-details {
+    .html-details {
         border: 1px solid var(--color-border);
         border-radius: 6px;
         padding: 0;
         margin: var(--spacing-xs) 0;
 
-        &:not([data-open]) .md-details-summary {
+        &:not([data-open]) .html-summary {
             border-radius: 6px;
         }
 
-        &[data-open] .md-details-summary {
+        &[data-open] .html-summary {
             border-bottom: 1px solid var(--color-border);
         }
 
-        &:not([data-open]) .md-details-body {
+        &:not([data-open]) > div:not(.html-summary) {
             display: none;
         }
     }
 
-    .md-details-summary {
+    .html-summary {
         display: flex;
         align-items: baseline;
         gap: var(--spacing-xs);
@@ -291,7 +291,7 @@
         padding: var(--spacing-sm) var(--spacing-md);
     }
 
-    .md-details-triangle {
+    .dropdown {
         cursor: pointer;
         user-select: none;
         flex-shrink: 0;
@@ -305,7 +305,7 @@
         }
     }
 
-    .md-details-summary-content {
+    .html-summary > div {
         flex: 1;
         min-width: 0;
         font-weight: 600;
@@ -315,7 +315,7 @@
         }
     }
 
-    .md-details-body {
+    .html-details > div:not(.html-summary) {
         overflow: hidden;
 
         > [data-node-id] {

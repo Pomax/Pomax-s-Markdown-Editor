@@ -110,7 +110,7 @@ test(`writing view: backspace at start of paragraph after </details> merges with
 
   // The merged text should now be "betterAnd then this is the main doc again."
   // located inside the fake details block.
-  const mergedLine = page.locator(`#editor .md-details [data-node-id]`, {
+  const mergedLine = page.locator(`#editor .html-details [data-node-id]`, {
     hasText: `betterAnd then this is the main doc again.`,
   });
   const mergedCount = await mergedLine.count();

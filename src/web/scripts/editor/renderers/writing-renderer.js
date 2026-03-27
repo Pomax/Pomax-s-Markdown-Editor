@@ -716,7 +716,7 @@ export class WritingRenderer {
     const isOpen = !!node.attributes.detailsOpen;
 
     const container = document.createElement(`div`);
-    container.className = `md-html-container md-details`;
+    container.className = `md-html-container html-details`;
     if (isOpen) {
       container.dataset.open = ``;
     }
@@ -743,11 +743,11 @@ export class WritingRenderer {
     // Summary row
     if (summaryNode) {
       const summaryRow = document.createElement(`div`);
-      summaryRow.className = `md-details-summary`;
+      summaryRow.className = `html-summary`;
 
       // Disclosure triangle
       const triangle = document.createElement(`span`);
-      triangle.className = `md-details-triangle`;
+      triangle.className = `dropdown`;
       triangle.textContent = isOpen ? `▼` : `▶`;
       triangle.setAttribute(`role`, `button`);
       triangle.setAttribute(`aria-label`, isOpen ? `Collapse` : `Expand`);
@@ -770,7 +770,6 @@ export class WritingRenderer {
 
       // Render summary content
       const summaryContent = document.createElement(`div`);
-      summaryContent.className = `md-details-summary-content`;
       const summaryFocused = summaryNode.id === currentNodeId;
       // Render summary's own children (the bareText paragraph)
       for (const sc of summaryNode.children) {
@@ -784,7 +783,6 @@ export class WritingRenderer {
 
     // Collapsible body
     const body = document.createElement(`div`);
-    body.className = `md-details-body`;
 
     for (const child of bodyChildren) {
       const childFocused = child.id === currentNodeId;

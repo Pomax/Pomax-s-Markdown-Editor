@@ -40,8 +40,8 @@ test.afterAll(async () => {
 test(`pressing Enter after summary text and typing " a a" preserves leading space`, async () => {
   // Click on the paragraph inside the summary element to focus it.
   // The fake details widget renders the summary content inside
-  // .md-details-summary-content, which contains the .md-paragraph.
-  const summaryParagraph = page.locator(`#editor .md-details-summary-content .md-paragraph`);
+  // .html-summary > div, which contains the .md-paragraph.
+  const summaryParagraph = page.locator(`#editor .html-summary > div .md-paragraph`);
   await summaryParagraph.waitFor({ state: `visible` });
   await clickInEditor(page, summaryParagraph);
   await page.waitForTimeout(200);
@@ -59,7 +59,7 @@ test(`pressing Enter after summary text and typing " a a" preserves leading spac
    *  inside the details body. */
   const readParagraph = () =>
     page.evaluate(() => {
-      const details = document.querySelector(`#editor .md-details`);
+      const details = document.querySelector(`#editor .html-details`);
       if (!details) return null;
       // The new paragraph is the one that is currently focused.
       const para = details.querySelector(`.md-paragraph[data-has-focus]`);
