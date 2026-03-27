@@ -60,3 +60,18 @@ These are structural, state, or styling classes that will remain as classes rega
 - ~~`md-details-triangle`~~ — replaced by `dropdown`
 - ~~`md-details-summary-content`~~ — removed (use `.html-summary > div`)
 - `writing-placeholder` — empty editor placeholder (no `md-` prefix)
+
+
+---
+
+
+all tests pass
+
+Created 6 todos
+
+All 398 integration tests + 332 unit tests pass. Before committing, could you manually test this by:
+
+Opening a document that contains a <details> block — verify the disclosure triangle still collapses/expands, and clicking into the summary text still works for editing
+Opening a document with other HTML blocks (e.g. <section>, <nav>, or <iframe>) and confirming they render correctly in writing view
+Switching between writing view and source view on a document with HTML blocks to make sure both look right
+This will confirm the flattened DOM and renamed classes work correctly end-to-end.
