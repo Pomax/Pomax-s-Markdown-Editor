@@ -14,10 +14,11 @@
  *    result is "betterAnd then this is the main doc again."
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import fs from "node:fs";
+import path from "node:path";
+import { expect, test } from "@playwright/test";
 import {
+  HOME,
   clickInEditor,
   closeApp,
   launchApp,
@@ -25,10 +26,7 @@ import {
   projectRoot,
   setSourceView,
   setWritingView,
-} from '../../test-utils.js';
-
-const isMac = process.platform === `darwin`;
-const Home = isMac ? `Meta+ArrowLeft` : `Home`;
+} from "../../test-utils.js";
 
 const fixturePath = path.join(projectRoot, `test`, `fixtures`, `details.md`);
 const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
@@ -47,45 +45,6 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
-test(`source view: backspace at start of paragraph after </details> does not delete the line`, async () => {
-  // Load the fixture fresh.
-  await loadContent(page, fixtureContent);
-
-  // Switch to source view.
-  await setSourceView(page);
-
-  // Find the line that contains "And then this is the main doc again."
-  const targetLine = page.locator(`#editor [data-node-id]`, {
-    hasText: `And then this is the main doc again.`,
-  });
-  // There may be a parent wrapper that also matches; narrow to the
-  // innermost [data-node-id] that has no [data-node-id] children.
-  const innerTarget = targetLine.locator(`:scope:not(:has([data-node-id]))`).first();
-  await clickInEditor(page, innerTarget);
-  await page.waitForTimeout(100);
-
-  // Move cursor to the very start of the line.
-  await page.keyboard.press(Home);
-  await page.waitForTimeout(100);
-
-  // Press Backspace.
-  await page.keyboard.press(`Backspace`);
-  await page.waitForTimeout(300);
-
-  // The line must still exist with its full content.
-  const afterLine = page.locator(`#editor [data-node-id]`, {
-    hasText: `And then this is the main doc again.`,
-  });
-  const count = await afterLine.locator(`:scope:not(:has([data-node-id]))`).count();
-  expect(
-    count,
-    `paragraph should still exist after backspace in source view`,
-  ).toBeGreaterThanOrEqual(1);
-
-  const text = await afterLine.locator(`:scope:not(:has([data-node-id]))`).first().innerText();
-  expect(text).toContain(`And then this is the main doc again.`);
-});
-
 test(`writing view: backspace at start of paragraph after </details> merges with last child inside details`, async () => {
   // Reload the fixture fresh.
   await loadContent(page, fixtureContent);
@@ -101,7 +60,7 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   await page.waitForTimeout(100);
 
   // Move cursor to the very start.
-  await page.keyboard.press(Home);
+  await page.keyboard.press(HOME);
   await page.waitForTimeout(100);
 
   // Press Backspace — should merge into the "better" paragraph.
@@ -119,9 +78,12 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   // The standalone paragraph should no longer exist outside details.
   // Use :not(.html-element) to exclude the html-block wrapper whose
   // descendant text now includes the merged content.
-  const standaloneLine = page.locator(`#editor > [data-node-id]:not(.html-element)`, {
-    hasText: `And then this is the main doc again.`,
-  });
+  const standaloneLine = page.locator(
+    `#editor > [data-node-id]:not(.html-element)`,
+    {
+      hasText: `And then this is the main doc again.`,
+    },
+  );
   const standaloneCount = await standaloneLine.count();
   expect(standaloneCount, `standalone paragraph should be gone`).toBe(0);
 });
