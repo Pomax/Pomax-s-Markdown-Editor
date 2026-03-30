@@ -1042,6 +1042,10 @@ class App {
         await this.editor.setViewMode(`writing`);
         this.toolbar?.setViewMode(`writing`);
         break;
+      case `view:source2`:
+        await this.editor.setViewMode(`source2`);
+        this.toolbar?.setViewMode(`source2`);
+        break;
       case `document:getContent`:
         // Response would be handled via IPC
         break;

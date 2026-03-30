@@ -55,6 +55,8 @@ export class EventHandler {
    * @param {MouseEvent} event
    */
   handleMouseDown(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
     this.editor.editorInteractionPending = true;
@@ -75,6 +77,8 @@ export class EventHandler {
    * @param {MouseEvent} event
    */
   async handleClick(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     this.editor.rangeOperations.resetSelectAllLevel();
 
     // If the click landed on the phantom paragraph (the view-only
@@ -260,6 +264,8 @@ export class EventHandler {
    * @param {DragEvent} event
    */
   async handleDrop(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     if (!event.dataTransfer?.files?.length || !this.editor.syntaxTree) return;
 
     const files = [...event.dataTransfer.files];
@@ -391,6 +397,7 @@ export class EventHandler {
 
   /** Handles selection change events. */
   async handleSelectionChange() {
+    if (this.editor.viewMode === `source2`) return;
     if (this.editor.isRendering) return;
     if (document.activeElement === this.editor.container) {
       // If the selection is inside the phantom paragraph (no tree

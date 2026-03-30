@@ -157,7 +157,7 @@ export async function clickQuerySelector(page, qs) {
 }
 
 /**
- * Switch the editor to source view by clicking the toolbar toggle.
+ * Switch the editor to source view via the editor API.
  * If already in source view, this is a no-op.
  *
  * @param {import('@playwright/test').Page} page
@@ -165,7 +165,7 @@ export async function clickQuerySelector(page, qs) {
 export async function setSourceView(page) {
   const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
   if (current === `source`) return;
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
+  await page.evaluate(() => window.editorAPI?.setViewMode(`source`));
   await page.locator(`#editor[data-view-mode="source"]`).waitFor();
 }
 
@@ -211,14 +211,27 @@ export async function resetPage(page) {
 }
 
 /**
- * Switch the editor to writing view by clicking the toolbar toggle.
+ * Switch the editor to writing view via the editor API.
  * If already in writing view, this is a no-op.
  *
  * @param {import('@playwright/test').Page} page
  */
 export async function setWritingView(page) {
   const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
-  if (current !== `source`) return;
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
+  if (current === `writing`) return;
+  await page.evaluate(() => window.editorAPI?.setViewMode(`writing`));
   await page.locator(`#editor[data-view-mode="writing"]`).waitFor();
+}
+
+/**
+ * Switch the editor to source 2 view via the editor API.
+ * If already in source2 view, this is a no-op.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function setSource2View(page) {
+  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
+  if (current === `source2`) return;
+  await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
+  await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
 }

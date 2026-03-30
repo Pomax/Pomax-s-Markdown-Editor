@@ -190,6 +190,14 @@ export class MenuHandler {
   }
 
   /**
+   * Handles switching to Source 2 view.
+   */
+  async handleViewSource2() {
+    await this.editor.setViewMode(`source2`);
+    this.toolbar.setViewMode(`source2`);
+  }
+
+  /**
    * Handles changing the element type.
    * @param {string} elementType - The new element type
    */

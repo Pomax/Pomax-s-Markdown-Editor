@@ -267,6 +267,8 @@ export class ClipboardHandler {
    * @param {ClipboardEvent} event
    */
   handleCut(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     this.editor.syncCursorFromDOM();
     if (!this.editor.treeRange) return; // nothing selected — let browser handle
 
@@ -291,6 +293,8 @@ export class ClipboardHandler {
    * @param {ClipboardEvent} event
    */
   handleCopy(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     this.editor.syncCursorFromDOM();
     if (!this.editor.treeRange) return; // nothing selected — let browser handle
 

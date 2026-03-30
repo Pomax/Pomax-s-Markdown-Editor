@@ -354,7 +354,14 @@ export class Toolbar {
   static VIEW_MODE_LABELS = {
     writing: `Writing View`,
     source: `Source View`,
+    source2: `Source 2 View`,
   };
+
+  /**
+   * The order in which modes cycle when the toggle button is clicked.
+   * @type {ViewMode[]}
+   */
+  static VIEW_MODE_CYCLE = [`writing`, `source`, `source2`];
 
   /**
    * File-button definitions: id, label, and click handler.
@@ -424,7 +431,9 @@ export class Toolbar {
     button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
     button.addEventListener(`click`, async () => {
-      const newMode = this.editor.getViewMode() === `writing` ? `source` : `writing`;
+      const cycle = Toolbar.VIEW_MODE_CYCLE;
+      const currentIndex = cycle.indexOf(/** @type {ViewMode} */ (this.editor.getViewMode()));
+      const newMode = cycle[(currentIndex + 1) % cycle.length];
       await this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
     });

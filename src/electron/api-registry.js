@@ -152,12 +152,18 @@ export class APIRegistry {
       params: {
         mode: {
           type: `string`,
-          description: `The view mode: "source" or "writing"`,
+          description: `The view mode: "source", "source2", or "writing"`,
           required: true,
         },
       },
       handler: async (params, webContents) => {
-        const action = params.mode === `source` ? `view:source` : `view:writing`;
+        /** @type {Record<string, string>} */
+        const modeActions = {
+          source: `view:source`,
+          source2: `view:source2`,
+          writing: `view:writing`,
+        };
+        const action = modeActions[params.mode] ?? `view:writing`;
         webContents.send(`api:external`, action);
         return { success: true };
       },

@@ -28,6 +28,8 @@ export class InputHandler {
    * @param {InputEvent} event
    */
   async handleBeforeInput(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     if (this.editor.isRendering) {
       event.preventDefault();
       return;
@@ -80,6 +82,8 @@ export class InputHandler {
    * @param {KeyboardEvent} event
    */
   async handleKeyDown(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
     this.editor.editorInteractionPending = true;

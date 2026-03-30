@@ -118,6 +118,7 @@ export class PreferencesModal {
                             <select id="default-view-select" name="defaultView">
                                 <option value="writing">Writing</option>
                                 <option value="source">Source</option>
+                                <option value="source2">Source 2</option>
                             </select>
                         </div>
                     </fieldset>
@@ -696,7 +697,8 @@ export class PreferencesModal {
     try {
       const result = await window.electronAPI.getSetting(`defaultView`);
       if (result.success && result.value) {
-        return result.value === `source` ? `source` : `writing`;
+        if (result.value === `source` || result.value === `source2`) return result.value;
+        return `writing`;
       }
     } catch {
       // Fall through to default

@@ -187,6 +187,14 @@ export class IPCHandler {
       return { success: true };
     });
 
+    ipcMain.handle(`view:source2`, async (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        window.webContents.send(`menu:action`, `view:source2`);
+      }
+      return { success: true };
+    });
+
     ipcMain.handle(`view:openFilesChanged`, async (event, files) => {
       if (this.menuBuilder) {
         this.menuBuilder.openFiles = files ?? [];
