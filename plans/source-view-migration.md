@@ -8,9 +8,9 @@ Each step must be committed individually upon completion. Do not batch multiple 
 
 ## Progress
 
-- [ ] Step 1: Create the source view 2 renderer with a `<textarea>`
-- [ ] Step 2: Register the `source2` view mode in the editor
-- [ ] Step 3: Replace the view mode toggle button with a radio group
+- [x] Step 1: Create the source view 2 renderer with a `<textarea>`
+- [x] Step 2: Register the `source2` view mode in the editor
+- [ ] Step 3: Add a view mode toggle button with a radio group
 - [ ] Step 4: Style the radio group to look like a button bar
 - [ ] Step 5: Style the source view 2 textarea
 - [ ] Step 6: Add toolbar button support using local text examination
@@ -21,6 +21,7 @@ Each step must be committed individually upon completion. Do not batch multiple 
 - [ ] Step 11: Write integration tests for source view 2
 - [ ] Step 12: Run full test suite, fix any failures
 - [ ] Step 13: Update docs
+- [ ] Step 14: Remove old source view and rename `source2` to `source`
 
 ## Step Details
 
@@ -34,17 +35,20 @@ The renderer needs a `fullRender(syntaxTree, container)` method to match the int
 
 ### Step 2: Register the `source2` view mode in the editor
 
-Update `src/web/scripts/editor/index.js` to recognize `source2` as a valid view mode alongside `source` and `writing`. When `setViewMode('source2')` is called:
+Update `src/types.d.ts` to add `'source2'` to the `ViewMode` union.
 
-- Call `syntaxTree.toMarkdown()` to get the full markdown text.
-- Hand it to the source view 2 renderer's `fullRender`.
-- Skip all the per-node cursor/offset logic since there's no node correspondence.
+Update `src/web/scripts/editor/index.js` to recognize `source2` as a valid view mode alongside `source` and `writing`:
 
-When switching away from `source2`, read the textarea content to get the edited markdown (used in steps 8–10).
+- Import `SourceRendererV2` and instantiate it in the constructor.
+- `setViewMode`: accept `source2`. When entering `source2`, convert the tree cursor to an absolute offset in the markdown string using `cursorToAbsoluteOffset`, remove `contenteditable` from the container, render via `sourceRendererV2.fullRender`, then set `textarea.selectionStart`/`selectionEnd` to that absolute offset so the cursor appears in the same position.
+- When leaving `source2`, restore `contenteditable` on the container. The actual textarea-content reparse and cursor hand-off to the parser is deferred to steps 8–10.
+- `fullRender`: route `source2` to `sourceRendererV2`.
+- `renderNodes`: fall through to a full render for `source2` since incremental rendering does not apply.
+- Skip the code-block `sourceEditText` finalization logic when the origin or target mode is `source2`.
 
 ### Step 3: Replace the view mode toggle with a radio group
 
-Update the toolbar code in `src/web/scripts/utility/toolbar/toolbar.js` (or wherever `createViewModeToggle` lives) to replace the current button-based toggle with an HTML radio group: three `<input type="radio" name="view-mode">` elements with `<label>` wrappers. Values: `writing`, `source`, `source2`. The radio `change` event calls `editor.setViewMode(value)`.
+Update the toolbar code in `src/web/scripts/utility/toolbar/toolbar.js` (or wherever `createViewModeToggle` lives) to add a separate button to switch to the "source 2" view.
 
 ### Step 4: Style the radio group to look like a button bar
 
@@ -113,3 +117,7 @@ Run all existing tests to make sure nothing is broken by the new mode. Any failu
 ### Step 13: Update docs
 
 Update the developer and user-facing documentation to describe the new source view 2 mode, how it works, and how it differs from the original source view.
+
+### Step 14: Remove old source view and rename `source2` to `source`
+
+Remove `SourceRenderer` and its file (`source-renderer.js`). Rename `SourceRendererV2` to `SourceRenderer` (and its file to `source-renderer.js`). Change the `ViewMode` type from `'source' | 'source2' | 'writing'` back to `'source' | 'writing'`. Update all references throughout the codebase: editor, toolbar, electron IPC, menus, preferences, tests, CSS classes, and docs. The app returns to two view modes, but the source view is now the textarea-based implementation.

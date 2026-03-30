@@ -14,9 +14,9 @@
  *    result is "betterAnd then this is the main doc again."
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import { expect, test } from "@playwright/test";
+import fs from 'node:fs';
+import path from 'node:path';
+import { expect, test } from '@playwright/test';
 import {
   HOME,
   clickInEditor,
@@ -26,7 +26,7 @@ import {
   projectRoot,
   setSourceView,
   setWritingView,
-} from "../../test-utils.js";
+} from '../../test-utils.js';
 
 const fixturePath = path.join(projectRoot, `test`, `fixtures`, `details.md`);
 const fixtureContent = fs.readFileSync(fixturePath, `utf-8`);
@@ -78,12 +78,9 @@ test(`writing view: backspace at start of paragraph after </details> merges with
   // The standalone paragraph should no longer exist outside details.
   // Use :not(.html-element) to exclude the html-block wrapper whose
   // descendant text now includes the merged content.
-  const standaloneLine = page.locator(
-    `#editor > [data-node-id]:not(.html-element)`,
-    {
-      hasText: `And then this is the main doc again.`,
-    },
-  );
+  const standaloneLine = page.locator(`#editor > [data-node-id]:not(.html-element)`, {
+    hasText: `And then this is the main doc again.`,
+  });
   const standaloneCount = await standaloneLine.count();
   expect(standaloneCount, `standalone paragraph should be gone`).toBe(0);
 });

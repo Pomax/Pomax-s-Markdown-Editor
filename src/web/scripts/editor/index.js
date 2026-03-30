@@ -33,7 +33,10 @@ import { ImageHelper } from './content-types/image/image-helper.js';
 import { LinkHelper } from './content-types/link/link-helper.js';
 
 import { SourceRenderer } from './renderers/source-renderer.js';
+import { SourceRendererV2 } from './renderers/source-renderer-v2.js';
 import { WritingRenderer } from './renderers/writing-renderer.js';
+
+import { cursorToAbsoluteOffset } from './managers/cursor-persistence.js';
 
 /**
  * Main editor class that manages the markdown editing experience.
@@ -54,6 +57,9 @@ export class Editor {
 
     /** @type {WritingRenderer} */
     this.writingRenderer = new WritingRenderer(this);
+
+    /** @type {SourceRendererV2} */
+    this.sourceRendererV2 = new SourceRendererV2(this);
 
     /** @type {UndoManager} */
     this.undoManager = new UndoManager();
@@ -468,7 +474,12 @@ export class Editor {
 
     this.isRendering = true;
     try {
-      const renderer = this.viewMode === `source` ? this.sourceRenderer : this.writingRenderer;
+      const renderer =
+        this.viewMode === `source`
+          ? this.sourceRenderer
+          : this.viewMode === `source2`
+            ? this.sourceRendererV2
+            : this.writingRenderer;
       renderer.fullRender(this.syntaxTree, this.container);
     } finally {
       this.isRendering = false;
@@ -484,6 +495,11 @@ export class Editor {
    */
   renderNodes(hints) {
     if (!this.syntaxTree) return;
+
+    if (this.viewMode === `source2`) {
+      this.fullRender();
+      return;
+    }
 
     const renderer = this.viewMode === `writing` ? this.writingRenderer : this.sourceRenderer;
 
@@ -715,7 +731,7 @@ export class Editor {
    * @param {ViewMode} mode
    */
   async setViewMode(mode) {
-    if (mode !== `source` && mode !== `writing`) {
+    if (mode !== `source` && mode !== `source2` && mode !== `writing`) {
       console.warn(`Invalid view mode: ${mode}`);
       return;
     }
@@ -723,9 +739,27 @@ export class Editor {
     // Nothing to do if already in the requested mode.
     if (mode === this.viewMode) return;
 
+    // When entering source2, compute the absolute cursor offset so we
+    // can place the textarea caret in the same position.
+    let absoluteCursorOffset = null;
+    if (mode === `source2` && this.syntaxTree?.treeCursor) {
+      absoluteCursorOffset = cursorToAbsoluteOffset(
+        this.syntaxTree,
+        this.syntaxTree.treeCursor,
+        this.buildMarkdownLine.bind(this),
+        this.getPrefixLength.bind(this),
+      );
+    }
+
+    // When leaving source2, restore contenteditable on the container.
+    // (The actual reparse of textarea content is handled in steps 8–10.)
+    if (this.viewMode === `source2`) {
+      this.container.setAttribute(`contenteditable`, `true`);
+    }
+
     // Finalize any code-block that is still in source-edit mode
     // before switching views, so the tree is clean for the new renderer.
-    if (this.syntaxTree) {
+    if (mode !== `source2` && this.syntaxTree) {
       const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
       for (const child of this.syntaxTree.children) {
         if (child.type === `code-block` && child.sourceEditText !== null) {
@@ -748,7 +782,7 @@ export class Editor {
     // Writing → source: if the cursor is on a code-block, convert
     // the content-relative offset to sourceEditText-relative by
     // adding the opening-fence preamble length.
-    if (mode === `source` && this.syntaxTree?.treeCursor) {
+    if (mode === `source` && this.viewMode !== `source2` && this.syntaxTree?.treeCursor) {
       const cursorBlockId =
         this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
       const node = this.syntaxTree.findNodeById(cursorBlockId);
@@ -804,13 +838,29 @@ export class Editor {
       }
     }
 
+    // When entering source2, remove contenteditable so the textarea
+    // can own focus and input.
+    if (mode === `source2`) {
+      this.container.removeAttribute(`contenteditable`);
+    }
+
     this.viewMode = mode;
     this.container.dataset.viewMode = mode;
     this.fullRenderAndPlaceCursor();
 
+    // Place the textarea caret at the previously computed offset.
+    if (mode === `source2` && absoluteCursorOffset !== null && absoluteCursorOffset >= 0) {
+      const textarea = this.sourceRendererV2.textarea;
+      if (textarea) {
+        textarea.selectionStart = absoluteCursorOffset;
+        textarea.selectionEnd = absoluteCursorOffset;
+        textarea.focus();
+      }
+    }
+
     // If the tree owns a non-collapsed selection, rebuild it in the
     // new DOM so the user's selection survives the view-mode switch.
-    if (this.treeRange) {
+    if (mode !== `source2` && this.treeRange) {
       this.placeSelection();
     }
 
