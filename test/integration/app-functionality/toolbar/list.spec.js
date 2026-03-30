@@ -47,7 +47,7 @@ test(`clicking bullet list button converts paragraph to unordered list item`, as
   await setWritingView(page);
 
   // Click on the first paragraph to focus it
-  const firstLine = page.locator(`#editor .md-line`, { hasText: `First paragraph` }).first();
+  const firstLine = page.locator(`#editor [data-node-id]`, { hasText: `First paragraph` }).first();
   await firstLine.click();
   await page.waitForTimeout(200);
 
@@ -59,7 +59,7 @@ test(`clicking bullet list button converts paragraph to unordered list item`, as
   await setSourceView(page);
 
   // The first line should now be a list item
-  const firstSource = page.locator(`#editor .md-line`).first();
+  const firstSource = page.locator(`#editor [data-node-id]`).first();
   const text = await firstSource.textContent();
   expect(text).toMatch(/^- First paragraph/);
 });
@@ -69,7 +69,7 @@ test(`clicking numbered list button converts paragraph to ordered list item`, as
   await setWritingView(page);
 
   // Click on the first paragraph to focus it
-  const firstLine = page.locator(`#editor .md-line`, { hasText: `First paragraph` }).first();
+  const firstLine = page.locator(`#editor [data-node-id]`, { hasText: `First paragraph` }).first();
   await firstLine.click();
   await page.waitForTimeout(200);
 
@@ -80,7 +80,7 @@ test(`clicking numbered list button converts paragraph to ordered list item`, as
   // Switch to source view to verify
   await setSourceView(page);
 
-  const firstSource = page.locator(`#editor .md-line`).first();
+  const firstSource = page.locator(`#editor [data-node-id]`).first();
   const text = await firstSource.textContent();
   expect(text).toMatch(/^1\. First paragraph/);
 });
@@ -89,7 +89,7 @@ test(`clicking bullet list button on bullet list item toggles back to paragraph`
   await loadContent(page, `- Existing bullet item\n`);
   await setWritingView(page);
 
-  const line = page.locator(`#editor .md-line`, { hasText: `Existing bullet item` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Existing bullet item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -99,7 +99,7 @@ test(`clicking bullet list button on bullet list item toggles back to paragraph`
 
   await setSourceView(page);
 
-  const source = page.locator(`#editor .md-line`).first();
+  const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
   expect(text).toBe(`Existing bullet item`);
 });
@@ -108,7 +108,7 @@ test(`clicking numbered list button on bullet list item switches to ordered`, as
   await loadContent(page, `- Bullet item\n`);
   await setWritingView(page);
 
-  const line = page.locator(`#editor .md-line`, { hasText: `Bullet item` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Bullet item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -118,7 +118,7 @@ test(`clicking numbered list button on bullet list item switches to ordered`, as
 
   await setSourceView(page);
 
-  const source = page.locator(`#editor .md-line`).first();
+  const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^1\. Bullet item/);
 });
@@ -127,7 +127,7 @@ test(`Enter key in a list item creates a new list item`, async () => {
   await loadContent(page, `- First item\n`);
   await setWritingView(page);
 
-  const line = page.locator(`#editor .md-line`, { hasText: `First item` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `First item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -142,7 +142,7 @@ test(`Enter key in a list item creates a new list item`, async () => {
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const count = await lines.count();
   expect(count).toBeGreaterThanOrEqual(2);
 
@@ -157,7 +157,7 @@ test(`Enter on empty list item exits the list to a paragraph`, async () => {
   await setWritingView(page);
 
   // Click on the empty list item (second line)
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   await lines.nth(1).click();
   await page.waitForTimeout(200);
 
@@ -168,7 +168,7 @@ test(`Enter on empty list item exits the list to a paragraph`, async () => {
   await setSourceView(page);
 
   // The second line should now be a plain (empty) paragraph, not a list item
-  const secondLine = page.locator(`#editor .md-line`).nth(1);
+  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
   const text = await secondLine.textContent();
   // An empty paragraph renders as an empty line (no list marker)
   expect(text?.trim()).toBe(``);
@@ -178,7 +178,7 @@ test(`heading button on list item converts to heading`, async () => {
   await loadContent(page, `- Item before\n- Target item\n- Item after\n`);
   await setWritingView(page);
 
-  const line = page.locator(`#editor .md-line`, { hasText: `Target item` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Target item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -188,7 +188,7 @@ test(`heading button on list item converts to heading`, async () => {
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
   const second = await lines.nth(1).textContent();
   const third = await lines.nth(2).textContent();
@@ -203,7 +203,7 @@ test(`Enter in ordered list creates item with incremented number`, async () => {
   await setWritingView(page);
 
   // Click on the first ordered item
-  const line = page.locator(`#editor .md-line`, { hasText: `First` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `First` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -217,7 +217,7 @@ test(`Enter in ordered list creates item with incremented number`, async () => {
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
   const second = await lines.nth(1).textContent();
   const third = await lines.nth(2).textContent();
@@ -231,7 +231,7 @@ test(`source view: Enter between marker and content splits into empty item and n
   await loadContent(page, `1. Test item\n`);
   await setSourceView(page);
 
-  const line = page.locator(`#editor .md-line`, { hasText: `Test item` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Test item` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -246,7 +246,7 @@ test(`source view: Enter between marker and content splits into empty item and n
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const count = await lines.count();
   expect(count).toBeGreaterThanOrEqual(2);
 
@@ -264,7 +264,7 @@ test(`toggling off a list item converts the entire contiguous list to paragraphs
   await setWritingView(page);
 
   // Click on the middle item
-  const line = page.locator(`#editor .md-line`, { hasText: `Beta` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Beta` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -274,7 +274,7 @@ test(`toggling off a list item converts the entire contiguous list to paragraphs
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
   const second = await lines.nth(1).textContent();
   const third = await lines.nth(2).textContent();
@@ -288,7 +288,7 @@ test(`switching list type converts the entire contiguous list`, async () => {
   await setWritingView(page);
 
   // Click on the first item
-  const line = page.locator(`#editor .md-line`, { hasText: `Alpha` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Alpha` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -298,7 +298,7 @@ test(`switching list type converts the entire contiguous list`, async () => {
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
   const second = await lines.nth(1).textContent();
   const third = await lines.nth(2).textContent();
@@ -312,7 +312,7 @@ test(`Enter on empty middle ordered item renumbers remaining items`, async () =>
   await setWritingView(page);
 
   // Click on Beta to focus it
-  const line = page.locator(`#editor .md-line`, { hasText: `Beta` }).first();
+  const line = page.locator(`#editor [data-node-id]`, { hasText: `Beta` }).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -324,7 +324,7 @@ test(`Enter on empty middle ordered item renumbers remaining items`, async () =>
 
   await setSourceView(page);
 
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
   const second = await lines.nth(1).textContent();
   // Alpha keeps its number, Gamma renumbered to 2 (Beta was removed)
@@ -338,7 +338,7 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
   await setSourceView(page);
 
   // Focus the empty line
-  const line = page.locator(`#editor .md-line`).first();
+  const line = page.locator(`#editor [data-node-id]`).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -359,7 +359,7 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
 
   // Also check the rendered DOM in source view
   await setSourceView(page);
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   const count = await lines.count();
   expect(count).toBe(4);
 
@@ -373,7 +373,7 @@ test(`pasting multi-line markdown with CRLF line endings parses correctly`, asyn
   await loadContent(page, `\n`);
   await setSourceView(page);
 
-  const line = page.locator(`#editor .md-line`).first();
+  const line = page.locator(`#editor [data-node-id]`).first();
   await line.click();
   await page.waitForTimeout(200);
 
@@ -391,7 +391,7 @@ test(`pasting multi-line markdown with CRLF line endings parses correctly`, asyn
   expect(markdown).toContain(`3. three`);
 
   await setSourceView(page);
-  const lines = page.locator(`#editor .md-line`);
+  const lines = page.locator(`#editor [data-node-id]`);
   expect(await lines.count()).toBe(4);
   expect(await lines.nth(0).textContent()).toBe(`test`);
   expect(await lines.nth(1).textContent()).toMatch(/^1\.\s+one/);

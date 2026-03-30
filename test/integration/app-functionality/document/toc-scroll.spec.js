@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
@@ -21,11 +22,15 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await resetPage(page);
+});
+
 test(`clicking a TOC link scrolls the heading to the top of the editor container`, async ({
   page,
 }) => {
   await page.goto(baseURL);
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Build a document with enough content to force scrolling:
   // An h1, many paragraphs, then an h2 that will be off-screen.
@@ -35,7 +40,7 @@ test(`clicking a TOC link scrolls the heading to the top of the editor container
   for (let i = 0; i < 60; i++) lines.push(`More content ${i + 1}`);
 
   await page.evaluate((md) => window.editorAPI?.setContent(md), lines.join(`\n`));
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   // Wait for the TOC to pick up the headings
   await page.waitForSelector(`#toc-sidebar .toc-link`);

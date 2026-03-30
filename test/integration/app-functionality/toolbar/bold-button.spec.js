@@ -53,7 +53,7 @@ test.afterAll(async () => {
 async function dblclickWord(pg, lineLocator, word, which = `first`) {
   // Use the DOM Range API to get the exact pixel coordinates of the
   // target word.  This avoids the unreliable "fraction of box width"
-  // approach — .md-line is a block element that fills the full editor
+  // approach — [data-node-id] is a block element that fills the full editor
   // width, so box.width has no relation to text length.
   const coords = await lineLocator.evaluate(
     (el, args) => {
@@ -113,11 +113,11 @@ async function clickBoldButton(pg) {
 /**
  * Returns the raw markdown text of a specific line in source view.
  * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among .md-line elements.
+ * @param {number} index - 0-based line index among [data-node-id] elements.
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor .md-line`).nth(index).innerText();
+  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
 }
 
 test.describe(`Problem 1 — bold first word, toggle off`, () => {
@@ -125,7 +125,7 @@ test.describe(`Problem 1 — bold first word, toggle off`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
@@ -141,12 +141,12 @@ test.describe(`Problem 1 — bold first word, toggle off`, () => {
     await setWritingView(page);
 
     // Apply bold to first word.
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
     // Now dblclick the bolded word and un-bold it.
-    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    const firstLineAgain = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLineAgain, `text1`, `first`);
     await clickBoldButton(page);
 
@@ -161,7 +161,7 @@ test.describe(`Problem 2 — bold middle word, paragraph 1`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
@@ -175,12 +175,12 @@ test.describe(`Problem 2 — bold middle word, paragraph 1`, () => {
     await setWritingView(page);
 
     // Apply bold.
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
     // Toggle off.
-    const firstLineAgain = page.locator(`#editor .md-line`).first();
+    const firstLineAgain = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLineAgain, `text1`, `middle`);
     await clickBoldButton(page);
 
@@ -195,8 +195,8 @@ test.describe(`Problem 3 — bold first word, paragraph 2`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    // The second paragraph is the second .md-line in writing view.
-    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    // The second paragraph is the second [data-node-id] in writing view.
+    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
     await dblclickWord(page, secondLine, `text2`, `first`);
     await clickBoldButton(page);
 
@@ -215,7 +215,7 @@ test.describe(`Problem 4 — bold middle word, paragraph 2`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
     await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickBoldButton(page);
 
@@ -235,7 +235,7 @@ test.describe(`Cursor position after bold`, () => {
     await setWritingView(page);
 
     // Double-click middle word and bold it.
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
@@ -245,9 +245,9 @@ test.describe(`Cursor position after bold`, () => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      // Walk up to the .md-line element to compute the total text
+      // Walk up to the [data-node-id] element to compute the total text
       // offset from the start of the line.
-      const line = range.startContainer.parentElement?.closest(`.md-line`);
+      const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -276,7 +276,7 @@ test.describe(`Cursor position after bold`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickBoldButton(page);
 
@@ -284,7 +284,7 @@ test.describe(`Cursor position after bold`, () => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest(`.md-line`);
+      const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -369,7 +369,7 @@ test.describe(`Collapsed cursor — bold word under caret`, () => {
     await setWritingView(page);
 
     // Place a collapsed cursor inside the middle "text1".
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 
@@ -388,7 +388,7 @@ test.describe(`Collapsed cursor — bold word under caret`, () => {
     // In writing view the bold word renders without ** markers.
     // The rendered line shows "text1 text1 text1" with the middle
     // word in a <strong> tag.  Click inside that bold word.
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickBoldButton(page);
 

@@ -121,13 +121,23 @@ export class CursorManager {
             };
           }
 
-          const offset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
+          const rawOffset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
+
+          // A negative value signals the cursor is inside the
+          // `.md-syntax` prefix span (source view only).  Decode
+          // the actual prefix offset and store it on the cursor.
+          const inPrefix = rawOffset < 0;
+          const offset = inPrefix ? 0 : rawOffset;
+
           /** @type {TreeCursor} */
           const cursor = {
             nodeId: inlineNodeId ?? nodeId,
             blockNodeId: nodeId,
             offset,
           };
+          if (inPrefix) {
+            cursor.prefixOffset = -(rawOffset + 1);
+          }
           // If this element represents an html-block tag line in
           // source view, record which part so edit methods can
           // route changes to the correct attribute.
@@ -147,23 +157,41 @@ export class CursorManager {
    * Computes the character offset inside the *content* portion of a node
    * element (i.e. inside `.md-content`, skipping any `.md-syntax` marker).
    *
+   * In source view, when the cursor is inside the `.md-syntax` prefix
+   * span, returns a negative value whose absolute value is the character
+   * offset within that prefix.  The caller uses the sign to distinguish
+   * prefix positions from content positions.
+   *
    * @param {HTMLElement} nodeElement  - The element with `data-node-id`
    * @param {Node}        cursorNode  - The DOM node the browser cursor is in
    * @param {number}      cursorOffset - The offset inside `cursorNode`
    * @returns {number}
    */
   computeOffsetInContent(nodeElement, cursorNode, cursorOffset) {
-    // If cursor is inside a syntax marker span, treat offset as 0
+    // If cursor is inside a syntax marker span, compute the prefix offset.
+    /** @type {Element|null} */
+    let syntaxSpan = null;
     /** @type {Node|null} */
     let parent = cursorNode.parentNode;
     while (parent && parent !== nodeElement) {
       if (parent.nodeType === Node.ELEMENT_NODE) {
         const parentEl = /** @type {Element} */ (parent);
         if (parentEl.classList?.contains(`md-syntax`)) {
-          return 0;
+          syntaxSpan = parentEl;
+          break;
         }
       }
       parent = parent.parentNode;
+    }
+
+    if (syntaxSpan) {
+      // In source view, compute the actual position within the prefix.
+      if (this.editor.viewMode === `source`) {
+        const prefixOff = this.computePrefixOffset(syntaxSpan, cursorNode, cursorOffset);
+        // Return as negative to signal "inside prefix" to the caller.
+        return -(prefixOff + 1);
+      }
+      return 0;
     }
 
     // Determine which sub-element holds the editable content
@@ -215,6 +243,29 @@ export class CursorManager {
     // Fallback: clamp to content length.
     const renderedOff = Math.min(cursorOffset, offset);
     return this.toRawOffset(nodeElement, renderedOff);
+  }
+
+  /**
+   * Computes the character offset within a `.md-syntax` prefix span by
+   * walking its text nodes until the cursor node is found.
+   *
+   * @param {Element} syntaxSpan - The `.md-syntax` element
+   * @param {Node}    cursorNode - The DOM node the browser cursor is in
+   * @param {number}  cursorOffset - The offset inside `cursorNode`
+   * @returns {number}
+   */
+  computePrefixOffset(syntaxSpan, cursorNode, cursorOffset) {
+    const walker = document.createTreeWalker(syntaxSpan, NodeFilter.SHOW_TEXT, null);
+    let accumulated = 0;
+    let textNode = walker.nextNode();
+    while (textNode) {
+      if (textNode === cursorNode) {
+        return accumulated + cursorOffset;
+      }
+      accumulated += textNode.textContent?.length ?? 0;
+      textNode = walker.nextNode();
+    }
+    return accumulated;
   }
 
   /**
@@ -324,6 +375,34 @@ export class CursorManager {
         this.editor.syntaxTree.treeCursor.offset,
       );
       return;
+    }
+
+    // When the cursor is inside the `.md-syntax` prefix span (source
+    // view only), place it there rather than in `.md-content`.
+    if (this.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
+      const syntaxEl = nodeElement.querySelector(`.md-syntax`);
+      if (syntaxEl) {
+        const prefixWalker = document.createTreeWalker(syntaxEl, NodeFilter.SHOW_TEXT, null);
+        let prefixRemaining = this.editor.syntaxTree.treeCursor.prefixOffset;
+        let prefixTextNode = prefixWalker.nextNode();
+        while (prefixTextNode) {
+          const len = prefixTextNode.textContent?.length ?? 0;
+          if (prefixRemaining <= len) {
+            const sel = window.getSelection();
+            if (sel) {
+              const range = document.createRange();
+              range.setStart(prefixTextNode, prefixRemaining);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+            return;
+          }
+          prefixRemaining -= len;
+          prefixTextNode = prefixWalker.nextNode();
+        }
+      }
+      // Fallback: place at start of content if prefix span not found.
     }
 
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;

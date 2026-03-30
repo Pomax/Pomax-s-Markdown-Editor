@@ -59,9 +59,9 @@ async function typeAndGetCursor(pg, text) {
     const node = range.startContainer;
     const offset = range.startOffset;
 
-    // Walk up to find the .md-line element
+    // Walk up to find the [data-node-id] element
     let el = node instanceof HTMLElement ? node : node.parentElement;
-    while (el && !el.classList?.contains(`md-line`)) {
+    while (el && !el.dataset.nodeId) {
       el = el.parentElement;
     }
     if (!el) return null;
@@ -153,7 +153,7 @@ test(`typing ***word*** renders as bold inside italic in source view`, async () 
 
   const { setSourceView } = await import(`../../test-utils.js`);
   await setSourceView(page);
-  const srcLine = page.locator(`#editor .md-line`).first();
+  const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toContain(`***word***`);
 });
@@ -187,7 +187,7 @@ test(`typing after closing * produces plain text, not italic`, async () => {
   // Switch to source view to check the raw markdown
   const { setSourceView } = await import(`../../test-utils.js`);
   await setSourceView(page);
-  const srcLine = page.locator(`#editor .md-line`).first();
+  const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   // The raw markdown should have " hello" outside the italic markers
   expect(srcText).toContain(`*test*`);
@@ -215,7 +215,7 @@ test(`typing after closing ** produces plain text, not bold`, async () => {
 
   const { setSourceView } = await import(`../../test-utils.js`);
   await setSourceView(page);
-  const srcLine = page.locator(`#editor .md-line`).first();
+  const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toMatch(/\*\*bold\*\* after/);
 });
@@ -239,7 +239,7 @@ test(`typing after closing ~~ produces plain text, not strikethrough`, async () 
 
   const { setSourceView } = await import(`../../test-utils.js`);
   await setSourceView(page);
-  const srcLine = page.locator(`#editor .md-line`).first();
+  const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toMatch(/~~struck~~ after/);
 });

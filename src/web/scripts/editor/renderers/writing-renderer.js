@@ -98,7 +98,7 @@ export class WritingRenderer {
     // If empty, add a placeholder paragraph
     if (syntaxTree.children.length === 0) {
       const placeholder = document.createElement(`div`);
-      placeholder.className = `md-line md-paragraph writing-placeholder`;
+      placeholder.className = `md-paragraph writing-placeholder`;
       placeholder.appendChild(document.createElement(`br`));
       fragment.appendChild(placeholder);
     }
@@ -215,14 +215,15 @@ export class WritingRenderer {
    * @param {SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
-    const existing = container.querySelector(`.md-phantom-paragraph`);
+    const existing = container.querySelector(`[data-is-phantom]`);
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
     const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
       const phantom = document.createElement(`div`);
-      phantom.className = `md-line md-paragraph md-phantom-paragraph`;
+      phantom.className = `md-paragraph`;
+      phantom.dataset.isPhantom = ``;
       phantom.setAttribute(`contenteditable`, `true`);
       phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
@@ -263,11 +264,11 @@ export class WritingRenderer {
    */
   renderNode(node, isFocused, visualNumber) {
     const element = document.createElement(`div`);
-    element.className = `md-line md-${node.type}`;
+    element.className = node.type === `html-block` ? `html-element` : `md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     if (isFocused) {
-      element.classList.add(`md-focused`);
+      element.dataset.hasFocus = ``;
     }
 
     switch (node.type) {
@@ -382,13 +383,15 @@ export class WritingRenderer {
     // selectionchange → re-render → destroy the span before click
     // arrives, and would overwrite the user's cursor offset.
     const tagTop = document.createElement(`span`);
-    tagTop.className = `md-code-language-tag md-code-language-tag--top`;
+    tagTop.className = `top`;
+    tagTop.dataset.lang = ``;
     tagTop.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
     });
     const tagBottom = document.createElement(`span`);
-    tagBottom.className = `md-code-language-tag md-code-language-tag--bottom`;
+    tagBottom.className = `bottom`;
+    tagBottom.dataset.lang = ``;
     tagBottom.addEventListener(`mousedown`, (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -399,12 +402,12 @@ export class WritingRenderer {
     } else {
       tagTop.textContent = `lang`;
       tagBottom.textContent = `lang`;
-      tagTop.classList.add(`md-code-language-tag--empty`);
-      tagBottom.classList.add(`md-code-language-tag--empty`);
+      tagTop.classList.add(`empty`);
+      tagBottom.classList.add(`empty`);
     }
 
     const codeContent = document.createElement(`pre`);
-    codeContent.className = `md-code-content md-content`;
+    codeContent.className = `md-content`;
 
     const code = document.createElement(`code`);
     if (isFocused) {
@@ -453,11 +456,9 @@ export class WritingRenderer {
       element.style.listStyleType = `none`;
       element.style.display = `block`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-      element.classList.add(`md-checklist-item`);
 
       checkbox = document.createElement(`input`);
       checkbox.type = `checkbox`;
-      checkbox.className = `md-checklist-checkbox`;
       if (attrs.checked) {
         checkbox.setAttribute(`checked`, `checked`);
       }
@@ -505,7 +506,6 @@ export class WritingRenderer {
     if (checkbox) {
       const wrapper = document.createElement(`span`);
       wrapper.contentEditable = `false`;
-      wrapper.className = `md-checklist-checkbox-wrapper`;
       wrapper.appendChild(checkbox);
       element.appendChild(wrapper);
     }
@@ -526,7 +526,6 @@ export class WritingRenderer {
 
     // Always show rendered image (WYSIWYG)
     const img = document.createElement(`img`);
-    img.className = `md-image-preview`;
     img.src = this.resolveImageSrc(src);
     img.alt = alt;
     img.title = alt;
@@ -667,11 +666,11 @@ export class WritingRenderer {
       return element;
     }
 
-    // Create the actual HTML container element
+    // Create the actual semantic element so tags like <iframe>, <section>,
+    // <nav>, etc. render with their native behaviour.
     const container = document.createElement(tagName);
-    container.className = `md-html-container`;
 
-    // Copy attributes from the opening tag onto the container element
+    // Copy attributes from the opening tag onto the semantic element
     this.applyHtmlAttributes(container, attrs.openingTag || ``);
 
     // Determine which child (if any) is focused
@@ -716,14 +715,13 @@ export class WritingRenderer {
     }
     const isOpen = !!node.attributes.detailsOpen;
 
-    const container = document.createElement(`div`);
-    container.className = `md-html-container md-details`;
+    element.classList.add(`html-details`);
     if (isOpen) {
-      container.classList.add(`md-details--open`);
+      element.dataset.open = ``;
     }
 
     // Copy any extra attributes from the original opening tag
-    this.applyHtmlAttributes(container, attrs.openingTag || ``);
+    this.applyHtmlAttributes(element, attrs.openingTag || ``);
 
     const currentNodeId = this.editor.getBlockNodeId();
 
@@ -744,11 +742,11 @@ export class WritingRenderer {
     // Summary row
     if (summaryNode) {
       const summaryRow = document.createElement(`div`);
-      summaryRow.className = `md-details-summary`;
+      summaryRow.className = `html-summary`;
 
       // Disclosure triangle
       const triangle = document.createElement(`span`);
-      triangle.className = `md-details-triangle`;
+      triangle.className = `dropdown`;
       triangle.textContent = isOpen ? `▼` : `▶`;
       triangle.setAttribute(`role`, `button`);
       triangle.setAttribute(`aria-label`, isOpen ? `Collapse` : `Expand`);
@@ -771,7 +769,6 @@ export class WritingRenderer {
 
       // Render summary content
       const summaryContent = document.createElement(`div`);
-      summaryContent.className = `md-details-summary-content`;
       const summaryFocused = summaryNode.id === currentNodeId;
       // Render summary's own children (the bareText paragraph)
       for (const sc of summaryNode.children) {
@@ -780,12 +777,11 @@ export class WritingRenderer {
         if (scEl) summaryContent.appendChild(scEl);
       }
       summaryRow.appendChild(summaryContent);
-      container.appendChild(summaryRow);
+      element.appendChild(summaryRow);
     }
 
     // Collapsible body
     const body = document.createElement(`div`);
-    body.className = `md-details-body`;
 
     for (const child of bodyChildren) {
       const childFocused = child.id === currentNodeId;
@@ -799,8 +795,7 @@ export class WritingRenderer {
       body.appendChild(document.createElement(`br`));
     }
 
-    container.appendChild(body);
-    element.appendChild(container);
+    element.appendChild(body);
     return element;
   }
 
@@ -904,7 +899,6 @@ export class WritingRenderer {
         case `inline-image`: {
           const img = document.createElement(`img`);
           img.dataset.nodeId = child.id;
-          img.className = `md-image-preview`;
           img.alt = child.attributes.alt ?? ``;
           img.src = this.resolveImageSrc(child.attributes.src ?? ``);
           container.appendChild(img);
@@ -1028,7 +1022,6 @@ export class WritingRenderer {
         }
         case `image`: {
           const img = document.createElement(`img`);
-          img.className = `md-image-preview`;
           img.alt = seg.alt ?? ``;
           img.src = this.resolveImageSrc(seg.src ?? ``);
           container.appendChild(img);

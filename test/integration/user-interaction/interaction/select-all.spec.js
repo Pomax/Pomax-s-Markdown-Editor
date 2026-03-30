@@ -26,7 +26,7 @@ test.describe(`Select-All Cycling`, () => {
     const editor = page.locator(`#editor`);
 
     // Click into the first paragraph
-    const firstLine = editor.locator(`.md-line`, { hasText: `Hello world` }).first();
+    const firstLine = editor.locator(`[data-node-id]`, { hasText: `Hello world` }).first();
     await clickInEditor(page, firstLine);
 
     // First Ctrl+A — selects the paragraph
@@ -40,7 +40,7 @@ test.describe(`Select-All Cycling`, () => {
     await loadContent(page, `Hello world\n\nSecond paragraph`);
     const editor = page.locator(`#editor`);
 
-    const firstLine = editor.locator(`.md-line`, { hasText: `Hello world` }).first();
+    const firstLine = editor.locator(`[data-node-id]`, { hasText: `Hello world` }).first();
     await clickInEditor(page, firstLine);
 
     // First Ctrl+A — selects the paragraph
@@ -59,7 +59,7 @@ test.describe(`Select-All Cycling`, () => {
     const editor = page.locator(`#editor`);
 
     // Click into the "banana" list item
-    const bananaLine = editor.locator(`.md-line`, { hasText: `banana` }).first();
+    const bananaLine = editor.locator(`[data-node-id]`, { hasText: `banana` }).first();
     await clickInEditor(page, bananaLine);
 
     // First Ctrl+A — selects just "banana"
@@ -79,7 +79,7 @@ test.describe(`Select-All Cycling`, () => {
     await loadContent(page, `Before\n\n- apple\n- banana\n- cherry\n\nAfter`);
     const editor = page.locator(`#editor`);
 
-    const bananaLine = editor.locator(`.md-line`, { hasText: `banana` }).first();
+    const bananaLine = editor.locator(`[data-node-id]`, { hasText: `banana` }).first();
     await clickInEditor(page, bananaLine);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -95,7 +95,7 @@ test.describe(`Select-All Cycling`, () => {
     await loadContent(page, `Hello world\n\nSecond paragraph`);
     const editor = page.locator(`#editor`);
 
-    const firstLine = editor.locator(`.md-line`, { hasText: `Hello world` }).first();
+    const firstLine = editor.locator(`[data-node-id]`, { hasText: `Hello world` }).first();
     await clickInEditor(page, firstLine);
 
     // Ctrl+A then click → resets, next Ctrl+A should select node again
@@ -111,7 +111,7 @@ test.describe(`Select-All Cycling`, () => {
     await loadContent(page, `## My Heading\n\nSome text`);
     const editor = page.locator(`#editor`);
 
-    const heading = editor.locator(`.md-line`, { hasText: `My Heading` }).first();
+    const heading = editor.locator(`[data-node-id]`, { hasText: `My Heading` }).first();
     await clickInEditor(page, heading);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -126,7 +126,7 @@ test.describe(`Delete Empty Elements`, () => {
     await loadContent(page, `Only paragraph`);
     const editor = page.locator(`#editor`);
 
-    const line = editor.locator(`.md-line`).first();
+    const line = editor.locator(`[data-node-id]`).first();
     await clickInEditor(page, line);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -137,7 +137,7 @@ test.describe(`Delete Empty Elements`, () => {
     expect(content?.trim()).toBe(``);
 
     // Should still have one editable line in the DOM
-    const lineCount = await editor.locator(`.md-line`).count();
+    const lineCount = await editor.locator(`[data-node-id]`).count();
     expect(lineCount).toBe(1);
   });
 
@@ -145,7 +145,7 @@ test.describe(`Delete Empty Elements`, () => {
     await loadContent(page, `## Heading\n\nNext paragraph`);
     const editor = page.locator(`#editor`);
 
-    const heading = editor.locator(`.md-line`, { hasText: `Heading` }).first();
+    const heading = editor.locator(`[data-node-id]`, { hasText: `Heading` }).first();
     await clickInEditor(page, heading);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -162,7 +162,7 @@ test.describe(`Delete Empty Elements`, () => {
     await loadContent(page, `- first\n- second\n- third`);
     const editor = page.locator(`#editor`);
 
-    const secondItem = editor.locator(`.md-line`, { hasText: `second` }).first();
+    const secondItem = editor.locator(`[data-node-id]`, { hasText: `second` }).first();
     await clickInEditor(page, secondItem);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -178,7 +178,7 @@ test.describe(`Delete Empty Elements`, () => {
     await loadContent(page, `Before\n\n> Quoted text\n\nAfter`);
     const editor = page.locator(`#editor`);
 
-    const quote = editor.locator(`.md-line`, { hasText: `Quoted text` }).first();
+    const quote = editor.locator(`[data-node-id]`, { hasText: `Quoted text` }).first();
     await clickInEditor(page, quote);
 
     await page.keyboard.press(`${MOD}+a`);
@@ -194,7 +194,7 @@ test.describe(`Delete Empty Elements`, () => {
     await loadContent(page, `## Heading\n\nParagraph\n\n- item`);
     const editor = page.locator(`#editor`);
 
-    const heading = editor.locator(`.md-line`, { hasText: `Heading` }).first();
+    const heading = editor.locator(`[data-node-id]`, { hasText: `Heading` }).first();
     await clickInEditor(page, heading);
 
     // Cycle to document-level select-all
@@ -206,7 +206,7 @@ test.describe(`Delete Empty Elements`, () => {
     expect(content?.trim()).toBe(``);
 
     // Document should still have one line element
-    const lineCount = await editor.locator(`.md-line`).count();
+    const lineCount = await editor.locator(`[data-node-id]`).count();
     expect(lineCount).toBe(1);
   });
 });

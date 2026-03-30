@@ -70,6 +70,49 @@ export async function handleBackspace(ops) {
     return;
   }
 
+  // Source-view prefix editing: the cursor is inside the `.md-syntax`
+  // span.  Reconstruct the full markdown line, delete the character
+  // before the cursor, and reparse.
+  if (ops.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
+    const absPos = ops.editor.syntaxTree.treeCursor.prefixOffset;
+    if (absPos > 0) {
+      const before = ops.editor.syntaxTree.toMarkdown();
+      const fullLine = ops.editor.buildMarkdownLine(node.type, node.content, node.attributes);
+      const newLine = fullLine.substring(0, absPos - 1) + fullLine.substring(absPos);
+
+      const wasBareText = !!node.attributes.bareText;
+      const parsed = await ops.editor.reparseLine(newLine);
+      if (parsed) {
+        node.type = parsed.type;
+        node.content = parsed.content;
+        node.attributes = parsed.attributes;
+      } else {
+        node.content = newLine;
+      }
+      if (wasBareText) {
+        node.attributes.bareText = true;
+      }
+
+      const newAbsPos = absPos - 1;
+      const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
+      if (newAbsPos < newPrefixLen) {
+        ops.editor.syntaxTree.treeCursor = {
+          nodeId: node.id,
+          offset: 0,
+          prefixOffset: newAbsPos,
+        };
+      } else {
+        ops.editor.syntaxTree.treeCursor = {
+          nodeId: node.id,
+          offset: newAbsPos - newPrefixLen,
+        };
+      }
+      ops.editor.recordAndRender(before, { updated: [node.id] });
+    }
+    // At prefixOffset 0 — no-op (at very start of line)
+    return;
+  }
+
   const before = ops.editor.syntaxTree.toMarkdown();
   /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
   let renderHints = { updated: [node.id] };
@@ -80,6 +123,7 @@ export async function handleBackspace(ops) {
     const right = node.content.substring(ops.editor.syntaxTree.treeCursor.offset);
     const newContent = left + right;
     const oldType = node.type;
+    const oldPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
 
     // Code-block content is raw code — skip re-parsing.
     if (node.type === `code-block`) {
@@ -101,7 +145,6 @@ export async function handleBackspace(ops) {
     }
 
     // Re-parse to detect type changes
-    let newOffset;
     const wasBareText = !!node.attributes.bareText;
     const fullLine = ops.editor.buildMarkdownLine(node.type, newContent, node.attributes);
     const parsed = await ops.editor.reparseLine(fullLine);
@@ -119,16 +162,18 @@ export async function handleBackspace(ops) {
       node.attributes.bareText = true;
     }
 
-    // Compute new cursor offset
-    if (oldType === node.type) {
-      newOffset = left.length;
+    // Backspace removes one character before the cursor, so the
+    // absolute position moves back by one (left is already trimmed).
+    const absPos = oldPrefixLen + left.length;
+    const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
+    if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
+      ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
     } else {
-      const oldPrefix = ops.editor.getPrefixLength(oldType, node.attributes);
-      const newPrefix = ops.editor.getPrefixLength(node.type, node.attributes);
-      newOffset = Math.max(0, oldPrefix + left.length - newPrefix);
+      ops.editor.syntaxTree.treeCursor = {
+        nodeId: node.id,
+        offset: Math.max(0, absPos - newPrefixLen),
+      };
     }
-
-    ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
   } else {
     // Cursor is at the start of the node.
 

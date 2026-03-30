@@ -577,7 +577,6 @@ export class SearchBar {
    * `toMarkdown()` output includes the fence lines
    * (` ```lang ` / ` ``` `) and the code content, separated by `\n`.
    * The DOM renders these as separate child `<div>` elements
-   * (`div.md-code-fence` + `div.md-code-content` + `div.md-code-fence`)
    * whose text nodes we walk in order.
    *
    * @param {NodeSegment} seg

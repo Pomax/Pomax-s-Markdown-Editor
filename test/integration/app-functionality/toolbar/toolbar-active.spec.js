@@ -45,11 +45,11 @@ test.afterAll(async () => {
  * Uses real mouse coordinates so the full event chain fires.
  *
  * @param {import('@playwright/test').Page} pg
- * @param {number} lineIndex - 0-based index of the .md-line
+ * @param {number} lineIndex - 0-based index of the [data-node-id]
  * @param {string} selector - CSS selector for the inline element within the line
  */
 async function clickInlineElement(pg, lineIndex, selector) {
-  const line = pg.locator(`#editor .md-line`).nth(lineIndex);
+  const line = pg.locator(`#editor > [data-node-id]`).nth(lineIndex);
   // Click the line first to make it the focused node (ensures inline
   // elements are rendered in writing view).
   await clickInEditor(pg, line);
@@ -164,7 +164,7 @@ test(`no format buttons are active when cursor is in plain text`, async () => {
   await setWritingView(page);
 
   // Line 5: "Plain paragraph."
-  const line = page.locator(`#editor .md-line`).nth(5);
+  const line = page.locator(`#editor > [data-node-id]`).nth(5);
   await clickInEditor(page, line);
   await page.waitForTimeout(200);
 
@@ -275,7 +275,7 @@ test(`clicking bold button inside <strong> tag strips the tag`, async () => {
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(6).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(6).innerText();
   expect(line).toBe(`This is strong text here.`);
 });
 
@@ -289,7 +289,7 @@ test(`clicking bold button inside <b> tag strips the tag`, async () => {
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(7).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(7).innerText();
   expect(line).toBe(`This is bold tag here.`);
 });
 
@@ -303,7 +303,7 @@ test(`clicking italic button inside <em> tag strips the tag`, async () => {
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(8).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(8).innerText();
   expect(line).toBe(`This is emphasis text here.`);
 });
 
@@ -317,7 +317,7 @@ test(`clicking italic button inside <i> tag strips the tag`, async () => {
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(9).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(9).innerText();
   expect(line).toBe(`This is italic tag here.`);
 });
 
@@ -331,7 +331,7 @@ test(`clicking strikethrough button inside <del> tag strips the tag`, async () =
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(10).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(10).innerText();
   expect(line).toBe(`This is deleted text here.`);
 });
 
@@ -345,6 +345,6 @@ test(`clicking strikethrough button inside <s> tag strips the tag`, async () => 
   await page.waitForTimeout(200);
 
   await setSourceView(page);
-  const line = await page.locator(`#editor .md-line`).nth(11).innerText();
+  const line = await page.locator(`#editor > [data-node-id]`).nth(11).innerText();
   expect(line).toBe(`This is struck tag here.`);
 });

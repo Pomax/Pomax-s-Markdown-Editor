@@ -62,7 +62,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `hello world`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
 
@@ -78,7 +78,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `start`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
 
@@ -96,7 +96,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `replace me`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(`${MOD}+a`);
 
@@ -113,7 +113,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
     await setSourceView(page);
 
-    const lines = page.locator(`#editor .md-line`);
+    const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.first());
     await page.keyboard.press(HOME);
     await page.keyboard.press(`${MOD}+Shift+${END}`);
@@ -137,7 +137,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `\n`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
 
     await writeClipboard(`# Source heading`);
@@ -156,7 +156,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `\n`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
 
     await writeClipboard(`first\r\n\r\nsecond\r\n\r\nthird`);
@@ -173,7 +173,7 @@ test.describe(`Paste in source view`, () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
     await setSourceView(page);
 
-    const lines = page.locator(`#editor .md-line`);
+    const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.nth(1));
     await page.keyboard.press(END);
 
@@ -208,7 +208,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `hello world`);
     await setWritingView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
 
@@ -224,7 +224,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `start`);
     await setWritingView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
 
@@ -242,7 +242,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `\n`);
     await setWritingView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
 
     await writeClipboard(`# This is a heading`);
@@ -261,7 +261,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `select this text`);
     await setWritingView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(`${MOD}+a`);
 
@@ -278,7 +278,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
     await setWritingView(page);
 
-    const lines = page.locator(`#editor .md-line`);
+    const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.nth(1));
     await page.keyboard.press(END);
 
@@ -311,7 +311,7 @@ test.describe(`Paste in writing view`, () => {
     await loadContent(page, `\n`);
     await setWritingView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
 
     await writeClipboard(`first\r\n\r\nsecond\r\n\r\nthird`);

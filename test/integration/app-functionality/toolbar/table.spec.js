@@ -74,9 +74,9 @@ test(`inserting a table via the modal creates a table node`, async () => {
   await insertBtn.click();
   await expect(dialog).not.toBeVisible();
 
-  // Verify the table node was created (use .md-line.md-table to avoid
+  // Verify the table node was created (use [data-node-id].md-table to avoid
   // matching the inner <table class="md-table"> as well).
-  const tableNode = page.locator(`.md-line.md-table`);
+  const tableNode = page.locator(`[data-node-id].md-table`);
   await expect(tableNode).toBeVisible();
 
   // Verify the markdown content includes table syntax
@@ -92,11 +92,11 @@ test(`table renders as an HTML table in writing mode`, async () => {
   await setWritingView(page);
 
   // In WYSIWYG mode the table is always rendered as an HTML <table>.
-  const tableElement = page.locator(`.md-line.md-table`);
+  const tableElement = page.locator(`[data-node-id].md-table`);
   await expect(tableElement).toBeVisible();
 
   // The table should always be rendered as an HTML <table> (WYSIWYG)
-  const htmlTable = page.locator(`.md-line.md-table table`);
+  const htmlTable = page.locator(`[data-node-id].md-table table`);
   // It may or may not be visible depending on focus — let's check the content
   const content = await page.evaluate(() => window.editorAPI?.getContent());
   expect(content).toContain(`Header 1`);
@@ -110,7 +110,7 @@ test(`clicking table button on existing table opens edit modal with pre-filled d
   await setWritingView(page);
 
   // Click on the table node
-  const tableNode = page.locator(`.md-line.md-table`);
+  const tableNode = page.locator(`[data-node-id].md-table`);
   await clickInEditor(page, tableNode);
 
   // Now click the table button
@@ -151,7 +151,7 @@ test(`table cells render inline markdown formatting`, async () => {
   await loadContent(page, markdown);
   await setWritingView(page);
 
-  const table = page.locator(`.md-line.md-table table`);
+  const table = page.locator(`[data-node-id].md-table table`);
   await expect(table).toBeVisible();
 
   // Bold cell
@@ -186,7 +186,7 @@ test(`table cells render inline HTML formatting`, async () => {
   await loadContent(page, markdown);
   await setWritingView(page);
 
-  const table = page.locator(`.md-line.md-table table`);
+  const table = page.locator(`[data-node-id].md-table table`);
   await expect(table).toBeVisible();
 
   // Italic via <i>

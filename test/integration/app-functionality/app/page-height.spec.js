@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { clickInEditor } from '../../test-utils.js';
+import { clickInEditor, resetPage } from '../../test-utils.js';
 import { startServer, stopServer } from '../../test-http-server.js';
 
 /** @type {import('node:http').Server} */
@@ -22,11 +22,15 @@ test.afterAll(async () => {
   await stopServer(server);
 });
 
+test.afterEach(async ({ page }) => {
+  await resetPage(page);
+});
+
 test(`editor page height grows when content exceeds initial min-height`, async ({ page }) => {
   await page.goto(baseURL);
 
   // Wait for the editor to initialize
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);

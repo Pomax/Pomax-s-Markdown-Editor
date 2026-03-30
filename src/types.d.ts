@@ -46,6 +46,10 @@ interface TreeCursor {
     /** If set, cursor is on an html-block container's opening or closing tag
      *  line (source view only). */
     tagPart?: 'opening' | 'closing';
+    /** Character offset within the syntax prefix (e.g. `- [ ] `, `## `)
+     *  when the cursor is inside the `.md-syntax` span in source view.
+     *  When set, `offset` is 0. */
+    prefixOffset?: number;
     /** Row index for table cell editing (0 = header). */
     cellRow?: number;
     /** Column index for table cell editing. */

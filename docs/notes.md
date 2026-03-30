@@ -43,9 +43,7 @@ care about instead.
 
 ### Locator specificity
 
-Selectors like `locator('#editor .md-line', { hasText: 'foo' })` can match
-**parent** container elements whose descendant text includes `'foo'`. Use
-pseudo-selectors (`:has()`, `:not()`, `:scope >`) to be precise.
+Selectors like `locator('#editor [data-node-id]', { hasText: 'foo' })` can match **parent** container elements whose descendant text includes `'foo'`. Use pseudo-selectors (`:has()`, `:not()`, `:scope >`) or the direct child combinator (`#editor > [data-node-id]`) to be precise.
 
 ## Architecture Quick Reference
 
@@ -162,22 +160,20 @@ html-block (type: 'html-block', tagName: 'details')
   `toMarkdown()` and source view. No special flag is needed — the
   structural condition (`children.length === 1 && type === 'paragraph'`)
   is sufficient.
-- In **source view**, each line is rendered independently; the opening tag,
-  child lines, and closing tag are separate `.md-line` elements.
+- In **source view**, each line is rendered independently; the opening tag, child lines, and closing tag are separate `[data-node-id]` elements.
 - In **writing view**, the `<details>` block is rendered as a **fake
   disclosure widget** using `<div>` elements (never a real `<details>`
   element — the native element caused too many quirks):
 
   ```
-  div.md-line.md-html-element
-    div.md-html-container.md-details(.md-details--open)
-      div.md-details-summary
-        span.md-details-triangle   ← clickable ▶/▼
-        div.md-details-summary-content
-          div.md-line.md-paragraph
-      div.md-details-body
-        div.md-line.md-heading2
-        div.md-line.md-paragraph
+  div.html-element.html-details[data-node-id]([data-open])
+    div.html-summary
+      span.dropdown   ← clickable ▶/▼
+      div
+        div.md-paragraph[data-node-id]
+    div
+      div.md-heading2[data-node-id]
+      div.md-paragraph[data-node-id]
   ```
 
 - Collapse/expand state is stored as `node.runtime.detailsOpen`
@@ -323,7 +319,7 @@ Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably f
 ```js
 async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
   // 1. Click inside the editor to ensure focus
-  const startLine = page.locator('.md-line', { hasText: startText }).first();
+  const startLine = page.locator('[data-node-id]', { hasText: startText }).first();
   await startLine.click();
 
   // 2. Set DOM Range + treeRange programmatically
@@ -363,9 +359,8 @@ content, set view mode) rather than depending on prior tests. Module-level
 ## CSS Conventions
 
 - Editor styles are in `src/web/styles/editor.css`.
-- The fake details widget uses `.md-details`, `.md-details--open`,
-  `.md-details-summary`, `.md-details-triangle`, `.md-details-summary-content`,
-  `.md-details-body` classes.
-- Collapse is achieved via `.md-details:not(.md-details--open) .md-details-body { display: none; }`.
-- Checklist items use `.md-checklist-item` (on the line) and `.md-checklist-checkbox` (the `<input>` element). They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
-- `.writing-view .md-list-item.md-focused` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.
+- The fake details widget uses `.html-details`, `[data-open]`,
+  `.html-summary`, `.dropdown` classes. The summary content and body divs are targeted positionally (`.html-summary > div` and `.html-details > div:not(.html-summary)`).
+- Collapse is achieved via `.html-details:not([data-open]) > div:not(.html-summary) { display: none; }`.
+- Checklist items use `.md-list-item input[type="checkbox"]` for styling. They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
+- `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.
