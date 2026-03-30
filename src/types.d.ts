@@ -556,6 +556,28 @@ type EditOperations = import('./web/scripts/editor/edit-operations/index.js').Ed
  */
 type ImageModal = import('./web/scripts/editor/content-types/image/image-modal.js').ImageModal;
 
+/**
+ * View-mode-specific formatter.
+ * The toolbar and editor delegate formatting operations to the formatter
+ * returned by `editor.getFormatter()`, which varies by view mode.
+ */
+interface Formatter {
+    /** Applies an inline format (bold, italic, strikethrough, code, subscript, superscript, link). */
+    applyFormat(format: string): void;
+    /** Changes the block type of the current element (heading1, paragraph, blockquote, code-block, etc.). */
+    changeElementType(elementType: string): void;
+    /** Toggles list formatting on the current node. */
+    toggleList(kind: 'unordered' | 'ordered' | 'checklist'): Promise<void>;
+    /** Inserts or updates an image at the cursor. */
+    insertOrUpdateImage(alt: string, src: string, href: string, style?: string): void;
+    /** Inserts or updates a table at the cursor. */
+    insertOrUpdateTable(tableData: TableData): void;
+    /** Saves the textarea cursor position before a modal steals focus (source2 only). */
+    saveCursorPosition?(): void;
+    /** Restores the previously saved cursor position (source2 only). */
+    restoreCursorPosition?(): void;
+}
+
 interface Window {
     editorAPI?: EditorAPI;
     electronAPI?: ElectronAPI;

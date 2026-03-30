@@ -37,6 +37,8 @@ import { SourceRendererV2 } from './renderers/source-renderer-v2.js';
 import { WritingRenderer } from './renderers/writing-renderer.js';
 
 import { cursorToAbsoluteOffset } from './managers/cursor-persistence.js';
+import { TreeFormatter } from './formatters/tree-formatter.js';
+import { Source2Formatter } from './formatters/source2-formatter.js';
 
 /**
  * Main editor class that manages the markdown editing experience.
@@ -60,6 +62,12 @@ export class Editor {
 
     /** @type {SourceRendererV2} */
     this.sourceRendererV2 = new SourceRendererV2(this);
+
+    /** @type {TreeFormatter} */
+    this.treeFormatter = new TreeFormatter(this);
+
+    /** @type {Source2Formatter} */
+    this.source2Formatter = new Source2Formatter(this.sourceRendererV2);
 
     /** @type {UndoManager} */
     this.undoManager = new UndoManager();
@@ -858,6 +866,12 @@ export class Editor {
       }
     }
 
+    // In source2 mode, notify the toolbar to update button states
+    // (no syntax tree node to report — the toolbar will enable all buttons).
+    if (mode === `source2`) {
+      document.dispatchEvent(new CustomEvent(`editor:selectionchange`, { detail: { node: null } }));
+    }
+
     // If the tree owns a non-collapsed selection, rebuild it in the
     // new DOM so the user's selection survives the view-mode switch.
     if (mode !== `source2` && this.treeRange) {
@@ -881,6 +895,15 @@ export class Editor {
    */
   getViewMode() {
     return this.viewMode;
+  }
+
+  /**
+   * Returns the formatter appropriate for the current view mode.
+   * @returns {Formatter}
+   */
+  getFormatter() {
+    if (this.viewMode === `source2`) return this.source2Formatter;
+    return this.treeFormatter;
   }
 
   /** Undoes the last action. */

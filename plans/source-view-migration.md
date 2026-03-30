@@ -4,7 +4,7 @@ Tracking issue: https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/119
 
 ## Rules
 
-Each step must be committed individually upon completion (that includes checking off the task in this document before committing). Do not batch multiple steps into a single commit.
+Each step must be committed individually upon completion (that includes checking off the task in this document before committing). Do not batch multiple steps into a single commit. When a step requires more work than is in the document, update the document with a new approved plan before doing the work.
 
 ## Progress
 
@@ -12,7 +12,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 2: Register the `source2` view mode in the editor
 - [x] Step 3: Add `source2` to the view mode cycle button and wire up all layers
 - [x] Step 4: Style the source view 2 textarea
-- [ ] Step 5: Add toolbar button support using local text examination
+- [x] Step 5: Add toolbar button support using local text examination
 - [ ] Step 6: Add hotkey support by triggering toolbar buttons
 - [ ] Step 7: Reparse markdown to a new tree on switch back to writing view
 - [ ] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
@@ -65,12 +65,31 @@ Add CSS for the textarea inside the source view 2 container. Monospace font, ful
 
 ### Step 5: Add toolbar button support using local text examination
 
-When in `source2` mode, toolbar formatting buttons (bold, italic, code, link, etc.) operate on the textarea's selection directly:
+Introduce a `Formatter` interface and the `getFormatter()` pattern so that button clicks route through the correct view-mode-specific formatter.
 
-- **Examine local context:** Check the text around the selection/cursor to determine what formatting applies. For example, check if the selection is wrapped in `**...**` for bold.
-- **Apply formatting:** Wrap/unwrap the selection with the appropriate markdown syntax and update the textarea content and selection range.
-- Block-type buttons (heading, blockquote, code block, list) examine the current line(s) and add/remove prefixes or fences.
-- Auto-highlighting of buttons to reflect current state is explicitly **not required** per the issue.
+1. **Define a `Formatter` interface** in `types.d.ts` with the methods the toolbar needs: `applyFormat(format)`, `changeElementType(type)`, `toggleList(kind)`, `insertOrUpdateImage(alt, src, href, style)`, `insertOrUpdateTable(tableData)`, plus optional `saveCursorPosition()` and `restoreCursorPosition()` for modals that steal focus.
+
+2. **Create `src/web/scripts/editor/formatters/tree-formatter.js`** — thin delegation wrapper that takes the editor as a constructor param and routes each `Formatter` method to the editor's existing tree-based implementation.
+
+3. **Create `src/web/scripts/editor/formatters/source2-formatter.js`** — implements the same `Formatter` interface but operates on the textarea's text and selection directly:
+   - All textarea mutations use `document.execCommand('insertText')` so they participate in the browser's undo/redo stack, with a fallback to direct `.value` assignment if `execCommand` returns false (e.g. after modal focus loss).
+   - Inline formats (bold, italic, strikethrough, code, subscript, superscript) detect whether the cursor is collapsed or has a selection. Collapsed cursor uses word-boundary detection (`\w`/`\W` scanning) to find and wrap the word under the caret. Selection mode trims leading/trailing whitespace so delimiters wrap only the non-space portion.
+   - Link format inserts `[text](url)` syntax.
+   - Block formats (heading, blockquote) examine the current line prefix and toggle it.
+   - `changeElementType('paragraph')` supports multi-line selections: removes block prefixes from each line, joins former list items with blank lines, and inserts blank line separators adjacent to remaining list items. Cursor position is tracked through prefix removal and blank line insertion.
+   - `toggleList` supports multi-line selections: collapses empty lines between paragraphs when converting to list items, and inserts blank lines when removing list prefixes next to adjacent list items.
+   - `toggleCodeBlock` wraps/unwraps with triple-backtick fences.
+   - `insertOrUpdateImage` inserts `![alt](src)` syntax with cursor placed between `[]` selecting the alt text.
+   - `insertOrUpdateTable` inserts a markdown table with empty header cells (not placeholder text), cursor placed in the first header cell.
+   - `saveCursorPosition()`/`restoreCursorPosition()` store and restore `selectionStart`/`selectionEnd` across modal dialogs that steal focus from the textarea.
+
+4. **Add `getFormatter()` to the editor** — returns the source2-formatter for `source2` mode, tree-formatter otherwise. The editor's own formatting methods (`applyFormat`, `changeElementType`, etc.) remain unchanged and are used by the tree-formatter; the toolbar routes through the formatter directly.
+
+5. **Update the toolbar** — `handleButtonClick` calls `editor.getFormatter()` first, then calls methods on the returned formatter for all actions. The toolbar still owns modal UI (image/table dialogs) but passes results to the formatter. For image and table modals, the toolbar calls `formatter.saveCursorPosition?.()` before opening the modal and `formatter.restoreCursorPosition?.()` after, so the textarea cursor survives the focus shift.
+
+6. **Toolbar button states in source2** — `updateButtonStates` early-returns when in source2 mode: all buttons are enabled, none are marked active (no syntax-tree node to inspect). The editor dispatches `editor:selectionchange` with `{ node: null }` when switching to source2 so the toolbar updates immediately.
+
+Auto-highlighting of buttons to reflect current formatting state is explicitly **not required** per the issue.
 
 ### Step 6: Add hotkey support by triggering toolbar buttons
 

@@ -460,25 +460,26 @@ export class Toolbar {
    * @param {ButtonConfig} config - The button configuration
    */
   async handleButtonClick(config) {
+    const formatter = this.editor.getFormatter();
     const [actionType, actionValue] = config.action.split(`:`);
 
     switch (actionType) {
       case `changeType`:
-        this.editor.changeElementType(actionValue);
+        formatter.changeElementType(actionValue);
         break;
       case `format`:
-        this.editor.applyFormat(actionValue);
+        formatter.applyFormat(actionValue);
         break;
       case `list`:
-        await this.editor.toggleList(
+        await formatter.toggleList(
           /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
         );
         break;
       case `image`:
-        this.handleImageAction();
+        await this.handleImageAction(formatter);
         break;
       case `table`:
-        this.handleTableAction();
+        await this.handleTableAction(formatter);
         break;
     }
   }
@@ -487,9 +488,12 @@ export class Toolbar {
    * Handles the image button action.
    * If the cursor is on an image node, opens the modal for editing.
    * Otherwise opens it for insertion.
+   * @param {Formatter} formatter
    */
-  async handleImageAction() {
+  async handleImageAction(formatter) {
     const imageModal = this.editor.getImageModal();
+
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
 
     // Check if cursor is on an image node
     const currentNode = this.editor.getCurrentBlockNode();
@@ -530,7 +534,8 @@ export class Toolbar {
       src = await this.editor.toRelativeImagePath(src);
     }
 
-    this.editor.insertOrUpdateImage(result.alt, src, result.href, result.style);
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    formatter.insertOrUpdateImage(result.alt, src, result.href, result.style);
   }
 
   /**
@@ -578,11 +583,14 @@ export class Toolbar {
    * Handles the table button action.
    * If the cursor is on a table node, opens the modal pre-populated for editing.
    * Otherwise opens it for insertion.
+   * @param {Formatter} formatter
    */
-  async handleTableAction() {
+  async handleTableAction(formatter) {
     if (!this.tableModal) {
       this.tableModal = new TableModal();
     }
+
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
 
     const currentNode = this.editor.getCurrentBlockNode();
     /** @type {TableData|null} */
@@ -595,7 +603,8 @@ export class Toolbar {
     const result = await this.tableModal.open(existing);
     if (!result) return;
 
-    this.editor.insertOrUpdateTable(result);
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    formatter.insertOrUpdateTable(result);
   }
 
   /**
@@ -641,6 +650,15 @@ export class Toolbar {
    * @param {SyntaxNode|null} node - The current node
    */
   updateButtonStates(node) {
+    // In source2 mode there is no syntax tree — enable all buttons.
+    if (this.editor.viewMode === `source2`) {
+      for (const button of this.buttons) {
+        button.setEnabled(true);
+        button.setActive(false);
+      }
+      return;
+    }
+
     // Walk from the (potentially inline) node up to its block parent,
     // collecting every inline format type encountered on the way.
     /** @type {Set<string>} */
