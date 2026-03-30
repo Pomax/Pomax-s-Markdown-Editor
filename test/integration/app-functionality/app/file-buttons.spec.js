@@ -110,7 +110,7 @@ test(`cursor position is preserved across tab switch in writing mode`, async () 
   await setWritingView(page);
 
   // Click into the first line
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.waitForTimeout(200);
 
@@ -159,7 +159,7 @@ test(`cursor position is preserved across tab switch with inline formatting`, as
   await setWritingView(page);
 
   // Click into the first line
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.waitForTimeout(200);
 
@@ -211,7 +211,7 @@ test(`cursor position from real click is preserved across tab switch`, async () 
 
   // Click into the first line using real mouse coordinates,
   // slightly right of the left edge so we're definitely on text
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   const box = await firstLine.boundingBox();
   if (!box) throw new Error(`first line not visible`);
   await page.mouse.move(box.x + 80, box.y + box.height / 2);
@@ -251,7 +251,7 @@ test(`toolbar bold+italic buttons activate after switching back to a tab with fo
   const italicBtn = page.locator(`.toolbar-button[data-button-id="italic"]`);
 
   // Click into the bold text, verify bold is active
-  const line = page.locator(`#editor .md-line`).first();
+  const line = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, line);
   const boldEl = line.locator(`strong`).first();
   await clickInEditor(page, boldEl);
@@ -266,7 +266,7 @@ test(`toolbar bold+italic buttons activate after switching back to a tab with fo
   const firstTab = page.locator(`#tab-bar .tab-button`).first();
   await firstTab.click();
   await page.waitForTimeout(300);
-  const lineAgain = page.locator(`#editor .md-line`).first();
+  const lineAgain = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, lineAgain);
   const italicEl = lineAgain.locator(`em`).first();
   await clickInEditor(page, italicEl);

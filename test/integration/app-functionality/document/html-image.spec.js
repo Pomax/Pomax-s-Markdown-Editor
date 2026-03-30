@@ -35,11 +35,11 @@ test(`HTML img tag is parsed as an image node in writing mode`, async () => {
   await loadContent(page, HTML_IMG);
   await setWritingView(page);
 
-  const imageNode = page.locator(`.md-line.md-image`);
+  const imageNode = page.locator(`[data-node-id].md-image`);
   await expect(imageNode).toBeVisible();
 
   // The rendered <img> element should exist
-  const img = page.locator(`.md-image-preview`);
+  const img = page.locator(`.md-image img`);
   await expect(img).toBeVisible();
 });
 
@@ -60,7 +60,7 @@ test(`clicking HTML img in writing mode opens edit modal with style field`, asyn
   await setWritingView(page);
 
   // Click on the first paragraph, then arrow down to the image
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.keyboard.press(`ArrowDown`);
   await page.waitForTimeout(100);
@@ -97,7 +97,7 @@ test(`editing style via modal updates the parse tree`, async () => {
 
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
-  const image = page.locator(`.md-image-preview`);
+  const image = page.locator(`.md-image img`);
   await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
@@ -124,7 +124,7 @@ test(`clearing style converts HTML img to markdown syntax`, async () => {
 
   // Click the image preview element directly — the event handler requires
   // event.target to be the <img>, not the wrapper div.
-  const image = page.locator(`.md-image-preview`);
+  const image = page.locator(`.md-image img`);
   await expect(image).toBeVisible();
   await clickInEditor(page, image);
 
@@ -150,7 +150,7 @@ test(`markdown image without style does not show style in modal`, async () => {
   await setWritingView(page);
 
   // Navigate to the image
-  const firstLine = page.locator(`#editor .md-line`).first();
+  const firstLine = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, firstLine);
   await page.keyboard.press(`ArrowDown`);
   await page.waitForTimeout(100);

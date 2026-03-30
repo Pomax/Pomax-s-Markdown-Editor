@@ -9,6 +9,7 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  HOME,
   MOD,
   closeApp,
   launchApp,
@@ -397,11 +398,23 @@ test(`initial match is closest to cursor position`, async () => {
   await loadContent(page, FIXTURE);
   await setSourceView(page);
 
-  // Place cursor at the start of "## Another heading" by clicking it.
-  const secondHeading = page.locator(`#editor .md-line`, {
+  // Place cursor inside "## Another heading" before the word
+  // "heading": click to focus the node, Home to reach offset 0,
+  // then arrow right into the content.  Waits let selectionchange
+  // propagate so the tree cursor is up to date.
+  const secondHeading = page.locator(`#editor [data-node-id]`, {
     hasText: `Another heading`,
   });
   await secondHeading.click();
+  await page.waitForTimeout(200);
+  await page.keyboard.press(HOME);
+  await page.waitForTimeout(200);
+  await page.keyboard.press(`ArrowRight`);
+  await page.keyboard.press(`ArrowRight`);
+  await page.keyboard.press(`ArrowRight`);
+  await page.keyboard.press(`ArrowRight`);
+  await page.keyboard.press(`ArrowRight`);
+  await page.waitForTimeout(200);
 
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);

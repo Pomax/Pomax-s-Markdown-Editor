@@ -48,7 +48,7 @@ test.describe(`Source view typing`, () => {
     await loadContent(page, `hello`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
     await page.keyboard.type(`!`);
@@ -62,7 +62,7 @@ test.describe(`Source view typing`, () => {
     await loadContent(page, `world`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     await page.keyboard.type(`hello `);
@@ -76,7 +76,7 @@ test.describe(`Source view typing`, () => {
     await loadContent(page, `## Title`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
     await page.keyboard.type(` Here`);
@@ -98,7 +98,7 @@ test.describe(`Source view backspace`, () => {
     await loadContent(page, `abcdef`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
     await page.keyboard.press(`Backspace`);
@@ -113,7 +113,7 @@ test.describe(`Source view backspace`, () => {
     await loadContent(page, `first\n\nsecond`);
     await setSourceView(page);
 
-    const lines = page.locator(`#editor .md-line`);
+    const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.nth(1));
     await page.keyboard.press(HOME);
     await page.keyboard.press(`Backspace`);
@@ -127,7 +127,7 @@ test.describe(`Source view backspace`, () => {
     await loadContent(page, `hello beautiful world`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Select "hello "
@@ -148,7 +148,7 @@ test.describe(`Source view delete`, () => {
     await loadContent(page, `abcdef`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     await page.keyboard.press(`Delete`);
@@ -163,7 +163,7 @@ test.describe(`Source view delete`, () => {
     await loadContent(page, `first\n\nsecond`);
     await setSourceView(page);
 
-    const lines = page.locator(`#editor .md-line`);
+    const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.first());
     await page.keyboard.press(END);
     await page.keyboard.press(`Delete`);
@@ -177,7 +177,7 @@ test.describe(`Source view delete`, () => {
     await loadContent(page, `hello beautiful world`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Select "hello "
@@ -198,7 +198,7 @@ test.describe(`Source view cut`, () => {
     await loadContent(page, `cut this text`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(`${MOD}+a`);
     await page.keyboard.press(`${MOD}+x`);
@@ -212,7 +212,7 @@ test.describe(`Source view cut`, () => {
     await loadContent(page, `keep REMOVE keep`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Move past "keep "
@@ -237,7 +237,7 @@ test.describe(`Source view toolbar formatting`, () => {
     await loadContent(page, `make this bold`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Move past "make "
@@ -259,7 +259,7 @@ test.describe(`Source view toolbar formatting`, () => {
     await loadContent(page, `make this italic`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Move past "make "
@@ -283,7 +283,7 @@ test.describe(`Source view enter`, () => {
     await loadContent(page, `before after`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(HOME);
     // Move past "before"
@@ -308,7 +308,7 @@ test.describe(`Source view enter`, () => {
     await loadContent(page, `only line`);
     await setSourceView(page);
 
-    const line = page.locator(`#editor .md-line`).first();
+    const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
     await page.keyboard.press(END);
     await page.keyboard.press(`Enter`);

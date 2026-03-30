@@ -63,7 +63,7 @@ export class EventHandler {
       event.target instanceof HTMLElement && event.target.tagName === `A` ? event.target : null;
 
     this.mouseDownLanguageTag =
-      event.target instanceof HTMLElement && event.target.classList.contains(`md-code-language-tag`)
+      event.target instanceof HTMLElement && event.target.hasAttribute(`data-lang`)
         ? event.target
         : null;
   }
@@ -86,14 +86,10 @@ export class EventHandler {
     // Check this before any cursor syncing — void elements like <img>
     // don't hold text selections, so syncCursorFromDOM would resolve
     // to a neighbouring node instead.
-    if (
-      this.editor.viewMode === `writing` &&
-      event.target instanceof HTMLImageElement &&
-      event.target.classList.contains(`md-image-preview`)
-    ) {
-      const imgEl = event.target;
+    const target = /** @type {HTMLElement} */ (event.target);
+    if (this.editor.viewMode === `writing` && target.tagName === `IMG`) {
       // Walk up to find the nearest data-node-id
-      let el = /** @type {HTMLElement|null} */ (imgEl.parentElement);
+      let el = /** @type {HTMLElement|null} */ (target.parentElement);
       while (el && el !== this.editor.container) {
         if (el.dataset?.nodeId) break;
         el = el.parentElement;
@@ -123,7 +119,7 @@ export class EventHandler {
     if (this.editor.viewMode === `writing`) {
       const langTag =
         (event.target instanceof HTMLElement &&
-          event.target.classList.contains(`md-code-language-tag`) &&
+          event.target.hasAttribute(`data-lang`) &&
           event.target) ||
         this.mouseDownLanguageTag;
       this.mouseDownLanguageTag = null;
@@ -400,7 +396,7 @@ export class EventHandler {
       // If the selection is inside the phantom paragraph (no tree
       // node), skip all cursor syncing — handleClick will promote
       // it when the click event arrives.
-      const phantom = this.editor.container.querySelector(`.md-phantom-paragraph`);
+      const phantom = this.editor.container.querySelector(`[data-is-phantom]`);
       if (phantom) {
         const sel = window.getSelection();
         if (sel?.anchorNode) {

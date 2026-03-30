@@ -43,11 +43,11 @@ test(`loading a document that ends in </details> appends an empty paragraph`, as
 
   // The tree should have an extra empty paragraph after the details block.
   // We can't rely on getContent() because an empty paragraph serialises
-  // to nothing, so instead check the DOM: the last top-level .md-line
+  // to nothing, so instead check the DOM: the last top-level [data-node-id]
   // should be an empty paragraph, not the html-block.
-  const lastLine = page.locator(`#editor > .md-line`).last();
+  const lastLine = page.locator(`#editor > [data-node-id]`).last();
   const classList = await lastLine.evaluate((el) => [...el.classList]);
-  expect(classList).not.toContain(`md-html-block`);
+  expect(classList).not.toContain(`html-element`);
 
   // And it should be empty (no visible text).
   const text = await lastLine.innerText();
@@ -61,7 +61,7 @@ test(`deleting all content after </details> re-creates the trailing paragraph`, 
   await setWritingView(page);
 
   // Click on the trailing paragraph and select all its text.
-  const trailingLine = page.locator(`#editor > .md-line:not(.md-html-block)`).last();
+  const trailingLine = page.locator(`#editor > [data-node-id]:not(.html-element)`).last();
   await clickInEditor(page, trailingLine);
   await page.waitForTimeout(200);
 
@@ -78,10 +78,10 @@ test(`deleting all content after </details> re-creates the trailing paragraph`, 
 
   // The invariant should have re-created an empty trailing paragraph,
   // so the document still has a node after the details block.
-  const lastLine = page.locator(`#editor > .md-line`).last();
+  const lastLine = page.locator(`#editor > [data-node-id]`).last();
   const classList = await lastLine.evaluate((el) => [...el.classList]);
   // It should NOT be the html-block — it should be a paragraph.
-  expect(classList).not.toContain(`md-html-block`);
+  expect(classList).not.toContain(`html-element`);
 });
 
 test(`user can type in the auto-created trailing paragraph`, async () => {
@@ -91,7 +91,7 @@ test(`user can type in the auto-created trailing paragraph`, async () => {
   await setWritingView(page);
 
   // Click the trailing empty paragraph to place the cursor there.
-  const trailingPara = page.locator(`#editor > .md-line:not(.md-html-block)`).last();
+  const trailingPara = page.locator(`#editor > [data-node-id]:not(.html-element)`).last();
   await clickInEditor(page, trailingPara);
   await page.waitForTimeout(200);
 

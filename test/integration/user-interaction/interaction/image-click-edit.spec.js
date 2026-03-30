@@ -32,7 +32,7 @@ test.describe(`Image click-to-edit`, () => {
 
   test(`clicking an image in writing mode opens the edit modal`, async () => {
     // Click the image element
-    const image = page.locator(`.md-line.md-image`);
+    const image = page.locator(`[data-node-id].md-image`);
     await clickInEditor(page, image);
 
     // The image modal should appear
@@ -61,7 +61,7 @@ test.describe(`Image click-to-edit`, () => {
 
   test(`editing an image via the modal updates the parse tree`, async () => {
     // Click the image
-    const image = page.locator(`.md-line.md-image`);
+    const image = page.locator(`[data-node-id].md-image`);
     await clickInEditor(page, image);
 
     const dialog = page.locator(`.image-dialog`);
@@ -84,7 +84,7 @@ test.describe(`Image click-to-edit`, () => {
 
   test(`cancelling the modal does not change the image`, async () => {
     // Click the image
-    const image = page.locator(`.md-line.md-image`);
+    const image = page.locator(`[data-node-id].md-image`);
     await clickInEditor(page, image);
 
     const dialog = page.locator(`.image-dialog`);

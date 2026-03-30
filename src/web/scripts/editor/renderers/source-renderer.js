@@ -40,7 +40,7 @@ export class SourceRenderer {
     // If empty, add a placeholder paragraph
     if (syntaxTree.children.length === 0) {
       const placeholder = document.createElement(`div`);
-      placeholder.className = `md-line md-paragraph`;
+      placeholder.className = `md-paragraph`;
       placeholder.appendChild(document.createElement(`br`));
       fragment.appendChild(placeholder);
     }
@@ -74,14 +74,15 @@ export class SourceRenderer {
    * @param {SyntaxTree} tree
    */
   ensurePhantomParagraph(container, tree) {
-    const existing = container.querySelector(`.md-phantom-paragraph`);
+    const existing = container.querySelector(`[data-is-phantom]`);
     const children = tree.children;
     const last = children.length > 0 ? children[children.length - 1] : null;
     const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
       const phantom = document.createElement(`div`);
-      phantom.className = `md-line md-paragraph md-phantom-paragraph`;
+      phantom.className = `md-paragraph`;
+      phantom.dataset.isPhantom = ``;
       phantom.setAttribute(`contenteditable`, `true`);
       phantom.appendChild(document.createElement(`br`));
       container.appendChild(phantom);
@@ -195,7 +196,7 @@ export class SourceRenderer {
    */
   renderNode(node) {
     const element = document.createElement(`div`);
-    element.className = `md-line md-${node.type}`;
+    element.className = node.type === `html-block` ? `html-element` : `md-${node.type}`;
     element.dataset.nodeId = node.id;
 
     switch (node.type) {
@@ -316,7 +317,7 @@ export class SourceRenderer {
     node.enterSourceEditMode();
 
     const codeContent = document.createElement(`div`);
-    codeContent.className = `md-code-content md-content`;
+    codeContent.className = `md-content`;
     // Append an extra newline so trailing empty lines have visual
     // height (same reason as the old per-section render).
     codeContent.textContent = `${node.sourceEditText}\n`;
@@ -432,7 +433,7 @@ export class SourceRenderer {
       // Render as a single line whose data-node-id points to the
       // child paragraph so that editing targets the right node.
       element.dataset.nodeId = child.id;
-      element.className = `md-line md-paragraph`;
+      element.className = `md-paragraph`;
 
       const openSyntax = document.createElement(`span`);
       openSyntax.className = `md-syntax md-html-tag`;
@@ -454,7 +455,7 @@ export class SourceRenderer {
 
     // Opening tag line — editable via data-tag-part="opening"
     const openLine = document.createElement(`div`);
-    openLine.className = `md-line md-html-tag`;
+    openLine.className = `md-html-tag`;
     openLine.dataset.nodeId = node.id;
     openLine.dataset.tagPart = `opening`;
     const openContent = document.createElement(`span`);
@@ -468,7 +469,7 @@ export class SourceRenderer {
       if (attrs.rawContent) {
         for (const line of attrs.rawContent.split(`\n`)) {
           const rawLine = document.createElement(`div`);
-          rawLine.className = `md-line md-html-raw`;
+          rawLine.className = `md-html-raw`;
           rawLine.dataset.nodeId = node.id;
           const rawContent = document.createElement(`span`);
           rawContent.className = `md-content`;
@@ -490,7 +491,7 @@ export class SourceRenderer {
     // Closing tag line — editable via data-tag-part="closing"
     if (attrs.closingTag) {
       const closeLine = document.createElement(`div`);
-      closeLine.className = `md-line md-html-tag`;
+      closeLine.className = `md-html-tag`;
       closeLine.dataset.nodeId = node.id;
       closeLine.dataset.tagPart = `closing`;
       const closeContent = document.createElement(`span`);

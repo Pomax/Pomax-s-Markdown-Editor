@@ -34,18 +34,18 @@ test.afterAll(async () => {
 
 test(`clicking the disclosure triangle collapses and expands the details body`, async () => {
   // The editor should be in writing view by default (details rendered as
-  // fake details with .md-details).
-  const detailsBlock = page.locator(`#editor .md-details`);
+  // fake details with .html-details).
+  const detailsBlock = page.locator(`#editor .html-details`);
   await detailsBlock.waitFor({ state: `visible` });
 
   // The details body should start open (default preference is open).
-  await expect(detailsBlock).toHaveClass(/md-details--open/);
+  await expect(detailsBlock).toHaveAttribute(`data-open`, ``);
 
-  // We measure the .md-details element's own height rather than the
+  // We measure the .html-details element's own height rather than the
   // editor's scrollHeight, because the editor has a large min-height
   // (A4 aspect ratio) that masks content-size changes.
   const heightExpanded = await page.evaluate(() => {
-    const el = document.querySelector(`#editor .md-details`);
+    const el = document.querySelector(`#editor .html-details`);
     return el ? el.getBoundingClientRect().height : 0;
   });
   expect(heightExpanded).toBeGreaterThan(0);
@@ -55,7 +55,7 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   // click, just like a real human click.  Playwright's locator.click()
   // dispatches a synthetic click that skips the selectionchange, hiding
   // bugs where the DOM is destroyed before the click handler fires.
-  const triangleLoc = page.locator(`#editor .md-details-triangle`);
+  const triangleLoc = page.locator(`#editor .dropdown`);
   const triangleBox = await triangleLoc.boundingBox();
   if (!triangleBox) throw new Error(`triangle bounding box is null`);
   const tx = triangleBox.x + triangleBox.width / 2;
@@ -63,16 +63,16 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   await page.mouse.click(tx, ty);
   await page.waitForTimeout(300);
 
-  // The details block should no longer have the open class.
-  await expect(detailsBlock).not.toHaveClass(/md-details--open/);
+  // The details block should no longer have the data-open attribute.
+  await expect(detailsBlock).not.toHaveAttribute(`data-open`, ``);
 
   // The body should now be hidden.
-  const detailsBody = page.locator(`#editor .md-details-body`);
+  const detailsBody = page.locator(`#editor .html-details > div:not(.html-summary)`);
   await expect(detailsBody).toBeHidden();
 
   // The details block height should be smaller than when expanded.
   const heightCollapsed = await page.evaluate(() => {
-    const el = document.querySelector(`#editor .md-details`);
+    const el = document.querySelector(`#editor .html-details`);
     return el ? el.getBoundingClientRect().height : 0;
   });
   expect(
@@ -89,14 +89,14 @@ test(`clicking the disclosure triangle collapses and expands the details body`, 
   await page.waitForTimeout(300);
 
   // The details block should be open again.
-  await expect(detailsBlock).toHaveClass(/md-details--open/);
+  await expect(detailsBlock).toHaveAttribute(`data-open`, ``);
 
   // The body should be visible again.
   await expect(detailsBody).toBeVisible();
 
   // The details block height should match the original expanded height.
   const heightReexpanded = await page.evaluate(() => {
-    const el = document.querySelector(`#editor .md-details`);
+    const el = document.querySelector(`#editor .html-details`);
     return el ? el.getBoundingClientRect().height : 0;
   });
   expect(

@@ -418,7 +418,7 @@ export class Editor {
    * @returns {boolean} `true` if a phantom was promoted.
    */
   promotePhantomParagraph() {
-    const phantom = this.container.querySelector(`.md-phantom-paragraph`);
+    const phantom = this.container.querySelector(`[data-is-phantom]`);
     if (!phantom) return false;
 
     const selection = window.getSelection();

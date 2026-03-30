@@ -107,11 +107,11 @@ async function clickSuperscriptButton(pg) {
 /**
  * Returns the raw markdown text of a specific line in source view.
  * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among .md-line elements.
+ * @param {number} index - 0-based line index among [data-node-id] elements.
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor .md-line`).nth(index).innerText();
+  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
 }
 
 test.describe(`Superscript first word, paragraph 1`, () => {
@@ -119,7 +119,7 @@ test.describe(`Superscript first word, paragraph 1`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickSuperscriptButton(page);
 
@@ -134,7 +134,7 @@ test.describe(`Superscript middle word, paragraph 1`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickSuperscriptButton(page);
 
@@ -149,7 +149,7 @@ test.describe(`Superscript first word, paragraph 2`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
     await dblclickWord(page, secondLine, `text2`, `first`);
     await clickSuperscriptButton(page);
 
@@ -166,7 +166,7 @@ test.describe(`Superscript middle word, paragraph 2`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const secondLine = page.locator(`#editor .md-line`).nth(1);
+    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
     await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickSuperscriptButton(page);
 
@@ -183,7 +183,7 @@ test.describe(`Cursor position after superscript`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickSuperscriptButton(page);
 
@@ -191,7 +191,7 @@ test.describe(`Cursor position after superscript`, () => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return null;
       const range = sel.getRangeAt(0);
-      const line = range.startContainer.parentElement?.closest(`.md-line`);
+      const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -273,7 +273,7 @@ test.describe(`Collapsed cursor — superscript word under caret`, () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
-    const firstLine = page.locator(`#editor .md-line`).first();
+    const firstLine = page.locator(`#editor [data-node-id]`).first();
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickSuperscriptButton(page);
 

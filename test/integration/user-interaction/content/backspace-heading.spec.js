@@ -10,7 +10,7 @@ const heading = `# main`;
 
 test(`typing "# main" then backspace 6 times results in empty document`, async () => {
   const { electronApp, page } = await launchApp();
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);

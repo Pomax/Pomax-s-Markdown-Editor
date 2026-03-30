@@ -127,6 +127,10 @@ export class InputHandler {
         this.editor.rangeOperations.handleSelectAll();
         return;
       }
+
+      if (event.key === `ArrowLeft` || event.key === `ArrowRight`) {
+        event.preventDefault;
+      }
     }
 
     if (event.key === `Enter` && !event.shiftKey) {
@@ -160,7 +164,10 @@ export class InputHandler {
     if (event.key === `Tab` && this.editor.viewMode === `writing`) {
       this.editor.syncCursorFromDOM();
       const node = this.editor.getCurrentBlockNode();
-      if (node?.type === `table` && this.editor.syntaxTree?.treeCursor?.cellRow !== undefined) {
+      if (
+        node?.type === `table` &&
+        this.editor.syntaxTree?.treeCursor?.cellRow !== undefined
+      ) {
         event.preventDefault();
         this.editor.tableManager.handleTableTab(event.shiftKey);
         return;

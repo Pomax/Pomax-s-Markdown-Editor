@@ -100,7 +100,7 @@ export async function loadContent(page, fixtureContent) {
     window.editorAPI?.setContent(content);
   }, fixtureContent);
   // Wait for the editor to re-render.
-  await page.waitForSelector(`#editor .md-line`);
+  await page.waitForSelector(`#editor [data-node-id]`);
 }
 
 /**
@@ -191,6 +191,22 @@ export async function closeApp(electronApp) {
     } catch {
       /* already dead */
     }
+  }
+}
+
+/**
+ * Navigate the page to about:blank to clean up browser state between tests.
+ * Wrapped in a try/catch because Firefox occasionally throws a
+ * "browserContext.close" protocol error during teardown.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function resetPage(page) {
+  try {
+    await page.goto(`about:blank`);
+    await page.waitForTimeout(100);
+  } catch {
+    /* Firefox teardown glitch — safe to ignore */
   }
 }
 

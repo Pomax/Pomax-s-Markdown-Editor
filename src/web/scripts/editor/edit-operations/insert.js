@@ -77,7 +77,47 @@ export async function insertTextAtCursor(ops, text) {
     return;
   }
 
+  // Source-view prefix editing: the cursor is inside the `.md-syntax`
+  // span (e.g. `- [ ] `, `## `).  Reconstruct the full markdown line,
+  // splice the text at the absolute position, and reparse.
+  if (ops.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
+    const fullLine = ops.editor.buildMarkdownLine(node.type, node.content, node.attributes);
+    const absPos = ops.editor.syntaxTree.treeCursor.prefixOffset;
+    const newLine = fullLine.substring(0, absPos) + text + fullLine.substring(absPos);
+
+    const wasBareText = !!node.attributes.bareText;
+    const parsed = await ops.editor.reparseLine(newLine);
+    if (parsed) {
+      node.type = parsed.type;
+      node.content = parsed.content;
+      node.attributes = parsed.attributes;
+    } else {
+      node.content = newLine;
+    }
+    if (wasBareText) {
+      node.attributes.bareText = true;
+    }
+
+    const newAbsPos = absPos + text.length;
+    const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
+    if (newAbsPos < newPrefixLen) {
+      ops.editor.syntaxTree.treeCursor = {
+        nodeId: node.id,
+        offset: 0,
+        prefixOffset: newAbsPos,
+      };
+    } else {
+      ops.editor.syntaxTree.treeCursor = {
+        nodeId: node.id,
+        offset: newAbsPos - newPrefixLen,
+      };
+    }
+    ops.editor.recordAndRender(before, { updated: [node.id] });
+    return;
+  }
+
   const oldType = node.type;
+  const oldPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
 
   // Insert the text into the node's content at the cursor offset
   const left = node.content.substring(0, ops.editor.syntaxTree.treeCursor.offset);
@@ -170,7 +210,6 @@ export async function insertTextAtCursor(ops, text) {
   }
 
   // Re-parse the full markdown line to detect type changes
-  let newOffset;
   const wasBareText = !!node.attributes.bareText;
   const fullLine = ops.editor.buildMarkdownLine(node.type, newContent, node.attributes);
   const parsed = await ops.editor.reparseLine(fullLine);
@@ -203,24 +242,18 @@ export async function insertTextAtCursor(ops, text) {
     node.attributes.bareText = true;
   }
 
-  // Compute cursor position in the new content.
-  // If the type didn't change, the cursor is simply after the inserted text.
-  // If it changed (e.g. paragraph "# " → heading1 ""), we need to account
-  // for the prefix that was absorbed by the type change.
-  if (oldType === node.type) {
-    newOffset = left.length + text.length;
+  // Compute cursor position: the absolute position in the full
+  // markdown line advances by the inserted text length.
+  const absPos = oldPrefixLen + left.length + text.length;
+  const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
+  if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
+    ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
   } else {
-    // The old content up to cursor was `left + text`.  In the old type's
-    // markdown line, that corresponds to `oldPrefix + left + text`.
-    // In the new type's markdown line, the prefix changed.  The cursor
-    // position in the new content = old raw cursor pos − new prefix len.
-    const oldPrefix = ops.editor.getPrefixLength(oldType, node.attributes);
-    const newPrefix = ops.editor.getPrefixLength(node.type, node.attributes);
-    const rawCursorPos = oldPrefix + left.length + text.length;
-    newOffset = Math.max(0, rawCursorPos - newPrefix);
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: Math.max(0, absPos - newPrefixLen),
+    };
   }
-
-  ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: newOffset };
   /** @type {{ updated: string[], removed?: string[] }} */
   const hints = { updated: [node.id] };
   if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;

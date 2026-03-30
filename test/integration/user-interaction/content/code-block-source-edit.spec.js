@@ -89,7 +89,7 @@ test.describe(`Source-view code-block rendering`, () => {
     await loadContent(page, `\`\`\`js\nconsole.log("hi")\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await expect(codeBlock).toBeVisible();
 
     // The entire block should have one .md-content child containing
@@ -103,14 +103,6 @@ test.describe(`Source-view code-block rendering`, () => {
     // Closing fence
     expect(text?.trim().endsWith(`\`\`\``)).toBe(true);
   });
-
-  test(`no separate md-code-fence divs in source view`, async () => {
-    await loadContent(page, `\`\`\`py\nx = 1\n\`\`\``);
-    await setSourceView(page);
-
-    const fenceDivs = page.locator(`#editor .md-code-fence`);
-    await expect(fenceDivs).toHaveCount(0);
-  });
 });
 
 test.describe(`Editing the language tag`, () => {
@@ -118,7 +110,7 @@ test.describe(`Editing the language tag`, () => {
     await loadContent(page, `\`\`\`py\nx = 1\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor right after "```py" (offset 5)
@@ -134,7 +126,7 @@ test.describe(`Editing the language tag`, () => {
     await loadContent(page, `\`\`\`javascript\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at end of "```javascript" (offset 13)
@@ -157,7 +149,7 @@ test.describe(`Editing code content in source view`, () => {
     await loadContent(page, `\`\`\`js\nhello\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "hello": "```js\nhello" = 11 chars
@@ -173,7 +165,7 @@ test.describe(`Editing code content in source view`, () => {
     await loadContent(page, `\`\`\`js\nline1\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "line1": "```js\nline1" = 11 chars
@@ -192,7 +184,7 @@ test.describe(`Editing the code fences`, () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at very start (offset 0)
@@ -211,7 +203,7 @@ test.describe(`Backspace after removing opening fence`, () => {
     await loadContent(page, `previous\n\n\`\`\`js\ncode\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor at offset 0 and delete "```js" (5 chars)
@@ -241,7 +233,7 @@ test.describe(`View mode switch finalization`, () => {
     await loadContent(page, `\`\`\`ts\ncontent\n\`\`\``);
     await setSourceView(page);
 
-    const codeBlock = page.locator(`#editor .md-line.md-code-block`);
+    const codeBlock = page.locator(`#editor [data-node-id].md-code-block`);
     await clickInEditor(page, codeBlock);
 
     // Place cursor after "```ts" (offset 5) and type "x"

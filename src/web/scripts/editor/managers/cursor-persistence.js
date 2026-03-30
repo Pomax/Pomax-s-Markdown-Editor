@@ -52,6 +52,9 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
           const md = node.toMarkdown();
           const closingTag = node.attributes.closingTag ?? ``;
           return pos + md.length - closingTag.length + cursor.offset;
+        } else if (cursor.prefixOffset !== undefined) {
+          // Cursor is inside the syntax prefix (source view).
+          return pos + cursor.prefixOffset;
         } else {
           const prefix = getPrefixLength(node.type, node.attributes);
           return pos + prefix + cursor.offset;
@@ -188,9 +191,17 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
         // Leaf node — the offset falls within this node's content.
         const prefix = getPrefixLength(node.type, node.attributes);
         const contentOffset = absoluteOffset - pos - prefix;
+        if (contentOffset < 0) {
+          // Cursor is inside the syntax prefix (source view).
+          return {
+            nodeId: node.id,
+            offset: 0,
+            prefixOffset: absoluteOffset - pos,
+          };
+        }
         return {
           nodeId: node.id,
-          offset: Math.max(0, Math.min(contentOffset, node.content.length)),
+          offset: Math.min(contentOffset, node.content.length),
         };
       }
 

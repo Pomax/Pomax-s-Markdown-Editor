@@ -170,7 +170,6 @@ export class ImageModal extends BaseModal {
     if (src) {
       previewImg.src = src;
       previewImg.alt = this.getInput(`image-alt`).value.trim() || `Preview`;
-      previewContainer.classList.add(`visible`);
 
       previewImg.onerror = () => {
         previewContainer.classList.remove(`visible`);
