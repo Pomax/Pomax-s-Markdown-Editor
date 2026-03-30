@@ -1,0 +1,26 @@
+/**
+ * Source view V2 styles — textarea-based plain-text editing.
+ */
+
+.source-view-v2 {
+    display: flex;
+    flex-direction: column;
+}
+
+.source-view-v2 textarea {
+    flex: 1 0 auto;
+    field-sizing: content;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height);
+    color: var(--page-text);
+}

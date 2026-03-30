@@ -11,7 +11,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 1: Create the source view 2 renderer with a `<textarea>`
 - [x] Step 2: Register the `source2` view mode in the editor
 - [x] Step 3: Add `source2` to the view mode cycle button and wire up all layers
-- [ ] Step 4: Style the source view 2 textarea
+- [x] Step 4: Style the source view 2 textarea
 - [ ] Step 5: Add toolbar button support using local text examination
 - [ ] Step 6: Add hotkey support by triggering toolbar buttons
 - [ ] Step 7: Reparse markdown to a new tree on switch back to writing view
