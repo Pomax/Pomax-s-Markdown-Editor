@@ -1,6 +1,37 @@
-import { distance } from 'fastest-levenshtein';
 import { tokenizeInline } from './inline-tokenizer.js';
 import { SyntaxNode } from './syntax-node.js';
+
+/**
+ * Computes the Levenshtein distance between two strings using a
+ * single-row DP approach.
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function charDistance(a, b) {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  if (a.length > b.length) {
+    const tmp = a;
+    a = b;
+    b = tmp;
+  }
+  const m = a.length;
+  const n = b.length;
+  let row = Array.from({ length: m + 1 }, (_, i) => i);
+  for (let j = 1; j <= n; j++) {
+    let prev = j;
+    for (let i = 1; i <= m; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const val = Math.min(prev + 1, row[i] + 1, row[i - 1] + cost);
+      row[i - 1] = prev;
+      prev = val;
+    }
+    row[m] = prev;
+  }
+  return row[m];
+}
 
 /**
  * Computes the Levenshtein distance between two arrays using a
@@ -46,7 +77,7 @@ export function contentSimilarity(a, b) {
     return 1 - arrayLevenshtein(aLines, bLines) / maxLen;
   }
   const maxLen = Math.max(a.length, b.length);
-  return 1 - distance(a, b) / maxLen;
+  return 1 - charDistance(a, b) / maxLen;
 }
 
 /**
@@ -104,10 +135,7 @@ export function matchChildren(oldChildren, newChildren) {
       } else if (nc.type === `list-item`) {
         tiebreak = oc.attributes.indent === nc.attributes.indent;
       }
-      if (
-        score > bestScore ||
-        (score === bestScore && tiebreak && !bestTiebreak)
-      ) {
+      if (score > bestScore || (score === bestScore && tiebreak && !bestTiebreak)) {
         bestOi = oi;
         bestScore = score;
         bestTiebreak = tiebreak;
@@ -132,38 +160,75 @@ export function matchChildren(oldChildren, newChildren) {
  * @param {SyntaxNode} newNode
  */
 export function updateMatchedNode(oldNode, newNode) {
-  oldNode.content = newNode.content;
-
-  const savedDetailsOpen = oldNode.attributes.detailsOpen;
-  oldNode.attributes = { ...newNode.attributes };
-  if (savedDetailsOpen !== undefined) {
-    oldNode.attributes.detailsOpen = savedDetailsOpen;
+  if (oldNode.content !== newNode.content) {
+    oldNode.content = newNode.content;
   }
 
-  oldNode.startLine = newNode.startLine;
-  oldNode.endLine = newNode.endLine;
-  oldNode.sourceEditText = null;
+  if (!attributesEqual(oldNode.attributes, newNode.attributes)) {
+    const savedDetailsOpen = oldNode.attributes.detailsOpen;
+    oldNode.attributes = { ...newNode.attributes };
+    if (savedDetailsOpen !== undefined) {
+      oldNode.attributes.detailsOpen = savedDetailsOpen;
+    }
+  }
+
+  if (oldNode.startLine !== newNode.startLine) {
+    oldNode.startLine = newNode.startLine;
+  }
+  if (oldNode.endLine !== newNode.endLine) {
+    oldNode.endLine = newNode.endLine;
+  }
+  if (oldNode.sourceEditText !== null) {
+    oldNode.sourceEditText = null;
+  }
 
   if (oldNode.type === `html-block`) {
     if (newNode.children.length > 0) {
       const childMatches = matchChildren(oldNode.children, newNode.children);
       const result = [];
+      let changed = false;
       for (const nc of newNode.children) {
         const matched = childMatches.get(nc);
         if (matched) {
           updateMatchedNode(matched, nc);
-          matched.parent = oldNode;
+          if (matched.parent !== oldNode) {
+            matched.parent = oldNode;
+          }
           result.push(matched);
+          if (!changed && matched !== oldNode.children[result.length - 1]) {
+            changed = true;
+          }
         } else {
-          nc.parent = oldNode;
+          if (nc.parent !== oldNode) {
+            nc.parent = oldNode;
+          }
           result.push(nc);
+          changed = true;
         }
       }
-      oldNode.children = result;
-    } else {
+      if (changed || result.length !== oldNode.children.length) {
+        oldNode.children = result;
+      }
+    } else if (oldNode.children.length > 0) {
       oldNode.children = [];
     }
   }
+}
+
+/**
+ * Shallow-compares two attribute objects for equality.
+ * @param {Record<string, any>} a
+ * @param {Record<string, any>} b
+ * @returns {boolean}
+ */
+function attributesEqual(a, b) {
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
 }
 
 /**
@@ -874,17 +939,28 @@ export class SyntaxTree {
   updateUsing(newTree) {
     const matches = matchChildren(this.children, newTree.children);
     const result = [];
+    let changed = false;
     for (const nc of newTree.children) {
       const matched = matches.get(nc);
       if (matched) {
         updateMatchedNode(matched, nc);
-        matched.parent = null;
+        if (matched.parent !== null) {
+          matched.parent = null;
+        }
         result.push(matched);
+        if (!changed && matched !== this.children[result.length - 1]) {
+          changed = true;
+        }
       } else {
-        nc.parent = null;
+        if (nc.parent !== null) {
+          nc.parent = null;
+        }
         result.push(nc);
+        changed = true;
       }
     }
-    this.children = result;
+    if (changed || result.length !== this.children.length) {
+      this.children = result;
+    }
   }
 }

@@ -762,7 +762,7 @@ export class Editor {
     // When leaving source2, reparse the textarea content into a fresh
     // syntax tree so that edits made in source2 mode are reflected in
     // writing / source view.
-    if (this.viewMode === `source2`) {
+    if (this.viewMode === `source2` && this.syntaxTree) {
       const rawText = this.sourceRendererV2.getContent();
       const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
       const selectionStart = this.sourceRendererV2.textarea?.selectionStart ?? 0;

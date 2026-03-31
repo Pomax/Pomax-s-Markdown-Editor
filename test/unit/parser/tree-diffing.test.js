@@ -6,7 +6,11 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
-import { contentSimilarity, matchChildren, updateMatchedNode } from '../../../src/parsers/old/syntax-tree.js';
+import {
+  contentSimilarity,
+  matchChildren,
+  updateMatchedNode,
+} from '../../../src/parsers/old/syntax-tree.js';
 
 describe(`contentSimilarity`, () => {
   it(`returns 1 for two empty strings`, () => {
@@ -36,9 +40,18 @@ describe(`contentSimilarity`, () => {
   });
 
   it(`uses line-level fast-path for strings both > 10000 chars`, () => {
-    const line = `This is a ~~long~~ repeated line with [links](https://example.com) and **bold** formatting that pads the string`.repeat(2);
+    const line =
+      `This is a ~~long~~ repeated line with [links](https://example.com) and **bold** formatting that pads the string`.repeat(
+        2,
+      );
     const a = Array.from({ length: 60 }, () => line).join(`\n`);
-    const b = Array.from({ length: 60 }, (_, i) => (i < 55 ? line : `A completely different line with \`code\` and *emphasis* that replaces the original`.repeat(2))).join(`\n`);
+    const b = Array.from({ length: 60 }, (_, i) =>
+      i < 55
+        ? line
+        : `A completely different line with \`code\` and *emphasis* that replaces the original`.repeat(
+            2,
+          ),
+    ).join(`\n`);
     const result = contentSimilarity(a, b);
     assert.ok(result > 0 && result < 1, `expected between 0 and 1, got ${result}`);
   });
@@ -170,7 +183,12 @@ describe(`updateMatchedNode`, () => {
   });
 
   it(`copies attributes and preserves detailsOpen when present`, () => {
-    const oldAttrs = { tagName: `details`, openingTag: `<details>`, closingTag: `</details>`, detailsOpen: true };
+    const oldAttrs = {
+      tagName: `details`,
+      openingTag: `<details>`,
+      closingTag: `</details>`,
+      detailsOpen: true,
+    };
     const newAttrs = { tagName: `details`, openingTag: `<details open>`, closingTag: `</details>` };
     const oldNode = new SyntaxNode(`html-block`, ``);
     oldNode.attributes = oldAttrs;
@@ -223,7 +241,11 @@ describe(`updateMatchedNode`, () => {
   it(`recursively matches and updates html-block children`, () => {
     const oldChildContent = `This is a paragraph`;
     const newChildContent = `This is a paragraph updated`;
-    const containerAttrs = { tagName: `details`, openingTag: `<details>`, closingTag: `</details>` };
+    const containerAttrs = {
+      tagName: `details`,
+      openingTag: `<details>`,
+      closingTag: `</details>`,
+    };
 
     const oldChild = new SyntaxNode(`paragraph`, oldChildContent);
     const oldContainer = new SyntaxNode(`html-block`, ``);

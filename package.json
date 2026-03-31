@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
-    "fastest-levenshtein": "^1.0.16",
     "lucide-static": "^0.563.0"
   },
   "overrides": {

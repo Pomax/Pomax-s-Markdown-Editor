@@ -32,6 +32,42 @@ this **before** doing any work.
 
 ---
 
+> **🛑 MANDATORY PRE-ACTION CHECKLIST — OBEY BEFORE EVERY TOOL CALL 🛑**
+>
+> You **MUST** answer every question below before issuing **ANY** tool call
+> (file edit, terminal command, file read, or anything else). If any answer
+> is "yes", you **MUST** follow the instruction next to it instead of
+> issuing the tool call. Skipping this checklist is **NEVER** acceptable.
+>
+> 1. **Is a test or command still running in the terminal?**
+>    → **STOP.** Do **NOT** run any command. Ask the user: "Have the tests
+>    finished?" Wait for their answer. Running anything will kill the
+>    test run.
+>
+> 2. **Are you about to ask the user a question?**
+>    → **STOP.** Ask the question **with no tool calls at all**. Wait for
+>    the user's answer before doing anything.
+>
+> 3. **Are you about to modify a file without explicit user approval?**
+>    → **STOP.** Describe what you plan to change and ask if it makes
+>    sense. Wait for explicit approval ("yes", "looks good", "go ahead")
+>    before editing anything.
+>
+> 4. **Are you about to run a compound command (`;`, `&&`, `||`) or
+>    wrap a command in `cmd /c "..."`?**
+>    → **STOP.** Issue a single command only. If you need `cmd`, run
+>    `cmd` on its own first.
+>
+> 5. **Are you about to analyse test output that may be truncated?**
+>    → **STOP.** Ask the user if the tests have finished. Do **NOT**
+>    guess, assume, or run commands to check.
+>
+> These are not guidelines. These are **hard rules**. Violating any of
+> them wastes the user's time and money, and has done so repeatedly in
+> the past. **Read and obey.**
+
+---
+
 ## Working Environment
 
 - If we're on windows, you should be using the `cmd` shell, not powershell. If

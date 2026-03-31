@@ -17,10 +17,11 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 7: Reparse markdown to a new tree on switch back to writing view
 - [x] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
 - [x] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
-- [ ] Step 10: Write integration tests for source view 2
-- [ ] Step 11: Run full test suite, fix any failures
-- [ ] Step 12: Update docs
-- [ ] Step 13: Remove old source view and rename `source2` to `source`
+- [x] Step 10: Write integration tests for source view 2
+- [ ] Step 11: Improve switch-over performance
+- [ ] Step 12: Run full test suite, fix any failures
+- [ ] Step 13: Update docs
+- [ ] Step 14: Remove old source view and rename `source2` to `source`
 
 ## Step Details
 
@@ -132,24 +133,29 @@ Changed the "leaving source2" block in `setViewMode` (in `src/web/scripts/editor
 
 ### Step 10: Write integration tests for source view 2
 
-Cover at minimum:
+Two new spec files, both using the project's `README.md` as the fixture document:
 
-- Switching to source2 mode shows a textarea with the document's markdown.
-- Typing in the textarea modifies the content.
-- Toolbar buttons apply formatting to the textarea selection.
-- Hotkeys trigger the same formatting.
-- Switching back to writing view reparses and shows the updated document.
-- Round-trip: writing → source2 → edit → writing preserves changes correctly.
-- Tree identity preservation: nodes that weren't edited keep their original IDs after the switch back.
+1. **`test/integration/app-functionality/toolbar/source2-toolbar.spec.js`** — Toolbar button clicks in source2 mode. Tests that clicking bold, italic, strikethrough, heading, blockquote, list, code, and code-block toolbar buttons correctly modify the textarea content. This exercises the button-click → `getFormatter()` → `source2-formatter` code path (as opposed to `source2-hotkeys.spec.js` which tests the keyboard shortcut path).
 
-### Step 11: Run full test suite, fix failures
+2. **`test/integration/user-interaction/interaction/source2-roundtrip.spec.js`** — Round-trip and tree identity tests:
+   - Switching to source2 shows a textarea whose content matches the tree's `toMarkdown()` output.
+   - Typing in the textarea modifies the textarea value.
+   - Round-trip without edits: writing → source2 → writing preserves the document unchanged.
+   - Round-trip with edits: writing → source2 → make an edit → writing reflects the change.
+   - Tree identity preservation: nodes that weren't edited keep their original `data-node-id` after the round-trip.
+
+### Step 11: Improve switch-over performance
+
+The source2 → writing switch is too slow on large documents (tested with a 50,000-word document). Profile the bottleneck and optimise accordingly. Details to be filled in when this step is reached.
+
+### Step 12: Run full test suite, fix failures
 
 Run all existing tests to make sure nothing is broken by the new mode. Any failure — whether in new or existing tests — gets investigated and fixed.
 
-### Step 12: Update docs
+### Step 13: Update docs
 
 Update the developer and user-facing documentation to describe the new source view 2 mode, how it works, and how it differs from the original source view.
 
-### Step 13: Remove old source view and rename `source2` to `source`
+### Step 14: Remove old source view and rename `source2` to `source`
 
 Remove `SourceRenderer` and its file (`source-renderer.js`). Rename `SourceRendererV2` to `SourceRenderer` (and its file to `source-renderer.js`). Change the `ViewMode` type from `'source' | 'source2' | 'writing'` back to `'source' | 'writing'`. Update all references throughout the codebase: editor, toolbar, electron IPC, menus, preferences, tests, CSS classes, and docs. The app returns to two view modes, but the source view is now the textarea-based implementation.

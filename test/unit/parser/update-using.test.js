@@ -91,7 +91,11 @@ describe(`SyntaxTree.updateUsing`, () => {
   it(`assigns a fresh ID to an inserted node while preserving others`, async () => {
     const insertionPoint = `## Current version: v1.7.0`;
     const insertedSection = `## What's New\n\nThis section was just added with **bold** emphasis and a [link](https://example.com).`;
-    const editedReadme = replaceFirst(README, insertionPoint, `${insertedSection}\n\n${insertionPoint}`);
+    const editedReadme = replaceFirst(
+      README,
+      insertionPoint,
+      `${insertedSection}\n\n${insertionPoint}`,
+    );
 
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(editedReadme);
@@ -105,7 +109,10 @@ describe(`SyntaxTree.updateUsing`, () => {
     for (const child of oldTree.children) {
       if (!originalIds.has(child.id)) freshCount++;
     }
-    assert.ok(freshCount >= 2, `expected at least 2 fresh IDs (heading + paragraph), got ${freshCount}`);
+    assert.ok(
+      freshCount >= 2,
+      `expected at least 2 fresh IDs (heading + paragraph), got ${freshCount}`,
+    );
   });
 
   it(`removes a node and preserves surviving IDs`, async () => {
@@ -131,7 +138,9 @@ describe(`SyntaxTree.updateUsing`, () => {
     const electronSection = `## Eww, Electron?\n\nSorry, did you not have 8+GB if RAM and 1TB+ of disk space? Stop pretending you care about Electron, you care about whether the tools are useful or not. Yes, it's dumb that 2 MB of resources needs 100MB of UI runner, but on the other hand, it's literally a browser, and have you looked at what browsers need to support these days? Can you even _count_ the number of web APIs? =P`;
     const vibeSection = `## So this is a vibe coded project?\n\nNot really, no. This is literally an experiment into how _not_ to vibe code, and instead use these tools in a way that actually makes the same amount of sense as any other IDE automation. Because there is _so much_ these tools can't do, without telling you, and if you just let them "do their thing" instead of making them perform very specific targetted tasks based on you tracking the task list and acceptance criteria, that's on you.`;
 
-    const editedReadme = README.replace(electronSection, `PLACEHOLDER_VIBE`).replace(vibeSection, electronSection).replace(`PLACEHOLDER_VIBE`, vibeSection);
+    const editedReadme = README.replace(electronSection, `PLACEHOLDER_VIBE`)
+      .replace(vibeSection, electronSection)
+      .replace(`PLACEHOLDER_VIBE`, vibeSection);
 
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(editedReadme);
@@ -149,7 +158,10 @@ describe(`SyntaxTree.updateUsing`, () => {
   it(`assigns a fresh ID when a node's type changes`, async () => {
     const headingContent = `Eww, Electron?`;
     const oldTree = await parser.parse(README);
-    const headingNode = oldTree.children.find((c) => c.type === `heading2` && c.content === headingContent);
+    const headingNode = oldTree.children.find(
+      (c) => c.type === `heading2` && c.content === headingContent,
+    );
+    assert.ok(headingNode, `expected to find heading2 node with content "${headingContent}"`);
     const headingId = headingNode.id;
     const originalIds = collectIds(oldTree);
 
@@ -158,7 +170,9 @@ describe(`SyntaxTree.updateUsing`, () => {
 
     oldTree.updateUsing(newTree);
 
-    const paragraphNode = oldTree.children.find((c) => c.type === `paragraph` && c.content === headingContent);
+    const paragraphNode = oldTree.children.find(
+      (c) => c.type === `paragraph` && c.content === headingContent,
+    );
     assert.ok(paragraphNode, `expected a paragraph node with the former heading content`);
     assert.notStrictEqual(paragraphNode.id, headingId);
 
@@ -179,7 +193,11 @@ describe(`SyntaxTree.updateUsing`, () => {
 
     let editedReadme = replaceFirst(README, originalLine, editedLine);
     editedReadme = removeBlock(editedReadme, lineToRemove);
-    editedReadme = replaceFirst(editedReadme, insertionPoint, `${insertionPoint}\n\n${insertedBlock}`);
+    editedReadme = replaceFirst(
+      editedReadme,
+      insertionPoint,
+      `${insertionPoint}\n\n${insertedBlock}`,
+    );
 
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(editedReadme);
@@ -270,7 +288,11 @@ describe(`SyntaxTree.updateUsing`, () => {
   it(`preserves html-block child IDs during recursive diffing`, () => {
     const childContent = `This is a paragraph inside a details block`;
     const updatedChildContent = `This is an updated paragraph inside a details block`;
-    const containerAttrs = { tagName: `details`, openingTag: `<details>`, closingTag: `</details>` };
+    const containerAttrs = {
+      tagName: `details`,
+      openingTag: `<details>`,
+      closingTag: `</details>`,
+    };
 
     const oldChild = new SyntaxNode(`paragraph`, childContent);
     const oldContainer = new SyntaxNode(`html-block`, ``);
@@ -330,5 +352,24 @@ describe(`SyntaxTree.updateUsing`, () => {
     oldTree.updateUsing(newTree);
 
     assert.strictEqual(oldTree.treeCursor, cursor);
+  });
+
+  it(`preserves every node ID on a toMarkdown-reparse round-trip with no edits`, async () => {
+    const oldTree = await parser.parse(README);
+    const idsBefore = collectIds(oldTree);
+    const markdown = oldTree.toMarkdown();
+    const newTree = await parser.parse(markdown);
+
+    oldTree.updateUsing(newTree);
+
+    const idsAfter = collectIds(oldTree);
+    assert.strictEqual(idsAfter.length, idsBefore.length, `node count must not change`);
+    for (let i = 0; i < idsBefore.length; i++) {
+      assert.strictEqual(
+        idsAfter[i],
+        idsBefore[i],
+        `node ${i} (type: ${oldTree.children[i].type}) ID must be preserved`,
+      );
+    }
   });
 });
