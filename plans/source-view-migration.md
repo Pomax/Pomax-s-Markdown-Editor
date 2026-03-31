@@ -114,16 +114,17 @@ This is a temporary full-replacement approach — Steps 8–9 will replace it wi
 
 ### Step 8: Implement `SyntaxTree.updateUsing(newTree)`
 
-Add a method to `SyntaxTree` (in `src/parsers/old/syntax-tree.js`) that performs structural diffing between the original tree and a new tree:
+Added structural tree diffing to `SyntaxTree` in `src/parsers/old/syntax-tree.js`, broken into sub-steps 8a–8e (detailed in `source-view-migration-diff.md`). Installed `fastest-levenshtein` as a production dependency and added four top-level exported functions plus one class method:
 
-- Walk both trees' children in parallel.
-- Match nodes by type and content similarity (not by ID, since the new tree has fresh IDs).
-- For matched nodes: update the original node's content/attributes in place, preserving its identity (ID, any references).
-- For nodes in the new tree with no match: insert them as new nodes in the original tree.
-- For nodes in the original tree with no match in the new tree: remove them.
-- Handle reordering if nodes moved positions.
+1. **`contentSimilarity(a, b)`** — returns a 0–1 similarity score using character-level Levenshtein distance: `1 - (distance(a, b) / Math.max(a.length, b.length))`. Returns 1 for two empty strings, 0 when one is empty. Falls back to a line-level DP comparison when both strings exceed 10,000 characters.
 
-The goal is that after `updateUsing`, the original tree reflects the new content while preserving as much node identity as possible for downstream consumers.
+2. **`matchChildren(oldChildren, newChildren)`** — returns a `Map<newChild, oldChild>` via two passes. Pass 1 (exact): matches new children to unclaimed old children with identical `type` and `toMarkdown()` output. Pass 2 (fuzzy): for each still-unmatched new child, finds the best unclaimed same-type old child by `contentSimilarity` score. Tiebreakers prefer matching `html-block` nodes with the same `attributes.tagName` and `list-item` nodes with the same `attributes.indent`. No minimum similarity threshold — the best same-type match always wins.
+
+3. **`updateMatchedNode(oldNode, newNode)`** — copies `content`, `attributes`, `startLine`, `endLine` from `newNode` to `oldNode`, preserving `oldNode.id`. The content setter triggers `buildInlineChildren()` for inline-containing types. Preserves `detailsOpen` if it existed on the old node. Clears `sourceEditText` to null. For `html-block` nodes with block-level children, recursively calls `matchChildren` and `updateMatchedNode` on the children. For void `html-block` nodes, clears children to an empty array.
+
+4. **`SyntaxTree.updateUsing(newTree)`** — orchestrates the above. Calls `matchChildren(this.children, newTree.children)`, then iterates `newTree.children` in order: matched nodes get `updateMatchedNode` applied (preserving the old node's identity), unmatched new nodes are inserted as-is. Sets `parent = null` on all result children. Assigns the result to `this.children`. Does not touch `this.treeCursor` — the caller handles cursor restoration.
+
+Tests: `test/unit/parser/tree-diffing.test.js` (22 tests covering `contentSimilarity`, `matchChildren`, and `updateMatchedNode`) and `test/unit/parser/update-using.test.js` (15 tests using real README.md parsed through the DFA parser, covering identical trees, edits, insertions, deletions, reordering, type changes, mixed operations, empty trees, tiebreakers, parent references, recursive html-block diffing, duplicate nodes, and treeCursor preservation).
 
 ### Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 
