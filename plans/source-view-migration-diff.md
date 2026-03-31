@@ -12,7 +12,7 @@ All new functions are declared at the top level of `syntax-tree.js` (never neste
 - [x] Step 8b: Implement `contentSimilarity(a, b)`
 - [x] Step 8c: Implement `matchChildren(oldChildren, newChildren)`
 - [x] Step 8d: Implement `updateMatchedNode(oldNode, newNode)`
-- [ ] Step 8e: Implement `SyntaxTree.updateUsing(newTree)` class method
+- [x] Step 8e: Implement `SyntaxTree.updateUsing(newTree)` class method
 
 ---
 

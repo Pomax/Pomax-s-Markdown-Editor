@@ -862,4 +862,29 @@ export class SyntaxTree {
     }
     return null;
   }
+
+  /**
+   * Performs structural diffing between this tree and a newly parsed tree,
+   * updating this tree's children to match `newTree` while preserving node
+   * identity (IDs) for matched nodes. Does not touch `treeCursor` — the
+   * caller handles cursor restoration.
+   *
+   * @param {SyntaxTree} newTree
+   */
+  updateUsing(newTree) {
+    const matches = matchChildren(this.children, newTree.children);
+    const result = [];
+    for (const nc of newTree.children) {
+      const matched = matches.get(nc);
+      if (matched) {
+        updateMatchedNode(matched, nc);
+        matched.parent = null;
+        result.push(matched);
+      } else {
+        nc.parent = null;
+        result.push(nc);
+      }
+    }
+    this.children = result;
+  }
 }
