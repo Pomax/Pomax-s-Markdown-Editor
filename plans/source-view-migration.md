@@ -14,7 +14,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 4: Style the source view 2 textarea
 - [x] Step 5: Add toolbar button support using local text examination
 - [x] Step 6: Add hotkey support by triggering toolbar buttons
-- [ ] Step 7: Reparse markdown to a new tree on switch back to writing view
+- [x] Step 7: Reparse markdown to a new tree on switch back to writing view
 - [ ] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
 - [ ] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 - [ ] Step 10: Write integration tests for source view 2
@@ -108,7 +108,9 @@ Auto-highlighting of buttons to reflect current formatting state is explicitly *
 
 ### Step 7: Reparse markdown to a new tree on switch back to writing view
 
-When the user switches from `source2` to `writing` (or `source`), read the full markdown text from the textarea and parse it into a brand new syntax tree using the existing parser. This new tree represents the document state as edited in the textarea.
+When the user switches from `source2` to `writing` (or `source`), `setViewMode` now reads the full markdown text from the textarea via `sourceRendererV2.getContent()`, normalises excessive blank lines (`\n{3,}` → `\n\n`), captures `textarea.selectionStart`, and parses the result into a brand new syntax tree via `parser.parse()`. The new tree replaces `this.syntaxTree` entirely. The same guards as `loadMarkdown` are applied: if the tree is empty an empty paragraph is appended, and `ensureTrailingParagraph()` guards against trailing container html-blocks. The textarea caret offset is converted back to a `treeCursor` via `absoluteOffsetToCursor` (newly imported from `cursor-persistence.js`), falling back to the start of the first node if the offset is out of range. Finally `contenteditable` is restored on the container.
+
+This is a temporary full-replacement approach — Steps 8–9 will replace it with structural tree diffing via `updateUsing()` so that node identity is preserved across the round-trip.
 
 ### Step 8: Implement `SyntaxTree.updateUsing(newTree)`
 

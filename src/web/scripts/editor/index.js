@@ -36,7 +36,7 @@ import { SourceRenderer } from './renderers/source-renderer.js';
 import { SourceRendererV2 } from './renderers/source-renderer-v2.js';
 import { WritingRenderer } from './renderers/writing-renderer.js';
 
-import { cursorToAbsoluteOffset } from './managers/cursor-persistence.js';
+import { absoluteOffsetToCursor, cursorToAbsoluteOffset } from './managers/cursor-persistence.js';
 import { TreeFormatter } from './formatters/tree-formatter.js';
 import { Source2Formatter } from './formatters/source2-formatter.js';
 
@@ -759,9 +759,31 @@ export class Editor {
       );
     }
 
-    // When leaving source2, restore contenteditable on the container.
-    // (The actual reparse of textarea content is handled in steps 8–10.)
+    // When leaving source2, reparse the textarea content into a fresh
+    // syntax tree so that edits made in source2 mode are reflected in
+    // writing / source view.
     if (this.viewMode === `source2`) {
+      const rawText = this.sourceRendererV2.getContent();
+      const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
+      const selectionStart = this.sourceRendererV2.textarea?.selectionStart ?? 0;
+
+      this.syntaxTree = await parser.parse(normalised);
+
+      // Ensure there is at least one node so the editor is never empty
+      if (this.syntaxTree.children.length === 0) {
+        const node = new SyntaxNode(`paragraph`, ``);
+        this.syntaxTree.appendChild(node);
+      }
+
+      this.ensureTrailingParagraph();
+
+      // Restore the cursor position from the textarea caret offset.
+      this.syntaxTree.treeCursor = absoluteOffsetToCursor(
+        this.syntaxTree,
+        selectionStart,
+        this.getPrefixLength.bind(this),
+      ) ?? { nodeId: this.syntaxTree.children[0].id, offset: 0 };
+
       this.container.setAttribute(`contenteditable`, `true`);
     }
 
