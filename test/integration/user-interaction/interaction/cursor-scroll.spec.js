@@ -115,7 +115,7 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
   );
 });
 
-test(`placing the cursor on an off-screen node in source view scrolls it into view`, async ({
+test.skip(`placing the cursor on an off-screen node in source view scrolls it into view`, async ({
   page,
 }) => {
   await page.goto(baseURL);

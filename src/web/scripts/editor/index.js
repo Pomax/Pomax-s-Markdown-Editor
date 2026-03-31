@@ -831,6 +831,20 @@ export class Editor {
     // the user is focused on.  Fall back to the node closest to the
     // viewport centre so content doesn't jump when there is no cursor.
     const scrollContainer = this.container.parentElement;
+
+    // When entering source2, capture the actual caret pixel position
+    // from the browser selection so we can match it after the switch.
+    let savedCaretTop = null;
+    if (mode === `source2` && scrollContainer) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        savedCaretTop = rect.top - containerRect.top;
+      }
+    }
+
     /** @type {string|null} */
     let anchorNodeId = null;
     let savedOffsetFromTop = null;
@@ -886,6 +900,22 @@ export class Editor {
         textarea.selectionStart = absoluteCursorOffset;
         textarea.selectionEnd = absoluteCursorOffset;
         textarea.focus();
+      }
+    }
+
+    // Scroll-preserve for source2: use getCaretRect to find where the
+    // caret landed and adjust scroll so it sits at the saved position.
+    if (
+      mode === `source2` &&
+      scrollContainer &&
+      savedCaretTop !== null &&
+      absoluteCursorOffset !== null
+    ) {
+      const caretRect = this.sourceRendererV2.getCaretRect(absoluteCursorOffset);
+      if (caretRect) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const currentOffsetFromTop = caretRect.top - containerRect.top;
+        scrollContainer.scrollTop += currentOffsetFromTop - savedCaretTop;
       }
     }
 

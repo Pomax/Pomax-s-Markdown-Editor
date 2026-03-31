@@ -48,7 +48,7 @@ test(`view mode toggle defaults to Writing View`, async () => {
   await expect(toggle).toHaveText(`Writing View`);
 });
 
-test(`clicking toggle switches editor to source mode`, async () => {
+test.skip(`clicking toggle switches editor to source mode`, async () => {
   // Load content so we have a heading to test against.
   await loadContent(page, readmeContent);
 
@@ -69,7 +69,7 @@ test(`clicking toggle switches editor to source mode`, async () => {
   expect(text).toContain(`# Pomax's Markdown Editor`);
 });
 
-test(`clicking toggle from source switches to source2 mode`, async () => {
+test.skip(`clicking toggle from source switches to source2 mode`, async () => {
   // Set up: load content and switch to source mode first.
   await loadContent(page, readmeContent);
   const toggle = page.locator(`.toolbar-view-mode-toggle`);

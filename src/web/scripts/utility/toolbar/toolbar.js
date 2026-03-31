@@ -383,7 +383,7 @@ export class Toolbar {
    * The order in which modes cycle when the toggle button is clicked.
    * @type {ViewMode[]}
    */
-  static VIEW_MODE_CYCLE = [`writing`, `source`, `source2`];
+  static VIEW_MODE_CYCLE = [`writing`, `source2`];
 
   /**
    * File-button definitions: id, label, and click handler.
