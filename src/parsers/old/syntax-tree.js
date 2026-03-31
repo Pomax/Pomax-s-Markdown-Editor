@@ -1,5 +1,53 @@
+import { distance } from 'fastest-levenshtein';
 import { tokenizeInline } from './inline-tokenizer.js';
 import { SyntaxNode } from './syntax-node.js';
+
+/**
+ * Computes the Levenshtein distance between two arrays using a
+ * full DP matrix.  Elements are compared with strict equality.
+ * @param {string[]} a
+ * @param {string[]} b
+ * @returns {number}
+ */
+function arrayLevenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+/**
+ * Returns a 0–1 similarity score between two strings.  1 means
+ * identical, 0 means completely different.  For strings both
+ * exceeding 10 000 characters, falls back to a cheaper line-level
+ * comparison instead of character-level Levenshtein.
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+export function contentSimilarity(a, b) {
+  if (a.length === 0 && b.length === 0) return 1;
+  if (a.length > 10_000 && b.length > 10_000) {
+    const aLines = a.split(`\n`);
+    const bLines = b.split(`\n`);
+    const maxLen = Math.max(aLines.length, bLines.length);
+    if (maxLen === 0) return 1;
+    return 1 - arrayLevenshtein(aLines, bLines) / maxLen;
+  }
+  const maxLen = Math.max(a.length, b.length);
+  return 1 - distance(a, b) / maxLen;
+}
 
 /**
  * Node types whose content contains inline formatting and should be

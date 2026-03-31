@@ -5,7 +5,7 @@
 import assert from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
 import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
-import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
+import { contentSimilarity, SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
 
 describe(`SyntaxNode`, () => {
   describe(`constructor`, () => {
@@ -538,5 +538,36 @@ describe(`SyntaxTree.setCursorPath`, () => {
     assert.ok(restored);
     assert.strictEqual(restored.nodeId, child.id);
     assert.strictEqual(restored.offset, 5);
+  });
+});
+
+describe(`contentSimilarity`, () => {
+  it(`returns 1 for two empty strings`, () => {
+    assert.strictEqual(contentSimilarity(``, ``), 1);
+  });
+
+  it(`returns 1 for identical strings`, () => {
+    assert.strictEqual(contentSimilarity(`abc`, `abc`), 1);
+  });
+
+  it(`returns 0 for completely different strings of equal length`, () => {
+    assert.strictEqual(contentSimilarity(`abc`, `def`), 0);
+  });
+
+  it(`returns approximately 0.667 for one-char diff`, () => {
+    const result = contentSimilarity(`abc`, `abd`);
+    assert.ok(result > 0.66 && result < 0.68, `expected ~0.667, got ${result}`);
+  });
+
+  it(`returns 0 when one string is empty`, () => {
+    assert.strictEqual(contentSimilarity(`abc`, ``), 0);
+  });
+
+  it(`uses line-level fast-path for strings both > 10000 chars`, () => {
+    const line = `x`.repeat(200);
+    const a = Array.from({ length: 60 }, () => line).join(`\n`);
+    const b = Array.from({ length: 60 }, (_, i) => (i < 55 ? line : `y`.repeat(200))).join(`\n`);
+    const result = contentSimilarity(a, b);
+    assert.ok(result > 0 && result < 1, `expected between 0 and 1, got ${result}`);
   });
 });
