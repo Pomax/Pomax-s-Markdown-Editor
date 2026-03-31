@@ -123,6 +123,50 @@ export function matchChildren(oldChildren, newChildren) {
 }
 
 /**
+ * Copies state from `newNode` to `oldNode` while preserving `oldNode.id`.
+ * For inline-containing types, the content setter triggers
+ * `buildInlineChildren()`. For `html-block` nodes with block-level
+ * children, recursively matches and updates children.
+ *
+ * @param {SyntaxNode} oldNode
+ * @param {SyntaxNode} newNode
+ */
+export function updateMatchedNode(oldNode, newNode) {
+  oldNode.content = newNode.content;
+
+  const savedDetailsOpen = oldNode.attributes.detailsOpen;
+  oldNode.attributes = { ...newNode.attributes };
+  if (savedDetailsOpen !== undefined) {
+    oldNode.attributes.detailsOpen = savedDetailsOpen;
+  }
+
+  oldNode.startLine = newNode.startLine;
+  oldNode.endLine = newNode.endLine;
+  oldNode.sourceEditText = null;
+
+  if (oldNode.type === `html-block`) {
+    if (newNode.children.length > 0) {
+      const childMatches = matchChildren(oldNode.children, newNode.children);
+      const result = [];
+      for (const nc of newNode.children) {
+        const matched = childMatches.get(nc);
+        if (matched) {
+          updateMatchedNode(matched, nc);
+          matched.parent = oldNode;
+          result.push(matched);
+        } else {
+          nc.parent = oldNode;
+          result.push(nc);
+        }
+      }
+      oldNode.children = result;
+    } else {
+      oldNode.children = [];
+    }
+  }
+}
+
+/**
  * Node types whose content contains inline formatting and should be
  * modelled as inline child nodes (text, bold, italic, link, etc.).
  * @type {Set<string>}
