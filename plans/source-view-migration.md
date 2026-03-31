@@ -15,7 +15,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 5: Add toolbar button support using local text examination
 - [x] Step 6: Add hotkey support by triggering toolbar buttons
 - [x] Step 7: Reparse markdown to a new tree on switch back to writing view
-- [ ] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
+- [x] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
 - [ ] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 - [ ] Step 10: Write integration tests for source view 2
 - [ ] Step 11: Run full test suite, fix any failures
