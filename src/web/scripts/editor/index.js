@@ -759,6 +759,21 @@ export class Editor {
       );
     }
 
+    // When leaving source2, capture the textarea caret's pixel position
+    // so we can restore it after re-rendering in writing mode.
+    let savedSource2CaretTop = null;
+    if (this.viewMode === `source2`) {
+      const sc = this.container.parentElement;
+      if (sc) {
+        const offset = this.sourceRendererV2.textarea?.selectionStart ?? 0;
+        const caretRect = this.sourceRendererV2.getCaretRect(offset);
+        if (caretRect) {
+          const containerRect = sc.getBoundingClientRect();
+          savedSource2CaretTop = caretRect.top - containerRect.top;
+        }
+      }
+    }
+
     // When leaving source2, reparse the textarea content into a fresh
     // syntax tree so that edits made in source2 mode are reflected in
     // writing / source view.
@@ -938,6 +953,19 @@ export class Editor {
         const containerRect = scrollContainer.getBoundingClientRect();
         const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
         scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
+      }
+    }
+
+    // Scroll-preserve for source2 → writing: match the writing-mode
+    // caret position to where it was in the source2 textarea.
+    if (savedSource2CaretTop !== null && scrollContainer) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const currentOffsetFromTop = rect.top - containerRect.top;
+        scrollContainer.scrollTop += currentOffsetFromTop - savedSource2CaretTop;
       }
     }
   }
