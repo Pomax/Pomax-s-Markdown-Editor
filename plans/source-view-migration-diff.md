@@ -8,7 +8,7 @@ All new functions are declared at the top level of `syntax-tree.js` (never neste
 
 ## Progress
 
-- [ ] Step 8a: Implement `levenshteinDistance(a, b)`
+- [ ] Step 8a: Install a Levenshtein distance package
 - [ ] Step 8b: Implement `contentSimilarity(a, b)`
 - [ ] Step 8c: Implement `matchChildren(oldChildren, newChildren)`
 - [ ] Step 8d: Implement `updateMatchedNode(oldNode, newNode)`
@@ -18,24 +18,17 @@ All new functions are declared at the top level of `syntax-tree.js` (never neste
 
 ## Work Plan
 
-### 8a. Implement `levenshteinDistance(a, b)`
+### 8a. Install a Levenshtein distance package
 
-Add a top-level function to `syntax-tree.js`:
+Install a well-maintained Levenshtein distance package (e.g. `fastest-levenshtein` or `js-levenshtein`) as a production dependency. No custom implementation needed — this is a solved problem.
 
 ```
-function levenshteinDistance(a, b)
+npm install fastest-levenshtein
 ```
 
-Standard dynamic-programming edit distance on two strings. Returns a non-negative integer.
+Import it in `syntax-tree.js` as needed in step 8b.
 
-**Tests** (in `syntax-tree.test.js` under a new `describe('levenshteinDistance')` — import the function):
-
-- `levenshteinDistance('', '')` → `0`
-- `levenshteinDistance('abc', '')` → `3`
-- `levenshteinDistance('', 'abc')` → `3`
-- `levenshteinDistance('abc', 'abc')` → `0`
-- `levenshteinDistance('kitten', 'sitting')` → `3`
-- `levenshteinDistance('abc', 'def')` → `3`
+**No tests needed for this step** — the package has its own test suite. Just verify `npm test` still passes after install.
 
 **Run `npm test`, confirm all pass before continuing.**
 
@@ -49,9 +42,9 @@ Add a top-level function to `syntax-tree.js`:
 function contentSimilarity(a, b)
 ```
 
-Returns a 0–1 float: `1 - (levenshteinDistance(a, b) / Math.max(a.length, b.length))`. Returns `1` when both are empty strings.
+Import the `distance` function from the installed package. Returns a 0–1 float: `1 - (distance(a, b) / Math.max(a.length, b.length))`. Returns `1` when both are empty strings.
 
-Fast-path: if both strings exceed 10 000 chars, fall back to a cheaper line-level comparison instead of char-level Levenshtein. Split both by `\n`, compute Levenshtein on the resulting line arrays (treating each line as an atomic unit — use `===` for element comparison in the DP), and return `1 - (lineDistance / Math.max(aLines.length, bLines.length))`.
+Fast-path: if both strings exceed 10 000 chars, fall back to a cheaper line-level comparison instead of char-level Levenshtein. Split both by `\n`, compute Levenshtein on the resulting line arrays (treating each line as an atomic unit — use `===` for element comparison in a small local DP loop over the line arrays), and return `1 - (lineDistance / Math.max(aLines.length, bLines.length))`. This line-level DP is trivial (few dozen lines at most) and does not warrant a package.
 
 **Tests** (in `syntax-tree.test.js` under a new `describe('contentSimilarity')`):
 
