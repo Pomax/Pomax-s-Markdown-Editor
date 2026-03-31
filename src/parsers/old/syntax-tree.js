@@ -50,6 +50,79 @@ export function contentSimilarity(a, b) {
 }
 
 /**
+ * Matches children from an old node list to children from a new node
+ * list.  Returns a Map where each key is a new child that was matched
+ * and each value is the corresponding original child.
+ *
+ * Pass 1 finds exact matches (same type + identical toMarkdown()).
+ * Pass 2 finds fuzzy matches among remaining same-type candidates
+ * using contentSimilarity, with tiebreakers for html-block tagName
+ * and list-item indent.
+ *
+ * @param {SyntaxNode[]} oldChildren
+ * @param {SyntaxNode[]} newChildren
+ * @returns {Map<SyntaxNode, SyntaxNode>}
+ */
+export function matchChildren(oldChildren, newChildren) {
+  /** @type {Map<SyntaxNode, SyntaxNode>} */
+  const matches = new Map();
+  /** @type {Set<number>} */
+  const claimedOld = new Set();
+  /** @type {Set<number>} */
+  const matchedNew = new Set();
+
+  for (let ni = 0; ni < newChildren.length; ni++) {
+    const nc = newChildren[ni];
+    const ncMd = nc.toMarkdown();
+    for (let oi = 0; oi < oldChildren.length; oi++) {
+      if (claimedOld.has(oi)) continue;
+      const oc = oldChildren[oi];
+      if (oc.type === nc.type && oc.toMarkdown() === ncMd) {
+        matches.set(nc, oc);
+        claimedOld.add(oi);
+        matchedNew.add(ni);
+        break;
+      }
+    }
+  }
+
+  for (let ni = 0; ni < newChildren.length; ni++) {
+    if (matchedNew.has(ni)) continue;
+    const nc = newChildren[ni];
+    const ncMd = nc.toMarkdown();
+    let bestOi = -1;
+    let bestScore = -1;
+    let bestTiebreak = false;
+    for (let oi = 0; oi < oldChildren.length; oi++) {
+      if (claimedOld.has(oi)) continue;
+      const oc = oldChildren[oi];
+      if (oc.type !== nc.type) continue;
+      const score = contentSimilarity(oc.toMarkdown(), ncMd);
+      let tiebreak = false;
+      if (nc.type === `html-block`) {
+        tiebreak = oc.attributes.tagName === nc.attributes.tagName;
+      } else if (nc.type === `list-item`) {
+        tiebreak = oc.attributes.indent === nc.attributes.indent;
+      }
+      if (
+        score > bestScore ||
+        (score === bestScore && tiebreak && !bestTiebreak)
+      ) {
+        bestOi = oi;
+        bestScore = score;
+        bestTiebreak = tiebreak;
+      }
+    }
+    if (bestOi !== -1) {
+      matches.set(nc, oldChildren[bestOi]);
+      claimedOld.add(bestOi);
+    }
+  }
+
+  return matches;
+}
+
+/**
  * Node types whose content contains inline formatting and should be
  * modelled as inline child nodes (text, bold, italic, link, etc.).
  * @type {Set<string>}
