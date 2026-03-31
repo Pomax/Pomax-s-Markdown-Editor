@@ -767,7 +767,8 @@ export class Editor {
       const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
       const selectionStart = this.sourceRendererV2.textarea?.selectionStart ?? 0;
 
-      this.syntaxTree = await parser.parse(normalised);
+      const newTree = await parser.parse(normalised);
+      this.syntaxTree.updateUsing(newTree);
 
       // Ensure there is at least one node so the editor is never empty
       if (this.syntaxTree.children.length === 0) {

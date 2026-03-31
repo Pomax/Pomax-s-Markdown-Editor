@@ -16,7 +16,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 6: Add hotkey support by triggering toolbar buttons
 - [x] Step 7: Reparse markdown to a new tree on switch back to writing view
 - [x] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
-- [ ] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
+- [x] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 - [ ] Step 10: Write integration tests for source view 2
 - [ ] Step 11: Run full test suite, fix any failures
 - [ ] Step 12: Update docs
@@ -128,13 +128,7 @@ Tests: `test/unit/parser/tree-diffing.test.js` (22 tests covering `contentSimila
 
 ### Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 
-In the editor's `setViewMode` logic for leaving `source2`:
-
-1. Read the textarea content.
-2. Parse it into `newTree`.
-3. Call `this.syntaxTree.updateUsing(newTree)`.
-4. Discard `newTree` — it has served its purpose.
-5. Proceed with the normal full render in the target view mode using the now-updated original tree.
+Changed the "leaving source2" block in `setViewMode` (in `src/web/scripts/editor/index.js`) to use structural tree diffing instead of full tree replacement. The previous Step 7 implementation did `this.syntaxTree = await parser.parse(normalised)` which discarded all node identity. Now it parses into a local `newTree` and calls `this.syntaxTree.updateUsing(newTree)`, preserving IDs of nodes that weren't changed. The empty-tree guard, `ensureTrailingParagraph()`, and cursor restoration via `absoluteOffsetToCursor` all remain unchanged — they operate on the now-updated original tree.
 
 ### Step 10: Write integration tests for source view 2
 
