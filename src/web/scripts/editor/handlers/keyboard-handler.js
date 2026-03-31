@@ -25,8 +25,11 @@ export class KeyboardHandler {
       // Formatting shortcuts
       { key: `b`, ctrl: true, action: `format:bold` },
       { key: `i`, ctrl: true, action: `format:italic` },
-      { key: `k`, ctrl: true, action: `format:link` },
+      { key: `k`, ctrl: true, action: `insert:link` },
       { key: `\``, ctrl: true, action: `format:code` },
+      { key: `-`, code: `Minus`, ctrl: true, shift: true, action: `format:strikethrough` },
+      { key: `ArrowDown`, ctrl: true, shift: true, action: `format:subscript` },
+      { key: `ArrowUp`, ctrl: true, shift: true, action: `format:superscript` },
 
       // Heading shortcuts
       { key: `1`, ctrl: true, alt: true, action: `changeType:heading1` },
@@ -40,6 +43,15 @@ export class KeyboardHandler {
       // Block shortcuts
       { key: `q`, ctrl: true, shift: true, action: `changeType:blockquote` },
       { key: `c`, ctrl: true, shift: true, action: `changeType:code-block` },
+
+      // Insert shortcuts
+      { key: `i`, ctrl: true, shift: true, action: `insert:image` },
+      { key: `t`, ctrl: true, shift: true, action: `insert:table` },
+
+      // List shortcuts
+      { key: `b`, ctrl: true, shift: true, action: `list:unordered-list` },
+      { key: `n`, ctrl: true, shift: true, action: `list:ordered-list` },
+      { key: `x`, ctrl: true, shift: true, action: `list:checklist` },
 
       // Search
       { key: `f`, ctrl: true, action: `search:open` },
@@ -107,8 +119,11 @@ export class KeyboardHandler {
    * @returns {boolean}
    */
   matchesShortcut(event, shortcut) {
-    // Check key
-    if (event.key.toLowerCase() !== shortcut.key.toLowerCase()) {
+    // Check key (use event.code when Shift transforms the character)
+    const keyMatches = shortcut.code
+      ? event.code === shortcut.code
+      : event.key.toLowerCase() === shortcut.key.toLowerCase();
+    if (!keyMatches) {
       return false;
     }
 
@@ -129,24 +144,24 @@ export class KeyboardHandler {
   }
 
   /**
-   * Executes an action from a shortcut.
+   * Executes an action from a shortcut by clicking the corresponding
+   * toolbar button, so that keyboard shortcuts and button clicks share
+   * a single code path.
    * @param {string} action - The action to execute
    */
   executeAction(action) {
     const [actionType, actionValue] = action.split(`:`);
 
-    switch (actionType) {
-      case `format`:
-        this.editor.applyFormat(actionValue);
-        break;
-      case `changeType`:
-        this.editor.changeElementType(actionValue);
-        break;
-      case `search`:
-        document.dispatchEvent(new CustomEvent(`search:open`));
-        break;
-      default:
-        console.warn(`Unknown action type: ${actionType}`);
+    if (actionType === `search`) {
+      document.dispatchEvent(new CustomEvent(`search:open`));
+      return;
+    }
+
+    const button = /** @type {HTMLElement|null} */ (
+      document.querySelector(`.toolbar-button[data-button-id="${actionValue}"]`)
+    );
+    if (button) {
+      button.click();
     }
   }
 }

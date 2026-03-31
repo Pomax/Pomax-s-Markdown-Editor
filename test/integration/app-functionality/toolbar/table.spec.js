@@ -6,6 +6,7 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  MOD_LABEL,
   clickInEditor,
   closeApp,
   launchApp,
@@ -31,7 +32,7 @@ test.afterAll(async () => {
 test(`table button is visible in the toolbar`, async () => {
   const tableButton = page.locator(`[data-button-id="table"]`);
   await expect(tableButton).toBeVisible();
-  await expect(tableButton).toHaveAttribute(`title`, `Table`);
+  await expect(tableButton).toHaveAttribute(`data-tooltip`, `Table (${MOD_LABEL}+Shift+T)`);
 });
 
 test(`clicking table button opens the table modal`, async () => {

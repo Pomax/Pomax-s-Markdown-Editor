@@ -1,5 +1,17 @@
 import { icons } from './icons.js';
 
+const isMac = navigator.platform.toUpperCase().includes(`MAC`);
+
+/**
+ * Resolves a platform-agnostic shortcut string for display.
+ * Replaces "Mod" with "⌘" on macOS and "Ctrl" elsewhere.
+ * @param {string} shortcut - e.g. "Mod+B", "Mod+Shift+Q"
+ * @returns {string}
+ */
+function formatShortcut(shortcut) {
+  return shortcut.replace(`Mod`, isMac ? `⌘` : `Ctrl`);
+}
+
 /**
  * Represents a single toolbar button.
  */
@@ -33,8 +45,11 @@ export class ToolbarButton {
     const button = document.createElement(`button`);
     button.className = `toolbar-button`;
     button.type = `button`;
-    button.title = this.config.label;
     button.setAttribute(`aria-label`, this.config.label);
+    const tooltip = this.config.shortcut
+      ? `${this.config.label} (${formatShortcut(this.config.shortcut)})`
+      : this.config.label;
+    button.dataset.tooltip = tooltip;
     button.dataset.buttonId = this.config.id;
 
     // Create icon/label content
@@ -114,7 +129,7 @@ export class ToolbarButton {
    * @param {string} label
    */
   setLabel(label) {
-    this.element.title = label;
+    this.element.dataset.tooltip = label;
     this.element.setAttribute(`aria-label`, label);
   }
 }

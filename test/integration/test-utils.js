@@ -29,6 +29,12 @@ const isMac = process.platform === `darwin`;
 export const MOD = isMac ? `Meta` : `Control`;
 
 /**
+ * Platform-aware modifier label for tooltip assertions.
+ * Matches the display text produced by `formatShortcut()` in the renderer.
+ */
+export const MOD_LABEL = isMac ? `⌘` : `Ctrl`;
+
+/**
  * Platform-aware Home key: Meta+ArrowLeft on macOS, Home everywhere else.
  * Moves the cursor to the beginning of the current line.
  */

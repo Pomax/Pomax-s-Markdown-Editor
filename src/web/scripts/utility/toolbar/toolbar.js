@@ -3,6 +3,7 @@
  * Provides element-specific formatting buttons.
  */
 
+import { LinkModal } from '../../editor/content-types/link/link-modal.js';
 import { TableModal } from '../../editor/content-types/table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
 
@@ -30,6 +31,9 @@ export class Toolbar {
     /** @type {HTMLButtonElement|null} */
     this.viewModeToggle = null;
 
+    /** @type {LinkModal|null} */
+    this.linkModal = null;
+
     /** @type {TableModal|null} */
     this.tableModal = null;
 
@@ -49,6 +53,7 @@ export class Toolbar {
         label: `Heading 1`,
         icon: `H1`,
         action: `changeType:heading1`,
+        shortcut: `Mod+Alt+1`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -65,6 +70,7 @@ export class Toolbar {
         label: `Heading 2`,
         icon: `H2`,
         action: `changeType:heading2`,
+        shortcut: `Mod+Alt+2`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -81,6 +87,7 @@ export class Toolbar {
         label: `Heading 3`,
         icon: `H3`,
         action: `changeType:heading3`,
+        shortcut: `Mod+Alt+3`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -97,6 +104,7 @@ export class Toolbar {
         label: `Paragraph`,
         icon: `¶`,
         action: `changeType:paragraph`,
+        shortcut: `Mod+Alt+0`,
         applicableTo: [
           `heading1`,
           `heading2`,
@@ -113,6 +121,7 @@ export class Toolbar {
         label: `Quote`,
         icon: `"`,
         action: `changeType:blockquote`,
+        shortcut: `Mod+Shift+Q`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `list-item`],
       },
       {
@@ -120,6 +129,7 @@ export class Toolbar {
         label: `Code Block`,
         icon: `</>`,
         action: `changeType:code-block`,
+        shortcut: `Mod+Shift+C`,
         applicableTo: [`paragraph`, `list-item`],
       },
       {
@@ -127,6 +137,7 @@ export class Toolbar {
         label: `Image`,
         icon: `🖼`,
         action: `image:insert`,
+        shortcut: `Mod+Shift+I`,
         applicableTo: [`paragraph`, `image`, `list-item`],
       },
       {
@@ -134,6 +145,7 @@ export class Toolbar {
         label: `Table`,
         icon: `▦`,
         action: `table:insert`,
+        shortcut: `Mod+Shift+T`,
         applicableTo: [`paragraph`, `table`, `list-item`],
       },
       {
@@ -141,6 +153,7 @@ export class Toolbar {
         label: `Bullet List`,
         icon: `•`,
         action: `list:unordered`,
+        shortcut: `Mod+Shift+B`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -158,6 +171,7 @@ export class Toolbar {
         label: `Numbered List`,
         icon: `1.`,
         action: `list:ordered`,
+        shortcut: `Mod+Shift+N`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -175,6 +189,7 @@ export class Toolbar {
         label: `Checklist`,
         icon: `☑`,
         action: `list:checklist`,
+        shortcut: `Mod+Shift+X`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -199,6 +214,7 @@ export class Toolbar {
         label: `Bold`,
         icon: `B`,
         action: `format:bold`,
+        shortcut: `Mod+B`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -216,6 +232,7 @@ export class Toolbar {
         label: `Italic`,
         icon: `I`,
         action: `format:italic`,
+        shortcut: `Mod+I`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -233,6 +250,7 @@ export class Toolbar {
         label: `Strikethrough`,
         icon: `S̶`,
         action: `format:strikethrough`,
+        shortcut: `Mod+Shift+-`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -240,6 +258,7 @@ export class Toolbar {
         label: `Subscript`,
         icon: `ₓ`,
         action: `format:subscript`,
+        shortcut: `Mod+Shift+↓`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -247,6 +266,7 @@ export class Toolbar {
         label: `Superscript`,
         icon: `ˣ`,
         action: `format:superscript`,
+        shortcut: `Mod+Shift+↑`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -254,13 +274,15 @@ export class Toolbar {
         label: `Inline Code`,
         icon: `\``,
         action: `format:code`,
+        shortcut: `Mod+\``,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
         id: `link`,
         label: `Link`,
         icon: `🔗`,
-        action: `format:link`,
+        action: `link:insert`,
+        shortcut: `Mod+K`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
     ];
@@ -475,6 +497,9 @@ export class Toolbar {
           /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
         );
         break;
+      case `link`:
+        await this.handleLinkAction(formatter);
+        break;
       case `image`:
         await this.handleImageAction(formatter);
         break;
@@ -482,6 +507,28 @@ export class Toolbar {
         await this.handleTableAction(formatter);
         break;
     }
+  }
+
+  /**
+   * Handles the link button action.
+   * Opens the link modal, pre-populated with the selected text or
+   * the word under the cursor as the link text.
+   * @param {Formatter} formatter
+   */
+  async handleLinkAction(formatter) {
+    if (!this.linkModal) {
+      this.linkModal = new LinkModal();
+    }
+
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
+
+    // Pre-fill the modal with selected text or word under cursor.
+    const prefill = formatter.getLinkPrefill ? formatter.getLinkPrefill() : {};
+    const result = await this.linkModal.open(prefill);
+    if (!result) return;
+
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    if (formatter.insertOrUpdateLink) formatter.insertOrUpdateLink(result.text, result.url);
   }
 
   /**

@@ -13,7 +13,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 3: Add `source2` to the view mode cycle button and wire up all layers
 - [x] Step 4: Style the source view 2 textarea
 - [x] Step 5: Add toolbar button support using local text examination
-- [ ] Step 6: Add hotkey support by triggering toolbar buttons
+- [x] Step 6: Add hotkey support by triggering toolbar buttons
 - [ ] Step 7: Reparse markdown to a new tree on switch back to writing view
 - [ ] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
 - [ ] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
@@ -91,9 +91,20 @@ Introduce a `Formatter` interface and the `getFormatter()` pattern so that butto
 
 Auto-highlighting of buttons to reflect current formatting state is explicitly **not required** per the issue.
 
-### Step 6: Add hotkey support by triggering toolbar buttons
+### Step 6: Add hotkey support and tooltip enhancement
 
-Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+K, etc.) in `source2` mode should trigger the same logic as the toolbar buttons from Step 5. The keyboard handler dispatches to the same formatting functions. This keeps the hotkey and button behavior identical.
+1. **Keyboard shortcut handler** (`keyboard-handler.js`): Created a `KeyboardHandler` class that registers a `keydown` listener on the textarea. It defines 21 shortcuts covering inline formatting (Ctrl+B bold, Ctrl+I italic, Ctrl+\` code, Ctrl+Shift+- strikethrough, Ctrl+Shift+↓ subscript, Ctrl+Shift+↑ superscript), headings (Ctrl+Alt+1–6, Ctrl+Alt+0), block types (Ctrl+Shift+Q blockquote, Ctrl+Shift+C code-block), lists (Ctrl+Shift+B unordered, Ctrl+Shift+N ordered, Ctrl+Shift+X checklist), modals (Ctrl+Shift+I image, Ctrl+Shift+T table, Ctrl+K link), and search (Ctrl+F). `executeAction()` finds the matching toolbar button via `document.querySelector` and calls `.click()`, reusing the toolbar's existing `handleButtonClick` → `getFormatter()` code path. The `search:open` action dispatches a custom event since it has no button.
+
+2. **Physical key matching for Shift-modified keys**: Strikethrough is Ctrl+Shift+- but pressing Shift+`-` produces `event.key === '_'` on most layouts. The shortcut config includes an optional `code` property (`'Minus'`) and `matchesShortcut()` checks `event.code` when `code` is specified, falling back to `event.key` otherwise. The `ShortcutConfig` type in `types.d.ts` has an optional `code?: string` field.
+
+3. **Link modal integration**: Ctrl+K triggers the `insert:link` action which routes through the toolbar to `handleLinkAction()`. This opens the `LinkModal` pre-populated with the selected text or word under the cursor (via `formatter.getLinkPrefill()`), and on submit calls `formatter.insertOrUpdateLink(text, url)`. The `source2-formatter` implements both methods: `getLinkPrefill()` returns the selection or word-under-cursor text, and `insertOrUpdateLink()` inserts `[text](url)` replacing the selection or word. The `Formatter` interface in `types.d.ts` declares both as optional so writing mode is unaffected.
+
+4. **Toolbar tooltip enhancement** (`toolbar-button.js`): Buttons now display keyboard shortcuts in their tooltips using `data-tooltip` attributes (e.g. "Bold (Ctrl+B)"). A `formatShortcut()` helper converts shortcut syntax to display form with platform-aware modifier labels (`Ctrl` on Windows/Linux, `⌘` on macOS). CSS in `toolbar.css` renders these as positioned pseudo-element overlays.
+
+5. **Bug fixes discovered during manual testing**:
+   - **Sub/sup mutual exclusion**: Applying superscript on subscript text (or vice versa) now strips the opposite format first via `stripInlineFormat()` before applying the new one. The `EXCLUSIVE` map in `applyFormat()` drives this.
+   - **Double-wrap prevention**: `toggleInlineCollapsed()` now checks for existing delimiters around the word-under-cursor (not just at the cursor position), and removes them if present — preventing `<sub><sub>word</sub></sub>` on repeated invocation.
+   - **Collapsed cursor no-highlight**: After formatting a word under a collapsed cursor, the cursor remains collapsed (no selection) instead of highlighting the word. `applyTextareaEdit` is called with equal start/end positions.
 
 ### Step 7: Reparse markdown to a new tree on switch back to writing view
 

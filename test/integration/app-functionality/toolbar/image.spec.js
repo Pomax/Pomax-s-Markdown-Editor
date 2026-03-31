@@ -6,6 +6,7 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  MOD_LABEL,
   clickInEditor,
   closeApp,
   launchApp,
@@ -30,7 +31,7 @@ test.afterAll(async () => {
 test(`image button is visible in the toolbar`, async () => {
   const imageButton = page.locator(`[data-button-id="image"]`);
   await expect(imageButton).toBeVisible();
-  await expect(imageButton).toHaveAttribute(`title`, `Image`);
+  await expect(imageButton).toHaveAttribute(`data-tooltip`, `Image (${MOD_LABEL}+Shift+I)`);
 });
 
 test(`clicking image button opens the image modal`, async () => {

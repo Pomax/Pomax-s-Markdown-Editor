@@ -189,13 +189,16 @@ export class Source2Formatter {
     const textarea = this.getTextarea();
     if (!textarea) return;
 
-    if (format === `link`) {
-      this.applyLinkFormat(textarea);
-      return;
-    }
-
     const delims = INLINE_DELIMITERS[format];
     if (!delims) return;
+
+    // Sub and sup are mutually exclusive: strip the opposite first.
+    /** @type {Record<string, string>} */
+    const EXCLUSIVE = { subscript: `superscript`, superscript: `subscript` };
+    const opposite = EXCLUSIVE[format];
+    if (opposite) {
+      this.stripInlineFormat(textarea, INLINE_DELIMITERS[opposite]);
+    }
 
     const { selectionStart, selectionEnd, value } = textarea;
     const hasSelection = selectionStart !== selectionEnd;
@@ -279,12 +282,76 @@ export class Source2Formatter {
     const wordRange = this.getWordAtPosition(text, pos);
     if (wordRange) {
       const { start, end } = wordRange;
-      const word = text.substring(start, end);
-      const wrapped = open + word + close;
-      applyTextareaEdit(textarea, start, end, wrapped, start + open.length, end + open.length);
+
+      // Check if the word is already wrapped with these delimiters.
+      const beforeWord = text.substring(start - open.length, start);
+      const afterWord = text.substring(end, end + close.length);
+      if (beforeWord === open && afterWord === close) {
+        // Toggle off: remove the delimiters around the word.
+        const word = text.substring(start, end);
+        applyTextareaEdit(
+          textarea,
+          start - open.length,
+          end + close.length,
+          word,
+          pos - open.length,
+          pos - open.length,
+        );
+      } else {
+        const word = text.substring(start, end);
+        const wrapped = open + word + close;
+        applyTextareaEdit(textarea, start, end, wrapped, pos + open.length, pos + open.length);
+      }
     } else {
       const insertion = open + close;
       applyTextareaEdit(textarea, pos, pos, insertion, pos + open.length, pos + open.length);
+    }
+  }
+
+  /**
+   * Strips an inline format around the current selection or cursor word
+   * if present. Used to remove a mutually exclusive format before
+   * applying a new one (e.g. remove sub before adding sup).
+   * @param {HTMLTextAreaElement} textarea
+   * @param {{ open: string, close: string }} delims
+   */
+  stripInlineFormat(textarea, delims) {
+    const { open, close } = delims;
+    const { selectionStart, selectionEnd, value } = textarea;
+
+    if (selectionStart !== selectionEnd) {
+      // Selection: check whether the delimiters wrap the selection.
+      const before = value.substring(selectionStart - open.length, selectionStart);
+      const after = value.substring(selectionEnd, selectionEnd + close.length);
+      if (before === open && after === close) {
+        const inner = value.substring(selectionStart, selectionEnd);
+        applyTextareaEdit(
+          textarea,
+          selectionStart - open.length,
+          selectionEnd + close.length,
+          inner,
+          selectionStart - open.length,
+          selectionEnd - open.length,
+        );
+      }
+    } else {
+      // Collapsed cursor: look for delimiters around the word at the cursor.
+      const wordRange = this.getWordAtPosition(value, selectionStart);
+      if (!wordRange) return;
+
+      const before = value.substring(wordRange.start - open.length, wordRange.start);
+      const after = value.substring(wordRange.end, wordRange.end + close.length);
+      if (before === open && after === close) {
+        const word = value.substring(wordRange.start, wordRange.end);
+        applyTextareaEdit(
+          textarea,
+          wordRange.start - open.length,
+          wordRange.end + close.length,
+          word,
+          selectionStart - open.length,
+          selectionStart - open.length,
+        );
+      }
     }
   }
 
@@ -309,34 +376,71 @@ export class Source2Formatter {
   }
 
   /**
-   * Applies link formatting: wraps selection in `[text](url)` or inserts
-   * an empty link template.
-   * @param {HTMLTextAreaElement} textarea
+   * Returns prefill data for the link modal based on the current
+   * selection or word under the cursor.
+   * @returns {Partial<LinkData>}
    */
-  applyLinkFormat(textarea) {
+  getLinkPrefill() {
+    const textarea = this.getTextarea();
+    if (!textarea) return {};
+
     const { selectionStart, selectionEnd, value } = textarea;
-    const selectedText = value.substring(selectionStart, selectionEnd);
 
     if (selectionStart !== selectionEnd) {
-      const link = `[${selectedText}](url)`;
+      return { text: value.substring(selectionStart, selectionEnd) };
+    }
+
+    const wordRange = this.getWordAtPosition(value, selectionStart);
+    if (wordRange) {
+      return { text: value.substring(wordRange.start, wordRange.end) };
+    }
+
+    return {};
+  }
+
+  /**
+   * Inserts a link at the current cursor position or replaces the
+   * current selection / word under cursor with a markdown link.
+   * @param {string} text - The link display text
+   * @param {string} url - The link URL
+   */
+  insertOrUpdateLink(text, url) {
+    const textarea = this.getTextarea();
+    if (!textarea) return;
+
+    const { selectionStart, selectionEnd, value } = textarea;
+    const link = `[${text}](${url})`;
+
+    if (selectionStart !== selectionEnd) {
       applyTextareaEdit(
         textarea,
         selectionStart,
         selectionEnd,
         link,
-        selectionStart + 1 + selectedText.length + 2,
-        selectionStart + 1 + selectedText.length + 2 + 3,
+        selectionStart + link.length,
+        selectionStart + link.length,
       );
     } else {
-      const link = `[](url)`;
-      applyTextareaEdit(
-        textarea,
-        selectionStart,
-        selectionStart,
-        link,
-        selectionStart + 1,
-        selectionStart + 1,
-      );
+      const wordRange = this.getWordAtPosition(value, selectionStart);
+      if (wordRange) {
+        applyTextareaEdit(
+          textarea,
+          wordRange.start,
+          wordRange.end,
+          link,
+          wordRange.start + link.length,
+          wordRange.start + link.length,
+        );
+      } else {
+        applyTextareaEdit(
+          textarea,
+          selectionStart,
+          selectionStart,
+          link,
+          selectionStart + link.length,
+          selectionStart + link.length,
+        );
+      }
     }
   }
 

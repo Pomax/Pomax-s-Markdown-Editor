@@ -265,6 +265,8 @@ interface ButtonConfig {
     action: string;
     /** Element types this button applies to. */
     applicableTo?: string[];
+    /** Keyboard shortcut in platform-agnostic notation (e.g. "Mod+B"). */
+    shortcut?: string;
 }
 
 /**
@@ -384,8 +386,10 @@ interface Change {
  * Configuration for a keyboard shortcut.
  */
 interface ShortcutConfig {
-    /** The key code. */
+    /** The key value (event.key). */
     key: string;
+    /** The physical key code (event.code), used when Shift transforms the key character. */
+    code?: string;
     /** Whether Ctrl is required. */
     ctrl?: boolean;
     /** Whether Shift is required. */
@@ -572,6 +576,10 @@ interface Formatter {
     insertOrUpdateImage(alt: string, src: string, href: string, style?: string): void;
     /** Inserts or updates a table at the cursor. */
     insertOrUpdateTable(tableData: TableData): void;
+    /** Inserts or updates a link at the cursor (source2 only). */
+    insertOrUpdateLink?(text: string, url: string): void;
+    /** Returns prefill data for the link modal (source2 only). */
+    getLinkPrefill?(): Partial<LinkData>;
     /** Saves the textarea cursor position before a modal steals focus (source2 only). */
     saveCursorPosition?(): void;
     /** Restores the previously saved cursor position (source2 only). */
