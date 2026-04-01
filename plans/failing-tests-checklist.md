@@ -16,10 +16,12 @@ Each test must be examined individually to determine whether it should be fixed 
 - [x] #38 :287 — source view search matches markdown syntax — DELETED (trivially true for plain text)
 - [x] #39 :397 — initial match is closest to cursor position — FIXED (source2 cursor via textarea selectionStart)
 - [x] #41 :164 — regex search finds pattern matches — PASSED (cascade failure)
-- [ ] #44 :127 — plain text search is case insensitive by default
+- [x] #44 :127 — plain text search is case insensitive by default — PASSED (cascade failure)
 - [ ] #50 :380 — regex search still works with single character
 
+Missing:
 
+- test that search does NOT match the wrong thing
 
 ## session-save.spec.js
 - [ ] #46 :151 — reopening the app restores cursor position and ToC heading
