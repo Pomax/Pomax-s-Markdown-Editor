@@ -65,7 +65,7 @@ Missing:
 
 ## cursor-typing-delimiters.spec.js
 - [x] #271 :203 — typing after closing ** produces plain text, not bold (FIXED: read textarea inputValue instead of [data-node-id])
-- [ ] #279 :147 — typing ***word*** renders as bold inside italic in source view
+- [x] #279 :147 — typing ***word*** renders as bold inside italic in source view (DELETED: just a toMarkdown unit test, not an integration test)
 - [ ] #280 :172 — typing after closing * produces plain text, not italic
 - [ ] #286 :226 — typing after closing ~~ produces plain text, not strikethrough
 

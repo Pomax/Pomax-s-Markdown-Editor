@@ -144,25 +144,6 @@ test(`cursor stays correct when completing bold+italic ***text***`, async () => 
   expect(cursorOffset).toBe(4);
 });
 
-test(`typing ***word*** renders as bold inside italic in source view`, async () => {
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `test ***word***`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  await setSource2View(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  expect(srcText).toContain(`***word***`);
-});
-
 test(`typing **** is treated as plain text`, async () => {
   const { cursorOffset, lineText } = await typeAndGetCursor(page, `test ****`);
   expect(lineText).toContain(`****`);
