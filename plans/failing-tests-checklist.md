@@ -40,7 +40,7 @@ Missing:
 - [x] #274 :28 — typing "# main" letter by letter creates a heading with correct content (already passing)
 
 ## source-view-summary-edit.spec.js
-- [ ] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line
+- [x] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line (DELETED: source2 is a textarea, no DOM rewriting possible)
 
 ## click-outside-defocus.spec.js
 - [ ] #326 :122 — defocus is a no-op in source view
