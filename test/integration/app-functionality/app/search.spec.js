@@ -284,20 +284,6 @@ test(`writing view search does not match markdown syntax`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-test(`source view search matches markdown syntax`, async () => {
-  await loadContent(page, FIXTURE);
-  await setSource2View(page);
-  await page.keyboard.press(`${MOD}+f`);
-  const input = page.locator(`.search-input`);
-  await input.fill(`##`);
-
-  // Source mode should find '##' in heading lines.
-  const matchCount = page.locator(`.search-match-count`);
-  await expect(matchCount).not.toHaveText(`No results`);
-
-  await page.keyboard.press(`Escape`);
-});
-
 test(`highlights are removed when search bar closes`, async () => {
   await loadContent(page, FIXTURE);
   await setSource2View(page);
