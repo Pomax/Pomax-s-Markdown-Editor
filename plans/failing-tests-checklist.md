@@ -64,7 +64,7 @@ Missing:
 - [x] #283 :95 — removing ! in source view converts inline image to link (FIXED: use textarea + HOME constant for cross-platform)
 
 ## cursor-typing-delimiters.spec.js
-- [ ] #271 :203 — typing after closing ** produces plain text, not bold
+- [x] #271 :203 — typing after closing ** produces plain text, not bold (FIXED: read textarea inputValue instead of [data-node-id])
 - [ ] #279 :147 — typing ***word*** renders as bold inside italic in source view
 - [ ] #280 :172 — typing after closing * produces plain text, not italic
 - [ ] #286 :226 — typing after closing ~~ produces plain text, not strikethrough

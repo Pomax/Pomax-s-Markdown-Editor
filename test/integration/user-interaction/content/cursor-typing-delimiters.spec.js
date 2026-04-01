@@ -218,8 +218,7 @@ test(`typing after closing ** produces plain text, not bold`, async () => {
   await page.waitForTimeout(100);
 
   await setSource2View(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
+  const srcText = await page.locator(`#editor textarea`).inputValue();
   expect(srcText).toMatch(/\*\*bold\*\* after/);
 });
 
