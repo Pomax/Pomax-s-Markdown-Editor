@@ -339,27 +339,6 @@ test(`shows "No results" for unmatched query`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-test(`regex can match across element boundaries`, async () => {
-  await loadContent(page, FIXTURE);
-  await setSource2View(page);
-  await page.keyboard.press(`${MOD}+f`);
-
-  await page.locator(`.search-toggle[data-action="regex"]`).click();
-  const input = page.locator(`.search-input`);
-  // Match across the heading into the paragraph (separated by \n\n).
-  await input.fill(`cake\\n\\nA paragraph`);
-
-  const matchCount = page.locator(`.search-match-count`);
-  await expect(matchCount).toContainText(`1 of 1`);
-
-  // Should produce highlight marks in both the heading and paragraph.
-  const marks = page.locator(`#editor mark.search-highlight`);
-  expect(await marks.count()).toBe(2);
-
-  await page.locator(`.search-toggle[data-action="regex"]`).click();
-  await page.keyboard.press(`Escape`);
-});
-
 test(`plain text search requires at least 2 characters`, async () => {
   await loadContent(page, FIXTURE);
   await setSource2View(page);

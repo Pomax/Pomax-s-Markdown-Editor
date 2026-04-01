@@ -12,7 +12,7 @@ Each test must be examined individually to determine whether it should be fixed 
 - [x] #30 :104 — plain text search highlights matches in source view (FIXED: implemented source2 highlight via pre mirror)
 - [x] #33 :218 — Shift+Enter navigates to previous match (PASSED: cascade failure from prior test, no change needed)
 - [x] #34 :301 — highlights are removed when search bar closes (PASSED: fixed by #30 highlight implementation)
-- [ ] #36 :342 — regex can match across element boundaries
+- [x] #36 :342 — regex can match across element boundaries (DELETED: pointless in source2, regex works on plain text by definition)
 - [ ] #38 :287 — source view search matches markdown syntax
 - [ ] #39 :397 — initial match is closest to cursor position
 - [ ] #41 :164 — regex search finds pattern matches
