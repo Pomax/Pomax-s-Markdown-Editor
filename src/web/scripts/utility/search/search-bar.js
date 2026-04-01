@@ -287,16 +287,23 @@ export class SearchBar {
   findClosestMatchIndex() {
     if (this.matches.length === 0) return -1;
 
-    const cursor = this.editor.syntaxTree?.treeCursor;
-    if (!cursor) return 0;
-
-    // Convert the cursor's (nodeId, offset) to a document-level
-    // offset using the offset map we already built.
     let cursorDocOffset = 0;
-    for (const entry of this.offsetMap) {
-      if (entry.nodeId === cursor.nodeId) {
-        cursorDocOffset = entry.docStart + cursor.offset;
-        break;
+
+    if (this.editor.viewMode === `source2`) {
+      /** @type {HTMLTextAreaElement|null} */
+      const textarea = this.editor.container?.querySelector(`textarea`);
+      cursorDocOffset = textarea?.selectionStart ?? 0;
+    } else {
+      const cursor = this.editor.syntaxTree?.treeCursor;
+      if (!cursor) return 0;
+
+      // Convert the cursor's (nodeId, offset) to a document-level
+      // offset using the offset map we already built.
+      for (const entry of this.offsetMap) {
+        if (entry.nodeId === cursor.nodeId) {
+          cursorDocOffset = entry.docStart + cursor.offset;
+          break;
+        }
       }
     }
 

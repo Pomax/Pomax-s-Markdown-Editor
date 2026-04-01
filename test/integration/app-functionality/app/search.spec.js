@@ -363,22 +363,13 @@ test(`initial match is closest to cursor position`, async () => {
   await loadContent(page, FIXTURE);
   await setSource2View(page);
 
-  // Place cursor inside "## Another heading" before the word
-  // "heading": click to focus the node, Home to reach offset 0,
-  // then arrow right into the content.  Waits let selectionchange
-  // propagate so the tree cursor is up to date.
-  const secondHeading = page.locator(`#editor [data-node-id]`, {
-    hasText: `Another heading`,
-  });
-  await secondHeading.click();
-  await page.waitForTimeout(200);
-  await page.keyboard.press(HOME);
-  await page.waitForTimeout(200);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
+  // Place cursor 5 characters into "## Another heading" (offset 60
+  // in the textarea) so it sits between "## An" and "other heading".
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.evaluate((/** @type {HTMLTextAreaElement} */ el, pos) => {
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  }, 60);
   await page.waitForTimeout(200);
 
   await page.keyboard.press(`${MOD}+f`);
