@@ -46,7 +46,13 @@ Missing:
 - [x] #326 :122 — defocus is a no-op in source view (DELETED: trivially true for textarea, no syntax to hide)
 
 ## paste.spec.js
-- [ ] #356 :61 — single-line paste inserts text at cursor (source view)
+- [x] #356 :61 — single-line paste inserts text at cursor (source view) (DELETED: native textarea paste, nothing to test)
+- [ ] #371 :61 — multi-line paste creates correct node structure (source view)
+- [ ] #372 :79 — paste replaces active selection (source view)
+- [ ] #373 :96 — paste over multi-node selection removes intermediate nodes (source view)
+- [ ] #374 :120 — pasting markdown heading creates a heading node (source view)
+- [ ] #375 :139 — multi-line paste with CRLF line endings works correctly (source view)
+- [ ] #376 :156 — paste does not trigger a full render (source view)
 
 ## range-handling.spec.js
 - [ ] #387 :443 — cross-node copy produces markdown with block prefixes

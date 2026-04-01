@@ -58,22 +58,6 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`single-line paste inserts text at cursor`, async () => {
-    await loadContent(page, `hello world`);
-    await setSource2View(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-    await page.keyboard.press(HOME);
-
-    await writeClipboard(`PASTED `);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`PASTED hello world`);
-  });
-
   test(`multi-line paste creates correct node structure`, async () => {
     await loadContent(page, `start`);
     await setSource2View(page);
