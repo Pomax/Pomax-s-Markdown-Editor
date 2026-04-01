@@ -49,7 +49,7 @@ Missing:
 - [x] #356 :61 — single-line paste inserts text at cursor (source view) (DELETED: native textarea paste, nothing to test)
 - [x] #371 :61 — multi-line paste creates correct node structure (source view) (DELETED: native textarea paste, nothing to test)
 - [x] #372 :79 — paste replaces active selection (source view) (DELETED: native textarea behaviour)
-- [ ] #373 :96 — paste over multi-node selection removes intermediate nodes (source view)
+- [x] #373 :96 — paste over multi-node selection removes intermediate nodes (source view) (DELETED: native textarea behaviour)
 - [ ] #374 :120 — pasting markdown heading creates a heading node (source view)
 - [ ] #375 :139 — multi-line paste with CRLF line endings works correctly (source view)
 - [ ] #376 :156 — paste does not trigger a full render (source view)

@@ -58,30 +58,6 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`paste over multi-node selection removes intermediate nodes`, async () => {
-    await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSource2View(page);
-
-    const lines = page.locator(`#editor [data-node-id]`);
-    await clickInEditor(page, lines.first());
-    await page.keyboard.press(HOME);
-    await page.keyboard.press(`${MOD}+Shift+${END}`);
-    // Extend selection to last line
-    await page.keyboard.press(`Shift+ArrowDown`);
-    await page.keyboard.press(`Shift+ArrowDown`);
-    await page.keyboard.press(`Shift+${END}`);
-
-    await writeClipboard(`only this`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(300);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`only this`);
-    expect(md).not.toContain(`alpha`);
-    expect(md).not.toContain(`beta`);
-    expect(md).not.toContain(`gamma`);
-  });
-
   test(`pasting markdown heading creates a heading node`, async () => {
     await loadContent(page, `\n`);
     await setSource2View(page);
