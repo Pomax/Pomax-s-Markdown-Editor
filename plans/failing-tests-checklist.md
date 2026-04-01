@@ -70,10 +70,10 @@ Missing:
 - [x] #286 :226 — typing after closing ~~ produces plain text, not strikethrough — DELETED (toMarkdown unit test)
 
 ## subscript-button.spec.js
-- [ ] #193 :118 — subscript first word produces correct markdown
-- [ ] #194 :133 — subscript middle word produces correct markdown
-- [ ] #195 :148 — subscript first word of second paragraph produces correct markdown
-- [ ] #196 :165 — subscript middle word of second paragraph produces correct markdown
+- [x] #193 :118 — subscript first word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #194 :133 — subscript middle word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #195 :148 — subscript first word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #196 :165 — subscript middle word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
 - [ ] #202 :272 — clicking subscript with cursor on a plain word applies subscript
 
 ## superscript-button.spec.js
