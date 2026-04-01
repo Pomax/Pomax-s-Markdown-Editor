@@ -11,7 +11,6 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
   setWritingView,
 } from '../../test-utils.js';
 

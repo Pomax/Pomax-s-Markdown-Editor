@@ -13,7 +13,7 @@ import {
   defocusEditor,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -122,7 +122,7 @@ test(`clicking back into the editor after defocus restores cursor`, async () => 
 test(`defocus is a no-op in source view`, async () => {
   // Set up: load content and switch to source view.
   await loadContent(page, markdown);
-  await setSourceView(page);
+  await setSource2View(page);
 
   // Click the heading to place the cursor there.
   const heading = page.locator(`#editor [data-node-id]`).first();

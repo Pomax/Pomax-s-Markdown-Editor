@@ -163,19 +163,6 @@ export async function clickQuerySelector(page, qs) {
 }
 
 /**
- * Switch the editor to source view via the editor API.
- * If already in source view, this is a no-op.
- *
- * @param {import('@playwright/test').Page} page
- */
-export async function setSourceView(page) {
-  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
-  if (current === `source`) return;
-  await page.evaluate(() => window.editorAPI?.setViewMode(`source`));
-  await page.locator(`#editor[data-view-mode="source"]`).waitFor();
-}
-
-/**
  * Close an Electron app with a timeout fallback.
  *
  * `electronApp.close()` can hang on CI when the Electron process is

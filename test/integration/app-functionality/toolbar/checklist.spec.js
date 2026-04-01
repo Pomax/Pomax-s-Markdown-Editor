@@ -19,7 +19,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -39,7 +39,7 @@ test.afterAll(async () => {
 
 test(`source view renders checklist prefix for unchecked item`, async () => {
   await loadContent(page, `- [ ] Unchecked task\n`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   const line = page.locator(`#editor [data-node-id]`).first();
   const text = await line.textContent();
@@ -48,7 +48,7 @@ test(`source view renders checklist prefix for unchecked item`, async () => {
 
 test(`source view renders checklist prefix for checked item`, async () => {
   await loadContent(page, `- [x] Checked task\n`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   const line = page.locator(`#editor [data-node-id]`).first();
   const text = await line.textContent();
@@ -84,7 +84,7 @@ test(`clicking checklist button converts paragraph to checklist item`, async () 
   await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -102,7 +102,7 @@ test(`clicking checklist button on checklist item toggles back to paragraph`, as
   await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -120,7 +120,7 @@ test(`clicking bullet button on checklist item switches to bullet list`, async (
   await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -140,7 +140,7 @@ test(`clicking ordered button on checklist item switches to ordered list`, async
   await page.locator(`.toolbar-button[data-button-id="ordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -158,7 +158,7 @@ test(`clicking checklist button on bullet list switches to checklist`, async () 
   await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -176,7 +176,7 @@ test(`clicking checklist button on ordered list switches to checklist`, async ()
   await page.locator(`.toolbar-button[data-button-id="checklist"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -210,7 +210,7 @@ test(`clicking checkbox in writing view toggles checked state`, async () => {
   await expect(checkboxAfter).toBeChecked();
 
   // Verify markdown roundtrip
-  await setSourceView(page);
+  await setSource2View(page);
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
   expect(text).toMatch(/^- \[x\] Toggle me/);
@@ -232,7 +232,7 @@ test(`Enter key in checklist item creates new unchecked checklist item`, async (
   await page.keyboard.type(`Second task`, { delay: 30 });
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const firstText = await lines.nth(0).textContent();
@@ -253,7 +253,7 @@ test(`Enter on empty checklist item exits to paragraph`, async () => {
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const allLines = page.locator(`#editor [data-node-id]`);
   const firstText = await allLines.nth(0).textContent();
@@ -274,7 +274,7 @@ test(`switching entire contiguous checklist run to bullet via toolbar`, async ()
   await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   for (let i = 0; i < 3; i++) {
@@ -402,7 +402,7 @@ test(`multi-select across html-block converts all nodes to checklist after confi
   await page.waitForTimeout(300);
 
   // Switch to source view to verify
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const lineCount = await lines.count();
@@ -447,7 +447,7 @@ test(`multi-select across html-block aborts on cancel`, async () => {
   await page.waitForTimeout(300);
 
   // Switch to source view — nothing should have changed
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const allText = [];
@@ -477,7 +477,7 @@ test(`typing x into checkbox brackets in source view checks the item`, async () 
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   await page.waitForTimeout(200);
 
   for (let i = 0; i < 8; i++) {

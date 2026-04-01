@@ -14,7 +14,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -103,7 +103,7 @@ test(`Ctrl+F while open selects the search text`, async () => {
 
 test(`plain text search highlights matches in source view`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -126,7 +126,7 @@ test(`plain text search highlights matches in source view`, async () => {
 
 test(`plain text search is case insensitive by default`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`Cake`);
@@ -144,7 +144,7 @@ test(`plain text search is case insensitive by default`, async () => {
 
 test(`case sensitive toggle restricts matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`Cake`);
@@ -163,7 +163,7 @@ test(`case sensitive toggle restricts matches`, async () => {
 
 test(`regex search finds pattern matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   // Enable regex mode.
@@ -184,7 +184,7 @@ test(`regex search finds pattern matches`, async () => {
 
 test(`invalid regex shows no results instead of error`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   await page.locator(`.search-toggle[data-action="regex"]`).click();
@@ -200,7 +200,7 @@ test(`invalid regex shows no results instead of error`, async () => {
 
 test(`Enter navigates to next match`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -217,7 +217,7 @@ test(`Enter navigates to next match`, async () => {
 
 test(`Shift+Enter navigates to previous match`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -236,7 +236,7 @@ test(`Shift+Enter navigates to previous match`, async () => {
 
 test(`next/prev buttons navigate matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -286,7 +286,7 @@ test(`writing view search does not match markdown syntax`, async () => {
 
 test(`source view search matches markdown syntax`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`##`);
@@ -300,7 +300,7 @@ test(`source view search matches markdown syntax`, async () => {
 
 test(`highlights are removed when search bar closes`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -328,7 +328,7 @@ test(`close button closes the search bar`, async () => {
 
 test(`shows "No results" for unmatched query`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`xyznonexistent`);
@@ -341,7 +341,7 @@ test(`shows "No results" for unmatched query`, async () => {
 
 test(`regex can match across element boundaries`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   await page.locator(`.search-toggle[data-action="regex"]`).click();
@@ -362,7 +362,7 @@ test(`regex can match across element boundaries`, async () => {
 
 test(`plain text search requires at least 2 characters`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`c`);
@@ -379,7 +379,7 @@ test(`plain text search requires at least 2 characters`, async () => {
 
 test(`regex search still works with single character`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   await page.locator(`.search-toggle[data-action="regex"]`).click();
@@ -396,7 +396,7 @@ test(`regex search still works with single character`, async () => {
 
 test(`initial match is closest to cursor position`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
 
   // Place cursor inside "## Another heading" before the word
   // "heading": click to focus the node, Home to reach offset 0,

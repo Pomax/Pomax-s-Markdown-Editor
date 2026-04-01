@@ -18,7 +18,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -119,7 +119,7 @@ test.describe(`Strikethrough first word, toggle off`, () => {
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`~~text1~~ text1 text1`);
   });
@@ -136,7 +136,7 @@ test.describe(`Strikethrough first word, toggle off`, () => {
     await dblclickWord(page, firstLineAgain, `text1`, `first`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });
@@ -151,7 +151,7 @@ test.describe(`Strikethrough middle word, paragraph 1`, () => {
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 ~~text1~~ text1`);
   });
@@ -168,7 +168,7 @@ test.describe(`Strikethrough middle word, paragraph 1`, () => {
     await dblclickWord(page, firstLineAgain, `text1`, `middle`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });
@@ -183,7 +183,7 @@ test.describe(`Strikethrough first word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `first`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
@@ -200,7 +200,7 @@ test.describe(`Strikethrough middle word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
@@ -341,7 +341,7 @@ test.describe(`Collapsed cursor — strikethrough word under caret`, () => {
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 ~~text1~~ text1`);
   });
@@ -355,7 +355,7 @@ test.describe(`Collapsed cursor — strikethrough word under caret`, () => {
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickStrikethroughButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });

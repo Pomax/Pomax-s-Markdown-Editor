@@ -14,7 +14,6 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -71,42 +70,6 @@ test(`typing in the phantom paragraph promotes it to a real tree node`, async ()
   expect(content).toContain(`New content after code block`);
 
   // The new text should be after the closing fence in the serialised markdown.
-  const fenceEnd = content?.lastIndexOf(`\`\`\``) ?? -1;
-  const newText = content?.indexOf(`New content after code block`) ?? -1;
-  expect(fenceEnd).toBeGreaterThan(-1);
-  expect(newText).toBeGreaterThan(fenceEnd);
-});
-
-test(`source view: loading a document that ends in a code block appends a phantom paragraph`, async () => {
-  await loadContent(page, markdownEndingInCodeBlock);
-  await setSourceView(page);
-
-  const phantom = page.locator(`#editor > [data-is-phantom]`);
-  await expect(phantom).toBeVisible();
-
-  const text = await phantom.innerText();
-  expect(text.trim()).toBe(``);
-
-  const content = await page.evaluate(() => window.editorAPI?.getContent());
-  expect(content).toBe(markdownEndingInCodeBlock);
-});
-
-test(`source view: typing in the phantom paragraph promotes it to a real tree node`, async () => {
-  await loadContent(page, markdownEndingInCodeBlock);
-  await setSourceView(page);
-
-  const phantom = page.locator(`#editor > [data-is-phantom]`);
-  await clickInEditor(page, phantom);
-  await page.waitForTimeout(200);
-
-  await page.keyboard.type(`New content after code block`);
-  await page.waitForTimeout(200);
-
-  await expect(page.locator(`#editor > [data-is-phantom]`)).toHaveCount(0);
-
-  const content = await page.evaluate(() => window.editorAPI?.getContent());
-  expect(content).toContain(`New content after code block`);
-
   const fenceEnd = content?.lastIndexOf(`\`\`\``) ?? -1;
   const newText = content?.indexOf(`New content after code block`) ?? -1;
   expect(fenceEnd).toBeGreaterThan(-1);

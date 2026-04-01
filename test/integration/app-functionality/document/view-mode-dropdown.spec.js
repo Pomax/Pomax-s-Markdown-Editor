@@ -15,8 +15,6 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
-  setWritingView,
 } from '../../test-utils.js';
 
 const readmePath = path.join(projectRoot, `README.md`);
@@ -67,25 +65,6 @@ test.skip(`clicking toggle switches editor to source mode`, async () => {
   const firstLine = page.locator(`#editor [data-node-id]`).first();
   const text = await firstLine.innerText();
   expect(text).toContain(`# Pomax's Markdown Editor`);
-});
-
-test.skip(`clicking toggle from source switches to source2 mode`, async () => {
-  // Set up: load content and switch to source mode first.
-  await loadContent(page, readmeContent);
-  const toggle = page.locator(`.toolbar-view-mode-toggle`);
-  await setSourceView(page);
-
-  // Click to advance from source to source2.
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
-
-  await expect(toggle).toHaveText(`Source 2 View`);
-
-  const editor = page.locator(`#editor`);
-  await expect(editor).toHaveAttribute(`data-view-mode`, `source2`);
-
-  // In source2 mode the editor shows a textarea with the raw markdown.
-  const textarea = page.locator(`#editor textarea`);
-  await expect(textarea).toBeVisible();
 });
 
 test(`clicking toggle from source2 switches back to writing mode`, async () => {

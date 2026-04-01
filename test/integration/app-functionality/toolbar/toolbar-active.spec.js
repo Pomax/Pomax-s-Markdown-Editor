@@ -19,7 +19,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -274,7 +274,7 @@ test(`clicking bold button inside <strong> tag strips the tag`, async () => {
   await page.locator(`[data-button-id="bold"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(6).innerText();
   expect(line).toBe(`This is strong text here.`);
 });
@@ -288,7 +288,7 @@ test(`clicking bold button inside <b> tag strips the tag`, async () => {
   await page.locator(`[data-button-id="bold"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(7).innerText();
   expect(line).toBe(`This is bold tag here.`);
 });
@@ -302,7 +302,7 @@ test(`clicking italic button inside <em> tag strips the tag`, async () => {
   await page.locator(`[data-button-id="italic"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(8).innerText();
   expect(line).toBe(`This is emphasis text here.`);
 });
@@ -316,7 +316,7 @@ test(`clicking italic button inside <i> tag strips the tag`, async () => {
   await page.locator(`[data-button-id="italic"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(9).innerText();
   expect(line).toBe(`This is italic tag here.`);
 });
@@ -330,7 +330,7 @@ test(`clicking strikethrough button inside <del> tag strips the tag`, async () =
   await page.locator(`[data-button-id="strikethrough"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(10).innerText();
   expect(line).toBe(`This is deleted text here.`);
 });
@@ -344,7 +344,7 @@ test(`clicking strikethrough button inside <s> tag strips the tag`, async () => 
   await page.locator(`[data-button-id="strikethrough"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const line = await page.locator(`#editor > [data-node-id]`).nth(11).innerText();
   expect(line).toBe(`This is struck tag here.`);
 });

@@ -21,7 +21,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -56,7 +56,7 @@ test(`clicking bullet list button converts paragraph to unordered list item`, as
   await page.waitForTimeout(200);
 
   // Switch to source view to verify the markdown
-  await setSourceView(page);
+  await setSource2View(page);
 
   // The first line should now be a list item
   const firstSource = page.locator(`#editor [data-node-id]`).first();
@@ -78,7 +78,7 @@ test(`clicking numbered list button converts paragraph to ordered list item`, as
   await page.waitForTimeout(200);
 
   // Switch to source view to verify
-  await setSourceView(page);
+  await setSource2View(page);
 
   const firstSource = page.locator(`#editor [data-node-id]`).first();
   const text = await firstSource.textContent();
@@ -97,7 +97,7 @@ test(`clicking bullet list button on bullet list item toggles back to paragraph`
   await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -116,7 +116,7 @@ test(`clicking numbered list button on bullet list item switches to ordered`, as
   await page.locator(`.toolbar-button[data-button-id="ordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const source = page.locator(`#editor [data-node-id]`).first();
   const text = await source.textContent();
@@ -140,7 +140,7 @@ test(`Enter key in a list item creates a new list item`, async () => {
   await page.keyboard.type(`Second item`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const count = await lines.count();
@@ -165,7 +165,7 @@ test(`Enter on empty list item exits the list to a paragraph`, async () => {
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   // The second line should now be a plain (empty) paragraph, not a list item
   const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
@@ -186,7 +186,7 @@ test(`heading button on list item converts to heading`, async () => {
   await page.locator(`.toolbar-button[data-button-id="heading2"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
@@ -215,7 +215,7 @@ test(`Enter in ordered list creates item with incremented number`, async () => {
   await page.keyboard.type(`Inserted`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
@@ -229,7 +229,7 @@ test(`Enter in ordered list creates item with incremented number`, async () => {
 
 test(`source view: Enter between marker and content splits into empty item and new item`, async () => {
   await loadContent(page, `1. Test item\n`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   const line = page.locator(`#editor [data-node-id]`, { hasText: `Test item` }).first();
   await line.click();
@@ -272,7 +272,7 @@ test(`toggling off a list item converts the entire contiguous list to paragraphs
   await page.locator(`.toolbar-button[data-button-id="unordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
@@ -296,7 +296,7 @@ test(`switching list type converts the entire contiguous list`, async () => {
   await page.locator(`.toolbar-button[data-button-id="ordered-list"]`).click();
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
@@ -322,7 +322,7 @@ test(`Enter on empty middle ordered item renumbers remaining items`, async () =>
   await page.keyboard.press(`Backspace`);
   await page.waitForTimeout(200);
 
-  await setSourceView(page);
+  await setSource2View(page);
 
   const lines = page.locator(`#editor [data-node-id]`);
   const first = await lines.nth(0).textContent();
@@ -335,7 +335,7 @@ test(`Enter on empty middle ordered item renumbers remaining items`, async () =>
 test(`pasting multi-line markdown with list items creates correct nodes`, async () => {
   // Start with an empty paragraph — the user's exact scenario
   await loadContent(page, `\n`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   // Focus the empty line
   const line = page.locator(`#editor [data-node-id]`).first();
@@ -358,7 +358,7 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
   expect(markdown).toContain(`3. three`);
 
   // Also check the rendered DOM in source view
-  await setSourceView(page);
+  await setSource2View(page);
   const lines = page.locator(`#editor [data-node-id]`);
   const count = await lines.count();
   expect(count).toBe(4);
@@ -371,7 +371,7 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
 
 test(`pasting multi-line markdown with CRLF line endings parses correctly`, async () => {
   await loadContent(page, `\n`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   const line = page.locator(`#editor [data-node-id]`).first();
   await line.click();
@@ -390,7 +390,7 @@ test(`pasting multi-line markdown with CRLF line endings parses correctly`, asyn
   expect(markdown).toContain(`2. two`);
   expect(markdown).toContain(`3. three`);
 
-  await setSourceView(page);
+  await setSource2View(page);
   const lines = page.locator(`#editor [data-node-id]`);
   expect(await lines.count()).toBe(4);
   expect(await lines.nth(0).textContent()).toBe(`test`);

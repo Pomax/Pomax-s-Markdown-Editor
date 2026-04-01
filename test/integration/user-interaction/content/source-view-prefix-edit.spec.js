@@ -14,13 +14,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import {
-  clickInEditor,
-  closeApp,
-  launchApp,
-  loadContent,
-  setSourceView,
-} from '../../test-utils.js';
+import { closeApp, launchApp, loadContent, setSource2View } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -124,7 +118,7 @@ async function setCursorInCodeBlock(pg, offset) {
 test.describe(`Heading1 prefix (# )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `# hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between # and space): "# hello"
     //                                             ^
     await setCursorInPrefix(page, `.md-heading1`, 1);
@@ -140,7 +134,7 @@ test.describe(`Heading1 prefix (# )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `# hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before #): "# hello"
     //                                  ^
     await setCursorInPrefix(page, `.md-heading1`, 0);
@@ -156,7 +150,7 @@ test.describe(`Heading1 prefix (# )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `# hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between # and space): "# hello"
     //                                             ^
     await setCursorInPrefix(page, `.md-heading1`, 1);
@@ -174,7 +168,7 @@ test.describe(`Heading1 prefix (# )`, () => {
 test.describe(`Heading2 prefix (## )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `## hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between first and second #)
     await setCursorInPrefix(page, `.md-heading2`, 1);
     await page.keyboard.type(`!`);
@@ -188,7 +182,7 @@ test.describe(`Heading2 prefix (## )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `## hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before first #)
     await setCursorInPrefix(page, `.md-heading2`, 0);
     await page.keyboard.press(`Delete`);
@@ -202,7 +196,7 @@ test.describe(`Heading2 prefix (## )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `## hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 2 (between second # and space)
     await setCursorInPrefix(page, `.md-heading2`, 2);
     await page.keyboard.press(`Backspace`);
@@ -218,7 +212,7 @@ test.describe(`Heading2 prefix (## )`, () => {
 test.describe(`Blockquote prefix (> )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `> hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between > and space)
     await setCursorInPrefix(page, `.md-blockquote`, 1);
     await page.keyboard.type(`!`);
@@ -232,7 +226,7 @@ test.describe(`Blockquote prefix (> )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `> hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before >)
     await setCursorInPrefix(page, `.md-blockquote`, 0);
     await page.keyboard.press(`Delete`);
@@ -246,7 +240,7 @@ test.describe(`Blockquote prefix (> )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `> hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between > and space)
     await setCursorInPrefix(page, `.md-blockquote`, 1);
     await page.keyboard.press(`Backspace`);
@@ -262,7 +256,7 @@ test.describe(`Blockquote prefix (> )`, () => {
 test.describe(`Unordered list prefix (- )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `- hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between - and space)
     await setCursorInPrefix(page, `.md-list-item`, 1);
     await page.keyboard.type(`!`);
@@ -276,7 +270,7 @@ test.describe(`Unordered list prefix (- )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `- hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before -)
     await setCursorInPrefix(page, `.md-list-item`, 0);
     await page.keyboard.press(`Delete`);
@@ -290,7 +284,7 @@ test.describe(`Unordered list prefix (- )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `- hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between - and space)
     await setCursorInPrefix(page, `.md-list-item`, 1);
     await page.keyboard.press(`Backspace`);
@@ -306,7 +300,7 @@ test.describe(`Unordered list prefix (- )`, () => {
 test.describe(`Ordered list prefix (1. )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `1. hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 1 (between 1 and .)
     await setCursorInPrefix(page, `.md-list-item`, 1);
     await page.keyboard.type(`!`);
@@ -320,7 +314,7 @@ test.describe(`Ordered list prefix (1. )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `1. hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before 1)
     await setCursorInPrefix(page, `.md-list-item`, 0);
     await page.keyboard.press(`Delete`);
@@ -334,7 +328,7 @@ test.describe(`Ordered list prefix (1. )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `1. hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 2 (between . and space)
     await setCursorInPrefix(page, `.md-list-item`, 2);
     await page.keyboard.press(`Backspace`);
@@ -350,7 +344,7 @@ test.describe(`Ordered list prefix (1. )`, () => {
 test.describe(`Checklist prefix (- [ ] )`, () => {
   test(`insert in prefix`, async () => {
     await loadContent(page, `- [ ] hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 3 (between [ and space): "- [ ] hello"
     //                                               ^
     await setCursorInPrefix(page, `.md-list-item`, 3);
@@ -365,7 +359,7 @@ test.describe(`Checklist prefix (- [ ] )`, () => {
 
   test(`delete in prefix`, async () => {
     await loadContent(page, `- [x] hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 3 (between [ and x): "- [x] hello"
     //                                            ^
     await setCursorInPrefix(page, `.md-list-item`, 3);
@@ -380,7 +374,7 @@ test.describe(`Checklist prefix (- [ ] )`, () => {
 
   test(`backspace in prefix`, async () => {
     await loadContent(page, `- [x] hello\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 4 (between x and ]): "- [x] hello"
     //                                             ^
     await setCursorInPrefix(page, `.md-list-item`, 4);
@@ -397,7 +391,7 @@ test.describe(`Checklist prefix (- [ ] )`, () => {
 test.describe(`Code fence — three ticks, no language`, () => {
   test(`insert on opening fence`, async () => {
     await loadContent(page, `\`\`\`\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // sourceEditText = "```\ncode\n```"
     // Cursor at offset 1 (between first and second backtick)
     await setCursorInCodeBlock(page, 1);
@@ -411,7 +405,7 @@ test.describe(`Code fence — three ticks, no language`, () => {
 
   test(`delete on opening fence`, async () => {
     await loadContent(page, `\`\`\`\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0 (before first backtick)
     await setCursorInCodeBlock(page, 0);
     await page.keyboard.press(`Delete`);
@@ -424,7 +418,7 @@ test.describe(`Code fence — three ticks, no language`, () => {
 
   test(`backspace on opening fence`, async () => {
     await loadContent(page, `\`\`\`\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 2 (between second and third backtick)
     await setCursorInCodeBlock(page, 2);
     await page.keyboard.press(`Backspace`);
@@ -439,7 +433,7 @@ test.describe(`Code fence — three ticks, no language`, () => {
 test.describe(`Code fence — three ticks, with language`, () => {
   test(`insert in language tag`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // sourceEditText = "```js\ncode\n```"
     // Cursor at offset 4 (between j and s)
     await setCursorInCodeBlock(page, 4);
@@ -453,7 +447,7 @@ test.describe(`Code fence — three ticks, with language`, () => {
 
   test(`delete in language tag`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 3 (before j): "```js..."
     //                                     ^
     await setCursorInCodeBlock(page, 3);
@@ -467,7 +461,7 @@ test.describe(`Code fence — three ticks, with language`, () => {
 
   test(`backspace in language tag`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\`\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 5 (after s): "```js..."
     //                                      ^
     await setCursorInCodeBlock(page, 5);
@@ -484,7 +478,7 @@ test.describe(`Code fence — eight ticks, no language`, () => {
   test(`insert on opening fence`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 4 (middle of opening fence)
     await setCursorInCodeBlock(page, 4);
     await page.keyboard.type(`!`);
@@ -500,7 +494,7 @@ test.describe(`Code fence — eight ticks, no language`, () => {
   test(`delete on opening fence`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 0
     await setCursorInCodeBlock(page, 0);
     await page.keyboard.press(`Delete`);
@@ -515,7 +509,7 @@ test.describe(`Code fence — eight ticks, no language`, () => {
   test(`backspace on opening fence`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 4 (middle of fence)
     await setCursorInCodeBlock(page, 4);
     await page.keyboard.press(`Backspace`);
@@ -531,7 +525,7 @@ test.describe(`Code fence — eight ticks, with language`, () => {
   test(`insert in language tag`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}python\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // sourceEditText = "````````python\ncode\n````````"
     // Cursor at offset 11 (between "pyt" and "hon")
     await setCursorInCodeBlock(page, 11);
@@ -546,7 +540,7 @@ test.describe(`Code fence — eight ticks, with language`, () => {
   test(`delete in language tag`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}python\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 8 (before 'p')
     await setCursorInCodeBlock(page, 8);
     await page.keyboard.press(`Delete`);
@@ -560,7 +554,7 @@ test.describe(`Code fence — eight ticks, with language`, () => {
   test(`backspace in language tag`, async () => {
     const fence = `\``.repeat(8);
     await loadContent(page, `${fence}python\ncode\n${fence}\n\n`);
-    await setSourceView(page);
+    await setSource2View(page);
     // Cursor at offset 14 (after 'n' in "python")
     await setCursorInCodeBlock(page, 14);
     await page.keyboard.press(`Backspace`);

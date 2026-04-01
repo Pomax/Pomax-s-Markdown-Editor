@@ -8,7 +8,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { closeApp, launchApp, loadContent, setWritingView } from '../../test-utils.js';
+import {
+  closeApp,
+  launchApp,
+  loadContent,
+  setSource2View,
+  setWritingView,
+} from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -151,8 +157,7 @@ test(`typing ***word*** renders as bold inside italic in source view`, async () 
   }
   await page.waitForTimeout(100);
 
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
+  await setSource2View(page);
   const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toContain(`***word***`);
@@ -185,8 +190,7 @@ test(`typing after closing * produces plain text, not italic`, async () => {
   await page.waitForTimeout(100);
 
   // Switch to source view to check the raw markdown
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
+  await setSource2View(page);
   const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   // The raw markdown should have " hello" outside the italic markers
@@ -213,8 +217,7 @@ test(`typing after closing ** produces plain text, not bold`, async () => {
   }
   await page.waitForTimeout(100);
 
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
+  await setSource2View(page);
   const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toMatch(/\*\*bold\*\* after/);
@@ -237,8 +240,7 @@ test(`typing after closing ~~ produces plain text, not strikethrough`, async () 
   }
   await page.waitForTimeout(100);
 
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
+  await setSource2View(page);
   const srcLine = page.locator(`#editor [data-node-id]`).first();
   const srcText = await srcLine.textContent();
   expect(srcText).toMatch(/~~struck~~ after/);

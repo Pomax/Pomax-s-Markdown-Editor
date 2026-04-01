@@ -22,7 +22,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -123,7 +123,7 @@ test.describe(`Subscript first word, paragraph 1`, () => {
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickSubscriptButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`<sub>text1</sub> text1 text1`);
   });
@@ -138,7 +138,7 @@ test.describe(`Subscript middle word, paragraph 1`, () => {
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickSubscriptButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 <sub>text1</sub> text1`);
   });
@@ -153,7 +153,7 @@ test.describe(`Subscript first word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `first`);
     await clickSubscriptButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
@@ -170,7 +170,7 @@ test.describe(`Subscript middle word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickSubscriptButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     const line1 = await getSourceLineText(page, 1);
@@ -277,7 +277,7 @@ test.describe(`Collapsed cursor — subscript word under caret`, () => {
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickSubscriptButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 <sub>text1</sub> text1`);
   });

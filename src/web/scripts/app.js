@@ -946,7 +946,7 @@ class App {
       setContent: async (content) => {
         await this.editor?.loadMarkdown(content);
       },
-      getViewMode: () => this.editor?.getViewMode() ?? `source`,
+      getViewMode: () => this.editor?.getViewMode() ?? `writing`,
       setViewMode: async (/** @type {string} */ mode) => {
         await this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);
@@ -1033,10 +1033,6 @@ class App {
         break;
       case `edit:redo`:
         await this.editor.redo();
-        break;
-      case `view:source`:
-        await this.editor.setViewMode(`source`);
-        this.toolbar?.setViewMode(`source`);
         break;
       case `view:writing`:
         await this.editor.setViewMode(`writing`);

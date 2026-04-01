@@ -18,7 +18,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -60,7 +60,7 @@ test.describe.configure({ mode: `serial` });
 test.describe(`Paste in source view`, () => {
   test(`single-line paste inserts text at cursor`, async () => {
     await loadContent(page, `hello world`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
@@ -76,7 +76,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`multi-line paste creates correct node structure`, async () => {
     await loadContent(page, `start`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
@@ -94,7 +94,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`paste replaces active selection`, async () => {
     await loadContent(page, `replace me`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
@@ -111,7 +111,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`paste over multi-node selection removes intermediate nodes`, async () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.first());
@@ -135,7 +135,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`pasting markdown heading creates a heading node`, async () => {
     await loadContent(page, `\n`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
@@ -154,7 +154,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`multi-line paste with CRLF line endings works correctly`, async () => {
     await loadContent(page, `\n`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const line = page.locator(`#editor [data-node-id]`).first();
     await clickInEditor(page, line);
@@ -171,7 +171,7 @@ test.describe(`Paste in source view`, () => {
 
   test(`paste does not trigger a full render`, async () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const lines = page.locator(`#editor [data-node-id]`);
     await clickInEditor(page, lines.nth(1));

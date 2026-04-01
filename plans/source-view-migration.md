@@ -21,8 +21,9 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 11: Improve switch-over performance
 - [x] Step 12: Run full test suite, fix any failures
 - [x] Step 13: Update docs
-- [ ] Step 14: Remove old source view related code, docs, and tests
-- [ ] Step 15: Rename all `source2` related code, docs, and tests so they use `source`
+- [ ] Step 14: fix "search" in source2 mode
+- [ ] Step 15: Remove old source view code, test, and docs
+- [ ] Step 16: Rename all `source2` related code, docs, and tests so they use `source`
 
 ## Step Details
 
@@ -175,10 +176,14 @@ Run all existing tests to make sure nothing is broken by the new mode. Any failu
 
 Update the developer and user-facing documentation to describe the new source view 2 mode, how it works, and how it differs from the original source view.
 
-### Step 14: Remove old source view related code, docs, and tests
+### Step 14: fix "search" in source2 mode
 
-details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated file.
+Using the search modal in source2 mode does not highlight any text, even though it signals search result(s).
 
-### Step 15: Rename all `source2` related code, docs, and tests so they use `source`
+### Step 15: Remove old source view related code, docs, and tests
 
-details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated file.
+details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each reference that gets removed.
+
+### Step 16: Rename all `source2` related code, docs, and tests so they use `source`
+
+details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated reference.

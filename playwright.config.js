@@ -10,7 +10,7 @@ const platform = os.platform();
 
 const config = {
   retries: 0,
-  timeout: 30_000,
+  timeout: 5_000,
   workers: 8,
 };
 

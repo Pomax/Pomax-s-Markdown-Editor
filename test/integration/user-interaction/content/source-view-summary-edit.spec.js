@@ -16,7 +16,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
 } from '../../test-utils.js';
 
 const fixturePath = path.join(projectRoot, `test`, `fixtures`, `details.md`);
@@ -51,7 +51,7 @@ test(`typing a character on the summary line in source view inserts it without r
   await page.waitForTimeout(100);
 
   // Step 3: switch to source view.
-  await setSourceView(page);
+  await setSource2View(page);
 
   // The summary should be rendered as a single line in source view.
   // The bareText path renders it as a .md-paragraph (not .html-element)

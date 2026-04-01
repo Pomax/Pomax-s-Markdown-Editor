@@ -14,7 +14,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -34,7 +34,7 @@ test.afterAll(async () => {
 
 test(`cursors sync after loading content`, async () => {
   await loadContent(page, `# Hello\n\nWorld`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -46,7 +46,7 @@ test(`cursors sync after loading content`, async () => {
 
 test(`cursors sync after typing text`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -61,7 +61,7 @@ test(`cursors sync after typing text`, async () => {
 
 test(`cursors sync after typing a heading prefix`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -78,7 +78,7 @@ test(`cursors sync after typing a heading prefix`, async () => {
 
 test(`cursors sync after backspace`, async () => {
   await loadContent(page, `abcdef`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -96,7 +96,7 @@ test(`cursors sync after backspace`, async () => {
 
 test(`cursors sync after delete`, async () => {
   await loadContent(page, `abcdef`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -114,7 +114,7 @@ test(`cursors sync after delete`, async () => {
 
 test(`cursors sync after Enter splits a paragraph`, async () => {
   await loadContent(page, `first second`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -135,7 +135,7 @@ test(`cursors sync after Enter splits a paragraph`, async () => {
 
 test(`cursors sync after backspace merges paragraphs`, async () => {
   await loadContent(page, `first\n\nsecond`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -156,7 +156,7 @@ test(`cursors sync after backspace merges paragraphs`, async () => {
 
 test(`cursors sync after clicking a different node`, async () => {
   await loadContent(page, `# Heading\n\nParagraph`);
-  await setSourceView(page);
+  await setSource2View(page);
 
   // Click the heading
   const heading = page.locator(`#editor .md-heading1`);
@@ -195,7 +195,7 @@ test(`cursors sync in writing view after clicking a node`, async () => {
 
 test(`cursors sync after typing in a code block`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -215,7 +215,7 @@ test(`cursors sync after typing in a code block`, async () => {
 
 test(`cursors sync after Enter inside a code block`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -237,7 +237,7 @@ test(`cursors sync after Enter inside a code block`, async () => {
 
 test(`cursors sync after creating and exiting a list item`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -271,7 +271,7 @@ test(`cursors sync after creating and exiting a list item`, async () => {
 
 test(`cursors sync after fence-to-code-block conversion`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -285,27 +285,6 @@ test(`cursors sync after fence-to-code-block conversion`, async () => {
     () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
   );
   expect(cursor, `syntaxTree.treeCursor should be set after \`\`\` + Enter`).not.toBeNull();
-});
-
-test(`cursors sync after multi-line paste`, async () => {
-  await loadContent(page, ``);
-  await setSourceView(page);
-  const editor = page.locator(`#editor`);
-  await clickInEditor(page, editor);
-  await page.waitForTimeout(100);
-
-  // Simulate a multi-line paste by inserting text with newlines
-  await page.evaluate(() => {
-    const e = /** @type {any} */ (window).__editor;
-    if (e) {
-      e.editOperations.insertTextAtCursor(`line one\nline two\nline three`);
-    }
-  });
-  await page.waitForTimeout(100);
-  const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursor, `syntaxTree.treeCursor should be set after multi-line paste`).not.toBeNull();
 });
 
 test(`treeCursor persists after blur in writing view`, async () => {

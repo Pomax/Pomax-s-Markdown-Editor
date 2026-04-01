@@ -14,7 +14,7 @@ import {
   clickInEditor,
   closeApp,
   launchApp,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -148,7 +148,7 @@ test.describe(`Code-block early conversion — source view`, () => {
   test(`typing \`\`\` + Enter creates an empty code block`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
     await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -166,7 +166,7 @@ test.describe(`Code-block early conversion — source view`, () => {
   test(`typing \`\`\`js + Enter creates a code block with language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
     await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -184,7 +184,7 @@ test.describe(`Code-block early conversion — source view`, () => {
   test(`typing \`\`\`\` + Enter creates a code block with fenceCount 4`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
     await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -202,7 +202,7 @@ test.describe(`Code-block early conversion — source view`, () => {
   test(`typing \`\`\`\`\`\`js + Enter creates a code block with fenceCount 6 and language`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
     await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);
@@ -220,7 +220,7 @@ test.describe(`Code-block early conversion — source view`, () => {
   test(`backtick fence text is not converted until Enter`, async () => {
     await page.evaluate(() => window.editorAPI?.setContent(``));
     await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
+    await setSource2View(page);
 
     const editor = page.locator(`#editor`);
     await clickInEditor(page, editor);

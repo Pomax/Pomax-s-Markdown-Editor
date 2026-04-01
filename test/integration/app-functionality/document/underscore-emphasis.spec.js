@@ -6,13 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import {
-  clickInEditor,
-  closeApp,
-  launchApp,
-  setSourceView,
-  setWritingView,
-} from '../../test-utils.js';
+import { clickInEditor, closeApp, launchApp, setWritingView } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;

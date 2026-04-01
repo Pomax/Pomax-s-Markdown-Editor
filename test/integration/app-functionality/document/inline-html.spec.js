@@ -12,7 +12,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -323,7 +323,7 @@ test(`cursor offset is correct after view-mode switch with inline HTML`, async (
   await page.waitForTimeout(100);
 
   // Switch to source view via toolbar toggle
-  await setSourceView(page);
+  await setSource2View(page);
   await page.waitForTimeout(200);
 
   // Raw offset should point at "text." (index 60)

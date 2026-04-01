@@ -14,7 +14,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -79,7 +79,7 @@ test.describe(`Writing-view code-block language tag spans`, () => {
 
   test(`source view does not render language tag spans`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
-    await setSourceView(page);
+    await setSource2View(page);
     const tags = page.locator(`#editor .md-code-block [data-lang]`);
     await expect(tags).toHaveCount(0);
   });
@@ -182,7 +182,7 @@ test.describe(`Code-block language tag dialog`, () => {
     await page.locator(`.code-language-btn--insert`).click();
     // Switch to source view — the cursor should land inside the code
     // body, not on the opening fence line.
-    await setSourceView(page);
+    await setSource2View(page);
     // In source-edit mode the full text is "```python\ncode\n```\n".
     // The preamble is "```python\n" (10 chars).  A content-relative
     // offset of 0 should become sourceEditText-relative offset 10,
