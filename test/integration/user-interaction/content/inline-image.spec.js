@@ -83,8 +83,7 @@ test(`image syntax round-trips through source view correctly`, async () => {
 
   // Switch to source view — should show raw markdown
   await setSource2View(page);
-  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](img.png)` });
-  await expect(srcLine).toBeVisible();
+  await expect(page.locator(`#editor textarea`)).toHaveValue(/!\[alt\]\(img\.png\)/);
 
   // Switch back to writing view — image should still render
   await setWritingView(page);

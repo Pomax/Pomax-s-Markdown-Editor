@@ -60,7 +60,7 @@ Missing:
 - [x] #387 :443 — cross-node copy produces markdown with block prefixes (already passing, original failure was afterAll hook timeout)
 
 ## inline-image.spec.js
-- [ ] #282 :74 — image syntax round-trips through source view correctly
+- [x] #282 :74 — image syntax round-trips through source view correctly (FIXED: check textarea value instead of [data-node-id])
 - [ ] #283 :95 — removing ! in source view converts inline image to link
 
 ## cursor-typing-delimiters.spec.js
