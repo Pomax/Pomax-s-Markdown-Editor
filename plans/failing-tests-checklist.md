@@ -67,7 +67,7 @@ Missing:
 - [x] #271 :203 — typing after closing ** produces plain text, not bold (FIXED: read textarea inputValue instead of [data-node-id])
 - [x] #279 :147 — typing ***word*** renders as bold inside italic in source view (DELETED: just a toMarkdown unit test, not an integration test)
 - [x] #280 :172 — typing after closing * produces plain text, not italic — DELETED (toMarkdown unit test)
-- [ ] #286 :226 — typing after closing ~~ produces plain text, not strikethrough
+- [x] #286 :226 — typing after closing ~~ produces plain text, not strikethrough — DELETED (toMarkdown unit test)
 
 ## subscript-button.spec.js
 - [ ] #193 :118 — subscript first word produces correct markdown

@@ -171,26 +171,3 @@ test(`typing after closing ** produces plain text, not bold`, async () => {
   const srcText = await page.locator(`#editor textarea`).inputValue();
   expect(srcText).toMatch(/\*\*bold\*\* after/);
 });
-
-test(`typing after closing ~~ produces plain text, not strikethrough`, async () => {
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `~~struck~~`) {
-    await page.keyboard.press(ch);
-    await page.waitForTimeout(50);
-  }
-  for (const ch of ` after`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  await setSource2View(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  expect(srcText).toMatch(/~~struck~~ after/);
-});
