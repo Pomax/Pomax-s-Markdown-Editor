@@ -21,7 +21,8 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 11: Improve switch-over performance
 - [x] Step 12: Run full test suite, fix any failures
 - [x] Step 13: Update docs
-- [ ] Step 14: Remove old source view and rename `source2` to `source`
+- [ ] Step 14: Remove old source view related code, docs, and tests
+- [ ] Step 15: Rename all `source2` related code, docs, and tests so they use `source`
 
 ## Step Details
 
@@ -174,6 +175,10 @@ Run all existing tests to make sure nothing is broken by the new mode. Any failu
 
 Update the developer and user-facing documentation to describe the new source view 2 mode, how it works, and how it differs from the original source view.
 
-### Step 14: Remove old source view and rename `source2` to `source`
+### Step 14: Remove old source view related code, docs, and tests
 
-Remove `SourceRenderer` and its file (`source-renderer.js`). Rename `SourceRendererV2` to `SourceRenderer` (and its file to `source-renderer.js`). Change the `ViewMode` type from `'source' | 'source2' | 'writing'` back to `'source' | 'writing'`. Update all references throughout the codebase: editor, toolbar, electron IPC, menus, preferences, tests, CSS classes, and docs. The app returns to two view modes, but the source view is now the textarea-based implementation.
+details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated file.
+
+### Step 15: Rename all `source2` related code, docs, and tests so they use `source`
+
+details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated file.
