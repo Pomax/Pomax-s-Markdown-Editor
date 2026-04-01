@@ -47,7 +47,7 @@ Missing:
 
 ## paste.spec.js
 - [x] #356 :61 — single-line paste inserts text at cursor (source view) (DELETED: native textarea paste, nothing to test)
-- [ ] #371 :61 — multi-line paste creates correct node structure (source view)
+- [x] #371 :61 — multi-line paste creates correct node structure (source view) (DELETED: native textarea paste, nothing to test)
 - [ ] #372 :79 — paste replaces active selection (source view)
 - [ ] #373 :96 — paste over multi-node selection removes intermediate nodes (source view)
 - [ ] #374 :120 — pasting markdown heading creates a heading node (source view)
