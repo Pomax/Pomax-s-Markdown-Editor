@@ -15,9 +15,11 @@ Each test must be examined individually to determine whether it should be fixed 
 - [x] #36 :342 — regex can match across element boundaries (DELETED: pointless in source2, regex works on plain text by definition)
 - [x] #38 :287 — source view search matches markdown syntax — DELETED (trivially true for plain text)
 - [x] #39 :397 — initial match is closest to cursor position — FIXED (source2 cursor via textarea selectionStart)
-- [ ] #41 :164 — regex search finds pattern matches
+- [x] #41 :164 — regex search finds pattern matches — PASSED (cascade failure)
 - [ ] #44 :127 — plain text search is case insensitive by default
 - [ ] #50 :380 — regex search still works with single character
+
+
 
 ## session-save.spec.js
 - [ ] #46 :151 — reopening the app restores cursor position and ToC heading
