@@ -37,7 +37,7 @@ Missing:
 - [x] #263 :171 — cursor offset is correct in source view after changing language in writing view
 
 ## heading-input.spec.js
-- [ ] #274 :28 — typing "# main" letter by letter creates a heading with correct content
+- [x] #274 :28 — typing "# main" letter by letter creates a heading with correct content (already passing)
 
 ## source-view-summary-edit.spec.js
 - [ ] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line
