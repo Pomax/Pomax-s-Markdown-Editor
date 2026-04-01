@@ -61,7 +61,7 @@ Missing:
 
 ## inline-image.spec.js
 - [x] #282 :74 — image syntax round-trips through source view correctly (FIXED: check textarea value instead of [data-node-id])
-- [ ] #283 :95 — removing ! in source view converts inline image to link
+- [x] #283 :95 — removing ! in source view converts inline image to link (FIXED: use textarea + HOME constant for cross-platform)
 
 ## cursor-typing-delimiters.spec.js
 - [ ] #271 :203 — typing after closing ** produces plain text, not bold

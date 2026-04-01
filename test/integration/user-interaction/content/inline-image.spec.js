@@ -8,6 +8,7 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  HOME,
   closeApp,
   launchApp,
   loadContent,
@@ -106,16 +107,15 @@ test(`removing ! in source view converts inline image to link`, async () => {
   // Switch to source view
   await setSource2View(page);
 
-  // Click on the line and move to beginning, then delete the '!'
-  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](url)` });
-  await expect(srcLine).toBeVisible();
-  await srcLine.click();
-  await page.keyboard.press(`Home`);
+  // Click on the textarea and move to beginning, then delete the '!'
+  const textarea = page.locator(`#editor textarea`);
+  await expect(textarea).toHaveValue(/!\[alt\]\(url\)/);
+  await textarea.click();
+  await page.keyboard.press(HOME);
   await page.keyboard.press(`Delete`);
 
-  // Now the line should be [alt](url) — a link
-  const updated = page.locator(`#editor [data-node-id]`, { hasText: `[alt](url)` });
-  await expect(updated).toBeVisible();
+  // Now the textarea should contain [alt](url) — a link
+  await expect(textarea).toHaveValue(/^\[alt\]\(url\)/);
 
   // Switch to writing view — should render as a link, not an image
   await setWritingView(page);
