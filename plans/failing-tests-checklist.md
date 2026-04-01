@@ -17,7 +17,7 @@ Each test must be examined individually to determine whether it should be fixed 
 - [x] #39 :397 — initial match is closest to cursor position — FIXED (source2 cursor via textarea selectionStart)
 - [x] #41 :164 — regex search finds pattern matches — PASSED (cascade failure)
 - [x] #44 :127 — plain text search is case insensitive by default — PASSED (cascade failure)
-- [ ] #50 :380 — regex search still works with single character
+- [x] #50 :380 — regex search still works with single character — PASSED (cascade failure)
 
 Missing:
 
