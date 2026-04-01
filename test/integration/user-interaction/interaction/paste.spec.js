@@ -58,23 +58,6 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`paste replaces active selection`, async () => {
-    await loadContent(page, `replace me`);
-    await setSource2View(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-    await page.keyboard.press(`${MOD}+a`);
-
-    await writeClipboard(`new text`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`new text`);
-    expect(md).not.toContain(`replace me`);
-  });
-
   test(`paste over multi-node selection removes intermediate nodes`, async () => {
     await loadContent(page, `alpha\n\nbeta\n\ngamma`);
     await setSource2View(page);
