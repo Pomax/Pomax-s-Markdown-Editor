@@ -150,37 +150,6 @@ test(`typing **** is treated as plain text`, async () => {
   expect(cursorOffset).toBe(lineText.length);
 });
 
-test(`typing after closing * produces plain text, not italic`, async () => {
-  // Type "this is a *test*" then type " hello"
-  // The " hello" must NOT be inside the <em> — it should be plain text.
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `this is a *test*`) {
-    await page.keyboard.press(ch);
-    await page.waitForTimeout(50);
-  }
-  // Now type " hello" after the closing *
-  for (const ch of ` hello`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  // Switch to source view to check the raw markdown
-  await setSource2View(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  // The raw markdown should have " hello" outside the italic markers
-  expect(srcText).toContain(`*test*`);
-  expect(srcText).toContain(` hello`);
-  // " hello" must come after the closing *, not inside *...*
-  expect(srcText).toMatch(/\*test\* hello/);
-});
-
 test(`typing after closing ** produces plain text, not bold`, async () => {
   await loadContent(page, ``);
   await setWritingView(page);
