@@ -20,7 +20,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 10: Write integration tests for source view 2
 - [x] Step 11: Improve switch-over performance
 - [x] Step 12: Run full test suite, fix any failures
-- [ ] Step 13: Update docs
+- [x] Step 13: Update docs
 - [ ] Step 14: Remove old source view and rename `source2` to `source`
 
 ## Step Details
