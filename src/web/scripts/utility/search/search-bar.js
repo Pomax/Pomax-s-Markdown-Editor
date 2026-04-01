@@ -524,27 +524,16 @@ export class SearchBar {
   }
 
   /**
-   * Clears all `<mark>` highlight elements from the editor DOM.
+   * Clears all `<mark>` highlight elements from every search
+   * context in the editor, regardless of current view mode.
    */
   clearHighlights() {
-    if (this.editor.viewMode === `source2`) {
-      const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
-      if (pre) {
-        const textarea = /** @type {HTMLTextAreaElement|null} */ (
-          this.editor.container.querySelector(`.source-v2-wrapper textarea`)
-        );
-        pre.textContent = (textarea?.value ?? ``) + `\n`;
-      }
-      return;
-    }
     const marks = this.editor.container.querySelectorAll(`mark.search-highlight`);
     for (const mark of marks) {
       const parent = mark.parentNode;
       if (!parent) continue;
-      // Replace the <mark> with its text content.
       const text = document.createTextNode(mark.textContent ?? ``);
       parent.replaceChild(text, mark);
-      // Merge adjacent text nodes.
       parent.normalize();
     }
   }
@@ -656,9 +645,10 @@ export class SearchBar {
     if (!el) return;
 
     const isFocused = this.editor.viewMode === `writing`;
+    const walkRoot = el.querySelector(`.md-content`) ?? el;
 
     // Collect text nodes in document order via TreeWalker.
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT);
     /** @type {{ node: Text, start: number, end: number }[]} */
     const textRuns = [];
     let offset = 0;

@@ -21,7 +21,9 @@ Each test must be examined individually to determine whether it should be fixed 
 
 Missing:
 
-- test that search does NOT match the wrong thing
+- [x] test that search does NOT match the wrong thing in writing mode. (ADDED)
+- [x] test that search highlights in code blocks in writing mode are placed correctly. (FIXED: walk .md-content instead of whole element; ADDED test)
+- [ ] test that verifies the cursor position does not change when exiting search via "esc": place cursor somewhere in document, search for "ckae" (won't find anything), then hit esc. The cursor should NOT move to the start of the document.
 
 ## session-save.spec.js
 - [ ] #46 :151 — reopening the app restores cursor position and ToC heading

@@ -392,3 +392,37 @@ test(`initial match is closest to cursor position`, async () => {
 
   await page.keyboard.press(`Escape`);
 });
+
+test(`writing view search does not highlight in source2 pre`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`cake`);
+
+  // Writing DOM should have highlights.
+  const editorMarks = page.locator(`#editor mark.search-highlight`);
+  expect(await editorMarks.count()).toBeGreaterThan(0);
+
+  // Source2 pre must not contain any highlights.
+  const preMarks = page.locator(`.source-v2-wrapper pre mark.search-highlight`);
+  expect(await preMarks.count()).toBe(0);
+
+  await page.keyboard.press(`Escape`);
+});
+
+test(`writing view search highlights inside code blocks are placed correctly`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`true`);
+
+  // The mark for "true" in the code block must be inside the
+  // <code> element, not in a language-label span.
+  const codeBlockMark = page.locator(`.md-code-block code mark.search-highlight`);
+  expect(await codeBlockMark.count()).toBeGreaterThan(0);
+  await expect(codeBlockMark.first()).toHaveText(`true`);
+
+  await page.keyboard.press(`Escape`);
+});
