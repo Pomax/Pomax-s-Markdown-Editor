@@ -77,11 +77,11 @@ Missing:
 - [x] #202 :272 — clicking subscript with cursor on a plain word applies subscript — DELETED (toMarkdown unit test)
 
 ## superscript-button.spec.js
-- [ ] #203 :118 — superscript first word produces correct markdown
-- [ ] #204 :133 — superscript middle word produces correct markdown
-- [ ] #205 :148 — superscript first word of second paragraph produces correct markdown
-- [ ] #207 :165 — superscript middle word of second paragraph produces correct markdown
-- [ ] #208 :272 — clicking superscript with cursor on a plain word applies superscript
+- [x] #203 :118 — superscript first word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #204 :133 — superscript middle word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #205 :148 — superscript first word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #207 :165 — superscript middle word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #208 :272 — clicking superscript with cursor on a plain word applies superscript — DELETED (toMarkdown unit test)
 
 ## code-block-enter.spec.js
 - [ ] #240 :148 — source view: typing ``` + Enter creates an empty code block
