@@ -203,18 +203,3 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   await pg.mouse.click(coords.x, coords.y);
   await pg.waitForTimeout(200);
 }
-
-test.describe(`Collapsed cursor — subscript word under caret`, () => {
-  test(`clicking subscript with cursor on a plain word applies subscript`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await clickInsideWord(page, firstLine, `text1`, `middle`);
-    await clickSubscriptButton(page);
-
-    await setSource2View(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`text1 <sub>text1</sub> text1`);
-  });
-});

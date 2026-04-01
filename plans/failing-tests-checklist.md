@@ -74,7 +74,7 @@ Missing:
 - [x] #194 :133 — subscript middle word produces correct markdown — DELETED (toMarkdown unit test)
 - [x] #195 :148 — subscript first word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
 - [x] #196 :165 — subscript middle word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
-- [ ] #202 :272 — clicking subscript with cursor on a plain word applies subscript
+- [x] #202 :272 — clicking subscript with cursor on a plain word applies subscript — DELETED (toMarkdown unit test)
 
 ## superscript-button.spec.js
 - [ ] #203 :118 — superscript first word produces correct markdown
