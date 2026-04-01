@@ -37,6 +37,9 @@ export class SourceRendererV2 {
 
     /** @type {boolean} */
     this.mirrorDirty = false;
+
+    /** @type {string} */
+    this.originalMarkdown = ``;
   }
 
   /**
@@ -75,6 +78,7 @@ export class SourceRendererV2 {
     this.textarea = textarea;
     this.pre = pre;
     this.mirrorDirty = false;
+    this.originalMarkdown = markdown;
   }
 
   /**
@@ -85,6 +89,14 @@ export class SourceRendererV2 {
     if (!this.mirrorDirty || !this.textarea || !this.pre) return;
     this.pre.textContent = this.textarea.value + `\n`;
     this.mirrorDirty = false;
+  }
+
+  /**
+   * Returns whether the textarea content differs from the original.
+   * @returns {boolean}
+   */
+  hasChanges() {
+    return this.getContent() !== this.originalMarkdown;
   }
 
   /**

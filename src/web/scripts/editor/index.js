@@ -776,24 +776,30 @@ export class Editor {
 
     // When leaving source2, reparse the textarea content into a fresh
     // syntax tree so that edits made in source2 mode are reflected in
-    // writing / source view.
+    // writing / source view.  Skip reparse when nothing changed.
     if (this.viewMode === `source2` && this.syntaxTree) {
-      const rawText = this.sourceRendererV2.getContent();
-      const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
       const selectionStart = this.sourceRendererV2.textarea?.selectionStart ?? 0;
 
-      const newTree = await parser.parse(normalised);
-      this.syntaxTree.updateUsing(newTree);
+      if (this.sourceRendererV2.hasChanges()) {
+        const rawText = this.sourceRendererV2.getContent();
+        const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
 
-      // Ensure there is at least one node so the editor is never empty
-      if (this.syntaxTree.children.length === 0) {
-        const node = new SyntaxNode(`paragraph`, ``);
-        this.syntaxTree.appendChild(node);
+        const newTree = await parser.parse(normalised);
+        this.syntaxTree.updateUsing(newTree);
+
+        // Ensure there is at least one node so the editor is never empty
+        if (this.syntaxTree.children.length === 0) {
+          const node = new SyntaxNode(`paragraph`, ``);
+          this.syntaxTree.appendChild(node);
+        }
+
+        this.ensureTrailingParagraph();
+        this.setUnsavedChanges(true);
       }
 
-      this.ensureTrailingParagraph();
-
-      // Restore the cursor position from the textarea caret offset.
+      // Always restore the cursor position from the textarea caret
+      // offset, even if the content didn't change (the user may have
+      // moved the caret without editing).
       this.syntaxTree.treeCursor = absoluteOffsetToCursor(
         this.syntaxTree,
         selectionStart,
