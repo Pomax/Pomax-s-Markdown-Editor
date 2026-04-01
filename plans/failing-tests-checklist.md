@@ -57,7 +57,7 @@ Missing:
 - [x] #376 :156 — paste does not trigger a full render (source view) (DELETED: no rendering in textarea, concept doesn't apply)
 
 ## range-handling.spec.js
-- [ ] #387 :443 — cross-node copy produces markdown with block prefixes
+- [x] #387 :443 — cross-node copy produces markdown with block prefixes (already passing, original failure was afterAll hook timeout)
 
 ## inline-image.spec.js
 - [ ] #282 :74 — image syntax round-trips through source view correctly
