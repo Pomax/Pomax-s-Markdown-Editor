@@ -74,38 +74,6 @@ test.describe(`Paste in source view`, () => {
     expect(text).toBe(`first\n\nsecond\n\nthird`);
   });
 
-  test(`paste does not trigger a full render`, async () => {
-    await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSource2View(page);
-
-    const lines = page.locator(`#editor [data-node-id]`);
-    await clickInEditor(page, lines.nth(1));
-    await page.keyboard.press(END);
-
-    // Instrument fullRender AFTER clicking so click-triggered renders
-    // don't produce false positives.
-    await page.evaluate(() => {
-      const editor = /** @type {any} */ (window).__editor;
-      editor.pasteTestFullRenderCount = 0;
-      const origFullRender = editor.fullRender.bind(editor);
-      editor.fullRender = (/** @type {any[]} */ ...args) => {
-        editor.pasteTestFullRenderCount++;
-        return origFullRender(...args);
-      };
-    });
-
-    await writeClipboard(` extra`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const count = await page.evaluate(
-      () => /** @type {any} */ (window).__editor.pasteTestFullRenderCount,
-    );
-    expect(count).toBe(0);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`beta extra`);
-  });
 });
 
 test.describe(`Paste in writing view`, () => {

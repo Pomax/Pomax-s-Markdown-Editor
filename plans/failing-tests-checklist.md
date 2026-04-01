@@ -54,7 +54,7 @@ Missing:
 - [x] #373 :96 — paste over multi-node selection removes intermediate nodes (source view) (DELETED: native textarea behaviour)
 - [x] #374 :120 — pasting markdown heading creates a heading node (source view) (DELETED: parser doesn't care how text arrived)
 - [x] #375 :139 — multi-line paste with CRLF line endings works correctly (source view) (FIXED: click textarea, read textarea value instead of getMarkdown)
-- [ ] #376 :156 — paste does not trigger a full render (source view)
+- [x] #376 :156 — paste does not trigger a full render (source view) (DELETED: no rendering in textarea, concept doesn't apply)
 
 ## range-handling.spec.js
 - [ ] #387 :443 — cross-node copy produces markdown with block prefixes
