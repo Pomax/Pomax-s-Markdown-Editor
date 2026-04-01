@@ -8,6 +8,8 @@ All test results AND DETAILS are found in the test-results.txt file. Integration
 
 Each test must be examined individually to determine whether it should be fixed or deleted.
 
+And remember: the point of tests are **to test behaviour** and we **changed the underlying structure** so the job is to confirm that (A) **the tests still make sense at all** and if so (b) **how to rewrite them based on the fact that source2 is a textarea**
+
 ## search.spec.js
 - [x] #30 :104 — plain text search highlights matches in source view (FIXED: implemented source2 highlight via pre mirror)
 - [x] #33 :218 — Shift+Enter navigates to previous match (PASSED: cascade failure from prior test, no change needed)
@@ -51,7 +53,7 @@ Missing:
 - [x] #372 :79 — paste replaces active selection (source view) (DELETED: native textarea behaviour)
 - [x] #373 :96 — paste over multi-node selection removes intermediate nodes (source view) (DELETED: native textarea behaviour)
 - [x] #374 :120 — pasting markdown heading creates a heading node (source view) (DELETED: parser doesn't care how text arrived)
-- [ ] #375 :139 — multi-line paste with CRLF line endings works correctly (source view)
+- [x] #375 :139 — multi-line paste with CRLF line endings works correctly (source view) (FIXED: click textarea, read textarea value instead of getMarkdown)
 - [ ] #376 :156 — paste does not trigger a full render (source view)
 
 ## range-handling.spec.js

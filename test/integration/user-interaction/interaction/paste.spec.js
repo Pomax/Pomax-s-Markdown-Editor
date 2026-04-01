@@ -58,21 +58,20 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`multi-line paste with CRLF line endings works correctly`, async () => {
+  test(`multi-line paste with CRLF line endings normalizes to LF in source view`, async () => {
     await loadContent(page, `\n`);
     await setSource2View(page);
 
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
+    const textarea = page.locator(`#editor textarea`);
+    await textarea.click();
 
     await writeClipboard(`first\r\n\r\nsecond\r\n\r\nthird`);
     await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(300);
 
-    const md = await getMarkdown();
-    expect(md).toContain(`first`);
-    expect(md).toContain(`second`);
-    expect(md).toContain(`third`);
+    await expect(textarea).toHaveValue(/first/);
+
+    const text = await textarea.inputValue();
+    expect(text).toBe(`first\n\nsecond\n\nthird`);
   });
 
   test(`paste does not trigger a full render`, async () => {
