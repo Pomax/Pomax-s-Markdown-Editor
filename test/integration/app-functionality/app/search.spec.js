@@ -8,12 +8,15 @@
  */
 
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   HOME,
   MOD,
   closeApp,
   launchApp,
   loadContent,
+  projectRoot,
   setSource2View,
   setWritingView,
 } from '../../test-utils.js';
@@ -41,6 +44,8 @@ const FIXTURE = [
   `const cake = true;`,
   `\`\`\``,
 ].join(`\n`);
+
+const LOREM = fs.readFileSync(path.join(projectRoot, `test`, `fixtures`, `lorem.md`), `utf-8`);
 
 test.beforeAll(async () => {
   ({ electronApp, page } = await launchApp());
@@ -493,4 +498,42 @@ test(`closing search preserves cursor position in writing view`, async () => {
     return node?.getAttribute(`data-node-id`) ?? null;
   });
   expect(selectionNodeId).toBe(cursorBefore?.nodeId);
+});
+
+test(`scroll position is restored when search has zero results`, async () => {
+  await loadContent(page, LOREM);
+  await setWritingView(page);
+
+  // Scroll to the middle of the document.
+  await page.evaluate(() => {
+    const container = document.getElementById(`editor-container`);
+    if (container) container.scrollTop = container.scrollHeight / 2;
+  });
+  await page.waitForTimeout(200);
+
+  const scrollBefore = await page.evaluate(() => {
+    return document.getElementById(`editor-container`)?.scrollTop ?? 0;
+  });
+  expect(scrollBefore).toBeGreaterThan(0);
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+
+  // Type "loremelephant" letter by letter — "lorem" will match
+  // initially, scrolling to a hit, but eventually zero results.
+  for (const ch of `loremelephant`) {
+    await input.press(ch);
+    await page.waitForTimeout(50);
+  }
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  // With zero results the scroll should be back where we started.
+  const scrollAfter = await page.evaluate(() => {
+    return document.getElementById(`editor-container`)?.scrollTop ?? 0;
+  });
+  expect(scrollAfter).toBe(scrollBefore);
+
+  await page.keyboard.press(`Escape`);
 });

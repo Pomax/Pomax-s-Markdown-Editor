@@ -54,6 +54,13 @@ export class SearchBar {
     this.searchViewMode = null;
 
     /**
+     * Saved scroll position so we can restore it when a search
+     * yields zero results.
+     * @type {number|undefined}
+     */
+    this.savedScrollTop = undefined;
+
+    /**
      * Bound handler for render-complete events so we can remove it.
      * @type {(() => void)|null}
      */
@@ -179,6 +186,9 @@ export class SearchBar {
     this.container.style.left = ``;
     this.input.focus();
     this.input.select();
+    // Save the current scroll position so we can restore it if
+    // the search ends up with zero results.
+    this.savedScrollTop = document.getElementById(`editor-container`)?.scrollTop;
     // Re-run the search in case the view mode changed since
     // the bar was last open.
     this.onSearchChanged();
@@ -278,6 +288,8 @@ export class SearchBar {
     this.applyHighlights();
     if (this.matches.length > 0) {
       this.scrollToCurrentMatch();
+    } else if (this.savedScrollTop) {
+      document.getElementById(`editor-container`)?.scrollTo(0, this.savedScrollTop);
     }
   }
 
