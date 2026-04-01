@@ -84,11 +84,11 @@ Missing:
 - [x] #208 :272 — clicking superscript with cursor on a plain word applies superscript — DELETED (toMarkdown unit test)
 
 ## code-block-enter.spec.js
-- [ ] #240 :148 — source view: typing ``` + Enter creates an empty code block
-- [ ] #241 :184 — source view: typing ```` + Enter creates a code block with fenceCount 4
-- [ ] #242 :220 — source view: backtick fence text is not converted until Enter
-- [ ] #260 :166 — source view: typing ```js + Enter creates a code block with language
-- [ ] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language
+- [x] #240 :148 — source view: typing ``` + Enter creates an empty code block — DELETED (early-conversion is a writing view feature, no DOM in textarea)
+- [x] #241 :184 — source view: typing ```` + Enter creates a code block with fenceCount 4 — DELETED (same)
+- [x] #242 :220 — source view: backtick fence text is not converted until Enter — DELETED (same)
+- [x] #260 :166 — source view: typing ```js + Enter creates a code block with language — DELETED (same)
+- [x] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language — DELETED (same)
 
 ## toolbar-active.spec.js
 - [ ] #224 :296 — clicking italic button inside <em> tag strips the tag
