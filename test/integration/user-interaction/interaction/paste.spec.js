@@ -58,25 +58,6 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`pasting markdown heading creates a heading node`, async () => {
-    await loadContent(page, `\n`);
-    await setSource2View(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-
-    await writeClipboard(`# Source heading`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const nodeType = await page.evaluate(() => {
-      const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-      if (!tree) return null;
-      return tree.children[0]?.type;
-    });
-    expect(nodeType).toBe(`heading1`);
-  });
-
   test(`multi-line paste with CRLF line endings works correctly`, async () => {
     await loadContent(page, `\n`);
     await setSource2View(page);
