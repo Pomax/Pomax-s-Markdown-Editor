@@ -31,7 +31,7 @@ Missing:
 - [x] #46 :151 — reopening the app restores cursor position and ToC heading (FIXED: increased test timeout to 30s — test launches two Electron instances)
 
 ## view-mode-dropdown.spec.js
-- [ ] #112 :95 — toggle stays in sync when view mode changes via menu
+- [x] #112 :95 — toggle stays in sync when view mode changes via menu (FIXED: removed defunct `source` mode step, now tests writing → source2 → writing)
 
 ## bold-button.spec.js
 - [ ] #113 :124 — bolding first word produces correct markdown
@@ -47,7 +47,7 @@ Missing:
 - [ ] #118 :40 — source view renders checklist prefix for unchecked item
 - [ ] #121 :76 — clicking checklist button converts paragraph to checklist item
 - [ ] #122 :112 — clicking bullet button on checklist item switches to bullet list
-- [ ] #124 :168 — clicking checklist button on ordered list switches to checklist
+- [ ] #124 :168 — clicking checklist button on ordered list switches to checklistF
 - [ ] #127 :49 — source view renders checklist prefix for checked item
 - [ ] #129 :94 — clicking checklist button on checklist item toggles back to paragraph
 - [ ] #130 :132 — clicking ordered button on checklist item switches to ordered list
