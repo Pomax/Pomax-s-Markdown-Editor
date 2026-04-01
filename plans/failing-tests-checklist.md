@@ -28,7 +28,7 @@ Missing:
 
 
 ## session-save.spec.js
-- [ ] #46 :151 — reopening the app restores cursor position and ToC heading
+- [x] #46 :151 — reopening the app restores cursor position and ToC heading (FIXED: increased test timeout to 30s — test launches two Electron instances)
 
 ## view-mode-dropdown.spec.js
 - [ ] #112 :95 — toggle stays in sync when view mode changes via menu
