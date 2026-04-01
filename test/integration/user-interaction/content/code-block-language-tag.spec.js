@@ -183,34 +183,13 @@ test.describe(`Code-block language tag dialog`, () => {
     // Switch to source view — the cursor should land inside the code
     // body, not on the opening fence line.
     await setSource2View(page);
-    // In source-edit mode the full text is "```python\ncode\n```\n".
-    // The preamble is "```python\n" (10 chars).  A content-relative
-    // offset of 0 should become sourceEditText-relative offset 10,
-    // placing the cursor at the start of "code".
-    const cursorInfo = await page.evaluate(() => {
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
-      const range = sel.getRangeAt(0);
-      // Walk backwards from the cursor to count the character offset
-      // from the start of the .md-content element.
-      const content = range.startContainer.parentElement?.closest(`.md-content`);
-      if (!content) return null;
-      const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-      let offset = 0;
-      let node = walker.nextNode();
-      while (node) {
-        if (node === range.startContainer) {
-          offset += range.startOffset;
-          break;
-        }
-        offset += node.textContent?.length ?? 0;
-        node = walker.nextNode();
-      }
-      return { offset };
-    });
-    // "```python\n" is 10 characters; cursor should be at offset 10.
-    expect(cursorInfo).not.toBeNull();
-    expect(cursorInfo?.offset).toBe(10);
+    // In source2 the textarea contains "```python\ncode\n```".
+    // The preamble "```python\n" is 10 chars, so a content-relative
+    // offset of 0 maps to selectionStart === 10.
+    const cursorPos = await page
+      .locator(`#editor textarea`)
+      .evaluate((/** @type {HTMLTextAreaElement} */ el) => el.selectionStart);
+    expect(cursorPos).toBe(10);
   });
 
   test(`cursor offset is preserved after changing language via dialog`, async () => {

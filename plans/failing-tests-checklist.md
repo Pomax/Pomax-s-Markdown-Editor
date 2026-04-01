@@ -33,6 +33,81 @@ Missing:
 ## view-mode-dropdown.spec.js
 - [x] #112 :95 — toggle stays in sync when view mode changes via menu (FIXED: removed defunct `source` mode step, now tests writing → source2 → writing)
 
+## code-block-language-tag.spec.js
+- [x] #263 :171 — cursor offset is correct in source view after changing language in writing view
+
+## heading-input.spec.js
+- [ ] #274 :28 — typing "# main" letter by letter creates a heading with correct content
+
+## source-view-summary-edit.spec.js
+- [ ] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line
+
+## click-outside-defocus.spec.js
+- [ ] #326 :122 — defocus is a no-op in source view
+
+## paste.spec.js
+- [ ] #356 :61 — single-line paste inserts text at cursor (source view)
+
+## range-handling.spec.js
+- [ ] #387 :443 — cross-node copy produces markdown with block prefixes
+
+## inline-image.spec.js
+- [ ] #282 :74 — image syntax round-trips through source view correctly
+- [ ] #283 :95 — removing ! in source view converts inline image to link
+
+## cursor-typing-delimiters.spec.js
+- [ ] #271 :203 — typing after closing ** produces plain text, not bold
+- [ ] #279 :147 — typing ***word*** renders as bold inside italic in source view
+- [ ] #280 :172 — typing after closing * produces plain text, not italic
+- [ ] #286 :226 — typing after closing ~~ produces plain text, not strikethrough
+
+## subscript-button.spec.js
+- [ ] #193 :118 — subscript first word produces correct markdown
+- [ ] #194 :133 — subscript middle word produces correct markdown
+- [ ] #195 :148 — subscript first word of second paragraph produces correct markdown
+- [ ] #196 :165 — subscript middle word of second paragraph produces correct markdown
+- [ ] #202 :272 — clicking subscript with cursor on a plain word applies subscript
+
+## superscript-button.spec.js
+- [ ] #203 :118 — superscript first word produces correct markdown
+- [ ] #204 :133 — superscript middle word produces correct markdown
+- [ ] #205 :148 — superscript first word of second paragraph produces correct markdown
+- [ ] #207 :165 — superscript middle word of second paragraph produces correct markdown
+- [ ] #208 :272 — clicking superscript with cursor on a plain word applies superscript
+
+## code-block-enter.spec.js
+- [ ] #240 :148 — source view: typing ``` + Enter creates an empty code block
+- [ ] #241 :184 — source view: typing ```` + Enter creates a code block with fenceCount 4
+- [ ] #242 :220 — source view: backtick fence text is not converted until Enter
+- [ ] #260 :166 — source view: typing ```js + Enter creates a code block with language
+- [ ] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language
+
+## toolbar-active.spec.js
+- [ ] #224 :296 — clicking italic button inside <em> tag strips the tag
+- [ ] #227 :268 — clicking bold button inside <strong> tag strips the tag
+- [ ] #229 :338 — clicking strikethrough button inside <s> tag strips the tag
+- [ ] #247 :310 — clicking italic button inside <i> tag strips the tag
+- [ ] #252 :282 — clicking bold button inside <b> tag strips the tag
+- [ ] #262 :324 — clicking strikethrough button inside <del> tag strips the tag
+
+## italic-button.spec.js
+- [ ] #139 :114 — italicizing first word produces correct markdown
+- [ ] #141 :146 — italicizing middle word produces correct markdown
+- [ ] #144 :178 — italicizing first word of second paragraph produces correct markdown
+- [ ] #149 :127 — toggling italic off restores plain text
+- [ ] #150 :337 — clicking italic with cursor on a plain word italicizes that word
+- [ ] #151 :159 — toggling italic off middle word restores plain text
+- [ ] #153 :195 — italicizing middle word of second paragraph produces correct markdown
+
+## cursor-sync.spec.js
+- [ ] #332 :47 — cursors sync after typing text
+- [ ] #334 :136 — cursors sync after backspace merges paragraphs
+- [ ] #335 :79 — cursors sync after backspace
+- [ ] #336 :115 — cursors sync after Enter splits a paragraph
+- [ ] #341 :238 — cursors sync after creating and exiting a list item
+- [ ] #342 :290 — treeCursor persists after blur in writing view
+- [ ] #346 :157 — cursors sync after clicking a different node
+
 ## bold-button.spec.js
 - [ ] #113 :124 — bolding first word produces correct markdown
 - [ ] #114 :160 — bolding middle word produces correct markdown
@@ -43,11 +118,21 @@ Missing:
 - [ ] #126 :214 — bolding middle word of second paragraph produces correct markdown
 - [ ] #128 :382 — clicking bold with cursor inside bold text removes bold
 
+## strikethrough-button.spec.js
+- [ ] #183 :146 — strikethrough middle word produces correct markdown
+- [ ] #184 :178 — strikethrough first word of second paragraph produces correct markdown
+- [ ] #187 :114 — strikethrough first word produces correct markdown
+- [ ] #192 :336 — clicking strikethrough with cursor on a plain word applies strikethrough
+- [ ] #197 :159 — toggling strikethrough off middle word restores plain text
+- [ ] #198 :195 — strikethrough middle word of second paragraph produces correct markdown
+- [ ] #199 :127 — toggling strikethrough off restores plain text
+- [ ] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it
+
 ## checklist.spec.js
 - [ ] #118 :40 — source view renders checklist prefix for unchecked item
 - [ ] #121 :76 — clicking checklist button converts paragraph to checklist item
 - [ ] #122 :112 — clicking bullet button on checklist item switches to bullet list
-- [ ] #124 :168 — clicking checklist button on ordered list switches to checklistF
+- [ ] #124 :168 — clicking checklist button on ordered list switches to checklist
 - [ ] #127 :49 — source view renders checklist prefix for checked item
 - [ ] #129 :94 — clicking checklist button on checklist item toggles back to paragraph
 - [ ] #130 :132 — clicking ordered button on checklist item switches to ordered list
@@ -58,15 +143,6 @@ Missing:
 - [ ] #142 :266 — switching entire contiguous checklist run to bullet via toolbar
 - [ ] #145 :219 — Enter key in checklist item creates new unchecked checklist item
 - [ ] #148 :465 — typing x into checkbox brackets in source view checks the item
-
-## italic-button.spec.js
-- [ ] #139 :114 — italicizing first word produces correct markdown
-- [ ] #141 :146 — italicizing middle word produces correct markdown
-- [ ] #144 :178 — italicizing first word of second paragraph produces correct markdown
-- [ ] #149 :127 — toggling italic off restores plain text
-- [ ] #150 :337 — clicking italic with cursor on a plain word italicizes that word
-- [ ] #151 :159 — toggling italic off middle word restores plain text
-- [ ] #153 :195 — italicizing middle word of second paragraph produces correct markdown
 
 ## list.spec.js
 - [ ] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph
@@ -83,61 +159,6 @@ Missing:
 - [ ] #167 :262 — toggling off a list item converts the entire contiguous list to paragraphs
 - [ ] #168 :310 — Enter on empty middle ordered item renumbers remaining items
 - [ ] #172 :372 — pasting multi-line markdown with CRLF line endings parses correctly
-
-## strikethrough-button.spec.js
-- [ ] #183 :146 — strikethrough middle word produces correct markdown
-- [ ] #184 :178 — strikethrough first word of second paragraph produces correct markdown
-- [ ] #187 :114 — strikethrough first word produces correct markdown
-- [ ] #192 :336 — clicking strikethrough with cursor on a plain word applies strikethrough
-- [ ] #197 :159 — toggling strikethrough off middle word restores plain text
-- [ ] #198 :195 — strikethrough middle word of second paragraph produces correct markdown
-- [ ] #199 :127 — toggling strikethrough off restores plain text
-- [ ] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it
-
-## subscript-button.spec.js
-- [ ] #193 :118 — subscript first word produces correct markdown
-- [ ] #194 :133 — subscript middle word produces correct markdown
-- [ ] #195 :148 — subscript first word of second paragraph produces correct markdown
-- [ ] #196 :165 — subscript middle word of second paragraph produces correct markdown
-- [ ] #202 :272 — clicking subscript with cursor on a plain word applies subscript
-
-## superscript-button.spec.js
-- [ ] #203 :118 — superscript first word produces correct markdown
-- [ ] #204 :133 — superscript middle word produces correct markdown
-- [ ] #205 :148 — superscript first word of second paragraph produces correct markdown
-- [ ] #207 :165 — superscript middle word of second paragraph produces correct markdown
-- [ ] #208 :272 — clicking superscript with cursor on a plain word applies superscript
-
-## toolbar-active.spec.js
-- [ ] #224 :296 — clicking italic button inside <em> tag strips the tag
-- [ ] #227 :268 — clicking bold button inside <strong> tag strips the tag
-- [ ] #229 :338 — clicking strikethrough button inside <s> tag strips the tag
-- [ ] #247 :310 — clicking italic button inside <i> tag strips the tag
-- [ ] #252 :282 — clicking bold button inside <b> tag strips the tag
-- [ ] #262 :324 — clicking strikethrough button inside <del> tag strips the tag
-
-## code-block-enter.spec.js
-- [ ] #240 :148 — source view: typing ``` + Enter creates an empty code block
-- [ ] #241 :184 — source view: typing ```` + Enter creates a code block with fenceCount 4
-- [ ] #242 :220 — source view: backtick fence text is not converted until Enter
-- [ ] #260 :166 — source view: typing ```js + Enter creates a code block with language
-- [ ] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language
-
-## code-block-language-tag.spec.js
-- [ ] #263 :171 — cursor offset is correct in source view after changing language in writing view
-
-## cursor-typing-delimiters.spec.js
-- [ ] #271 :203 — typing after closing ** produces plain text, not bold
-- [ ] #279 :147 — typing ***word*** renders as bold inside italic in source view
-- [ ] #280 :172 — typing after closing * produces plain text, not italic
-- [ ] #286 :226 — typing after closing ~~ produces plain text, not strikethrough
-
-## heading-input.spec.js
-- [ ] #274 :28 — typing "# main" letter by letter creates a heading with correct content
-
-## inline-image.spec.js
-- [ ] #282 :74 — image syntax round-trips through source view correctly
-- [ ] #283 :95 — removing ! in source view converts inline image to link
 
 ## source-view-prefix-edit.spec.js
 - [ ] #284 :119 — Heading1 prefix: insert in prefix
@@ -170,24 +191,3 @@ Missing:
 - [ ] #314 :406 — Code fence three ticks: delete on opening fence
 - [ ] #315 :462 — Code fence three ticks with language: backspace in language tag
 - [ ] #317 :525 — Code fence eight ticks with language: insert in language tag
-
-## source-view-summary-edit.spec.js
-- [ ] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line
-
-## click-outside-defocus.spec.js
-- [ ] #326 :122 — defocus is a no-op in source view
-
-## cursor-sync.spec.js
-- [ ] #332 :47 — cursors sync after typing text
-- [ ] #334 :136 — cursors sync after backspace merges paragraphs
-- [ ] #335 :79 — cursors sync after backspace
-- [ ] #336 :115 — cursors sync after Enter splits a paragraph
-- [ ] #341 :238 — cursors sync after creating and exiting a list item
-- [ ] #342 :290 — treeCursor persists after blur in writing view
-- [ ] #346 :157 — cursors sync after clicking a different node
-
-## paste.spec.js
-- [ ] #356 :61 — single-line paste inserts text at cursor (source view)
-
-## range-handling.spec.js
-- [ ] #387 :443 — cross-node copy produces markdown with block prefixes

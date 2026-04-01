@@ -614,6 +614,12 @@ export class Editor {
       }
       case `image`:
         return 0;
+      case `code-block`: {
+        const ticks = `\``.repeat(attributes?.fenceCount || 3);
+        const lang = attributes?.language || ``;
+        // Opening fence line: ```lang\n
+        return ticks.length + lang.length + 1;
+      }
       default:
         return 0;
     }
