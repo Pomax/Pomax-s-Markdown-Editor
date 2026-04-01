@@ -18,7 +18,7 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 8: Implement `SyntaxTree.updateUsing(newTree)` for structural tree diffing
 - [x] Step 9: Wire up the view-switch to use `updateUsing` and discard the new tree
 - [x] Step 10: Write integration tests for source view 2
-- [ ] Step 11: Improve switch-over performance
+- [x] Step 11: Improve switch-over performance
 - [ ] Step 12: Run full test suite, fix any failures
 - [ ] Step 13: Update docs
 - [ ] Step 14: Remove old source view and rename `source2` to `source`
@@ -160,10 +160,11 @@ The source2 → writing switch is too slow on large documents (tested with a 50,
 
 5. **Removed old `source` from the view mode cycle**: `VIEW_MODE_CYCLE` in `toolbar.js` changed from `[writing, source, source2]` to `[writing, source2]`. Three integration tests that relied on the old source mode in the cycle are `.skip`-ed.
 
-#### Still to do
+6. **Skip reparse when no changes**: Added `hasChanges()` method to `SourceRendererV2` that compares the current textarea content against the markdown that was loaded in `fullRender()`. The `setViewMode` leaving-source2 path wraps the parse + `updateUsing` call in a `hasChanges()` guard, skipping the reparse entirely when the user made no edits. Cursor restoration via `absoluteOffsetToCursor` remains outside the guard so it always runs. Also fixed `setUnsavedChanges(true)` not being called in the source2 reparse path.
 
-- Profile and optimise the source2 → writing reparse/render path for large documents.
-- Address any remaining performance bottlenecks in `updateUsing` / `matchChildren` / `contentSimilarity`.
+7. **Cursor position integration tests**: Added `test/integration/user-interaction/interaction/source2-cursor-position.spec.js` with 5 tests covering cursor preservation across view switches, including the critical "moving caret without editing" case.
+
+Remaining performance work (stashing writing DOM for selective updates) is tracked separately in `plans/selective-dom-updates.md`.
 
 ### Step 12: Run full test suite, fix failures
 
