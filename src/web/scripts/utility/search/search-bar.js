@@ -338,7 +338,7 @@ export class SearchBar {
       return;
     }
 
-    const isSource = this.editor.viewMode === `source`;
+    const isSource = this.editor.viewMode === `source2`;
     this.searchViewMode = this.editor.viewMode;
     /** @type {OffsetMapEntry[]} */
     const map = [];
@@ -520,6 +520,16 @@ export class SearchBar {
    * Clears all `<mark>` highlight elements from the editor DOM.
    */
   clearHighlights() {
+    if (this.editor.viewMode === `source2`) {
+      const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
+      if (pre) {
+        const textarea = /** @type {HTMLTextAreaElement|null} */ (
+          this.editor.container.querySelector(`.source-v2-wrapper textarea`)
+        );
+        pre.textContent = (textarea?.value ?? ``) + `\n`;
+      }
+      return;
+    }
     const marks = this.editor.container.querySelectorAll(`mark.search-highlight`);
     for (const mark of marks) {
       const parent = mark.parentNode;
@@ -540,6 +550,11 @@ export class SearchBar {
     this.clearHighlights();
     if (!this.visible || this.matches.length === 0) return;
 
+    if (this.editor.viewMode === `source2`) {
+      this.applySource2Highlights();
+      return;
+    }
+
     for (let i = 0; i < this.matches.length; i++) {
       const segments = this.matchToSegments(this.matches[i]);
       const isActive = i === this.currentIndex;
@@ -548,6 +563,53 @@ export class SearchBar {
         this.highlightSegment(seg, isActive);
       }
     }
+  }
+
+  /**
+   * Renders `<mark>` highlight elements into the source2 `<pre>`
+   * mirror overlay.  The matches use document-level character
+   * offsets which map directly into the textarea/pre text.
+   */
+  applySource2Highlights() {
+    const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
+    const textarea = /** @type {HTMLTextAreaElement|null} */ (
+      this.editor.container.querySelector(`.source-v2-wrapper textarea`)
+    );
+    if (!pre || !textarea) return;
+
+    const text = textarea.value;
+    const frag = document.createDocumentFragment();
+    let cursor = 0;
+
+    // Sort matches by docStart so we can walk left-to-right.
+    const sorted = this.matches
+      .map((m, i) => ({ ...m, index: i }))
+      .sort((a, b) => a.docStart - b.docStart);
+
+    for (const m of sorted) {
+      const start = m.docStart;
+      const end = m.docEnd;
+      if (start < cursor) continue;
+
+      if (start > cursor) {
+        frag.appendChild(document.createTextNode(text.substring(cursor, start)));
+      }
+
+      const mark = document.createElement(`mark`);
+      const isActive = m.index === this.currentIndex;
+      mark.className = isActive ? `search-highlight search-highlight--active` : `search-highlight`;
+      mark.textContent = text.substring(start, end);
+      frag.appendChild(mark);
+      cursor = end;
+    }
+
+    if (cursor < text.length) {
+      frag.appendChild(document.createTextNode(text.substring(cursor)));
+    }
+    frag.appendChild(document.createTextNode(`\n`));
+
+    pre.textContent = ``;
+    pre.appendChild(frag);
   }
 
   /**

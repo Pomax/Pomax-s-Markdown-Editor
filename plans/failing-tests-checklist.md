@@ -7,7 +7,7 @@ After every test that you update (rather than remove) you should run just that s
 Each test must be examined individually to determine whether it should be fixed or deleted.
 
 ## search.spec.js
-- [ ] #30 :104 — plain text search highlights matches in source view
+- [x] #30 :104 — plain text search highlights matches in source view (FIXED: implemented source2 highlight via pre mirror)
 - [ ] #33 :218 — Shift+Enter navigates to previous match
 - [ ] #34 :301 — highlights are removed when search bar closes
 - [ ] #36 :342 — regex can match across element boundaries
