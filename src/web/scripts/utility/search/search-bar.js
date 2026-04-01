@@ -195,8 +195,13 @@ export class SearchBar {
     this.matches = [];
     this.currentIndex = -1;
     this.updateMatchCount();
-    // Return focus to the editor
-    this.editor.container.focus();
+    // Return focus to the editor, preserving cursor position.
+    if (this.editor.viewMode === `source2`) {
+      const textarea = this.editor.container.querySelector(`textarea`);
+      textarea?.focus();
+    } else {
+      this.editor.placeCursor();
+    }
   }
 
   /** @returns {boolean} Whether the search bar is currently visible. */

@@ -23,7 +23,9 @@ Missing:
 
 - [x] test that search does NOT match the wrong thing in writing mode. (ADDED)
 - [x] test that search highlights in code blocks in writing mode are placed correctly. (FIXED: walk .md-content instead of whole element; ADDED test)
-- [ ] test that verifies the cursor position does not change when exiting search via "esc": place cursor somewhere in document, search for "ckae" (won't find anything), then hit esc. The cursor should NOT move to the start of the document.
+- [x] test that verifies the cursor position does not change when exiting search via "esc": place cursor somewhere in document, search for "ckae" (won't find anything), then hit esc. The cursor should NOT move to the start of the document. (FIXED: close() now focuses textarea/placeCursor; ADDED tests for both views)
+- [ ] test that verifies the view is the same scroll position when searching for a term with zero hits rather than "wherever it was when it last matched something while typing". This needs a _large_ document (e.g. lorem fixture), the cursor in the middle, then search for "loremelephant" (typed as individual letters). By the time we have 0 results, the scroll position should be restored to where we were prior to starting the search.
+
 
 ## session-save.spec.js
 - [ ] #46 :151 — reopening the app restores cursor position and ToC heading

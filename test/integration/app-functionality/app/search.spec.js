@@ -426,3 +426,71 @@ test(`writing view search highlights inside code blocks are placed correctly`, a
 
   await page.keyboard.press(`Escape`);
 });
+
+test(`closing search preserves cursor position in source2 view`, async () => {
+  await loadContent(page, FIXTURE);
+  await setSource2View(page);
+
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.evaluate((/** @type {HTMLTextAreaElement} */ el, pos) => {
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  }, 30);
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`ckae`);
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  await page.keyboard.press(`Escape`);
+
+  // The textarea must have focus and its cursor must not have moved.
+  await expect(textarea).toBeFocused();
+  const cursorPos = await textarea.evaluate(
+    (/** @type {HTMLTextAreaElement} */ el) => el.selectionStart,
+  );
+  expect(cursorPos).toBe(30);
+});
+
+test(`closing search preserves cursor position in writing view`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+
+  // Place the cursor on the second heading at offset 4.
+  await page.evaluate(() => {
+    const tree = /** @type {any} */ (window).__editor?.syntaxTree;
+    if (!tree) return;
+    const target = tree.children.find(
+      (/** @type {any} */ n) => n.type.startsWith(`heading`) && n.content?.includes(`Another`),
+    );
+    if (target) {
+      tree.treeCursor = { nodeId: target.id, offset: 4 };
+      /** @type {any} */ (window).__editor?.placeCursor();
+    }
+  });
+
+  const cursorBefore = await page.evaluate(() => {
+    const tc = /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor;
+    return tc ? { nodeId: tc.nodeId, offset: tc.offset } : null;
+  });
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`ckae`);
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  await page.keyboard.press(`Escape`);
+
+  // The DOM selection must be inside the editor, not at the start.
+  const selectionNodeId = await page.evaluate(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const node = sel.anchorNode?.parentElement?.closest(`[data-node-id]`);
+    return node?.getAttribute(`data-node-id`) ?? null;
+  });
+  expect(selectionNodeId).toBe(cursorBefore?.nodeId);
+});
