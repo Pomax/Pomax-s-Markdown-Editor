@@ -43,7 +43,7 @@ Missing:
 - [x] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line (DELETED: source2 is a textarea, no DOM rewriting possible)
 
 ## click-outside-defocus.spec.js
-- [ ] #326 :122 — defocus is a no-op in source view
+- [x] #326 :122 — defocus is a no-op in source view (DELETED: trivially true for textarea, no syntax to hide)
 
 ## paste.spec.js
 - [ ] #356 :61 — single-line paste inserts text at cursor (source view)

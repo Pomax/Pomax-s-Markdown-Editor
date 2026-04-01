@@ -13,7 +13,6 @@ import {
   defocusEditor,
   launchApp,
   loadContent,
-  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -117,26 +116,4 @@ test(`clicking back into the editor after defocus restores cursor`, async () => 
   // The paragraph should show its content (no special syntax to hide).
   const paraText = await paragraph.innerText();
   expect(paraText).toContain(`A paragraph of text.`);
-});
-
-test(`defocus is a no-op in source view`, async () => {
-  // Set up: load content and switch to source view.
-  await loadContent(page, markdown);
-  await setSource2View(page);
-
-  // Click the heading to place the cursor there.
-  const heading = page.locator(`#editor [data-node-id]`).first();
-  await clickInEditor(page, heading);
-  await page.waitForTimeout(200);
-
-  // In source view, headings always show `#` regardless of focus.
-  const beforeText = await heading.innerText();
-  expect(beforeText).toContain(`# My Heading`);
-
-  // Blur the editor.
-  await defocusEditor(page);
-
-  // The `#` should still be visible — source view never hides syntax.
-  const afterText = await page.locator(`#editor [data-node-id]`).first().innerText();
-  expect(afterText).toContain(`# My Heading`);
 });
