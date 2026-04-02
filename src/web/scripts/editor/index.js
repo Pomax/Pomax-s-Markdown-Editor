@@ -844,8 +844,13 @@ export class Editor {
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         const rect = range.getBoundingClientRect();
-        const containerRect = scrollContainer.getBoundingClientRect();
-        savedCaretTop = rect.top - containerRect.top;
+        // Firefox returns a zero-height rect for collapsed selections
+        // after inline elements (e.g. <em>), producing a bogus top
+        // value that would scroll the content off-screen.
+        if (rect.height > 0) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          savedCaretTop = rect.top - containerRect.top;
+        }
       }
     }
 
@@ -936,7 +941,9 @@ export class Editor {
     }
 
     // Restore scroll so the anchor node sits at the same viewport offset.
-    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
+    // Source2 is a plain textarea with no [data-node-id] elements, so
+    // anchor-based scroll restore cannot work — skip it entirely.
+    if (mode !== `source2` && anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
       const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
       if (el) {
         const containerRect = scrollContainer.getBoundingClientRect();

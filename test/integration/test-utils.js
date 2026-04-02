@@ -18,8 +18,8 @@ const __dirname = path.dirname(__filename);
 
 export const projectRoot = path.join(__dirname, `..`, `..`);
 
-/** Standard viewport: 800 wide × 1132 tall (A4 portrait ratio). */
-export const VIEWPORT = { width: 800, height: 1132 };
+/** Standard viewport: 1920×1280 (typical desktop). */
+export const VIEWPORT = { width: 1920, height: 1280 };
 
 /**
  * Platform-aware modifier key: Meta on macOS, Control everywhere else.

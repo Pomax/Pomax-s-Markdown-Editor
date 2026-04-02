@@ -310,3 +310,43 @@ test(`treeCursor persists after blur in writing view`, async () => {
   expect(cursorAfter, `syntaxTree.treeCursor should persist after blur`).not.toBeNull();
   expect(cursorAfter.offset).toBe(cursorBefore.offset);
 });
+
+test(`cursor position is preserved after source2 → writing → source2 round-trip`, async () => {
+  const content = `this is <em>a test</em> lol`;
+  await loadContent(page, content);
+  await setSource2View(page);
+
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+
+  // Place cursor inside "a test" between the <em> tags.
+  const emIdx = content.indexOf(`<em>`);
+  const cursorPos = emIdx + `<em>`.length + 2;
+  await page.evaluate((pos) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    ta.selectionStart = pos;
+    ta.selectionEnd = pos;
+  }, cursorPos);
+
+  // Switch to writing view, then back to source2.
+  await setWritingView(page);
+  await setSource2View(page);
+
+  // The textarea should have focus and the cursor should be within the <em> region.
+  const result = await page.evaluate(() => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    return {
+      hasFocus: document.activeElement === ta,
+      selectionStart: ta.selectionStart,
+    };
+  });
+
+  expect(result.hasFocus, `textarea should have focus after round-trip`).toBe(true);
+  const emStart = emIdx + `<em>`.length;
+  const emEnd = content.indexOf(`</em>`);
+  expect(
+    result.selectionStart,
+    `cursor should be within the <em> region (${emStart}–${emEnd})`,
+  ).toBeGreaterThanOrEqual(emStart);
+  expect(result.selectionStart).toBeLessThanOrEqual(emEnd);
+});

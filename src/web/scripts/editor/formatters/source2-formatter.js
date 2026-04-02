@@ -21,6 +21,26 @@ const INLINE_DELIMITERS = {
 };
 
 /**
+ * Maps inline format names to alternative HTML tag pairs that should
+ * be stripped (but never added) when toggling formatting off.
+ * @type {Record<string, Array<{open: string, close: string}>>}
+ */
+const HTML_ALTERNATIVES = {
+  bold: [
+    { open: `<strong>`, close: `</strong>` },
+    { open: `<b>`, close: `</b>` },
+  ],
+  italic: [
+    { open: `<em>`, close: `</em>` },
+    { open: `<i>`, close: `</i>` },
+  ],
+  strikethrough: [
+    { open: `<del>`, close: `</del>` },
+    { open: `<s>`, close: `</s>` },
+  ],
+};
+
+/**
  * Maps block element types to their line prefix.
  * @type {Record<string, string>}
  */
@@ -200,6 +220,14 @@ export class Source2Formatter {
       this.stripInlineFormat(textarea, INLINE_DELIMITERS[opposite]);
     }
 
+    // Check for HTML alternative tags and strip them if present.
+    const alts = HTML_ALTERNATIVES[format];
+    if (alts) {
+      for (const alt of alts) {
+        if (this.stripHtmlTag(textarea, alt)) return;
+      }
+    }
+
     const { selectionStart, selectionEnd, value } = textarea;
     const hasSelection = selectionStart !== selectionEnd;
 
@@ -309,11 +337,45 @@ export class Source2Formatter {
   }
 
   /**
+   * Strips an HTML tag pair surrounding the cursor position. Scans
+   * backwards from the cursor for the opening tag and forwards for
+   * the closing tag on the same line. Returns true if a pair was
+   * found and stripped.
+   * @param {HTMLTextAreaElement} textarea
+   * @param {{ open: string, close: string }} tags
+   * @returns {boolean}
+   */
+  stripHtmlTag(textarea, tags) {
+    const { open, close } = tags;
+    const { selectionStart, value } = textarea;
+    const { lineStart, lineEnd } = getLineRange(value, selectionStart);
+    const lineText = value.substring(lineStart, lineEnd);
+    const cursorInLine = selectionStart - lineStart;
+
+    const openIdx = lineText.lastIndexOf(open, cursorInLine - 1);
+    if (openIdx === -1) return false;
+
+    const contentStart = openIdx + open.length;
+    if (cursorInLine < contentStart) return false;
+
+    const closeIdx = lineText.indexOf(close, cursorInLine);
+    if (closeIdx === -1) return false;
+
+    const inner = lineText.substring(contentStart, closeIdx);
+    const absOpen = lineStart + openIdx;
+    const absClose = lineStart + closeIdx + close.length;
+    const newCursor = lineStart + openIdx + (cursorInLine - contentStart);
+    applyTextareaEdit(textarea, absOpen, absClose, inner, newCursor, newCursor);
+    return true;
+  }
+
+  /**
    * Strips an inline format around the current selection or cursor word
    * if present. Used to remove a mutually exclusive format before
    * applying a new one (e.g. remove sub before adding sup).
    * @param {HTMLTextAreaElement} textarea
    * @param {{ open: string, close: string }} delims
+   * @returns {boolean} Whether delimiters were found and stripped.
    */
   stripInlineFormat(textarea, delims) {
     const { open, close } = delims;
@@ -333,11 +395,12 @@ export class Source2Formatter {
           selectionStart - open.length,
           selectionEnd - open.length,
         );
+        return true;
       }
     } else {
       // Collapsed cursor: look for delimiters around the word at the cursor.
       const wordRange = this.getWordAtPosition(value, selectionStart);
-      if (!wordRange) return;
+      if (!wordRange) return false;
 
       const before = value.substring(wordRange.start - open.length, wordRange.start);
       const after = value.substring(wordRange.end, wordRange.end + close.length);
@@ -351,8 +414,10 @@ export class Source2Formatter {
           selectionStart - open.length,
           selectionStart - open.length,
         );
+        return true;
       }
     }
+    return false;
   }
 
   /**

@@ -73,7 +73,6 @@ test.describe(`Paste in source view`, () => {
     const text = await textarea.inputValue();
     expect(text).toBe(`first\n\nsecond\n\nthird`);
   });
-
 });
 
 test.describe(`Paste in writing view`, () => {

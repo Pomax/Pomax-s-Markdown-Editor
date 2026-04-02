@@ -91,12 +91,12 @@ Missing:
 - [x] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language — DELETED (same)
 
 ## toolbar-active.spec.js
-- [ ] #224 :296 — clicking italic button inside <em> tag strips the tag
-- [ ] #227 :268 — clicking bold button inside <strong> tag strips the tag
-- [ ] #229 :338 — clicking strikethrough button inside <s> tag strips the tag
-- [ ] #247 :310 — clicking italic button inside <i> tag strips the tag
-- [ ] #252 :282 — clicking bold button inside <b> tag strips the tag
-- [ ] #262 :324 — clicking strikethrough button inside <del> tag strips the tag
+- [x] #224 :296 — clicking italic button inside <em> tag strips the tag (FIXED: source2 formatter strips HTML tags + test uses textarea)
+- [x] #227 :268 — clicking bold button inside <strong> tag strips the tag (FIXED: same)
+- [x] #229 :338 — clicking strikethrough button inside <s> tag strips the tag (FIXED: same)
+- [x] #247 :310 — clicking italic button inside <i> tag strips the tag (FIXED: same)
+- [x] #252 :282 — clicking bold button inside <b> tag strips the tag (FIXED: same)
+- [x] #262 :324 — clicking strikethrough button inside <del> tag strips the tag (FIXED: same)
 
 ## italic-button.spec.js
 - [ ] #139 :114 — italicizing first word produces correct markdown
