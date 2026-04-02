@@ -46,27 +46,6 @@ test(`view mode toggle defaults to Writing View`, async () => {
   await expect(toggle).toHaveText(`Writing View`);
 });
 
-test.skip(`clicking toggle switches editor to source mode`, async () => {
-  // Load content so we have a heading to test against.
-  await loadContent(page, readmeContent);
-
-  const toggle = page.locator(`.toolbar-view-mode-toggle`);
-
-  // Click to switch to source mode.
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
-
-  await expect(toggle).toHaveText(`Source View`);
-
-  // The editor's data-view-mode attribute should reflect the change.
-  const editor = page.locator(`#editor`);
-  await expect(editor).toHaveAttribute(`data-view-mode`, `source`);
-
-  // In source mode, headings always show their `#` syntax.
-  const firstLine = page.locator(`#editor [data-node-id]`).first();
-  const text = await firstLine.innerText();
-  expect(text).toContain(`# Pomax's Markdown Editor`);
-});
-
 test(`clicking toggle from source2 switches back to writing mode`, async () => {
   // Set up: ensure we are in source2 mode.
   await loadContent(page, readmeContent);

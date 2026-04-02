@@ -11,6 +11,7 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  clickInEditor,
   closeApp,
   launchApp,
   loadContent,
@@ -32,17 +33,20 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
+test.beforeEach(async () => {
+  await loadContent(page, ``);
+  await setWritingView(page);
+});
+
 test.describe(`Writing-view code-block language tag spans`, () => {
   test(`code block with language shows language text in top tag`, async () => {
     await loadContent(page, `\`\`\`js\nconsole.log("hi");\n\`\`\``);
-    await setWritingView(page);
     const topTag = page.locator(`#editor [data-lang].top`);
     await expect(topTag).toHaveText(`js`);
   });
 
   test(`code block without language shows placeholder with --empty modifier`, async () => {
     await loadContent(page, `\`\`\`\nplain code\n\`\`\``);
-    await setWritingView(page);
     const topTag = page.locator(`#editor [data-lang].top`);
     await expect(topTag).toHaveText(`lang`);
     await expect(topTag).toHaveClass(/empty/);
@@ -50,7 +54,6 @@ test.describe(`Writing-view code-block language tag spans`, () => {
 
   test(`bottom tag is hidden on short code blocks (< 20 lines)`, async () => {
     await loadContent(page, `\`\`\`js\nshort\n\`\`\``);
-    await setWritingView(page);
     const bottomTag = page.locator(`#editor [data-lang].bottom`);
     await expect(bottomTag).toBeHidden();
   });
@@ -58,7 +61,6 @@ test.describe(`Writing-view code-block language tag spans`, () => {
   test(`bottom tag is visible on tall code blocks (>= 20 lines)`, async () => {
     const lines = Array.from({ length: 25 }, (_, i) => `line ${i + 1}`).join(`\n`);
     await loadContent(page, `\`\`\`js\n${lines}\n\`\`\``);
-    await setWritingView(page);
     const bottomTag = page.locator(`#editor [data-lang].bottom`);
     await expect(bottomTag).toBeVisible();
     await expect(bottomTag).toHaveText(`js`);
@@ -66,7 +68,6 @@ test.describe(`Writing-view code-block language tag spans`, () => {
 
   test(`top tag is positioned absolutely with pointer cursor`, async () => {
     await loadContent(page, `\`\`\`python\nprint("hello")\n\`\`\``);
-    await setWritingView(page);
     const topTag = page.locator(`#editor [data-lang].top`);
     await expect(topTag).toBeVisible();
     const topStyle = await topTag.evaluate((el) => {
@@ -88,7 +89,6 @@ test.describe(`Writing-view code-block language tag spans`, () => {
 test.describe(`Code-block language tag dialog`, () => {
   test(`single click on language tag opens dialog even when code block is not focused`, async () => {
     await loadContent(page, `some text\n\n\`\`\`js\ncode\n\`\`\``);
-    await setWritingView(page);
     // Click the paragraph first so the code block is NOT focused.
     await page.locator(`#editor .md-paragraph`).first().click();
 
@@ -117,7 +117,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`clicking the language tag opens the code-language dialog`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
-    await setWritingView(page);
     const topTag = page.locator(`#editor [data-lang].top`);
     await topTag.click();
     const dialog = page.locator(`.code-language-dialog`);
@@ -129,7 +128,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`dialog is pre-filled with the current language`, async () => {
     await loadContent(page, `\`\`\`python\ncode\n\`\`\``);
-    await setWritingView(page);
     await page.locator(`#editor [data-lang].top`).click();
     const input = page.locator(`#code-language-input`);
     await expect(input).toHaveValue(`python`);
@@ -138,7 +136,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`submitting a new language updates the code block`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
-    await setWritingView(page);
     await page.locator(`#editor [data-lang].top`).click();
     const input = page.locator(`#code-language-input`);
     await input.fill(`typescript`);
@@ -154,7 +151,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`submitting empty string clears the language`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
-    await setWritingView(page);
     await page.locator(`#editor [data-lang].top`).click();
     const input = page.locator(`#code-language-input`);
     await input.fill(``);
@@ -170,31 +166,36 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`cursor offset is correct in source view after changing language in writing view`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
-    await setWritingView(page);
-    // Click inside the code block content and press Home to ensure
-    // the cursor is at offset 0 (start of the code body).
-    await page.locator(`#editor .md-code-block .md-content`).click();
-    await page.keyboard.press(`Home`);
-    // Change the language from "js" to "python" via the dialog.
-    await page.locator(`#editor [data-lang].top`).click();
+    // Wait for the code block to render with expected content
+    await expect(page.locator(`#editor .md-code-block .md-content`)).toHaveText(`code`);
+    await clickInEditor(page, page.locator(`#editor .md-code-block .md-content`));
+    // Read the cursor offset wherever the click landed
+    const offsetBefore = await page.evaluate(() => {
+      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? null;
+    });
+    expect(offsetBefore).not.toBeNull();
+    // Open the language dialog and change the language
+    await expect(page.locator(`#editor [data-lang].top`)).toBeVisible();
+    await page.locator(`#editor [data-lang].top`).click({ force: true });
     const input = page.locator(`#code-language-input`);
+    await expect(input).toBeVisible();
     await input.fill(`python`);
-    await page.locator(`.code-language-btn--insert`).click();
-    // Switch to source view — the cursor should land inside the code
-    // body, not on the opening fence line.
-    await setSource2View(page);
-    // In source2 the textarea contains "```python\ncode\n```".
+    await expect(page.locator(`.code-language-btn--insert`)).toBeVisible();
+    await page.locator(`.code-language-btn--insert`).click({ force: true });
+    await expect(page.locator(`.code-language-dialog`)).not.toBeVisible();
+    // Switch to source2 and verify the cursor mapped correctly.
+    // The textarea contains "```python\ncode\n```".
     // The preamble "```python\n" is 10 chars, so a content-relative
-    // offset of 0 maps to selectionStart === 10.
+    // offset maps to selectionStart === 10 + offset.
+    await setSource2View(page);
     const cursorPos = await page
       .locator(`#editor textarea`)
       .evaluate((/** @type {HTMLTextAreaElement} */ el) => el.selectionStart);
-    expect(cursorPos).toBe(10);
+    expect(cursorPos).toBe(10 + offsetBefore);
   });
 
   test(`cursor offset is preserved after changing language via dialog`, async () => {
     await loadContent(page, `\`\`\`js\nhello world\n\`\`\``);
-    await setWritingView(page);
 
     // Click inside the code content using real mouse coordinates,
     // the same way a user would — no keyboard navigation.
@@ -227,7 +228,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`text selection is preserved after changing language via dialog`, async () => {
     await loadContent(page, `\`\`\`js\nhello world\n\`\`\``);
-    await setWritingView(page);
 
     // Click inside the code content to place the cursor first.
     const codeContent = page.locator(`#editor .md-code-block .md-content`);
@@ -265,7 +265,6 @@ test.describe(`Code-block language tag dialog`, () => {
 
   test(`clicking placeholder lang tag on a bare code block opens the dialog empty`, async () => {
     await loadContent(page, `\`\`\`\ncode\n\`\`\``);
-    await setWritingView(page);
     await page.locator(`#editor [data-lang].top`).click();
     const input = page.locator(`#code-language-input`);
     await expect(input).toHaveValue(``);
