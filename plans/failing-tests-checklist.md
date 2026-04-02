@@ -178,35 +178,36 @@ Missing:
 - [x] #168 :310 — Enter on empty middle ordered item renumbers remaining items (FIXED: same)
 - [x] #172 :372 — pasting multi-line markdown with CRLF line endings parses correctly (FIXED: click textarea + read textarea value)
 
-## source-view-prefix-edit.spec.js
-- [ ] #284 :119 — Heading1 prefix: insert in prefix
-- [ ] #285 :183 — Heading2 prefix: delete in prefix
-- [ ] #287 :135 — Heading1 prefix: delete in prefix
-- [ ] #288 :241 — Blockquote prefix: backspace in prefix
-- [ ] #289 :197 — Heading2 prefix: backspace in prefix
-- [ ] #290 :301 — Ordered list prefix: insert in prefix
-- [ ] #291 :360 — Checklist prefix: delete in prefix
-- [ ] #292 :419 — Code fence three ticks: backspace on opening fence
-- [ ] #293 :151 — Heading1 prefix: backspace in prefix
-- [ ] #294 :213 — Blockquote prefix: insert in prefix
-- [ ] #295 :257 — Unordered list prefix: insert in prefix
-- [ ] #296 :478 — Code fence eight ticks: insert on opening fence
-- [ ] #297 :375 — Checklist prefix: backspace in prefix
-- [ ] #298 :315 — Ordered list prefix: delete in prefix
-- [ ] #299 :434 — Code fence three ticks with language: insert in language tag
-- [ ] :525 — Code fence eight ticks with language: insert in language tag
-- [ ] #300 :540 — Code fence eight ticks with language: delete in language tag
-- [ ] #301 :169 — Heading2 prefix: insert in prefix
-- [ ] #302 :494 — Code fence eight ticks: delete on opening fence
-- [ ] #303 :227 — Blockquote prefix: delete in prefix
-- [ ] #304 :271 — Unordered list prefix: delete in prefix
-- [ ] #305 :392 — Code fence three ticks: insert on opening fence
-- [ ] #306 :329 — Ordered list prefix: backspace in prefix
-- [ ] #307 :448 — Code fence three ticks with language: delete in language tag
-- [ ] #308 :554 — Code fence eight ticks with language: backspace in language tag
-- [ ] #310 :509 — Code fence eight ticks: backspace on opening fence
-- [ ] #312 :345 — Checklist prefix: insert in prefix
-- [ ] #313 :285 — Unordered list prefix: backspace in prefix
-- [ ] #314 :406 — Code fence three ticks: delete on opening fence
-- [ ] #315 :462 — Code fence three ticks with language: backspace in language tag
-- [ ] #317 :525 — Code fence eight ticks with language: insert in language tag
+## source-view-prefix-edit.spec.js — ALL 30 DELETED (entire file removed)
+Source2 is a plain textarea — insert/delete/backspace at any position is native browser behavior. The old source view had structured DOM nodes (.md-heading1, .md-list-item, .md-code-block .md-content, etc.) where custom rendering could interfere with editing; that no longer applies.
+- [x] #284 :119 — Heading1 prefix: insert in prefix (DELETED)
+- [x] #285 :183 — Heading2 prefix: delete in prefix (DELETED)
+- [x] #287 :135 — Heading1 prefix: delete in prefix (DELETED)
+- [x] #288 :241 — Blockquote prefix: backspace in prefix (DELETED)
+- [x] #289 :197 — Heading2 prefix: backspace in prefix (DELETED)
+- [x] #290 :301 — Ordered list prefix: insert in prefix (DELETED)
+- [x] #291 :360 — Checklist prefix: delete in prefix (DELETED)
+- [x] #292 :419 — Code fence three ticks: backspace on opening fence (DELETED)
+- [x] #293 :151 — Heading1 prefix: backspace in prefix (DELETED)
+- [x] #294 :213 — Blockquote prefix: insert in prefix (DELETED)
+- [x] #295 :257 — Unordered list prefix: insert in prefix (DELETED)
+- [x] #296 :478 — Code fence eight ticks: insert on opening fence (DELETED)
+- [x] #297 :375 — Checklist prefix: backspace in prefix (DELETED)
+- [x] #298 :315 — Ordered list prefix: delete in prefix (DELETED)
+- [x] #299 :434 — Code fence three ticks with language: insert in language tag (DELETED)
+- [x] :525 — Code fence eight ticks with language: insert in language tag (DELETED)
+- [x] #300 :540 — Code fence eight ticks with language: delete in language tag (DELETED)
+- [x] #301 :169 — Heading2 prefix: insert in prefix (DELETED)
+- [x] #302 :494 — Code fence eight ticks: delete on opening fence (DELETED)
+- [x] #303 :227 — Blockquote prefix: delete in prefix (DELETED)
+- [x] #304 :271 — Unordered list prefix: delete in prefix (DELETED)
+- [x] #305 :392 — Code fence three ticks: insert on opening fence (DELETED)
+- [x] #306 :329 — Ordered list prefix: backspace in prefix (DELETED)
+- [x] #307 :448 — Code fence three ticks with language: delete in language tag (DELETED)
+- [x] #308 :554 — Code fence eight ticks with language: backspace in language tag (DELETED)
+- [x] #310 :509 — Code fence eight ticks: backspace on opening fence (DELETED)
+- [x] #312 :345 — Checklist prefix: insert in prefix (DELETED)
+- [x] #313 :285 — Unordered list prefix: backspace in prefix (DELETED)
+- [x] #314 :406 — Code fence three ticks: delete on opening fence (DELETED)
+- [x] #315 :462 — Code fence three ticks with language: backspace in language tag (DELETED)
+- [x] #317 :525 — Code fence eight ticks with language: insert in language tag (DELETED)
