@@ -99,13 +99,13 @@ Missing:
 - [x] #262 :324 — clicking strikethrough button inside <del> tag strips the tag (FIXED: same)
 
 ## italic-button.spec.js
-- [ ] #139 :114 — italicizing first word produces correct markdown
-- [ ] #141 :146 — italicizing middle word produces correct markdown
-- [ ] #144 :178 — italicizing first word of second paragraph produces correct markdown
-- [ ] #149 :127 — toggling italic off restores plain text
-- [ ] #150 :337 — clicking italic with cursor on a plain word italicizes that word
-- [ ] #151 :159 — toggling italic off middle word restores plain text
-- [ ] #153 :195 — italicizing middle word of second paragraph produces correct markdown
+- [x] #139 :114 — italicizing first word produces correct markdown (FIXED: getSourceLineText reads textarea)
+- [x] #141 :146 — italicizing middle word produces correct markdown (FIXED: same)
+- [x] #144 :178 — italicizing first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #149 :127 — toggling italic off restores plain text (FIXED: same)
+- [x] #150 :337 — clicking italic with cursor on a plain word italicizes that word (FIXED: same)
+- [x] #151 :159 — toggling italic off on the middle word restores plain text (FIXED: same + renamed test)
+- [x] #153 :195 — italicizing middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2)
 
 ## cursor-sync.spec.js
 - [ ] #332 :47 — cursors sync after typing text

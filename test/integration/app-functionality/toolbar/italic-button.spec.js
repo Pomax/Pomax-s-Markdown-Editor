@@ -107,7 +107,8 @@ async function clickItalicButton(pg) {
  * @returns {Promise<string>}
  */
 async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+  const value = await pg.locator(`#editor textarea`).inputValue();
+  return value.split(`\n`)[index] ?? ``;
 }
 
 test.describe(`Italic first word, toggle off`, () => {
@@ -156,7 +157,7 @@ test.describe(`Italic middle word, paragraph 1`, () => {
     expect(line).toBe(`text1 *text1* text1`);
   });
 
-  test(`toggling italic off middle word restores plain text`, async () => {
+  test(`toggling italic off on the middle word restores plain text`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
@@ -186,7 +187,7 @@ test.describe(`Italic first word, paragraph 2`, () => {
     await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`*text2* text2 text2`);
   });
 });
@@ -203,7 +204,7 @@ test.describe(`Italic middle word, paragraph 2`, () => {
     await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`text2 *text2* text2`);
   });
 });
