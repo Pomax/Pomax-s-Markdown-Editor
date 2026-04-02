@@ -118,12 +118,12 @@ Missing:
 - [x] :351 — clicking italic with cursor inside italic text removes italic (PASSED: cascade failure from loadContent fix)
 
 ## cursor-sync.spec.js
-- [ ] #332 :47 — cursors sync after typing text
+- [x] #332 :47 — cursors sync after typing text (PASSED: cascade failure from loadContent fix)
 - [ ] #334 :136 — cursors sync after backspace merges paragraphs
-- [ ] #335 :79 — cursors sync after backspace
-- [ ] #336 :115 — cursors sync after Enter splits a paragraph
-- [ ] #341 :238 — cursors sync after creating and exiting a list item
-- [ ] #342 :290 — treeCursor persists after blur in writing view
+- [x] #335 :79 — cursors sync after backspace (PASSED: cascade failure from loadContent fix)
+- [x] #336 :115 — cursors sync after Enter splits a paragraph (PASSED: cascade failure from loadContent fix)
+- [x] #341 :238 — cursors sync after creating and exiting a list item (PASSED: cascade failure from loadContent fix)
+- [x] #342 :290 — treeCursor persists after blur in writing view (PASSED: cascade failure from loadContent fix)
 - [ ] #346 :157 — cursors sync after clicking a different node
 
 ## bold-button.spec.js
