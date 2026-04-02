@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { BrowserWindow, Menu, dialog } from 'electron';
+import { BrowserWindow, Menu, clipboard, dialog } from 'electron';
 import { settings } from './settings-manager.js';
 
 /**
@@ -89,6 +89,15 @@ export class MenuBuilder {
         {
           label: `Word Count`,
           click: () => this.sendMenuAction(`file:wordCount`),
+        },
+        {
+          label: `Copy File Path`,
+          enabled: !!this.fileManager.currentFilePath,
+          click: () => {
+            if (this.fileManager.currentFilePath) {
+              clipboard.writeText(this.fileManager.currentFilePath);
+            }
+          },
         },
         { type: `separator` },
         {

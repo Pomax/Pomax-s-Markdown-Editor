@@ -21,9 +21,11 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 11: Improve switch-over performance
 - [x] Step 12: Run full test suite, fix any failures
 - [x] Step 13: Update docs
-- [ ] Step 14: fix "search" in source2 mode
-- [ ] Step 15: Remove old source view code, test, and docs
-- [ ] Step 16: Rename all `source2` related code, docs, and tests so they use `source`
+- [ ] Step 14: Audit the code for mentions/use of code relating to the old "Source" (not the new "Source2") view
+- [ ] Step 15: Remove all mentions/use of code relating to the old  "Source" (not the new "Source2") view
+- [ ] Step 16: Fix "search" in source2 mode
+- [ ] Step 17: Remove old source view code, test, and docs
+- [ ] Step 18: Rename all `source2` related code, docs, and tests so they use `source`
 
 ## Step Details
 
@@ -176,14 +178,22 @@ Run all existing tests to make sure nothing is broken by the new mode. Any failu
 
 Update the developer and user-facing documentation to describe the new source view 2 mode, how it works, and how it differs from the original source view.
 
-### Step 14: fix "search" in source2 mode
+### Step 14: Audit the code for mentions/use of code relating to the old "Source" (not the new "Source2") view
 
-Using the search modal in source2 mode does not highlight any text, even though it signals search result(s).
+audit pending.
 
-### Step 15: Remove old source view related code, docs, and tests
+### Step 15: Remove all mentions/use of code relating to the old  "Source" (not the new "Source2") view
+
+audit pending.
+
+### Step 16: fix "search" in source2 mode
+
+Using the search modal in source2 mode does not highlight text correctly. We should use `C:\Users\Mike\Documents\Git\released\are-we-flying\docs\index.md`, which is a huge document where we can find terms that are easily shown as being highlighted wrong.
+
+### Step 17: Remove old source view related code, docs, and tests
 
 details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each reference that gets removed.
 
-### Step 16: Rename all `source2` related code, docs, and tests so they use `source`
+### Step 18: Rename all `source2` related code, docs, and tests so they use `source`
 
 details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated reference.

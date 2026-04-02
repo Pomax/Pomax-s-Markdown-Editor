@@ -107,7 +107,7 @@ Handles all file system operations:
 ### MenuBuilder
 
 Constructs the application menu:
-- **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Exit
+- **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Copy File Path, Exit
 - **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
 - **View**: Source View (`Ctrl+1`), Writing View (`Ctrl+2`), open file list with checkmarks
 - **Help**: Reload, Debug, About
