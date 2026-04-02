@@ -55,6 +55,10 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
+test.beforeEach(async () => {
+  await setWritingView(page);
+});
+
 test(`Ctrl+F opens the search bar`, async () => {
   await loadContent(page, FIXTURE);
   // Search bar should be hidden initially.

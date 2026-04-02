@@ -4,7 +4,7 @@ We removed the s`etSourceView` function from the codebase, and indiscriminantly 
 
 After every test that you update (rather than remove) you should run just that specific test to confirm that it works before moving on. You also need to ask me whether I agree with your assessment on whether to delete or fix before you modify the file it is in.
 
-All test results AND DETAILS are found in the test-results.txt file. Integration tests may not be run to verify failures: the test-results.txt file fully captures all information.
+All test results AND DETAILS are found in the test-results.txt file. Integration tests may not be run purely to verify that a test still fails or not before working on it.
 
 Each test must be examined individually to determine whether it should be fixed or deleted.
 
@@ -16,10 +16,15 @@ And remember: the point of tests are **to test behaviour** and we **changed the 
 - [x] #34 :301 — highlights are removed when search bar closes (PASSED: fixed by #30 highlight implementation)
 - [x] #36 :342 — regex can match across element boundaries (DELETED: pointless in source2, regex works on plain text by definition)
 - [x] #38 :287 — source view search matches markdown syntax — DELETED (trivially true for plain text)
-- [x] #39 :397 — initial match is closest to cursor position — FIXED (source2 cursor via textarea selectionStart)
-- [x] #41 :164 — regex search finds pattern matches — PASSED (cascade failure)
-- [x] #44 :127 — plain text search is case insensitive by default — PASSED (cascade failure)
+- [x] #39 :367 — initial match is closest to cursor position (PASSED: cascade from loadContent fix + beforeEach)
+- [x] #41 :169 — regex search finds pattern matches (PASSED: cascade from loadContent fix + beforeEach)
+- [x] #44 :132 — plain text search is case insensitive by default (PASSED: cascade from loadContent fix + beforeEach)
 - [x] #50 :380 — regex search still works with single character — PASSED (cascade failure)
+- [x] :206 — Enter navigates to next match (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :242 — next/prev buttons navigate matches (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :311 — close button closes the search bar (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :333 — plain text search requires at least 2 characters (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :462 — closing search preserves cursor position in writing view (PASSED: cascade from loadContent fix + beforeEach)
 
 Missing:
 
@@ -27,6 +32,9 @@ Missing:
 - [x] test that search highlights in code blocks in writing mode are placed correctly. (FIXED: walk .md-content instead of whole element; ADDED test)
 - [x] test that verifies the cursor position does not change when exiting search via "esc": place cursor somewhere in document, search for "ckae" (won't find anything), then hit esc. The cursor should NOT move to the start of the document. (FIXED: close() now focuses textarea/placeCursor; ADDED tests for both views)
 - [x] test that verifies the view is the same scroll position when searching for a term with zero hits rather than "wherever it was when it last matched something while typing". This needs a _large_ document (e.g. lorem fixture), the cursor in the middle, then search for "loremelephant" (typed as individual letters). By the time we have 0 results, the scroll position should be restored to where we were prior to starting the search. (FIXED: save scrollTop on open, restore when matches drop to zero; ADDED test)
+
+## toc-highlight.spec.js
+- [ ] :105 — ToC highlight updates when scrolling between sections
 
 
 ## session-save.spec.js
@@ -36,7 +44,7 @@ Missing:
 - [x] #112 :95 — toggle stays in sync when view mode changes via menu (FIXED: removed defunct `source` mode step, now tests writing → source2 → writing)
 
 ## code-block-language-tag.spec.js
-- [x] #263 :171 — cursor offset is correct in source view after changing language in writing view
+- [ ] #263 :171 — cursor offset is correct in source view after changing language in writing view
 
 ## heading-input.spec.js
 - [x] #274 :28 — typing "# main" letter by letter creates a heading with correct content (already passing)
@@ -55,9 +63,10 @@ Missing:
 - [x] #374 :120 — pasting markdown heading creates a heading node (source view) (DELETED: parser doesn't care how text arrived)
 - [x] #375 :139 — multi-line paste with CRLF line endings works correctly (source view) (FIXED: click textarea, read textarea value instead of getMarkdown)
 - [x] #376 :156 — paste does not trigger a full render (source view) (DELETED: no rendering in textarea, concept doesn't apply)
+- [ ] :79 — single-line paste inserts text at cursor (writing view)
 
 ## range-handling.spec.js
-- [x] #387 :443 — cross-node copy produces markdown with block prefixes (already passing, original failure was afterAll hook timeout)
+- [ ] #387 :443 — cross-node copy produces markdown with block prefixes
 
 ## inline-image.spec.js
 - [x] #282 :74 — image syntax round-trips through source view correctly (FIXED: check textarea value instead of [data-node-id])
@@ -94,18 +103,19 @@ Missing:
 - [x] #224 :296 — clicking italic button inside <em> tag strips the tag (FIXED: source2 formatter strips HTML tags + test uses textarea)
 - [x] #227 :268 — clicking bold button inside <strong> tag strips the tag (FIXED: same)
 - [x] #229 :338 — clicking strikethrough button inside <s> tag strips the tag (FIXED: same)
-- [x] #247 :310 — clicking italic button inside <i> tag strips the tag (FIXED: same)
-- [x] #252 :282 — clicking bold button inside <b> tag strips the tag (FIXED: same)
+- [ ] #247 :319 — clicking italic button inside <i> tag strips the tag
+- [ ] #252 :285 — clicking bold button inside <b> tag strips the tag
 - [x] #262 :324 — clicking strikethrough button inside <del> tag strips the tag (FIXED: same)
 
 ## italic-button.spec.js
 - [x] #139 :114 — italicizing first word produces correct markdown (FIXED: getSourceLineText reads textarea)
 - [x] #141 :146 — italicizing middle word produces correct markdown (FIXED: same)
 - [x] #144 :178 — italicizing first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
-- [x] #149 :127 — toggling italic off restores plain text (FIXED: same)
+- [ ] #149 :128 — toggling italic off restores plain text
 - [x] #150 :337 — clicking italic with cursor on a plain word italicizes that word (FIXED: same)
-- [x] #151 :159 — toggling italic off on the middle word restores plain text (FIXED: same + renamed test)
-- [x] #153 :195 — italicizing middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2)
+- [ ] #151 :160 — toggling italic off on the middle word restores plain text
+- [ ] #153 :196 — italicizing middle word of second paragraph produces correct markdown
+- [ ] :351 — clicking italic with cursor inside italic text removes italic
 
 ## cursor-sync.spec.js
 - [ ] #332 :47 — cursors sync after typing text
@@ -184,6 +194,7 @@ Missing:
 - [ ] #297 :375 — Checklist prefix: backspace in prefix
 - [ ] #298 :315 — Ordered list prefix: delete in prefix
 - [ ] #299 :434 — Code fence three ticks with language: insert in language tag
+- [ ] :525 — Code fence eight ticks with language: insert in language tag
 - [ ] #300 :540 — Code fence eight ticks with language: delete in language tag
 - [ ] #301 :169 — Heading2 prefix: insert in prefix
 - [ ] #302 :494 — Code fence eight ticks: delete on opening fence

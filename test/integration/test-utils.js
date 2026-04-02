@@ -105,8 +105,16 @@ export async function loadContent(page, fixtureContent) {
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, fixtureContent);
-  // Wait for the editor to re-render.
-  await page.waitForSelector(`#editor [data-node-id]`);
+  // Wait for the editor to settle — the selector depends on the active view.
+  const isSource2 = await page
+    .locator(`#editor textarea`)
+    .isVisible()
+    .catch(() => false);
+  if (isSource2) {
+    await page.locator(`#editor textarea`).waitFor({ state: `visible` });
+  } else {
+    await page.waitForSelector(`#editor [data-node-id]`);
+  }
 }
 
 /**
