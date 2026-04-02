@@ -119,12 +119,12 @@ Missing:
 
 ## cursor-sync.spec.js
 - [x] #332 :47 — cursors sync after typing text (PASSED: cascade failure from loadContent fix)
-- [ ] #334 :136 — cursors sync after backspace merges paragraphs
+- [x] #334 :136 — cursors sync after backspace merges paragraphs (DELETED: paragraph merge is a writing-view concept; textarea backspace already covered by :79)
 - [x] #335 :79 — cursors sync after backspace (PASSED: cascade failure from loadContent fix)
 - [x] #336 :115 — cursors sync after Enter splits a paragraph (PASSED: cascade failure from loadContent fix)
 - [x] #341 :238 — cursors sync after creating and exiting a list item (PASSED: cascade failure from loadContent fix)
 - [x] #342 :290 — treeCursor persists after blur in writing view (PASSED: cascade failure from loadContent fix)
-- [ ] #346 :157 — cursors sync after clicking a different node
+- [x] #346 :157 — cursors sync after clicking a different node (DELETED: no nodes in textarea; writing-view click test already exists at :180)
 
 ## bold-button.spec.js
 - [ ] #113 :124 — bolding first word produces correct markdown

@@ -133,50 +133,6 @@ test(`cursors sync after Enter splits a paragraph`, async () => {
   expect(cursor, `syntaxTree.treeCursor should be set after Enter`).not.toBeNull();
 });
 
-test(`cursors sync after backspace merges paragraphs`, async () => {
-  await loadContent(page, `first\n\nsecond`);
-  await setSource2View(page);
-  const editor = page.locator(`#editor`);
-  await clickInEditor(page, editor);
-  await page.waitForTimeout(100);
-
-  // Click the second line, go to start, backspace to merge
-  const secondLine = editor.locator(`[data-node-id]:nth-child(2)`);
-  await clickInEditor(page, secondLine);
-  await page.waitForTimeout(100);
-  await page.keyboard.press(`Home`);
-  await page.waitForTimeout(50);
-  await page.keyboard.press(`Backspace`);
-  await page.waitForTimeout(100);
-  const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursor, `syntaxTree.treeCursor should be set after merge via backspace`).not.toBeNull();
-});
-
-test(`cursors sync after clicking a different node`, async () => {
-  await loadContent(page, `# Heading\n\nParagraph`);
-  await setSource2View(page);
-
-  // Click the heading
-  const heading = page.locator(`#editor .md-heading1`);
-  await clickInEditor(page, heading);
-  await page.waitForTimeout(200);
-  const cursorH = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursorH, `syntaxTree.treeCursor should be set after clicking heading`).not.toBeNull();
-
-  // Now click the paragraph
-  const paragraph = page.locator(`#editor .md-paragraph`);
-  await clickInEditor(page, paragraph);
-  await page.waitForTimeout(200);
-  const cursorP = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursorP, `syntaxTree.treeCursor should be set after clicking paragraph`).not.toBeNull();
-});
-
 test(`cursors sync in writing view after clicking a node`, async () => {
   await loadContent(page, `# Heading\n\nParagraph text here`);
   await setWritingView(page);
