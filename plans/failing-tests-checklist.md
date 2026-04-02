@@ -111,7 +111,7 @@ Missing:
 - [x] #139 :114 — italicizing first word produces correct markdown (FIXED: getSourceLineText reads textarea)
 - [x] #141 :146 — italicizing middle word produces correct markdown (FIXED: same)
 - [x] #144 :178 — italicizing first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
-- [ ] #149 :128 — toggling italic off restores plain text
+- [x] #149 :128 — toggling italic off restores plain text (PASSED: cascade failure from loadContent fix)
 - [x] #150 :337 — clicking italic with cursor on a plain word italicizes that word (FIXED: same)
 - [ ] #151 :160 — toggling italic off on the middle word restores plain text
 - [ ] #153 :196 — italicizing middle word of second paragraph produces correct markdown
