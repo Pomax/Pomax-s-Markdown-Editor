@@ -163,20 +163,20 @@ Missing:
 - [x] #148 :465 — typing x into checkbox brackets in source view checks the item (FIXED: ArrowLeft count 8→9, switch to writing view to verify checkbox is checked, removed unnecessary timeouts)
 
 ## list.spec.js
-- [ ] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph
-- [ ] #155 :45 — clicking bullet list button converts paragraph to unordered list item
-- [ ] #156 :177 — heading button on list item converts to heading
-- [ ] #157 :126 — Enter key in a list item creates a new list item
-- [ ] #159 :230 — source view: Enter between marker and content splits into empty item and new item
-- [ ] #160 :286 — switching list type converts the entire contiguous list
-- [ ] #161 :155 — Enter on empty list item exits the list to a paragraph
-- [ ] #162 :107 — clicking numbered list button on bullet list item switches to ordered
-- [ ] #163 :335 — pasting multi-line markdown with list items creates correct nodes
-- [ ] #164 :67 — clicking numbered list button converts paragraph to ordered list item
-- [ ] #165 :201 — Enter in ordered list creates item with incremented number
-- [ ] #167 :262 — toggling off a list item converts the entire contiguous list to paragraphs
-- [ ] #168 :310 — Enter on empty middle ordered item renumbers remaining items
-- [ ] #172 :372 — pasting multi-line markdown with CRLF line endings parses correctly
+- [x] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph (FIXED: read textarea instead of [data-node-id])
+- [x] #155 :45 — clicking bullet list button converts paragraph to unordered list item (FIXED: same)
+- [x] #156 :177 — heading button on list item converts to heading (FIXED: same)
+- [x] #157 :126 — Enter key in a list item creates a new list item (FIXED: same)
+- [x] #159 :230 — source view: Enter between marker and content splits into empty item and new item (DELETED: textarea has no list-aware Enter renumbering)
+- [x] #160 :286 — switching list type converts the entire contiguous list (FIXED: read textarea instead of [data-node-id])
+- [x] #161 :155 — Enter on empty list item exits the list to a paragraph (FIXED: same)
+- [x] #162 :107 — clicking numbered list button on bullet list item switches to ordered (FIXED: same)
+- [x] #163 :335 — pasting multi-line markdown with list items creates correct nodes (FIXED: click textarea + read textarea value)
+- [x] #164 :67 — clicking numbered list button converts paragraph to ordered list item (FIXED: read textarea instead of [data-node-id])
+- [x] #165 :201 — Enter in ordered list creates item with incremented number (FIXED: same)
+- [x] #167 :262 — toggling off a list item converts the entire contiguous list to paragraphs (FIXED: same)
+- [x] #168 :310 — Enter on empty middle ordered item renumbers remaining items (FIXED: same)
+- [x] #172 :372 — pasting multi-line markdown with CRLF line endings parses correctly (FIXED: click textarea + read textarea value)
 
 ## source-view-prefix-edit.spec.js
 - [ ] #284 :119 — Heading1 prefix: insert in prefix

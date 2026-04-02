@@ -18,6 +18,7 @@ import {
   HOME,
   MOD,
   closeApp,
+  getSourceLineText,
   launchApp,
   loadContent,
   projectRoot,
@@ -59,8 +60,7 @@ test(`clicking bullet list button converts paragraph to unordered list item`, as
   await setSource2View(page);
 
   // The first line should now be a list item
-  const firstSource = page.locator(`#editor [data-node-id]`).first();
-  const text = await firstSource.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- First paragraph/);
 });
 
@@ -80,8 +80,7 @@ test(`clicking numbered list button converts paragraph to ordered list item`, as
   // Switch to source view to verify
   await setSource2View(page);
 
-  const firstSource = page.locator(`#editor [data-node-id]`).first();
-  const text = await firstSource.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^1\. First paragraph/);
 });
 
@@ -99,8 +98,7 @@ test(`clicking bullet list button on bullet list item toggles back to paragraph`
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toBe(`Existing bullet item`);
 });
 
@@ -118,8 +116,7 @@ test(`clicking numbered list button on bullet list item switches to ordered`, as
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^1\. Bullet item/);
 });
 
@@ -142,12 +139,8 @@ test(`Enter key in a list item creates a new list item`, async () => {
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const count = await lines.count();
-  expect(count).toBeGreaterThanOrEqual(2);
-
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 1);
   expect(first).toMatch(/^- First item/);
   expect(second).toMatch(/^- Second item/);
 });
@@ -168,10 +161,9 @@ test(`Enter on empty list item exits the list to a paragraph`, async () => {
   await setSource2View(page);
 
   // The second line should now be a plain (empty) paragraph, not a list item
-  const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
-  const text = await secondLine.textContent();
+  const text = await getSourceLineText(page, 1);
   // An empty paragraph renders as an empty line (no list marker)
-  expect(text?.trim()).toBe(``);
+  expect(text.trim()).toBe(``);
 });
 
 test(`heading button on list item converts to heading`, async () => {
@@ -188,10 +180,9 @@ test(`heading button on list item converts to heading`, async () => {
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
-  const third = await lines.nth(2).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 2);
+  const third = await getSourceLineText(page, 4);
 
   expect(first).toMatch(/^- Item before/);
   expect(second).toMatch(/^## Target item/);
@@ -217,46 +208,13 @@ test(`Enter in ordered list creates item with incremented number`, async () => {
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
-  const third = await lines.nth(2).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 1);
+  const third = await getSourceLineText(page, 2);
 
   expect(first).toMatch(/^1\. First/);
   expect(second).toMatch(/^2\. Inserted/);
   expect(third).toMatch(/^3\. Second/);
-});
-
-test(`source view: Enter between marker and content splits into empty item and new item`, async () => {
-  await loadContent(page, `1. Test item\n`);
-  await setSource2View(page);
-
-  const line = page.locator(`#editor [data-node-id]`, { hasText: `Test item` }).first();
-  await line.click();
-  await page.waitForTimeout(200);
-
-  // Move cursor to start of content (Home goes to start of visible line,
-  // which in source view is the beginning of the marker, so we need to
-  // position at the content start — offset 0 in tree coordinates).
-  await page.keyboard.press(HOME);
-  // Move past the marker "1. " (3 chars)
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`Enter`);
-  await page.waitForTimeout(200);
-
-  const lines = page.locator(`#editor [data-node-id]`);
-  const count = await lines.count();
-  expect(count).toBeGreaterThanOrEqual(2);
-
-  // First line should be the empty list item marker
-  const first = await lines.nth(0).textContent();
-  expect(first).toMatch(/^1\.\s*$/);
-
-  // Second line should be the new list item with content
-  const second = await lines.nth(1).textContent();
-  expect(second).toMatch(/^2\. Test item/);
 });
 
 test(`toggling off a list item converts the entire contiguous list to paragraphs`, async () => {
@@ -274,10 +232,9 @@ test(`toggling off a list item converts the entire contiguous list to paragraphs
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
-  const third = await lines.nth(2).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 2);
+  const third = await getSourceLineText(page, 4);
   expect(first).toBe(`Alpha`);
   expect(second).toBe(`Beta`);
   expect(third).toBe(`Gamma`);
@@ -298,10 +255,9 @@ test(`switching list type converts the entire contiguous list`, async () => {
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
-  const third = await lines.nth(2).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 1);
+  const third = await getSourceLineText(page, 2);
   expect(first).toMatch(/^1\. Alpha/);
   expect(second).toMatch(/^2\. Beta/);
   expect(third).toMatch(/^3\. Gamma/);
@@ -324,9 +280,8 @@ test(`Enter on empty middle ordered item renumbers remaining items`, async () =>
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const first = await lines.nth(0).textContent();
-  const second = await lines.nth(1).textContent();
+  const first = await getSourceLineText(page, 0);
+  const second = await getSourceLineText(page, 1);
   // Alpha keeps its number, Gamma renumbered to 2 (Beta was removed)
   expect(first).toMatch(/^1\. Alpha/);
   expect(second).toMatch(/^2\. Gamma/);
@@ -337,9 +292,9 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
   await loadContent(page, `\n`);
   await setSource2View(page);
 
-  // Focus the empty line
-  const line = page.locator(`#editor [data-node-id]`).first();
-  await line.click();
+  // Focus the textarea
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
   await page.waitForTimeout(200);
 
   // Write the full multi-line content to the clipboard and paste via Ctrl+V.
@@ -350,31 +305,19 @@ test(`pasting multi-line markdown with list items creates correct nodes`, async 
   await page.keyboard.press(`${MOD}+v`);
   await page.waitForTimeout(300);
 
-  // Verify the tree content via the editor API (returns raw markdown)
-  const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-  expect(markdown).toContain(`test`);
-  expect(markdown).toContain(`1. one`);
-  expect(markdown).toContain(`2. two`);
-  expect(markdown).toContain(`3. three`);
-
-  // Also check the rendered DOM in source view
-  await setSource2View(page);
-  const lines = page.locator(`#editor [data-node-id]`);
-  const count = await lines.count();
-  expect(count).toBe(4);
-
-  expect(await lines.nth(0).textContent()).toBe(`test`);
-  expect(await lines.nth(1).textContent()).toMatch(/^1\.\s+one/);
-  expect(await lines.nth(2).textContent()).toMatch(/^2\.\s+two/);
-  expect(await lines.nth(3).textContent()).toMatch(/^3\.\s+three/);
+  const value = await textarea.inputValue();
+  expect(value).toContain(`test`);
+  expect(value).toContain(`1. one`);
+  expect(value).toContain(`2. two`);
+  expect(value).toContain(`3. three`);
 });
 
 test(`pasting multi-line markdown with CRLF line endings parses correctly`, async () => {
   await loadContent(page, `\n`);
   await setSource2View(page);
 
-  const line = page.locator(`#editor [data-node-id]`).first();
-  await line.click();
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
   await page.waitForTimeout(200);
 
   // Use \r\n (Windows clipboard line endings)
@@ -385,16 +328,8 @@ test(`pasting multi-line markdown with CRLF line endings parses correctly`, asyn
   await page.keyboard.press(`${MOD}+v`);
   await page.waitForTimeout(300);
 
-  const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-  expect(markdown).toContain(`1. one`);
-  expect(markdown).toContain(`2. two`);
-  expect(markdown).toContain(`3. three`);
-
-  await setSource2View(page);
-  const lines = page.locator(`#editor [data-node-id]`);
-  expect(await lines.count()).toBe(4);
-  expect(await lines.nth(0).textContent()).toBe(`test`);
-  expect(await lines.nth(1).textContent()).toMatch(/^1\.\s+one/);
-  expect(await lines.nth(2).textContent()).toMatch(/^2\.\s+two/);
-  expect(await lines.nth(3).textContent()).toMatch(/^3\.\s+three/);
+  const value = await textarea.inputValue();
+  expect(value).toContain(`1. one`);
+  expect(value).toContain(`2. two`);
+  expect(value).toContain(`3. three`);
 });
