@@ -127,14 +127,14 @@ Missing:
 - [x] #346 :157 — cursors sync after clicking a different node (DELETED: no nodes in textarea; writing-view click test already exists at :180)
 
 ## bold-button.spec.js
-- [ ] #113 :124 — bolding first word produces correct markdown
-- [ ] #114 :160 — bolding middle word produces correct markdown
-- [ ] #115 :194 — bolding first word of second paragraph produces correct markdown
-- [ ] #117 :367 — clicking bold with cursor on a plain word bolds that word
-- [ ] #123 :173 — toggling bold off middle word restores plain text
-- [ ] #125 :137 — toggling bold off restores plain text
-- [ ] #126 :214 — bolding middle word of second paragraph produces correct markdown
-- [ ] #128 :382 — clicking bold with cursor inside bold text removes bold
+- [x] #113 :124 — bolding first word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #114 :160 — bolding middle word produces correct markdown (FIXED: same)
+- [x] #115 :194 — bolding first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #117 :367 — clicking bold with cursor on a plain word bolds that word (FIXED: same)
+- [x] #123 :173 — toggling bold off middle word restores plain text (FIXED: same)
+- [x] #125 :137 — toggling bold off restores plain text (FIXED: same)
+- [x] #126 :214 — bolding middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #128 :382 — clicking bold with cursor inside bold text removes bold (FIXED: same)
 
 ## strikethrough-button.spec.js
 - [ ] #183 :146 — strikethrough middle word produces correct markdown

@@ -236,3 +236,14 @@ export async function setSource2View(page) {
   await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
   await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
 }
+
+/**
+ * Returns the raw markdown text of a specific line in source2 view.
+ * @param {import('@playwright/test').Page} pg
+ * @param {number} index - 0-based line index.
+ * @returns {Promise<string>}
+ */
+export async function getSourceLineText(pg, index) {
+  const value = await pg.locator(`#editor textarea`).inputValue();
+  return value.split(`\n`)[index] ?? ``;
+}

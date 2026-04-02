@@ -16,6 +16,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
   closeApp,
+  getSourceLineText,
   launchApp,
   loadContent,
   projectRoot,
@@ -110,16 +111,6 @@ async function clickBoldButton(pg) {
   await pg.waitForTimeout(200);
 }
 
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
-}
-
 test.describe(`Problem 1 — bold first word, toggle off`, () => {
   test(`bolding first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -205,7 +196,7 @@ test.describe(`Problem 3 — bold first word, paragraph 2`, () => {
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     // Second paragraph should have bold on first word.
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`**text2** text2 text2`);
   });
 });
@@ -224,7 +215,7 @@ test.describe(`Problem 4 — bold middle word, paragraph 2`, () => {
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
     // Second paragraph should have bold on middle word.
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`text2 **text2** text2`);
   });
 });

@@ -104,16 +104,6 @@ async function clickSubscriptButton(pg) {
   await pg.waitForTimeout(200);
 }
 
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
-}
-
 test.describe(`Cursor position after subscript`, () => {
   test(`cursor is at end of subscripted middle word`, async () => {
     await loadContent(page, fixtureContent);

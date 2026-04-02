@@ -15,6 +15,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
   closeApp,
+  getSourceLineText,
   launchApp,
   loadContent,
   projectRoot,
@@ -98,17 +99,6 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
 async function clickItalicButton(pg) {
   await pg.locator(`[data-button-id="italic"]`).click();
   await pg.waitForTimeout(200);
-}
-
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  const value = await pg.locator(`#editor textarea`).inputValue();
-  return value.split(`\n`)[index] ?? ``;
 }
 
 test.describe(`Italic first word, toggle off`, () => {
