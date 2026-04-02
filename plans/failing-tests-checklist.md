@@ -66,7 +66,7 @@ Missing:
 - [x] :79 — single-line paste inserts text at cursor (writing view) (PASSED: cascade failure from loadContent fix)
 
 ## range-handling.spec.js
-- [ ] #387 :443 — cross-node copy produces markdown with block prefixes
+- [x] #387 :443 — cross-node copy produces markdown with block prefixes (PASSED: cascade failure from loadContent fix)
 
 ## inline-image.spec.js
 - [x] #282 :74 — image syntax round-trips through source view correctly (FIXED: check textarea value instead of [data-node-id])
