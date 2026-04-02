@@ -147,20 +147,20 @@ Missing:
 - [x] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it (FIXED: same)
 
 ## checklist.spec.js
-- [ ] #118 :40 — source view renders checklist prefix for unchecked item
-- [ ] #121 :76 — clicking checklist button converts paragraph to checklist item
-- [ ] #122 :112 — clicking bullet button on checklist item switches to bullet list
-- [ ] #124 :168 — clicking checklist button on ordered list switches to checklist
-- [ ] #127 :49 — source view renders checklist prefix for checked item
-- [ ] #129 :94 — clicking checklist button on checklist item toggles back to paragraph
-- [ ] #130 :132 — clicking ordered button on checklist item switches to ordered list
-- [ ] #131 :244 — Enter on empty checklist item exits to paragraph
-- [ ] #132 :186 — clicking checkbox in writing view toggles checked state
-- [ ] #133 :383 — multi-select across html-block converts all nodes to checklist after confirm
-- [ ] #140 :150 — clicking checklist button on bullet list switches to checklist
-- [ ] #142 :266 — switching entire contiguous checklist run to bullet via toolbar
-- [ ] #145 :219 — Enter key in checklist item creates new unchecked checklist item
-- [ ] #148 :465 — typing x into checkbox brackets in source view checks the item
+- [x] #118 :40 — source view renders checklist prefix for unchecked item (DELETED: trivially true for textarea)
+- [x] #121 :76 — clicking checklist button converts paragraph to checklist item (FIXED: read textarea instead of [data-node-id])
+- [x] #122 :112 — clicking bullet button on checklist item switches to bullet list (FIXED: same)
+- [x] #124 :168 — clicking checklist button on ordered list switches to checklist (FIXED: same)
+- [x] #127 :49 — source view renders checklist prefix for checked item (DELETED: trivially true for textarea)
+- [x] #129 :94 — clicking checklist button on checklist item toggles back to paragraph (FIXED: read textarea instead of [data-node-id])
+- [x] #130 :132 — clicking ordered button on checklist item switches to ordered list (FIXED: same)
+- [x] #131 :244 — Enter on empty checklist item exits to paragraph (FIXED: same)
+- [x] #132 :186 — clicking checkbox in writing view toggles checked state (FIXED: same)
+- [x] #133 :383 — multi-select across html-block converts all nodes to checklist after confirm (FIXED: read textarea directly)
+- [x] #140 :150 — clicking checklist button on bullet list switches to checklist (FIXED: read textarea instead of [data-node-id])
+- [x] #142 :266 — switching entire contiguous checklist run to bullet via toolbar (FIXED: same + toMarkdown tight-list fix)
+- [x] #145 :219 — Enter key in checklist item creates new unchecked checklist item (FIXED: same + toMarkdown tight-list fix)
+- [ ] #148 :465 — typing x into checkbox brackets in source view checks the item (SEPARATE ISSUE: cursor positioning, not data-node-id)
 
 ## list.spec.js
 - [ ] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph

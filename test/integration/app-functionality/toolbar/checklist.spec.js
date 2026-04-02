@@ -17,6 +17,7 @@ import {
   MOD,
   clickInEditor,
   closeApp,
+  getSourceLineText,
   launchApp,
   loadContent,
   setSource2View,
@@ -35,24 +36,6 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   await closeApp(electronApp);
-});
-
-test(`source view renders checklist prefix for unchecked item`, async () => {
-  await loadContent(page, `- [ ] Unchecked task\n`);
-  await setSource2View(page);
-
-  const line = page.locator(`#editor [data-node-id]`).first();
-  const text = await line.textContent();
-  expect(text).toMatch(/^- \[ \] Unchecked task/);
-});
-
-test(`source view renders checklist prefix for checked item`, async () => {
-  await loadContent(page, `- [x] Checked task\n`);
-  await setSource2View(page);
-
-  const line = page.locator(`#editor [data-node-id]`).first();
-  const text = await line.textContent();
-  expect(text).toMatch(/^- \[x\] Checked task/);
 });
 
 test(`writing view renders checkbox for checklist item`, async () => {
@@ -86,8 +69,7 @@ test(`clicking checklist button converts paragraph to checklist item`, async () 
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- \[ \] A simple paragraph/);
 });
 
@@ -104,8 +86,7 @@ test(`clicking checklist button on checklist item toggles back to paragraph`, as
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toBe(`Task item`);
 });
 
@@ -122,8 +103,7 @@ test(`clicking bullet button on checklist item switches to bullet list`, async (
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- Checklist item/);
   // Should NOT have checkbox chars
   expect(text).not.toMatch(/\[[ x]\]/);
@@ -142,8 +122,7 @@ test(`clicking ordered button on checklist item switches to ordered list`, async
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^1\. Checklist item/);
 });
 
@@ -160,8 +139,7 @@ test(`clicking checklist button on bullet list switches to checklist`, async () 
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- \[ \] Bullet item/);
 });
 
@@ -178,8 +156,7 @@ test(`clicking checklist button on ordered list switches to checklist`, async ()
 
   await setSource2View(page);
 
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- \[ \] Ordered item/);
 });
 
@@ -211,8 +188,7 @@ test(`clicking checkbox in writing view toggles checked state`, async () => {
 
   // Verify markdown roundtrip
   await setSource2View(page);
-  const source = page.locator(`#editor [data-node-id]`).first();
-  const text = await source.textContent();
+  const text = await getSourceLineText(page, 0);
   expect(text).toMatch(/^- \[x\] Toggle me/);
 });
 
@@ -234,9 +210,8 @@ test(`Enter key in checklist item creates new unchecked checklist item`, async (
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const firstText = await lines.nth(0).textContent();
-  const secondText = await lines.nth(1).textContent();
+  const firstText = await getSourceLineText(page, 0);
+  const secondText = await getSourceLineText(page, 1);
   expect(firstText).toMatch(/^- \[x\] First task/);
   expect(secondText).toMatch(/^- \[ \] Second task/);
 });
@@ -255,9 +230,8 @@ test(`Enter on empty checklist item exits to paragraph`, async () => {
 
   await setSource2View(page);
 
-  const allLines = page.locator(`#editor [data-node-id]`);
-  const firstText = await allLines.nth(0).textContent();
-  const secondText = await allLines.nth(1).textContent();
+  const firstText = await getSourceLineText(page, 0);
+  const secondText = await getSourceLineText(page, 1);
   expect(firstText).toMatch(/^- \[ \] Task/);
   // Second line should be an empty paragraph (no list marker)
   expect(secondText).not.toMatch(/^- /);
@@ -276,9 +250,8 @@ test(`switching entire contiguous checklist run to bullet via toolbar`, async ()
 
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
   for (let i = 0; i < 3; i++) {
-    const text = await lines.nth(i).textContent();
+    const text = await getSourceLineText(page, i);
     expect(text).toMatch(/^- Task [ABC]/);
     expect(text).not.toMatch(/\[[ x]\]/);
   }
@@ -404,13 +377,12 @@ test(`multi-select across html-block converts all nodes to checklist after confi
   // Switch to source view to verify
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const lineCount = await lines.count();
+  const value = await page.locator(`#editor textarea`).inputValue();
+  const allLines = value.split(`\n`);
 
   // Collect all lines that are checklist items
   const checklistLines = [];
-  for (let i = 0; i < lineCount; i++) {
-    const text = (await lines.nth(i).textContent()) ?? ``;
+  for (const text of allLines) {
     if (text.match(/^- \[[ x]\] /)) {
       checklistLines.push(text);
     }
@@ -449,12 +421,8 @@ test(`multi-select across html-block aborts on cancel`, async () => {
   // Switch to source view — nothing should have changed
   await setSource2View(page);
 
-  const lines = page.locator(`#editor [data-node-id]`);
-  const allText = [];
-  const lineCount = await lines.count();
-  for (let i = 0; i < lineCount; i++) {
-    allText.push(await lines.nth(i).textContent());
-  }
+  const value = await page.locator(`#editor textarea`).inputValue();
+  const allText = value.split(`\n`);
 
   // No checklist markers should be present
   for (const text of allText) {
