@@ -63,7 +63,7 @@ Missing:
 - [x] #374 :120 — pasting markdown heading creates a heading node (source view) (DELETED: parser doesn't care how text arrived)
 - [x] #375 :139 — multi-line paste with CRLF line endings works correctly (source view) (FIXED: click textarea, read textarea value instead of getMarkdown)
 - [x] #376 :156 — paste does not trigger a full render (source view) (DELETED: no rendering in textarea, concept doesn't apply)
-- [ ] :79 — single-line paste inserts text at cursor (writing view)
+- [x] :79 — single-line paste inserts text at cursor (writing view) (PASSED: cascade failure from loadContent fix)
 
 ## range-handling.spec.js
 - [ ] #387 :443 — cross-node copy produces markdown with block prefixes
