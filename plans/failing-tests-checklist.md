@@ -104,7 +104,7 @@ Missing:
 - [x] #227 :268 — clicking bold button inside <strong> tag strips the tag (FIXED: same)
 - [x] #229 :338 — clicking strikethrough button inside <s> tag strips the tag (FIXED: same)
 - [x] #247 :319 — clicking italic button inside <i> tag strips the tag (PASSED: cascade failure from loadContent fix)
-- [ ] #252 :285 — clicking bold button inside <b> tag strips the tag
+- [x] #252 :285 — clicking bold button inside <b> tag strips the tag (PASSED: cascade failure from loadContent fix)
 - [x] #262 :324 — clicking strikethrough button inside <del> tag strips the tag (FIXED: same)
 
 ## italic-button.spec.js
