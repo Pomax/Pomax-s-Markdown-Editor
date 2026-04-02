@@ -171,14 +171,6 @@ export class IPCHandler {
    * Registers view-related IPC handlers.
    */
   registerViewHandlers() {
-    ipcMain.handle(`view:source`, async (event) => {
-      const window = BrowserWindow.fromWebContents(event.sender);
-      if (window) {
-        window.webContents.send(`menu:action`, `view:source`);
-      }
-      return { success: true };
-    });
-
     ipcMain.handle(`view:writing`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {

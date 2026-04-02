@@ -159,7 +159,6 @@ export class APIRegistry {
       handler: async (params, webContents) => {
         /** @type {Record<string, string>} */
         const modeActions = {
-          source: `view:source`,
           source2: `view:source2`,
           writing: `view:writing`,
         };

@@ -120,7 +120,7 @@ Menu actions are sent to the renderer via the `menu:action` IPC channel. Cut, Co
 Central hub for IPC communication. Registers handlers for:
 - File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
 - Document operations (`document:undo`, `document:redo`)
-- View operations (`view:source`, `view:writing`, `view:openFilesChanged`)
+- View operations (`view:source2`, `view:writing`, `view:openFilesChanged`)
 - Element operations (`element:changeType`, `element:format`)
 - Settings operations (`settings:get`, `settings:set`, `settings:getAll`)
 - Image operations (`image:browse`, `image:rename`)
