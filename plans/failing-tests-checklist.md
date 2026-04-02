@@ -44,7 +44,7 @@ Missing:
 - [x] #112 :95 — toggle stays in sync when view mode changes via menu (FIXED: removed defunct `source` mode step, now tests writing → source2 → writing)
 
 ## code-block-language-tag.spec.js
-- [ ] #263 :171 — cursor offset is correct in source view after changing language in writing view
+- [x] #263 :171 — cursor offset is correct in source view after changing language in writing view (PASSED: cascade failure from loadContent fix)
 
 ## heading-input.spec.js
 - [x] #274 :28 — typing "# main" letter by letter creates a heading with correct content (already passing)
