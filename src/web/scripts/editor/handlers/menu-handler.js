@@ -76,11 +76,11 @@ export class MenuHandler {
       case `edit:redo`:
         await this.handleRedo();
         break;
-      case `view:source`:
-        await this.handleViewSource();
-        break;
       case `view:writing`:
         await this.handleViewWriting();
+        break;
+      case `view:source2`:
+        await this.handleViewSource2();
         break;
       case `edit:preferences`:
         this.handlePreferences();

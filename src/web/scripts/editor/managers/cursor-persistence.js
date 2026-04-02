@@ -41,7 +41,10 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
       const node = nodes[i];
 
       // If this is the cursor node, compute final offset.
-      if (node.id === cursor.nodeId) {
+      // Also match when the cursor is on an inline child (e.g. <em>)
+      // whose blockNodeId points to this block-level node — the
+      // offset is already block-relative from computeOffsetInContent.
+      if (node.id === cursor.nodeId || node.id === cursor.blockNodeId) {
         // For html-block containers, the cursor may be on the
         // opening/closing tag line (source view tagPart).
         if (node.type === `html-block` && node.children.length > 0 && !cursor.tagPart) {

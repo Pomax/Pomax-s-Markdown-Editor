@@ -15,10 +15,11 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
   closeApp,
+  getSourceLineText,
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -100,16 +101,6 @@ async function clickItalicButton(pg) {
   await pg.waitForTimeout(200);
 }
 
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
-}
-
 test.describe(`Italic first word, toggle off`, () => {
   test(`italicizing first word produces correct markdown`, async () => {
     await loadContent(page, fixtureContent);
@@ -119,7 +110,7 @@ test.describe(`Italic first word, toggle off`, () => {
     await dblclickWord(page, firstLine, `text1`, `first`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`*text1* text1 text1`);
   });
@@ -136,7 +127,7 @@ test.describe(`Italic first word, toggle off`, () => {
     await dblclickWord(page, firstLineAgain, `text1`, `first`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });
@@ -151,12 +142,12 @@ test.describe(`Italic middle word, paragraph 1`, () => {
     await dblclickWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 *text1* text1`);
   });
 
-  test(`toggling italic off middle word restores plain text`, async () => {
+  test(`toggling italic off on the middle word restores plain text`, async () => {
     await loadContent(page, fixtureContent);
     await setWritingView(page);
 
@@ -168,7 +159,7 @@ test.describe(`Italic middle word, paragraph 1`, () => {
     await dblclickWord(page, firstLineAgain, `text1`, `middle`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });
@@ -183,10 +174,10 @@ test.describe(`Italic first word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `first`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`*text2* text2 text2`);
   });
 });
@@ -200,10 +191,10 @@ test.describe(`Italic middle word, paragraph 2`, () => {
     await dblclickWord(page, secondLine, `text2`, `middle`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`text2 *text2* text2`);
   });
 });
@@ -342,7 +333,7 @@ test.describe(`Collapsed cursor — italic word under caret`, () => {
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 *text1* text1`);
   });
@@ -356,7 +347,7 @@ test.describe(`Collapsed cursor — italic word under caret`, () => {
     await clickInsideWord(page, firstLine, `text1`, `middle`);
     await clickItalicButton(page);
 
-    await setSourceView(page);
+    await setSource2View(page);
     const line = await getSourceLineText(page, 0);
     expect(line).toBe(`text1 text1 text1`);
   });

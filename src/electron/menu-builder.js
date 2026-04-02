@@ -197,18 +197,13 @@ export class MenuBuilder {
     /** @type {Electron.MenuItemConstructorOptions[]} */
     const submenu = [
       {
-        label: `Source View`,
-        accelerator: `CmdOrCtrl+1`,
-        click: () => this.sendMenuAction(`view:source`),
-      },
-      {
         label: `Writing View`,
-        accelerator: `CmdOrCtrl+2`,
+        accelerator: `CmdOrCtrl+1`,
         click: () => this.sendMenuAction(`view:writing`),
       },
       {
         label: `Source 2 View`,
-        accelerator: `CmdOrCtrl+3`,
+        accelerator: `CmdOrCtrl+2`,
         click: () => this.sendMenuAction(`view:source2`),
       },
     ];

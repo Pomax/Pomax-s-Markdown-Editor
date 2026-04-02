@@ -735,7 +735,16 @@ export class SyntaxTree {
       lines.push(child.toMarkdown());
     }
 
-    return lines.join(`\n\n`);
+    if (lines.length === 0) return ``;
+
+    const parts = [lines[0]];
+    for (let i = 1; i < lines.length; i++) {
+      const prev = this.children[i - 1];
+      const curr = this.children[i];
+      const sep = prev.type === `list-item` && curr.type === `list-item` ? `\n` : `\n\n`;
+      parts.push(sep + lines[i]);
+    }
+    return parts.join(``);
   }
 
   /**

@@ -40,6 +40,8 @@ import { absoluteOffsetToCursor, cursorToAbsoluteOffset } from './managers/curso
 import { TreeFormatter } from './formatters/tree-formatter.js';
 import { Source2Formatter } from './formatters/source2-formatter.js';
 
+const VIEW_MODES = [`writing`, `source2`];
+
 /**
  * Main editor class that manages the markdown editing experience.
  */
@@ -455,10 +457,7 @@ export class Editor {
     this.syntaxTree?.appendChild(para);
 
     // Replace the phantom DOM element with a properly rendered node.
-    const element =
-      this.viewMode === `source`
-        ? this.sourceRenderer.renderNode(para)
-        : this.writingRenderer.renderNode(para, true);
+    const element = this.writingRenderer.renderNode(para, true);
     if (element) {
       phantom.replaceWith(element);
     }
@@ -482,12 +481,7 @@ export class Editor {
 
     this.isRendering = true;
     try {
-      const renderer =
-        this.viewMode === `source`
-          ? this.sourceRenderer
-          : this.viewMode === `source2`
-            ? this.sourceRendererV2
-            : this.writingRenderer;
+      const renderer = this.viewMode === `source2` ? this.sourceRendererV2 : this.writingRenderer;
       renderer.fullRender(this.syntaxTree, this.container);
     } finally {
       this.isRendering = false;
@@ -620,6 +614,12 @@ export class Editor {
       }
       case `image`:
         return 0;
+      case `code-block`: {
+        const ticks = `\``.repeat(attributes?.fenceCount || 3);
+        const lang = attributes?.language || ``;
+        // Opening fence line: ```lang\n
+        return ticks.length + lang.length + 1;
+      }
       default:
         return 0;
     }
@@ -739,7 +739,7 @@ export class Editor {
    * @param {ViewMode} mode
    */
   async setViewMode(mode) {
-    if (mode !== `source` && mode !== `source2` && mode !== `writing`) {
+    if (!VIEW_MODES.includes(mode)) {
       console.warn(`Invalid view mode: ${mode}`);
       return;
     }
@@ -831,23 +831,6 @@ export class Editor {
       }
     }
 
-    // Writing → source: if the cursor is on a code-block, convert
-    // the content-relative offset to sourceEditText-relative by
-    // adding the opening-fence preamble length.
-    if (mode === `source` && this.viewMode !== `source2` && this.syntaxTree?.treeCursor) {
-      const cursorBlockId =
-        this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
-      const node = this.syntaxTree.findNodeById(cursorBlockId);
-      if (node?.type === `code-block`) {
-        const attrs = /** @type {NodeAttributes} */ (node.attributes);
-        const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
-        this.syntaxTree.treeCursor = {
-          nodeId: node.id,
-          offset: this.syntaxTree.treeCursor.offset + preamble,
-        };
-      }
-    }
-
     // Anchor on the cursor's node if one exists, since that is what
     // the user is focused on.  Fall back to the node closest to the
     // viewport centre so content doesn't jump when there is no cursor.
@@ -861,8 +844,13 @@ export class Editor {
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         const rect = range.getBoundingClientRect();
-        const containerRect = scrollContainer.getBoundingClientRect();
-        savedCaretTop = rect.top - containerRect.top;
+        // Firefox returns a zero-height rect for collapsed selections
+        // after inline elements (e.g. <em>), producing a bogus top
+        // value that would scroll the content off-screen.
+        if (rect.height > 0) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          savedCaretTop = rect.top - containerRect.top;
+        }
       }
     }
 
@@ -953,7 +941,9 @@ export class Editor {
     }
 
     // Restore scroll so the anchor node sits at the same viewport offset.
-    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
+    // Source2 is a plain textarea with no [data-node-id] elements, so
+    // anchor-based scroll restore cannot work — skip it entirely.
+    if (mode !== `source2` && anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
       const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
       if (el) {
         const containerRect = scrollContainer.getBoundingClientRect();

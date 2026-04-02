@@ -14,7 +14,7 @@ import {
   clickInEditor,
   closeApp,
   launchApp,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -135,97 +135,6 @@ test.describe(`Code-block early conversion — writing view`, () => {
     await clickInEditor(page, editor);
 
     await page.keyboard.type(`\`\`\``);
-
-    const paragraph = editor.locator(`[data-node-id].md-paragraph`);
-    await expect(paragraph).toBeVisible();
-
-    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
-    await expect(codeBlock).toHaveCount(0);
-  });
-});
-
-test.describe(`Code-block early conversion — source view`, () => {
-  test(`typing \`\`\` + Enter creates an empty code block`, async () => {
-    await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
-
-    const editor = page.locator(`#editor`);
-    await clickInEditor(page, editor);
-
-    await page.keyboard.type(`\`\`\``);
-    await page.keyboard.press(`Enter`);
-
-    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
-    await expect(codeBlock).toBeVisible();
-
-    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-    expect(markdown).toContain(`\`\`\`\n`);
-  });
-
-  test(`typing \`\`\`js + Enter creates a code block with language`, async () => {
-    await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
-
-    const editor = page.locator(`#editor`);
-    await clickInEditor(page, editor);
-
-    await page.keyboard.type(`\`\`\`js`);
-    await page.keyboard.press(`Enter`);
-
-    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
-    await expect(codeBlock).toBeVisible();
-
-    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-    expect(markdown).toContain(`\`\`\`js\n`);
-  });
-
-  test(`typing \`\`\`\` + Enter creates a code block with fenceCount 4`, async () => {
-    await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
-
-    const editor = page.locator(`#editor`);
-    await clickInEditor(page, editor);
-
-    await page.keyboard.type(`\`\`\`\``);
-    await page.keyboard.press(`Enter`);
-
-    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
-    await expect(codeBlock).toBeVisible();
-
-    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-    expect(markdown).toContain(`\`\`\`\`\n`);
-  });
-
-  test(`typing \`\`\`\`\`\`js + Enter creates a code block with fenceCount 6 and language`, async () => {
-    await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
-
-    const editor = page.locator(`#editor`);
-    await clickInEditor(page, editor);
-
-    await page.keyboard.type(`\`\`\`\`\`\`js`);
-    await page.keyboard.press(`Enter`);
-
-    const codeBlock = editor.locator(`[data-node-id].md-code-block`);
-    await expect(codeBlock).toBeVisible();
-
-    const markdown = await page.evaluate(() => window.editorAPI?.getContent() ?? ``);
-    expect(markdown).toContain(`\`\`\`\`\`\`js\n`);
-  });
-
-  test(`backtick fence text is not converted until Enter`, async () => {
-    await page.evaluate(() => window.editorAPI?.setContent(``));
-    await page.waitForSelector(`#editor [data-node-id]`);
-    await setSourceView(page);
-
-    const editor = page.locator(`#editor`);
-    await clickInEditor(page, editor);
-
-    await page.keyboard.type(`\`\`\`\``);
 
     const paragraph = editor.locator(`[data-node-id].md-paragraph`);
     await expect(paragraph).toBeVisible();

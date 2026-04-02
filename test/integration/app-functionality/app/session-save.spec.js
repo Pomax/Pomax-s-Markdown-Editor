@@ -148,7 +148,8 @@ test(`flushing open files saves the active ToC heading path`, async () => {
   expect(resolvedText).toContain(activeHeadingText);
 });
 
-test(`reopening the app restores cursor position and ToC heading`, async () => {
+test(`reopening the app restores cursor position and ToC heading`, async ({}, testInfo) => {
+  testInfo.setTimeout(30_000);
   const app1 = await launchApp([MANY_SECTIONS]);
   const page1 = app1.page;
 

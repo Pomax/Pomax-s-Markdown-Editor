@@ -54,6 +54,13 @@ export class SearchBar {
     this.searchViewMode = null;
 
     /**
+     * Saved scroll position so we can restore it when a search
+     * yields zero results.
+     * @type {number|undefined}
+     */
+    this.savedScrollTop = undefined;
+
+    /**
      * Bound handler for render-complete events so we can remove it.
      * @type {(() => void)|null}
      */
@@ -179,6 +186,9 @@ export class SearchBar {
     this.container.style.left = ``;
     this.input.focus();
     this.input.select();
+    // Save the current scroll position so we can restore it if
+    // the search ends up with zero results.
+    this.savedScrollTop = document.getElementById(`editor-container`)?.scrollTop;
     // Re-run the search in case the view mode changed since
     // the bar was last open.
     this.onSearchChanged();
@@ -195,8 +205,13 @@ export class SearchBar {
     this.matches = [];
     this.currentIndex = -1;
     this.updateMatchCount();
-    // Return focus to the editor
-    this.editor.container.focus();
+    // Return focus to the editor, preserving cursor position.
+    if (this.editor.viewMode === `source2`) {
+      const textarea = this.editor.container.querySelector(`textarea`);
+      textarea?.focus();
+    } else {
+      this.editor.placeCursor();
+    }
   }
 
   /** @returns {boolean} Whether the search bar is currently visible. */
@@ -273,6 +288,8 @@ export class SearchBar {
     this.applyHighlights();
     if (this.matches.length > 0) {
       this.scrollToCurrentMatch();
+    } else if (this.savedScrollTop) {
+      document.getElementById(`editor-container`)?.scrollTo(0, this.savedScrollTop);
     }
   }
 
@@ -287,16 +304,23 @@ export class SearchBar {
   findClosestMatchIndex() {
     if (this.matches.length === 0) return -1;
 
-    const cursor = this.editor.syntaxTree?.treeCursor;
-    if (!cursor) return 0;
-
-    // Convert the cursor's (nodeId, offset) to a document-level
-    // offset using the offset map we already built.
     let cursorDocOffset = 0;
-    for (const entry of this.offsetMap) {
-      if (entry.nodeId === cursor.nodeId) {
-        cursorDocOffset = entry.docStart + cursor.offset;
-        break;
+
+    if (this.editor.viewMode === `source2`) {
+      /** @type {HTMLTextAreaElement|null} */
+      const textarea = this.editor.container?.querySelector(`textarea`);
+      cursorDocOffset = textarea?.selectionStart ?? 0;
+    } else {
+      const cursor = this.editor.syntaxTree?.treeCursor;
+      if (!cursor) return 0;
+
+      // Convert the cursor's (nodeId, offset) to a document-level
+      // offset using the offset map we already built.
+      for (const entry of this.offsetMap) {
+        if (entry.nodeId === cursor.nodeId) {
+          cursorDocOffset = entry.docStart + cursor.offset;
+          break;
+        }
       }
     }
 
@@ -338,7 +362,7 @@ export class SearchBar {
       return;
     }
 
-    const isSource = this.editor.viewMode === `source`;
+    const isSource = this.editor.viewMode === `source2`;
     this.searchViewMode = this.editor.viewMode;
     /** @type {OffsetMapEntry[]} */
     const map = [];
@@ -517,17 +541,16 @@ export class SearchBar {
   }
 
   /**
-   * Clears all `<mark>` highlight elements from the editor DOM.
+   * Clears all `<mark>` highlight elements from every search
+   * context in the editor, regardless of current view mode.
    */
   clearHighlights() {
     const marks = this.editor.container.querySelectorAll(`mark.search-highlight`);
     for (const mark of marks) {
       const parent = mark.parentNode;
       if (!parent) continue;
-      // Replace the <mark> with its text content.
       const text = document.createTextNode(mark.textContent ?? ``);
       parent.replaceChild(text, mark);
-      // Merge adjacent text nodes.
       parent.normalize();
     }
   }
@@ -540,6 +563,11 @@ export class SearchBar {
     this.clearHighlights();
     if (!this.visible || this.matches.length === 0) return;
 
+    if (this.editor.viewMode === `source2`) {
+      this.applySource2Highlights();
+      return;
+    }
+
     for (let i = 0; i < this.matches.length; i++) {
       const segments = this.matchToSegments(this.matches[i]);
       const isActive = i === this.currentIndex;
@@ -548,6 +576,53 @@ export class SearchBar {
         this.highlightSegment(seg, isActive);
       }
     }
+  }
+
+  /**
+   * Renders `<mark>` highlight elements into the source2 `<pre>`
+   * mirror overlay.  The matches use document-level character
+   * offsets which map directly into the textarea/pre text.
+   */
+  applySource2Highlights() {
+    const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
+    const textarea = /** @type {HTMLTextAreaElement|null} */ (
+      this.editor.container.querySelector(`.source-v2-wrapper textarea`)
+    );
+    if (!pre || !textarea) return;
+
+    const text = textarea.value;
+    const frag = document.createDocumentFragment();
+    let cursor = 0;
+
+    // Sort matches by docStart so we can walk left-to-right.
+    const sorted = this.matches
+      .map((m, i) => ({ ...m, index: i }))
+      .sort((a, b) => a.docStart - b.docStart);
+
+    for (const m of sorted) {
+      const start = m.docStart;
+      const end = m.docEnd;
+      if (start < cursor) continue;
+
+      if (start > cursor) {
+        frag.appendChild(document.createTextNode(text.substring(cursor, start)));
+      }
+
+      const mark = document.createElement(`mark`);
+      const isActive = m.index === this.currentIndex;
+      mark.className = isActive ? `search-highlight search-highlight--active` : `search-highlight`;
+      mark.textContent = text.substring(start, end);
+      frag.appendChild(mark);
+      cursor = end;
+    }
+
+    if (cursor < text.length) {
+      frag.appendChild(document.createTextNode(text.substring(cursor)));
+    }
+    frag.appendChild(document.createTextNode(`\n`));
+
+    pre.textContent = ``;
+    pre.appendChild(frag);
   }
 
   /**
@@ -587,9 +662,10 @@ export class SearchBar {
     if (!el) return;
 
     const isFocused = this.editor.viewMode === `writing`;
+    const walkRoot = el.querySelector(`.md-content`) ?? el;
 
     // Collect text nodes in document order via TreeWalker.
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT);
     /** @type {{ node: Text, start: number, end: number }[]} */
     const textRuns = [];
     let offset = 0;

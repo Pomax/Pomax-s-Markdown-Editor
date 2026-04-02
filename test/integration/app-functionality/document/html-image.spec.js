@@ -11,7 +11,6 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -41,18 +40,6 @@ test(`HTML img tag is parsed as an image node in writing mode`, async () => {
   // The rendered <img> element should exist
   const img = page.locator(`.md-image img`);
   await expect(img).toBeVisible();
-});
-
-test(`HTML img tag displays raw HTML syntax in source mode`, async () => {
-  await loadContent(page, HTML_IMG);
-  await setSourceView(page);
-
-  const imageNode = page.locator(`.md-image .md-content`);
-  await expect(imageNode).toBeVisible();
-
-  const text = await imageNode.textContent();
-  expect(text).toContain(`<img src=`);
-  expect(text).toContain(`style="display: inline-block; zoom: 80%;"`);
 });
 
 test(`clicking HTML img in writing mode opens edit modal with style field`, async () => {

@@ -188,7 +188,6 @@ interface ElectronAPI {
     toRelativeImagePath(imagePath: string, documentPath: string): Promise<string>;
     getPathForFile(file: File): string;
     executeAPICommand(command: string, params: object): Promise<any>;
-    setSourceView(): Promise<{ success: boolean }>;
     setWritingView(): Promise<{ success: boolean }>;
     changeElementType(elementType: string): Promise<{ success: boolean; message?: string }>;
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;

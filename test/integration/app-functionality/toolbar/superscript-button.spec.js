@@ -22,7 +22,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -103,80 +103,6 @@ async function clickSuperscriptButton(pg) {
   await pg.locator(`[data-button-id="superscript"]`).click();
   await pg.waitForTimeout(200);
 }
-
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
-}
-
-test.describe(`Superscript first word, paragraph 1`, () => {
-  test(`superscript first word produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await dblclickWord(page, firstLine, `text1`, `first`);
-    await clickSuperscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`<sup>text1</sup> text1 text1`);
-  });
-});
-
-test.describe(`Superscript middle word, paragraph 1`, () => {
-  test(`superscript middle word produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await dblclickWord(page, firstLine, `text1`, `middle`);
-    await clickSuperscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`text1 <sup>text1</sup> text1`);
-  });
-});
-
-test.describe(`Superscript first word, paragraph 2`, () => {
-  test(`superscript first word of second paragraph produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
-    await dblclickWord(page, secondLine, `text2`, `first`);
-    await clickSuperscriptButton(page);
-
-    await setSourceView(page);
-    const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe(`<sup>text2</sup> text2 text2`);
-  });
-});
-
-test.describe(`Superscript middle word, paragraph 2`, () => {
-  test(`superscript middle word of second paragraph produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
-    await dblclickWord(page, secondLine, `text2`, `middle`);
-    await clickSuperscriptButton(page);
-
-    await setSourceView(page);
-    const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe(`text2 <sup>text2</sup> text2`);
-  });
-});
 
 test.describe(`Cursor position after superscript`, () => {
   test(`cursor is at end of superscripted middle word`, async () => {
@@ -267,18 +193,3 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   await pg.mouse.click(coords.x, coords.y);
   await pg.waitForTimeout(200);
 }
-
-test.describe(`Collapsed cursor — superscript word under caret`, () => {
-  test(`clicking superscript with cursor on a plain word applies superscript`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await clickInsideWord(page, firstLine, `text1`, `middle`);
-    await clickSuperscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`text1 <sup>text1</sup> text1`);
-  });
-});

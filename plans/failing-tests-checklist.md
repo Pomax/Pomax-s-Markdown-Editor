@@ -1,0 +1,213 @@
+# Failing Tests Checklist
+
+We removed the s`etSourceView` function from the codebase, and indiscriminantly renamed `getSourceView` in tests to `getSource2View`. This is incredibly wrong, because the two functions behave differently, but the important thing is that we go through every failing test, ONE BY ONE (not "more than one test at a time" or "all tests at the same time", you are ONLY allowed to examining A SINGLE TEST and fix it at a time), and determine whether the test needs fixing because it's still a good test, just using the wrong code, or whether the test is meaningless because source2 view (which is just a plain textarea) behaves nothing like source view (which was a DOM with markdown classes).
+
+After every test that you update (rather than remove) you should run just that specific test to confirm that it works before moving on. You also need to ask me whether I agree with your assessment on whether to delete or fix before you modify the file it is in.
+
+All test results AND DETAILS are found in the test-results.txt file. Integration tests may not be run purely to verify that a test still fails or not before working on it.
+
+Each test must be examined individually to determine whether it should be fixed or deleted.
+
+And remember: the point of tests are **to test behaviour** and we **changed the underlying structure** so the job is to confirm that (A) **the tests still make sense at all** and if so (b) **how to rewrite them based on the fact that source2 is a textarea**
+
+## search.spec.js
+- [x] #30 :104 — plain text search highlights matches in source view (FIXED: implemented source2 highlight via pre mirror)
+- [x] #33 :218 — Shift+Enter navigates to previous match (PASSED: cascade failure from prior test, no change needed)
+- [x] #34 :301 — highlights are removed when search bar closes (PASSED: fixed by #30 highlight implementation)
+- [x] #36 :342 — regex can match across element boundaries (DELETED: pointless in source2, regex works on plain text by definition)
+- [x] #38 :287 — source view search matches markdown syntax — DELETED (trivially true for plain text)
+- [x] #39 :367 — initial match is closest to cursor position (PASSED: cascade from loadContent fix + beforeEach)
+- [x] #41 :169 — regex search finds pattern matches (PASSED: cascade from loadContent fix + beforeEach)
+- [x] #44 :132 — plain text search is case insensitive by default (PASSED: cascade from loadContent fix + beforeEach)
+- [x] #50 :380 — regex search still works with single character — PASSED (cascade failure)
+- [x] :206 — Enter navigates to next match (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :242 — next/prev buttons navigate matches (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :311 — close button closes the search bar (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :333 — plain text search requires at least 2 characters (PASSED: cascade from loadContent fix + beforeEach)
+- [x] :462 — closing search preserves cursor position in writing view (PASSED: cascade from loadContent fix + beforeEach)
+
+Missing:
+
+- [x] test that search does NOT match the wrong thing in writing mode. (ADDED)
+- [x] test that search highlights in code blocks in writing mode are placed correctly. (FIXED: walk .md-content instead of whole element; ADDED test)
+- [x] test that verifies the cursor position does not change when exiting search via "esc": place cursor somewhere in document, search for "ckae" (won't find anything), then hit esc. The cursor should NOT move to the start of the document. (FIXED: close() now focuses textarea/placeCursor; ADDED tests for both views)
+- [x] test that verifies the view is the same scroll position when searching for a term with zero hits rather than "wherever it was when it last matched something while typing". This needs a _large_ document (e.g. lorem fixture), the cursor in the middle, then search for "loremelephant" (typed as individual letters). By the time we have 0 results, the scroll position should be restored to where we were prior to starting the search. (FIXED: save scrollTop on open, restore when matches drop to zero; ADDED test)
+
+## toc-highlight.spec.js
+- [x] :105 — ToC highlight updates when scrolling between sections (PASSED: cascade failure from loadContent fix)
+
+
+## session-save.spec.js
+- [x] #46 :151 — reopening the app restores cursor position and ToC heading (FIXED: increased test timeout to 30s — test launches two Electron instances)
+
+## view-mode-dropdown.spec.js
+- [x] #112 :95 — toggle stays in sync when view mode changes via menu (FIXED: removed defunct `source` mode step, now tests writing → source2 → writing)
+
+## code-block-language-tag.spec.js
+- [x] #263 :171 — cursor offset is correct in source view after changing language in writing view (PASSED: cascade failure from loadContent fix)
+
+## heading-input.spec.js
+- [x] #274 :28 — typing "# main" letter by letter creates a heading with correct content (already passing)
+
+## source-view-summary-edit.spec.js
+- [x] #309 :42 — typing a character on the summary line in source view inserts it without rewriting the line (DELETED: source2 is a textarea, no DOM rewriting possible)
+
+## click-outside-defocus.spec.js
+- [x] #326 :122 — defocus is a no-op in source view (DELETED: trivially true for textarea, no syntax to hide)
+
+## paste.spec.js
+- [x] #356 :61 — single-line paste inserts text at cursor (source view) (DELETED: native textarea paste, nothing to test)
+- [x] #371 :61 — multi-line paste creates correct node structure (source view) (DELETED: native textarea paste, nothing to test)
+- [x] #372 :79 — paste replaces active selection (source view) (DELETED: native textarea behaviour)
+- [x] #373 :96 — paste over multi-node selection removes intermediate nodes (source view) (DELETED: native textarea behaviour)
+- [x] #374 :120 — pasting markdown heading creates a heading node (source view) (DELETED: parser doesn't care how text arrived)
+- [x] #375 :139 — multi-line paste with CRLF line endings works correctly (source view) (FIXED: click textarea, read textarea value instead of getMarkdown)
+- [x] #376 :156 — paste does not trigger a full render (source view) (DELETED: no rendering in textarea, concept doesn't apply)
+- [x] :79 — single-line paste inserts text at cursor (writing view) (PASSED: cascade failure from loadContent fix)
+
+## range-handling.spec.js
+- [x] #387 :443 — cross-node copy produces markdown with block prefixes (PASSED: cascade failure from loadContent fix)
+
+## inline-image.spec.js
+- [x] #282 :74 — image syntax round-trips through source view correctly (FIXED: check textarea value instead of [data-node-id])
+- [x] #283 :95 — removing ! in source view converts inline image to link (FIXED: use textarea + HOME constant for cross-platform)
+
+## cursor-typing-delimiters.spec.js
+- [x] #271 :203 — typing after closing ** produces plain text, not bold (FIXED: read textarea inputValue instead of [data-node-id])
+- [x] #279 :147 — typing ***word*** renders as bold inside italic in source view (DELETED: just a toMarkdown unit test, not an integration test)
+- [x] #280 :172 — typing after closing * produces plain text, not italic — DELETED (toMarkdown unit test)
+- [x] #286 :226 — typing after closing ~~ produces plain text, not strikethrough — DELETED (toMarkdown unit test)
+
+## subscript-button.spec.js
+- [x] #193 :118 — subscript first word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #194 :133 — subscript middle word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #195 :148 — subscript first word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #196 :165 — subscript middle word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #202 :272 — clicking subscript with cursor on a plain word applies subscript — DELETED (toMarkdown unit test)
+
+## superscript-button.spec.js
+- [x] #203 :118 — superscript first word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #204 :133 — superscript middle word produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #205 :148 — superscript first word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #207 :165 — superscript middle word of second paragraph produces correct markdown — DELETED (toMarkdown unit test)
+- [x] #208 :272 — clicking superscript with cursor on a plain word applies superscript — DELETED (toMarkdown unit test)
+
+## code-block-enter.spec.js
+- [x] #240 :148 — source view: typing ``` + Enter creates an empty code block — DELETED (early-conversion is a writing view feature, no DOM in textarea)
+- [x] #241 :184 — source view: typing ```` + Enter creates a code block with fenceCount 4 — DELETED (same)
+- [x] #242 :220 — source view: backtick fence text is not converted until Enter — DELETED (same)
+- [x] #260 :166 — source view: typing ```js + Enter creates a code block with language — DELETED (same)
+- [x] #261 :202 — source view: typing ``````js + Enter creates a code block with fenceCount 6 and language — DELETED (same)
+
+## toolbar-active.spec.js
+- [x] #224 :296 — clicking italic button inside <em> tag strips the tag (FIXED: source2 formatter strips HTML tags + test uses textarea)
+- [x] #227 :268 — clicking bold button inside <strong> tag strips the tag (FIXED: same)
+- [x] #229 :338 — clicking strikethrough button inside <s> tag strips the tag (FIXED: same)
+- [x] #247 :319 — clicking italic button inside <i> tag strips the tag (PASSED: cascade failure from loadContent fix)
+- [x] #252 :285 — clicking bold button inside <b> tag strips the tag (PASSED: cascade failure from loadContent fix)
+- [x] #262 :324 — clicking strikethrough button inside <del> tag strips the tag (FIXED: same)
+
+## italic-button.spec.js
+- [x] #139 :114 — italicizing first word produces correct markdown (FIXED: getSourceLineText reads textarea)
+- [x] #141 :146 — italicizing middle word produces correct markdown (FIXED: same)
+- [x] #144 :178 — italicizing first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #149 :128 — toggling italic off restores plain text (PASSED: cascade failure from loadContent fix)
+- [x] #150 :337 — clicking italic with cursor on a plain word italicizes that word (FIXED: same)
+- [x] #151 :160 — toggling italic off on the middle word restores plain text (PASSED: cascade failure from loadContent fix)
+- [x] #153 :196 — italicizing middle word of second paragraph produces correct markdown (PASSED: cascade failure from loadContent fix)
+- [x] :351 — clicking italic with cursor inside italic text removes italic (PASSED: cascade failure from loadContent fix)
+
+## cursor-sync.spec.js
+- [x] #332 :47 — cursors sync after typing text (PASSED: cascade failure from loadContent fix)
+- [x] #334 :136 — cursors sync after backspace merges paragraphs (DELETED: paragraph merge is a writing-view concept; textarea backspace already covered by :79)
+- [x] #335 :79 — cursors sync after backspace (PASSED: cascade failure from loadContent fix)
+- [x] #336 :115 — cursors sync after Enter splits a paragraph (PASSED: cascade failure from loadContent fix)
+- [x] #341 :238 — cursors sync after creating and exiting a list item (PASSED: cascade failure from loadContent fix)
+- [x] #342 :290 — treeCursor persists after blur in writing view (PASSED: cascade failure from loadContent fix)
+- [x] #346 :157 — cursors sync after clicking a different node (DELETED: no nodes in textarea; writing-view click test already exists at :180)
+
+## bold-button.spec.js
+- [x] #113 :124 — bolding first word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #114 :160 — bolding middle word produces correct markdown (FIXED: same)
+- [x] #115 :194 — bolding first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #117 :367 — clicking bold with cursor on a plain word bolds that word (FIXED: same)
+- [x] #123 :173 — toggling bold off middle word restores plain text (FIXED: same)
+- [x] #125 :137 — toggling bold off restores plain text (FIXED: same)
+- [x] #126 :214 — bolding middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #128 :382 — clicking bold with cursor inside bold text removes bold (FIXED: same)
+
+## strikethrough-button.spec.js
+- [x] #183 :146 — strikethrough middle word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #184 :178 — strikethrough first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #187 :114 — strikethrough first word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #192 :336 — clicking strikethrough with cursor on a plain word applies strikethrough (FIXED: same)
+- [x] #197 :159 — toggling strikethrough off middle word restores plain text (FIXED: same)
+- [x] #198 :195 — strikethrough middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #199 :127 — toggling strikethrough off restores plain text (FIXED: same)
+- [x] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it (FIXED: same)
+
+## checklist.spec.js
+- [x] #118 :40 — source view renders checklist prefix for unchecked item (DELETED: trivially true for textarea)
+- [x] #121 :76 — clicking checklist button converts paragraph to checklist item (FIXED: read textarea instead of [data-node-id])
+- [x] #122 :112 — clicking bullet button on checklist item switches to bullet list (FIXED: same)
+- [x] #124 :168 — clicking checklist button on ordered list switches to checklist (FIXED: same)
+- [x] #127 :49 — source view renders checklist prefix for checked item (DELETED: trivially true for textarea)
+- [x] #129 :94 — clicking checklist button on checklist item toggles back to paragraph (FIXED: read textarea instead of [data-node-id])
+- [x] #130 :132 — clicking ordered button on checklist item switches to ordered list (FIXED: same)
+- [x] #131 :244 — Enter on empty checklist item exits to paragraph (FIXED: same)
+- [x] #132 :186 — clicking checkbox in writing view toggles checked state (FIXED: same)
+- [x] #133 :383 — multi-select across html-block converts all nodes to checklist after confirm (FIXED: read textarea directly)
+- [x] #140 :150 — clicking checklist button on bullet list switches to checklist (FIXED: read textarea instead of [data-node-id])
+- [x] #142 :266 — switching entire contiguous checklist run to bullet via toolbar (FIXED: same + toMarkdown tight-list fix)
+- [x] #145 :219 — Enter key in checklist item creates new unchecked checklist item (FIXED: same + toMarkdown tight-list fix)
+- [x] #148 :465 — typing x into checkbox brackets in source view checks the item (FIXED: ArrowLeft count 8→9, switch to writing view to verify checkbox is checked, removed unnecessary timeouts)
+
+## list.spec.js
+- [x] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph (FIXED: read textarea instead of [data-node-id])
+- [x] #155 :45 — clicking bullet list button converts paragraph to unordered list item (FIXED: same)
+- [x] #156 :177 — heading button on list item converts to heading (FIXED: same)
+- [x] #157 :126 — Enter key in a list item creates a new list item (FIXED: same)
+- [x] #159 :230 — source view: Enter between marker and content splits into empty item and new item (DELETED: textarea has no list-aware Enter renumbering)
+- [x] #160 :286 — switching list type converts the entire contiguous list (FIXED: read textarea instead of [data-node-id])
+- [x] #161 :155 — Enter on empty list item exits the list to a paragraph (FIXED: same)
+- [x] #162 :107 — clicking numbered list button on bullet list item switches to ordered (FIXED: same)
+- [x] #163 :335 — pasting multi-line markdown with list items creates correct nodes (FIXED: click textarea + read textarea value)
+- [x] #164 :67 — clicking numbered list button converts paragraph to ordered list item (FIXED: read textarea instead of [data-node-id])
+- [x] #165 :201 — Enter in ordered list creates item with incremented number (FIXED: same)
+- [x] #167 :262 — toggling off a list item converts the entire contiguous list to paragraphs (FIXED: same)
+- [x] #168 :310 — Enter on empty middle ordered item renumbers remaining items (FIXED: same)
+- [x] #172 :372 — pasting multi-line markdown with CRLF line endings parses correctly (FIXED: click textarea + read textarea value)
+
+## source-view-prefix-edit.spec.js — ALL 30 DELETED (entire file removed)
+Source2 is a plain textarea — insert/delete/backspace at any position is native browser behavior. The old source view had structured DOM nodes (.md-heading1, .md-list-item, .md-code-block .md-content, etc.) where custom rendering could interfere with editing; that no longer applies.
+- [x] #284 :119 — Heading1 prefix: insert in prefix (DELETED)
+- [x] #285 :183 — Heading2 prefix: delete in prefix (DELETED)
+- [x] #287 :135 — Heading1 prefix: delete in prefix (DELETED)
+- [x] #288 :241 — Blockquote prefix: backspace in prefix (DELETED)
+- [x] #289 :197 — Heading2 prefix: backspace in prefix (DELETED)
+- [x] #290 :301 — Ordered list prefix: insert in prefix (DELETED)
+- [x] #291 :360 — Checklist prefix: delete in prefix (DELETED)
+- [x] #292 :419 — Code fence three ticks: backspace on opening fence (DELETED)
+- [x] #293 :151 — Heading1 prefix: backspace in prefix (DELETED)
+- [x] #294 :213 — Blockquote prefix: insert in prefix (DELETED)
+- [x] #295 :257 — Unordered list prefix: insert in prefix (DELETED)
+- [x] #296 :478 — Code fence eight ticks: insert on opening fence (DELETED)
+- [x] #297 :375 — Checklist prefix: backspace in prefix (DELETED)
+- [x] #298 :315 — Ordered list prefix: delete in prefix (DELETED)
+- [x] #299 :434 — Code fence three ticks with language: insert in language tag (DELETED)
+- [x] :525 — Code fence eight ticks with language: insert in language tag (DELETED)
+- [x] #300 :540 — Code fence eight ticks with language: delete in language tag (DELETED)
+- [x] #301 :169 — Heading2 prefix: insert in prefix (DELETED)
+- [x] #302 :494 — Code fence eight ticks: delete on opening fence (DELETED)
+- [x] #303 :227 — Blockquote prefix: delete in prefix (DELETED)
+- [x] #304 :271 — Unordered list prefix: delete in prefix (DELETED)
+- [x] #305 :392 — Code fence three ticks: insert on opening fence (DELETED)
+- [x] #306 :329 — Ordered list prefix: backspace in prefix (DELETED)
+- [x] #307 :448 — Code fence three ticks with language: delete in language tag (DELETED)
+- [x] #308 :554 — Code fence eight ticks with language: backspace in language tag (DELETED)
+- [x] #310 :509 — Code fence eight ticks: backspace on opening fence (DELETED)
+- [x] #312 :345 — Checklist prefix: insert in prefix (DELETED)
+- [x] #313 :285 — Unordered list prefix: backspace in prefix (DELETED)
+- [x] #314 :406 — Code fence three ticks: delete on opening fence (DELETED)
+- [x] #315 :462 — Code fence three ticks with language: backspace in language tag (DELETED)
+- [x] #317 :525 — Code fence eight ticks with language: insert in language tag (DELETED)

@@ -18,7 +18,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -58,148 +58,20 @@ async function getMarkdown() {
 test.describe.configure({ mode: `serial` });
 
 test.describe(`Paste in source view`, () => {
-  test(`single-line paste inserts text at cursor`, async () => {
-    await loadContent(page, `hello world`);
-    await setSourceView(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-    await page.keyboard.press(HOME);
-
-    await writeClipboard(`PASTED `);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`PASTED hello world`);
-  });
-
-  test(`multi-line paste creates correct node structure`, async () => {
-    await loadContent(page, `start`);
-    await setSourceView(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-    await page.keyboard.press(END);
-
-    await writeClipboard(`\n\n# Heading\n\nA paragraph`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(300);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`start`);
-    expect(md).toContain(`# Heading`);
-    expect(md).toContain(`A paragraph`);
-  });
-
-  test(`paste replaces active selection`, async () => {
-    await loadContent(page, `replace me`);
-    await setSourceView(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-    await page.keyboard.press(`${MOD}+a`);
-
-    await writeClipboard(`new text`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`new text`);
-    expect(md).not.toContain(`replace me`);
-  });
-
-  test(`paste over multi-node selection removes intermediate nodes`, async () => {
-    await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSourceView(page);
-
-    const lines = page.locator(`#editor [data-node-id]`);
-    await clickInEditor(page, lines.first());
-    await page.keyboard.press(HOME);
-    await page.keyboard.press(`${MOD}+Shift+${END}`);
-    // Extend selection to last line
-    await page.keyboard.press(`Shift+ArrowDown`);
-    await page.keyboard.press(`Shift+ArrowDown`);
-    await page.keyboard.press(`Shift+${END}`);
-
-    await writeClipboard(`only this`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(300);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`only this`);
-    expect(md).not.toContain(`alpha`);
-    expect(md).not.toContain(`beta`);
-    expect(md).not.toContain(`gamma`);
-  });
-
-  test(`pasting markdown heading creates a heading node`, async () => {
+  test(`multi-line paste with CRLF line endings normalizes to LF in source view`, async () => {
     await loadContent(page, `\n`);
-    await setSourceView(page);
+    await setSource2View(page);
 
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
-
-    await writeClipboard(`# Source heading`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const nodeType = await page.evaluate(() => {
-      const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-      if (!tree) return null;
-      return tree.children[0]?.type;
-    });
-    expect(nodeType).toBe(`heading1`);
-  });
-
-  test(`multi-line paste with CRLF line endings works correctly`, async () => {
-    await loadContent(page, `\n`);
-    await setSourceView(page);
-
-    const line = page.locator(`#editor [data-node-id]`).first();
-    await clickInEditor(page, line);
+    const textarea = page.locator(`#editor textarea`);
+    await textarea.click();
 
     await writeClipboard(`first\r\n\r\nsecond\r\n\r\nthird`);
     await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(300);
 
-    const md = await getMarkdown();
-    expect(md).toContain(`first`);
-    expect(md).toContain(`second`);
-    expect(md).toContain(`third`);
-  });
+    await expect(textarea).toHaveValue(/first/);
 
-  test(`paste does not trigger a full render`, async () => {
-    await loadContent(page, `alpha\n\nbeta\n\ngamma`);
-    await setSourceView(page);
-
-    const lines = page.locator(`#editor [data-node-id]`);
-    await clickInEditor(page, lines.nth(1));
-    await page.keyboard.press(END);
-
-    // Instrument fullRender AFTER clicking so click-triggered renders
-    // don't produce false positives.
-    await page.evaluate(() => {
-      const editor = /** @type {any} */ (window).__editor;
-      editor.pasteTestFullRenderCount = 0;
-      const origFullRender = editor.fullRender.bind(editor);
-      editor.fullRender = (/** @type {any[]} */ ...args) => {
-        editor.pasteTestFullRenderCount++;
-        return origFullRender(...args);
-      };
-    });
-
-    await writeClipboard(` extra`);
-    await page.keyboard.press(`${MOD}+v`);
-    await page.waitForTimeout(200);
-
-    const count = await page.evaluate(
-      () => /** @type {any} */ (window).__editor.pasteTestFullRenderCount,
-    );
-    expect(count).toBe(0);
-
-    const md = await getMarkdown();
-    expect(md).toContain(`beta extra`);
+    const text = await textarea.inputValue();
+    expect(text).toBe(`first\n\nsecond\n\nthird`);
   });
 });
 

@@ -80,12 +80,6 @@ const electronAPI = {
     // ========== View Operations ==========
 
     /**
-     * Switches to source view mode.
-     * @returns {Promise<{success: boolean}>}
-     */
-    setSourceView: () => ipcRenderer.invoke('view:source'),
-
-    /**
      * Switches to writing view mode.
      * @returns {Promise<{success: boolean}>}
      */

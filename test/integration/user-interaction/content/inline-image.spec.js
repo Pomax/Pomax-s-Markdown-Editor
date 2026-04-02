@@ -8,10 +8,11 @@
 
 import { expect, test } from '@playwright/test';
 import {
+  HOME,
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -82,9 +83,8 @@ test(`image syntax round-trips through source view correctly`, async () => {
   await expect(img).toBeVisible();
 
   // Switch to source view — should show raw markdown
-  await setSourceView(page);
-  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](img.png)` });
-  await expect(srcLine).toBeVisible();
+  await setSource2View(page);
+  await expect(page.locator(`#editor textarea`)).toHaveValue(/!\[alt\]\(img\.png\)/);
 
   // Switch back to writing view — image should still render
   await setWritingView(page);
@@ -105,18 +105,17 @@ test(`removing ! in source view converts inline image to link`, async () => {
   await expect(paragraph).toBeVisible();
 
   // Switch to source view
-  await setSourceView(page);
+  await setSource2View(page);
 
-  // Click on the line and move to beginning, then delete the '!'
-  const srcLine = page.locator(`#editor [data-node-id]`, { hasText: `![alt](url)` });
-  await expect(srcLine).toBeVisible();
-  await srcLine.click();
-  await page.keyboard.press(`Home`);
+  // Click on the textarea and move to beginning, then delete the '!'
+  const textarea = page.locator(`#editor textarea`);
+  await expect(textarea).toHaveValue(/!\[alt\]\(url\)/);
+  await textarea.click();
+  await page.keyboard.press(HOME);
   await page.keyboard.press(`Delete`);
 
-  // Now the line should be [alt](url) — a link
-  const updated = page.locator(`#editor [data-node-id]`, { hasText: `[alt](url)` });
-  await expect(updated).toBeVisible();
+  // Now the textarea should contain [alt](url) — a link
+  await expect(textarea).toHaveValue(/^\[alt\]\(url\)/);
 
   // Switch to writing view — should render as a link, not an image
   await setWritingView(page);

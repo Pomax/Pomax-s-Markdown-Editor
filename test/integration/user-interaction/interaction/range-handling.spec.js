@@ -294,9 +294,9 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then type replaces the entire node content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
+    await editor.waitFor();
     await clickInEditor(page, editor);
 
     await typeText(page, `hello world`);
@@ -309,9 +309,9 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then delete empties the node`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
+    await editor.waitFor();
     await clickInEditor(page, editor);
 
     await typeText(page, `hello world`);

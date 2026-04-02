@@ -24,7 +24,6 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
   setWritingView,
 } from '../../test-utils.js';
 

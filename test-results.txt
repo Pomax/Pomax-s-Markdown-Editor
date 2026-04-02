@@ -1,0 +1,2386 @@
+  1) [firefox] › test\integration\app-functionality\app\search.spec.js:132:1 › plain text search is case insensitive by default
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:133:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-f2adc-case-insensitive-by-default-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-f2adc-case-insensitive-by-default-firefox\error-context.md
+
+  2) [firefox] › test\integration\app-functionality\app\search.spec.js:169:1 › regex search finds pattern matches
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:170:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-a456c-earch-finds-pattern-matches-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-a456c-earch-finds-pattern-matches-firefox\error-context.md
+
+  3) [firefox] › test\integration\app-functionality\app\search.spec.js:206:1 › Enter navigates to next match
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:207:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-search-Enter-navigates-to-next-match-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-search-Enter-navigates-to-next-match-firefox\error-context.md
+
+  4) [firefox] › test\integration\app-functionality\app\search.spec.js:242:1 › next/prev buttons navigate matches
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:243:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-233ee-ev-buttons-navigate-matches-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-233ee-ev-buttons-navigate-matches-firefox\error-context.md
+
+  5) [firefox] › test\integration\app-functionality\app\search.spec.js:311:1 › close button closes the search bar
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:312:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-2c800-utton-closes-the-search-bar-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-2c800-utton-closes-the-search-bar-firefox\error-context.md
+
+  6) [firefox] › test\integration\app-functionality\app\search.spec.js:333:1 › plain text search requires at least 2 characters
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:334:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-2992a-uires-at-least-2-characters-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-2992a-uires-at-least-2-characters-firefox\error-context.md
+
+  7) [firefox] › test\integration\app-functionality\app\search.spec.js:367:1 › initial match is closest to cursor position
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:368:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-a2088--closest-to-cursor-position-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-a2088--closest-to-cursor-position-firefox\error-context.md
+
+  8) [firefox] › test\integration\app-functionality\app\search.spec.js:462:1 › closing search preserves cursor position in writing view
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\app\search.spec.js:463:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-app-sear-33253-or-position-in-writing-view-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-app-sear-33253-or-position-in-writing-view-firefox\error-context.md
+
+  9) [firefox] › test\integration\app-functionality\document\toc-highlight.spec.js:105:1 › ToC highlight updates when scrolling between sections
+
+    "afterAll" hook timeout of 5000ms exceeded.
+
+      28 | });
+      29 |
+    > 30 | test.afterAll(async () => {
+         |      ^
+      31 |   await stopServer(server);
+      32 | });
+      33 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\document\toc-highlight.spec.js:30:6
+
+  10) [firefox] › test\integration\app-functionality\document\toc-highlight.spec.js:132:1 › active ToC link is scrolled to the vertical center of the sidebar
+
+    "afterAll" hook timeout of 5000ms exceeded.
+
+      28 | });
+      29 |
+    > 30 | test.afterAll(async () => {
+         |      ^
+      31 |   await stopServer(server);
+      32 | });
+      33 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\document\toc-highlight.spec.js:30:6
+
+  11) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:124:3 › Problem 1 — bold first word, toggle off › bolding first word produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:133:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--e8727-d-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--e8727-d-produces-correct-markdown-firefox\error-context.md
+
+  12) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:137:3 › Problem 1 — bold first word, toggle off › toggling bold off restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:154:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--0a21a-old-off-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--0a21a-old-off-restores-plain-text-firefox\error-context.md
+
+  13) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:160:3 › Problem 2 — bold middle word, paragraph 1 › bolding middle word produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:169:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--ef8d5-d-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--ef8d5-d-produces-correct-markdown-firefox\error-context.md
+
+  14) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:173:3 › Problem 2 — bold middle word, paragraph 1 › toggling bold off middle word restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:188:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--f9e93-le-word-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--f9e93-le-word-restores-plain-text-firefox\error-context.md
+
+  15) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:194:3 › Problem 3 — bold first word, paragraph 2 › bolding first word of second paragraph produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:205:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--881ab-h-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--881ab-h-produces-correct-markdown-firefox\error-context.md
+
+  16) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:214:3 › Problem 4 — bold middle word, paragraph 2 › bolding middle word of second paragraph produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:224:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--ef3ed-h-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--ef3ed-h-produces-correct-markdown-firefox\error-context.md
+
+  17) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:367:3 › Collapsed cursor — bold word under caret › clicking bold with cursor on a plain word bolds that word
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:378:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--ffaa7--plain-word-bolds-that-word-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--ffaa7--plain-word-bolds-that-word-firefox\error-context.md
+
+  18) [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:382:3 › Collapsed cursor — bold word under caret › clicking bold with cursor inside bold text removes bold
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      118 |  */
+      119 | async function getSourceLineText(pg, index) {
+    > 120 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      121 | }
+      122 |
+      123 | test.describe(`Problem 1 — bold first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:120:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\bold-button.spec.js:397:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--60ad5-side-bold-text-removes-bold-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--60ad5-side-bold-text-removes-bold-firefox\error-context.md
+
+  19) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:40:1 › source view renders checklist prefix for unchecked item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      43 |
+      44 |   const line = page.locator(`#editor [data-node-id]`).first();
+    > 45 |   const text = await line.textContent();
+         |                           ^
+      46 |   expect(text).toMatch(/^- \[ \] Unchecked task/);
+      47 | });
+      48 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:45:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--3c119-t-prefix-for-unchecked-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--3c119-t-prefix-for-unchecked-item-firefox\error-context.md
+
+  20) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:49:1 › source view renders checklist prefix for checked item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      52 |
+      53 |   const line = page.locator(`#editor [data-node-id]`).first();
+    > 54 |   const text = await line.textContent();
+         |                           ^
+      55 |   expect(text).toMatch(/^- \[x\] Checked task/);
+      56 | });
+      57 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:54:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--488eb-ist-prefix-for-checked-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--488eb-ist-prefix-for-checked-item-firefox\error-context.md
+
+  21) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:76:1 › clicking checklist button converts paragraph to checklist item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      88 |
+      89 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 90 |   const text = await source.textContent();
+         |                             ^
+      91 |   expect(text).toMatch(/^- \[ \] A simple paragraph/);
+      92 | });
+      93 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:90:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--2b3da-paragraph-to-checklist-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--2b3da-paragraph-to-checklist-item-firefox\error-context.md
+
+  22) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:94:1 › clicking checklist button on checklist item toggles back to paragraph
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      106 |
+      107 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 108 |   const text = await source.textContent();
+          |                             ^
+      109 |   expect(text).toBe(`Task item`);
+      110 | });
+      111 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:108:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--13932-m-toggles-back-to-paragraph-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--13932-m-toggles-back-to-paragraph-firefox\error-context.md
+
+  23) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:112:1 › clicking bullet button on checklist item switches to bullet list
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      124 |
+      125 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 126 |   const text = await source.textContent();
+          |                             ^
+      127 |   expect(text).toMatch(/^- Checklist item/);
+      128 |   // Should NOT have checkbox chars
+      129 |   expect(text).not.toMatch(/\[[ x]\]/);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:126:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--e1e4a-tem-switches-to-bullet-list-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--e1e4a-tem-switches-to-bullet-list-firefox\error-context.md
+
+  24) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:132:1 › clicking ordered button on checklist item switches to ordered list
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      144 |
+      145 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 146 |   const text = await source.textContent();
+          |                             ^
+      147 |   expect(text).toMatch(/^1\. Checklist item/);
+      148 | });
+      149 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:146:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--9e55b-em-switches-to-ordered-list-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--9e55b-em-switches-to-ordered-list-firefox\error-context.md
+
+  25) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:150:1 › clicking checklist button on bullet list switches to checklist
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      162 |
+      163 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 164 |   const text = await source.textContent();
+          |                             ^
+      165 |   expect(text).toMatch(/^- \[ \] Bullet item/);
+      166 | });
+      167 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:164:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--67718--list-switches-to-checklist-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--67718--list-switches-to-checklist-firefox\error-context.md
+
+  26) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:168:1 › clicking checklist button on ordered list switches to checklist
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      180 |
+      181 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 182 |   const text = await source.textContent();
+          |                             ^
+      183 |   expect(text).toMatch(/^- \[ \] Ordered item/);
+      184 | });
+      185 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:182:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--3bf1e--list-switches-to-checklist-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--3bf1e--list-switches-to-checklist-firefox\error-context.md
+
+  27) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:186:1 › clicking checkbox in writing view toggles checked state
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      213 |   await setSource2View(page);
+      214 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 215 |   const text = await source.textContent();
+          |                             ^
+      216 |   expect(text).toMatch(/^- \[x\] Toggle me/);
+      217 | });
+      218 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:215:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--cdf2e--view-toggles-checked-state-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--cdf2e--view-toggles-checked-state-firefox\error-context.md
+
+  28) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:219:1 › Enter key in checklist item creates new unchecked checklist item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      236 |
+      237 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 238 |   const firstText = await lines.nth(0).textContent();
+          |                                        ^
+      239 |   const secondText = await lines.nth(1).textContent();
+      240 |   expect(firstText).toMatch(/^- \[x\] First task/);
+      241 |   expect(secondText).toMatch(/^- \[ \] Second task/);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:238:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--0bea5-ew-unchecked-checklist-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--0bea5-ew-unchecked-checklist-item-firefox\error-context.md
+
+  29) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:244:1 › Enter on empty checklist item exits to paragraph
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      257 |
+      258 |   const allLines = page.locator(`#editor [data-node-id]`);
+    > 259 |   const firstText = await allLines.nth(0).textContent();
+          |                                           ^
+      260 |   const secondText = await allLines.nth(1).textContent();
+      261 |   expect(firstText).toMatch(/^- \[ \] Task/);
+      262 |   // Second line should be an empty paragraph (no list marker)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:259:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--30a2f-ist-item-exits-to-paragraph-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--30a2f-ist-item-exits-to-paragraph-firefox\error-context.md
+
+  30) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:266:1 › switching entire contiguous checklist run to bullet via toolbar
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      279 |   const lines = page.locator(`#editor [data-node-id]`);
+      280 |   for (let i = 0; i < 3; i++) {
+    > 281 |     const text = await lines.nth(i).textContent();
+          |                                     ^
+      282 |     expect(text).toMatch(/^- Task [ABC]/);
+      283 |     expect(text).not.toMatch(/\[[ x]\]/);
+      284 |   }
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:281:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--70958-t-run-to-bullet-via-toolbar-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--70958-t-run-to-bullet-via-toolbar-firefox\error-context.md
+
+  31) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:383:1 › multi-select across html-block converts all nodes to checklist after confirm
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4
+    Received: 0
+
+      422 |   //   3. "inner heading" (h2 inside div — lifted out)
+      423 |   //   4. "And then the main doc again." (paragraph)
+    > 424 |   expect(checklistLines.length).toBe(4);
+          |                                 ^
+      425 |   expect(checklistLines[0]).toMatch(/with some text/);
+      426 |   expect(checklistLines[1]).toMatch(/inner paragraph/);
+      427 |   expect(checklistLines[2]).toMatch(/inner heading/);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:424:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--99e99--to-checklist-after-confirm-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--99e99--to-checklist-after-confirm-firefox\error-context.md
+
+  32) [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:465:1 › typing x into checkbox brackets in source view checks the item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\checklist.spec.js:466:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--01d1a-source-view-checks-the-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--01d1a-source-view-checks-the-item-firefox\error-context.md
+
+  33) [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:128:3 › Italic first word, toggle off › toggling italic off restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\italic-button.spec.js:129:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--00d22-lic-off-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--00d22-lic-off-restores-plain-text-firefox\error-context.md
+
+  34) [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:160:3 › Italic middle word, paragraph 1 › toggling italic off on the middle word restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\italic-button.spec.js:161:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--0771f-le-word-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--0771f-le-word-restores-plain-text-firefox\error-context.md
+
+  35) [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:196:3 › Italic middle word, paragraph 2 › italicizing middle word of second paragraph produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\italic-button.spec.js:197:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--50ad1-h-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--50ad1-h-produces-correct-markdown-firefox\error-context.md
+
+  36) [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:351:3 › Collapsed cursor — italic word under caret › clicking italic with cursor inside italic text removes italic
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\italic-button.spec.js:353:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--f6544--italic-text-removes-italic-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--f6544--italic-text-removes-italic-firefox\error-context.md
+
+  37) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:45:1 › clicking bullet list button converts paragraph to unordered list item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      61 |   // The first line should now be a list item
+      62 |   const firstSource = page.locator(`#editor [data-node-id]`).first();
+    > 63 |   const text = await firstSource.textContent();
+         |                                  ^
+      64 |   expect(text).toMatch(/^- First paragraph/);
+      65 | });
+      66 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:63:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--4057e-raph-to-unordered-list-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--4057e-raph-to-unordered-list-item-firefox\error-context.md
+
+  38) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:67:1 › clicking numbered list button converts paragraph to ordered list item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      82 |
+      83 |   const firstSource = page.locator(`#editor [data-node-id]`).first();
+    > 84 |   const text = await firstSource.textContent();
+         |                                  ^
+      85 |   expect(text).toMatch(/^1\. First paragraph/);
+      86 | });
+      87 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:84:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--d124d-agraph-to-ordered-list-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--d124d-agraph-to-ordered-list-item-firefox\error-context.md
+
+  39) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:88:1 › clicking bullet list button on bullet list item toggles back to paragraph
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      101 |
+      102 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 103 |   const text = await source.textContent();
+          |                             ^
+      104 |   expect(text).toBe(`Existing bullet item`);
+      105 | });
+      106 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:103:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--fe0cb-m-toggles-back-to-paragraph-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--fe0cb-m-toggles-back-to-paragraph-firefox\error-context.md
+
+  40) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:107:1 › clicking numbered list button on bullet list item switches to ordered
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      120 |
+      121 |   const source = page.locator(`#editor [data-node-id]`).first();
+    > 122 |   const text = await source.textContent();
+          |                             ^
+      123 |   expect(text).toMatch(/^1\. Bullet item/);
+      124 | });
+      125 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:122:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--244db-st-item-switches-to-ordered-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--244db-st-item-switches-to-ordered-firefox\error-context.md
+
+  41) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:126:1 › Enter key in a list item creates a new list item
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 2
+    Received:    0
+
+      145 |   const lines = page.locator(`#editor [data-node-id]`);
+      146 |   const count = await lines.count();
+    > 147 |   expect(count).toBeGreaterThanOrEqual(2);
+          |                 ^
+      148 |
+      149 |   const first = await lines.nth(0).textContent();
+      150 |   const second = await lines.nth(1).textContent();
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:147:17
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--45e39-tem-creates-a-new-list-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--45e39-tem-creates-a-new-list-item-firefox\error-context.md
+
+  42) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:155:1 › Enter on empty list item exits the list to a paragraph
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').nth(1)
+
+
+      170 |   // The second line should now be a plain (empty) paragraph, not a list item
+      171 |   const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
+    > 172 |   const text = await secondLine.textContent();
+          |                                 ^
+      173 |   // An empty paragraph renders as an empty line (no list marker)
+      174 |   expect(text?.trim()).toBe(``);
+      175 | });
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:172:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--cb0bc-its-the-list-to-a-paragraph-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--cb0bc-its-the-list-to-a-paragraph-firefox\error-context.md
+
+  43) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:177:1 › heading button on list item converts to heading
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      190 |
+      191 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 192 |   const first = await lines.nth(0).textContent();
+          |                                    ^
+      193 |   const second = await lines.nth(1).textContent();
+      194 |   const third = await lines.nth(2).textContent();
+      195 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:192:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--d8664-st-item-converts-to-heading-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--d8664-st-item-converts-to-heading-firefox\error-context.md
+
+  44) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:201:1 › Enter in ordered list creates item with incremented number
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      219 |
+      220 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 221 |   const first = await lines.nth(0).textContent();
+          |                                    ^
+      222 |   const second = await lines.nth(1).textContent();
+      223 |   const third = await lines.nth(2).textContent();
+      224 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:221:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--0e10b-tem-with-incremented-number-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--0e10b-tem-with-incremented-number-firefox\error-context.md
+
+  45) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:230:1 › source view: Enter between marker and content splits into empty item and new item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').filter({ hasText: 'Test item' }).first()
+
+
+      233 |
+      234 |   const line = page.locator(`#editor [data-node-id]`, { hasText: `Test item` }).first();
+    > 235 |   await line.click();
+          |              ^
+      236 |   await page.waitForTimeout(200);
+      237 |
+      238 |   // Move cursor to start of content (Home goes to start of visible line,
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:235:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--f9d66-nto-empty-item-and-new-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--f9d66-nto-empty-item-and-new-item-firefox\error-context.md
+
+  46) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:262:1 › toggling off a list item converts the entire contiguous list to paragraphs
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      276 |
+      277 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 278 |   const first = await lines.nth(0).textContent();
+          |                                    ^
+      279 |   const second = await lines.nth(1).textContent();
+      280 |   const third = await lines.nth(2).textContent();
+      281 |   expect(first).toBe(`Alpha`);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:278:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--04469-ntiguous-list-to-paragraphs-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--04469-ntiguous-list-to-paragraphs-firefox\error-context.md
+
+  47) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:286:1 › switching list type converts the entire contiguous list
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      300 |
+      301 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 302 |   const first = await lines.nth(0).textContent();
+          |                                    ^
+      303 |   const second = await lines.nth(1).textContent();
+      304 |   const third = await lines.nth(2).textContent();
+      305 |   expect(first).toMatch(/^1\. Alpha/);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:302:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--e2dd2--the-entire-contiguous-list-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--e2dd2--the-entire-contiguous-list-firefox\error-context.md
+
+  48) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:310:1 › Enter on empty middle ordered item renumbers remaining items
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.textContent: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      326 |
+      327 |   const lines = page.locator(`#editor [data-node-id]`);
+    > 328 |   const first = await lines.nth(0).textContent();
+          |                                    ^
+      329 |   const second = await lines.nth(1).textContent();
+      330 |   // Alpha keeps its number, Gamma renumbered to 2 (Beta was removed)
+      331 |   expect(first).toMatch(/^1\. Alpha/);
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:328:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--946ae-m-renumbers-remaining-items-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--946ae-m-renumbers-remaining-items-firefox\error-context.md
+
+  49) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:335:1 › pasting multi-line markdown with list items creates correct nodes
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      340 |   // Focus the empty line
+      341 |   const line = page.locator(`#editor [data-node-id]`).first();
+    > 342 |   await line.click();
+          |              ^
+      343 |   await page.waitForTimeout(200);
+      344 |
+      345 |   // Write the full multi-line content to the clipboard and paste via Ctrl+V.
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:342:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--555cb-items-creates-correct-nodes-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--555cb-items-creates-correct-nodes-firefox\error-context.md
+
+  50) [firefox] › test\integration\app-functionality\toolbar\list.spec.js:372:1 › pasting multi-line markdown with CRLF line endings parses correctly
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      375 |
+      376 |   const line = page.locator(`#editor [data-node-id]`).first();
+    > 377 |   await line.click();
+          |              ^
+      378 |   await page.waitForTimeout(200);
+      379 |
+      380 |   // Use \r\n (Windows clipboard line endings)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\list.spec.js:377:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--6fc2f-ne-endings-parses-correctly-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--6fc2f-ne-endings-parses-correctly-firefox\error-context.md
+
+  51) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:114:3 › Strikethrough first word, toggle off › strikethrough first word produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:123:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--2e88e-d-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--2e88e-d-produces-correct-markdown-firefox\error-context.md
+
+  52) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:127:3 › Strikethrough first word, toggle off › toggling strikethrough off restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:140:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--a8d2d-ugh-off-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--a8d2d-ugh-off-restores-plain-text-firefox\error-context.md
+
+  53) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:146:3 › Strikethrough middle word, paragraph 1 › strikethrough middle word produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:155:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--edeaf-d-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--edeaf-d-produces-correct-markdown-firefox\error-context.md
+
+  54) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:159:3 › Strikethrough middle word, paragraph 1 › toggling strikethrough off middle word restores plain text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:172:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--4ca16-le-word-restores-plain-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--4ca16-le-word-restores-plain-text-firefox\error-context.md
+
+  55) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:178:3 › Strikethrough first word, paragraph 2 › strikethrough first word of second paragraph produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:187:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--dd2b5-h-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--dd2b5-h-produces-correct-markdown-firefox\error-context.md
+
+  56) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:195:3 › Strikethrough middle word, paragraph 2 › strikethrough middle word of second paragraph produces correct markdown
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:204:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--4fb2c-h-produces-correct-markdown-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--4fb2c-h-produces-correct-markdown-firefox\error-context.md
+
+  57) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:336:3 › Collapsed cursor — strikethrough word under caret › clicking strikethrough with cursor on a plain word applies strikethrough
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:345:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--8de69--word-applies-strikethrough-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--8de69--word-applies-strikethrough-firefox\error-context.md
+
+  58) [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:349:3 › Collapsed cursor — strikethrough word under caret › clicking strikethrough with cursor inside struck-through text removes it
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.innerText: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]').first()
+
+
+      108 |  */
+      109 | async function getSourceLineText(pg, index) {
+    > 110 |   return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
+          |                                                          ^
+      111 | }
+      112 |
+      113 | test.describe(`Strikethrough first word, toggle off`, () => {
+        at getSourceLineText (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:110:58)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\strikethrough-button.spec.js:359:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--5faa0-uck-through-text-removes-it-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--5faa0-uck-through-text-removes-it-firefox\error-context.md
+
+  59) [firefox] › test\integration\app-functionality\toolbar\toolbar-active.spec.js:285:1 › clicking bold button inside <b> tag strips the tag
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\toolbar-active.spec.js:286:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--2a45c-inside-b-tag-strips-the-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--2a45c-inside-b-tag-strips-the-tag-firefox\error-context.md
+
+  60) [firefox] › test\integration\app-functionality\toolbar\toolbar-active.spec.js:319:1 › clicking italic button inside <i> tag strips the tag
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\app-functionality\toolbar\toolbar-active.spec.js:320:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\app-functionality-toolbar--0d748-inside-i-tag-strips-the-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\app-functionality-toolbar--0d748-inside-i-tag-strips-the-tag-firefox\error-context.md
+
+  61) [firefox] › test\integration\user-interaction\content\code-block-language-tag.spec.js:171:3 › Code-block language tag dialog › cursor offset is correct in source view after changing language in writing view
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.waitFor: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor[data-view-mode="source2"]') to be visible
+
+
+       at test-utils.js:229
+
+      227 |   if (current === `source2`) return;
+      228 |   await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
+    > 229 |   await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
+          |                                                           ^
+      230 | }
+      231 |
+        at setSource2View (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:229:59)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\code-block-language-tag.spec.js:185:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-c-71308-ng-language-in-writing-view-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-c-71308-ng-language-in-writing-view-firefox\error-context.md
+
+  62) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:119:3 › Heading1 prefix (# ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading1
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:124:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-ec7cc-ng1-prefix-insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-ec7cc-ng1-prefix-insert-in-prefix-firefox\error-context.md
+
+  63) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:135:3 › Heading1 prefix (# ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading1
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:140:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-b3ebe-ng1-prefix-delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-b3ebe-ng1-prefix-delete-in-prefix-firefox\error-context.md
+
+  64) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:151:3 › Heading1 prefix (# ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading1
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:156:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-91339--prefix-backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-91339--prefix-backspace-in-prefix-firefox\error-context.md
+
+  65) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:169:3 › Heading2 prefix (## ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading2
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:173:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-4b879-ng2-prefix-insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-4b879-ng2-prefix-insert-in-prefix-firefox\error-context.md
+
+  66) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:183:3 › Heading2 prefix (## ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading2
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:187:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-594f7-ng2-prefix-delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-594f7-ng2-prefix-delete-in-prefix-firefox\error-context.md
+
+  67) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:197:3 › Heading2 prefix (## ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-heading2
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:201:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-c00c2--prefix-backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-c00c2--prefix-backspace-in-prefix-firefox\error-context.md
+
+  68) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:213:3 › Blockquote prefix (> ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-blockquote
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:217:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-38e8e-ote-prefix-insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-38e8e-ote-prefix-insert-in-prefix-firefox\error-context.md
+
+  69) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:227:3 › Blockquote prefix (> ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-blockquote
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:231:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-e8cec-ote-prefix-delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-e8cec-ote-prefix-delete-in-prefix-firefox\error-context.md
+
+  70) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:241:3 › Blockquote prefix (> ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-blockquote
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:245:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-637d2--prefix-backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-637d2--prefix-backspace-in-prefix-firefox\error-context.md
+
+  71) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:257:3 › Unordered list prefix (- ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:261:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-411b0-t-prefix---insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-411b0-t-prefix---insert-in-prefix-firefox\error-context.md
+
+  72) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:271:3 › Unordered list prefix (- ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:275:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-a9035-t-prefix---delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-a9035-t-prefix---delete-in-prefix-firefox\error-context.md
+
+  73) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:285:3 › Unordered list prefix (- ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:289:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-786fc-refix---backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-786fc-refix---backspace-in-prefix-firefox\error-context.md
+
+  74) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:301:3 › Ordered list prefix (1. ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:305:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-d7d7d-t-prefix-1-insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-d7d7d-t-prefix-1-insert-in-prefix-firefox\error-context.md
+
+  75) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:315:3 › Ordered list prefix (1. ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:319:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-a442c-t-prefix-1-delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-a442c-t-prefix-1-delete-in-prefix-firefox\error-context.md
+
+  76) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:329:3 › Ordered list prefix (1. ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:333:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-fd47b-refix-1-backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-fd47b-refix-1-backspace-in-prefix-firefox\error-context.md
+
+  77) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:345:3 › Checklist prefix (- [ ] ) › insert in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:350:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-98e38-t-prefix---insert-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-98e38-t-prefix---insert-in-prefix-firefox\error-context.md
+
+  78) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:360:3 › Checklist prefix (- [ ] ) › delete in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:365:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-eabe7-t-prefix---delete-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-eabe7-t-prefix---delete-in-prefix-firefox\error-context.md
+
+  79) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:375:3 › Checklist prefix (- [ ] ) › backspace in prefix
+
+    Error: page.evaluate: Error: no element matching .md-list-item
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:7:23)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInPrefix (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:51:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:380:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-b16ed-refix---backspace-in-prefix-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-b16ed-refix---backspace-in-prefix-firefox\error-context.md
+
+  80) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:392:3 › Code fence — three ticks, no language › insert on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:397:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-f9b1c-age-insert-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-f9b1c-age-insert-on-opening-fence-firefox\error-context.md
+
+  81) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:406:3 › Code fence — three ticks, no language › delete on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:410:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-e86fa-age-delete-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-e86fa-age-delete-on-opening-fence-firefox\error-context.md
+
+  82) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:419:3 › Code fence — three ticks, no language › backspace on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:423:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-b0bdd--backspace-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-b0bdd--backspace-on-opening-fence-firefox\error-context.md
+
+  83) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:434:3 › Code fence — three ticks, with language › insert in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:439:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-7e88c-uage-insert-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-7e88c-uage-insert-in-language-tag-firefox\error-context.md
+
+  84) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:448:3 › Code fence — three ticks, with language › delete in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:453:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-ecc00-uage-delete-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-ecc00-uage-delete-in-language-tag-firefox\error-context.md
+
+  85) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:462:3 › Code fence — three ticks, with language › backspace in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:467:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-e6d2d-e-backspace-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-e6d2d-e-backspace-in-language-tag-firefox\error-context.md
+
+  86) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:478:3 › Code fence — eight ticks, no language › insert on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:483:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-e5320-age-insert-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-e5320-age-insert-on-opening-fence-firefox\error-context.md
+
+  87) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:494:3 › Code fence — eight ticks, no language › delete on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:499:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-e2dbc-age-delete-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-e2dbc-age-delete-on-opening-fence-firefox\error-context.md
+
+  88) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:509:3 › Code fence — eight ticks, no language › backspace on opening fence
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:514:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-b69cd--backspace-on-opening-fence-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-b69cd--backspace-on-opening-fence-firefox\error-context.md
+
+  89) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:525:3 › Code fence — eight ticks, with language › insert in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:531:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-78100-uage-insert-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-78100-uage-insert-in-language-tag-firefox\error-context.md
+
+  90) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:540:3 › Code fence — eight ticks, with language › delete in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:545:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-3b375-uage-delete-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-3b375-uage-delete-in-language-tag-firefox\error-context.md
+
+  91) [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:554:3 › Code fence — eight ticks, with language › backspace in language tag
+
+    Error: page.evaluate: Error: no .md-code-block .md-content found
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:6:28)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at setCursorInCodeBlock (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:90:12)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\content\source-view-prefix-edit.spec.js:559:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-content-s-9a827-e-backspace-in-language-tag-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-content-s-9a827-e-backspace-in-language-tag-firefox\error-context.md
+
+  92) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:47:1 › cursors sync after typing text
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:48:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-13496-sors-sync-after-typing-text-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-13496-sors-sync-after-typing-text-firefox\error-context.md
+
+  93) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:79:1 › cursors sync after backspace
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:80:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-37b3f-ursors-sync-after-backspace-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-37b3f-ursors-sync-after-backspace-firefox\error-context.md
+
+  94) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:115:1 › cursors sync after Enter splits a paragraph
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:116:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-2fc12-er-Enter-splits-a-paragraph-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-2fc12-er-Enter-splits-a-paragraph-firefox\error-context.md
+
+  95) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:136:1 › cursors sync after backspace merges paragraphs
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.boundingBox: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor').locator('[data-node-id]:nth-child(2)')
+
+
+       at test-utils.js:144
+
+      142 |  */
+      143 | export async function clickInEditor(page, locator) {
+    > 144 |   const box = await locator.boundingBox();
+          |                             ^
+      145 |   if (!box) throw new Error(`clickInEditor: element not visible`);
+      146 |   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      147 | }
+        at clickInEditor (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:144:29)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:145:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-47dcc-backspace-merges-paragraphs-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-47dcc-backspace-merges-paragraphs-firefox\error-context.md
+
+  96) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:157:1 › cursors sync after clicking a different node
+
+    Test timeout of 5000ms exceeded.
+
+    Error: locator.boundingBox: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor .md-heading1')
+
+
+       at test-utils.js:144
+
+      142 |  */
+      143 | export async function clickInEditor(page, locator) {
+    > 144 |   const box = await locator.boundingBox();
+          |                             ^
+      145 |   if (!box) throw new Error(`clickInEditor: element not visible`);
+      146 |   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      147 | }
+        at clickInEditor (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:144:29)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:163:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-ebe31-r-clicking-a-different-node-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-ebe31-r-clicking-a-different-node-firefox\error-context.md
+
+  97) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:238:1 › cursors sync after creating and exiting a list item
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:239:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-6d91f-ing-and-exiting-a-list-item-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-6d91f-ing-and-exiting-a-list-item-firefox\error-context.md
+
+  98) [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:290:1 › treeCursor persists after blur in writing view
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\cursor-sync.spec.js:291:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-84029--after-blur-in-writing-view-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-84029--after-blur-in-writing-view-firefox\error-context.md
+
+  99) [firefox] › test\integration\user-interaction\interaction\paste.spec.js:79:3 › Paste in writing view › single-line paste inserts text at cursor
+
+    Test timeout of 5000ms exceeded.
+
+    Error: page.waitForSelector: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('#editor [data-node-id]') to be visible
+
+
+       at test-utils.js:109
+
+      107 |   }, fixtureContent);
+      108 |   // Wait for the editor to re-render.
+    > 109 |   await page.waitForSelector(`#editor [data-node-id]`);
+          |              ^
+      110 | }
+      111 |
+      112 | /**
+        at loadContent (C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\test-utils.js:109:14)
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\paste.spec.js:80:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\user-interaction-interacti-1fb1b-aste-inserts-text-at-cursor-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\user-interaction-interacti-1fb1b-aste-inserts-text-at-cursor-firefox\error-context.md
+
+  100) [firefox] › test\integration\user-interaction\interaction\range-handling.spec.js:349:3 › Cross-node selection deletion › typing with cross-node selection replaces all selected content
+
+    "afterAll" hook timeout of 5000ms exceeded.
+
+      20 | });
+      21 |
+    > 22 | test.afterAll(async () => {
+         |      ^
+      23 |   await stopServer(server);
+      24 | });
+      25 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\range-handling.spec.js:22:6
+
+  101) [firefox] › test\integration\user-interaction\interaction\range-handling.spec.js:539:3 › Writing-view cut › cross-node cut copies markdown and removes content
+
+    "afterAll" hook timeout of 5000ms exceeded.
+
+      20 | });
+      21 |
+    > 22 | test.afterAll(async () => {
+         |      ^
+      23 |   await stopServer(server);
+      24 | });
+      25 |
+        at C:\Users\Mike\Documents\Git\projects\markdown editor\test\integration\user-interaction\interaction\range-handling.spec.js:22:6
+
+  101 failed
+    [firefox] › test\integration\app-functionality\app\search.spec.js:132:1 › plain text search is case insensitive by default
+    [firefox] › test\integration\app-functionality\app\search.spec.js:169:1 › regex search finds pattern matches
+    [firefox] › test\integration\app-functionality\app\search.spec.js:206:1 › Enter navigates to next match
+    [firefox] › test\integration\app-functionality\app\search.spec.js:242:1 › next/prev buttons navigate matches
+    [firefox] › test\integration\app-functionality\app\search.spec.js:311:1 › close button closes the search bar
+    [firefox] › test\integration\app-functionality\app\search.spec.js:333:1 › plain text search requires at least 2 characters
+    [firefox] › test\integration\app-functionality\app\search.spec.js:367:1 › initial match is closest to cursor position
+    [firefox] › test\integration\app-functionality\app\search.spec.js:462:1 › closing search preserves cursor position in writing view
+    [firefox] › test\integration\app-functionality\document\toc-highlight.spec.js:105:1 › ToC highlight updates when scrolling between sections
+    [firefox] › test\integration\app-functionality\document\toc-highlight.spec.js:132:1 › active ToC link is scrolled to the vertical center of the sidebar
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:124:3 › Problem 1 — bold first word, toggle off › bolding first word produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:137:3 › Problem 1 — bold first word, toggle off › toggling bold off restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:160:3 › Problem 2 — bold middle word, paragraph 1 › bolding middle word produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:173:3 › Problem 2 — bold middle word, paragraph 1 › toggling bold off middle word restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:194:3 › Problem 3 — bold first word, paragraph 2 › bolding first word of second paragraph produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:214:3 › Problem 4 — bold middle word, paragraph 2 › bolding middle word of second paragraph produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:367:3 › Collapsed cursor — bold word under caret › clicking bold with cursor on a plain word bolds that word
+    [firefox] › test\integration\app-functionality\toolbar\bold-button.spec.js:382:3 › Collapsed cursor — bold word under caret › clicking bold with cursor inside bold text removes bold
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:40:1 › source view renders checklist prefix for unchecked item
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:49:1 › source view renders checklist prefix for checked item
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:76:1 › clicking checklist button converts paragraph to checklist item
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:94:1 › clicking checklist button on checklist item toggles back to paragraph
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:112:1 › clicking bullet button on checklist item switches to bullet list
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:132:1 › clicking ordered button on checklist item switches to ordered list
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:150:1 › clicking checklist button on bullet list switches to checklist
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:168:1 › clicking checklist button on ordered list switches to checklist
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:186:1 › clicking checkbox in writing view toggles checked state
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:219:1 › Enter key in checklist item creates new unchecked checklist item
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:244:1 › Enter on empty checklist item exits to paragraph
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:266:1 › switching entire contiguous checklist run to bullet via toolbar
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:383:1 › multi-select across html-block converts all nodes to checklist after confirm
+    [firefox] › test\integration\app-functionality\toolbar\checklist.spec.js:465:1 › typing x into checkbox brackets in source view checks the item
+    [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:128:3 › Italic first word, toggle off › toggling italic off restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:160:3 › Italic middle word, paragraph 1 › toggling italic off on the middle word restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:196:3 › Italic middle word, paragraph 2 › italicizing middle word of second paragraph produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\italic-button.spec.js:351:3 › Collapsed cursor — italic word under caret › clicking italic with cursor inside italic text removes italic
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:45:1 › clicking bullet list button converts paragraph to unordered list item
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:67:1 › clicking numbered list button converts paragraph to ordered list item
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:88:1 › clicking bullet list button on bullet list item toggles back to paragraph
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:107:1 › clicking numbered list button on bullet list item switches to ordered
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:126:1 › Enter key in a list item creates a new list item
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:155:1 › Enter on empty list item exits the list to a paragraph
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:177:1 › heading button on list item converts to heading
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:201:1 › Enter in ordered list creates item with incremented number
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:230:1 › source view: Enter between marker and content splits into empty item and new item
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:262:1 › toggling off a list item converts the entire contiguous list to paragraphs
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:286:1 › switching list type converts the entire contiguous list
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:310:1 › Enter on empty middle ordered item renumbers remaining items
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:335:1 › pasting multi-line markdown with list items creates correct nodes
+    [firefox] › test\integration\app-functionality\toolbar\list.spec.js:372:1 › pasting multi-line markdown with CRLF line endings parses correctly
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:114:3 › Strikethrough first word, toggle off › strikethrough first word produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:127:3 › Strikethrough first word, toggle off › toggling strikethrough off restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:146:3 › Strikethrough middle word, paragraph 1 › strikethrough middle word produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:159:3 › Strikethrough middle word, paragraph 1 › toggling strikethrough off middle word restores plain text
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:178:3 › Strikethrough first word, paragraph 2 › strikethrough first word of second paragraph produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:195:3 › Strikethrough middle word, paragraph 2 › strikethrough middle word of second paragraph produces correct markdown
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:336:3 › Collapsed cursor — strikethrough word under caret › clicking strikethrough with cursor on a plain word applies strikethrough
+    [firefox] › test\integration\app-functionality\toolbar\strikethrough-button.spec.js:349:3 › Collapsed cursor — strikethrough word under caret › clicking strikethrough with cursor inside struck-through text removes it
+    [firefox] › test\integration\app-functionality\toolbar\toolbar-active.spec.js:285:1 › clicking bold button inside <b> tag strips the tag
+    [firefox] › test\integration\app-functionality\toolbar\toolbar-active.spec.js:319:1 › clicking italic button inside <i> tag strips the tag
+    [firefox] › test\integration\user-interaction\content\code-block-language-tag.spec.js:171:3 › Code-block language tag dialog › cursor offset is correct in source view after changing language in writing view
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:119:3 › Heading1 prefix (# ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:135:3 › Heading1 prefix (# ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:151:3 › Heading1 prefix (# ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:169:3 › Heading2 prefix (## ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:183:3 › Heading2 prefix (## ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:197:3 › Heading2 prefix (## ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:213:3 › Blockquote prefix (> ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:227:3 › Blockquote prefix (> ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:241:3 › Blockquote prefix (> ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:257:3 › Unordered list prefix (- ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:271:3 › Unordered list prefix (- ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:285:3 › Unordered list prefix (- ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:301:3 › Ordered list prefix (1. ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:315:3 › Ordered list prefix (1. ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:329:3 › Ordered list prefix (1. ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:345:3 › Checklist prefix (- [ ] ) › insert in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:360:3 › Checklist prefix (- [ ] ) › delete in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:375:3 › Checklist prefix (- [ ] ) › backspace in prefix
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:392:3 › Code fence — three ticks, no language › insert on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:406:3 › Code fence — three ticks, no language › delete on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:419:3 › Code fence — three ticks, no language › backspace on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:434:3 › Code fence — three ticks, with language › insert in language tag
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:448:3 › Code fence — three ticks, with language › delete in language tag
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:462:3 › Code fence — three ticks, with language › backspace in language tag
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:478:3 › Code fence — eight ticks, no language › insert on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:494:3 › Code fence — eight ticks, no language › delete on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:509:3 › Code fence — eight ticks, no language › backspace on opening fence
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:525:3 › Code fence — eight ticks, with language › insert in language tag
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:540:3 › Code fence — eight ticks, with language › delete in language tag
+    [firefox] › test\integration\user-interaction\content\source-view-prefix-edit.spec.js:554:3 › Code fence — eight ticks, with language › backspace in language tag
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:47:1 › cursors sync after typing text
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:79:1 › cursors sync after backspace
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:115:1 › cursors sync after Enter splits a paragraph
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:136:1 › cursors sync after backspace merges paragraphs
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:157:1 › cursors sync after clicking a different node
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:238:1 › cursors sync after creating and exiting a list item
+    [firefox] › test\integration\user-interaction\interaction\cursor-sync.spec.js:290:1 › treeCursor persists after blur in writing view
+    [firefox] › test\integration\user-interaction\interaction\paste.spec.js:79:3 › Paste in writing view › single-line paste inserts text at cursor
+    [firefox] › test\integration\user-interaction\interaction\range-handling.spec.js:349:3 › Cross-node selection deletion › typing with cross-node selection replaces all selected content
+    [firefox] › test\integration\user-interaction\interaction\range-handling.spec.js:539:3 › Writing-view cut › cross-node cut copies markdown and removes content
+

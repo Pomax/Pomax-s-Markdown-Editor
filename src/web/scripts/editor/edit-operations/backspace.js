@@ -127,19 +127,11 @@ export async function handleBackspace(ops) {
 
     // Code-block content is raw code — skip re-parsing.
     if (node.type === `code-block`) {
-      // In source view, backspace targets sourceEditText.
-      if (ops.editor.viewMode === `source` && node.sourceEditText !== null) {
-        const srcLeft = node.sourceEditText.substring(
-          0,
-          ops.editor.syntaxTree.treeCursor.offset - 1,
-        );
-        const srcRight = node.sourceEditText.substring(ops.editor.syntaxTree.treeCursor.offset);
-        node.sourceEditText = srcLeft + srcRight;
-        ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
-      } else {
-        node.content = newContent;
-        ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
-      }
+      node.content = newContent;
+      ops.editor.syntaxTree.treeCursor = {
+        nodeId: node.id,
+        offset: left.length,
+      };
       ops.editor.recordAndRender(before, { updated: [node.id] });
       return;
     }
@@ -166,14 +158,10 @@ export async function handleBackspace(ops) {
     // absolute position moves back by one (left is already trimmed).
     const absPos = oldPrefixLen + left.length;
     const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-    if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
-      ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
-    } else {
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: Math.max(0, absPos - newPrefixLen),
-      };
-    }
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: Math.max(0, absPos - newPrefixLen),
+    };
   } else {
     // Cursor is at the start of the node.
 
@@ -184,26 +172,6 @@ export async function handleBackspace(ops) {
     // is a no-op (consistent with html-block boundary behaviour).
     // In writing view with empty content, convert to paragraph.
     if (node.type === `code-block`) {
-      if (ops.editor.viewMode === `source`) {
-        // If the first line of the source edit text no longer
-        // contains any backticks, the user has fully removed
-        // the opening fence.  Finalize to reparse the text as
-        // normal content and fall through to the standard
-        // backspace-at-offset-0 logic (merge with previous).
-        const firstLine = (node.sourceEditText ?? ``).split(`\n`)[0];
-        if (firstLine.includes(`\``)) {
-          // Still has backticks — no-op.
-          ops.editor.recordAndRender(before, renderHints);
-          return;
-        }
-        // Finalize: reparse into non-code-block nodes.
-        const finalizeHints = await ops.editor.finalizeCodeBlockSourceEdit(node);
-        if (finalizeHints) {
-          renderHints = finalizeHints;
-        }
-        ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
-        // Fall through to the offset-0 logic below.
-      }
       if (node.content === ``) {
         node.type = `paragraph`;
         node.content = ``;
@@ -255,29 +223,28 @@ export async function handleBackspace(ops) {
 
         if (prev.type === `html-block` && prev.children.length > 0) {
           // Previous sibling is a container html-block.
-          if (ops.editor.viewMode === `source`) {
-            // In source view the container boundary is
-            // structural — backspace is a no-op.
-          } else {
-            // In writing view, merge into the last child
-            // of the html-block container.
-            const lastChild = prev.children[prev.children.length - 1];
-            const lastChildLen = lastChild.content.length;
-            lastChild.content += node.content;
-            siblings.splice(idx, 1);
-            node.parent = null;
-            ops.editor.syntaxTree.treeCursor = {
-              nodeId: lastChild.id,
-              offset: lastChildLen,
-            };
-            renderHints = { updated: [lastChild.id], removed: [node.id] };
-          }
+
+          // In writing view, merge into the last child
+          // of the html-block container.
+          const lastChild = prev.children[prev.children.length - 1];
+          const lastChildLen = lastChild.content.length;
+          lastChild.content += node.content;
+          siblings.splice(idx, 1);
+          node.parent = null;
+          ops.editor.syntaxTree.treeCursor = {
+            nodeId: lastChild.id,
+            offset: lastChildLen,
+          };
+          renderHints = { updated: [lastChild.id], removed: [node.id] };
         } else {
           const prevLen = prev.content.length;
           prev.content += node.content;
           siblings.splice(idx, 1);
           node.parent = null;
-          ops.editor.syntaxTree.treeCursor = { nodeId: prev.id, offset: prevLen };
+          ops.editor.syntaxTree.treeCursor = {
+            nodeId: prev.id,
+            offset: prevLen,
+          };
           renderHints = { updated: [prev.id], removed: [node.id] };
         }
       }
