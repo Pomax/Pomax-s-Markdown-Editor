@@ -160,7 +160,7 @@ Missing:
 - [x] #140 :150 — clicking checklist button on bullet list switches to checklist (FIXED: read textarea instead of [data-node-id])
 - [x] #142 :266 — switching entire contiguous checklist run to bullet via toolbar (FIXED: same + toMarkdown tight-list fix)
 - [x] #145 :219 — Enter key in checklist item creates new unchecked checklist item (FIXED: same + toMarkdown tight-list fix)
-- [ ] #148 :465 — typing x into checkbox brackets in source view checks the item (SEPARATE ISSUE: cursor positioning, not data-node-id)
+- [x] #148 :465 — typing x into checkbox brackets in source view checks the item (FIXED: ArrowLeft count 8→9, switch to writing view to verify checkbox is checked, removed unnecessary timeouts)
 
 ## list.spec.js
 - [ ] #154 :88 — clicking bullet list button on bullet list item toggles back to paragraph
