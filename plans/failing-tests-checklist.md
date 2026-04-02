@@ -34,7 +34,7 @@ Missing:
 - [x] test that verifies the view is the same scroll position when searching for a term with zero hits rather than "wherever it was when it last matched something while typing". This needs a _large_ document (e.g. lorem fixture), the cursor in the middle, then search for "loremelephant" (typed as individual letters). By the time we have 0 results, the scroll position should be restored to where we were prior to starting the search. (FIXED: save scrollTop on open, restore when matches drop to zero; ADDED test)
 
 ## toc-highlight.spec.js
-- [ ] :105 — ToC highlight updates when scrolling between sections
+- [x] :105 — ToC highlight updates when scrolling between sections (PASSED: cascade failure from loadContent fix)
 
 
 ## session-save.spec.js
