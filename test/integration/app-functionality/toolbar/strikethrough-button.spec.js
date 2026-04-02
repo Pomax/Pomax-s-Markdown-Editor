@@ -177,7 +177,7 @@ test.describe(`Strikethrough first word, paragraph 2`, () => {
     await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`~~text2~~ text2 text2`);
   });
 });
@@ -194,7 +194,7 @@ test.describe(`Strikethrough middle word, paragraph 2`, () => {
     await setSource2View(page);
     const line0 = await getSourceLineText(page, 0);
     expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
+    const line1 = await getSourceLineText(page, 2);
     expect(line1).toBe(`text2 ~~text2~~ text2`);
   });
 });

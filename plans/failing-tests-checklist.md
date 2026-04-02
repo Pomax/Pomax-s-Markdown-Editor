@@ -137,14 +137,14 @@ Missing:
 - [x] #128 :382 — clicking bold with cursor inside bold text removes bold (FIXED: same)
 
 ## strikethrough-button.spec.js
-- [ ] #183 :146 — strikethrough middle word produces correct markdown
-- [ ] #184 :178 — strikethrough first word of second paragraph produces correct markdown
-- [ ] #187 :114 — strikethrough first word produces correct markdown
-- [ ] #192 :336 — clicking strikethrough with cursor on a plain word applies strikethrough
-- [ ] #197 :159 — toggling strikethrough off middle word restores plain text
-- [ ] #198 :195 — strikethrough middle word of second paragraph produces correct markdown
-- [ ] #199 :127 — toggling strikethrough off restores plain text
-- [ ] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it
+- [x] #183 :146 — strikethrough middle word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #184 :178 — strikethrough first word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #187 :114 — strikethrough first word produces correct markdown (FIXED: shared getSourceLineText reads textarea)
+- [x] #192 :336 — clicking strikethrough with cursor on a plain word applies strikethrough (FIXED: same)
+- [x] #197 :159 — toggling strikethrough off middle word restores plain text (FIXED: same)
+- [x] #198 :195 — strikethrough middle word of second paragraph produces correct markdown (FIXED: same + line index 1→2 for blank line)
+- [x] #199 :127 — toggling strikethrough off restores plain text (FIXED: same)
+- [x] #200 :349 — clicking strikethrough with cursor inside struck-through text removes it (FIXED: same)
 
 ## checklist.spec.js
 - [ ] #118 :40 — source view renders checklist prefix for unchecked item
