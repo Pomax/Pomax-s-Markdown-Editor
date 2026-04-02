@@ -114,7 +114,7 @@ Missing:
 - [x] #149 :128 — toggling italic off restores plain text (PASSED: cascade failure from loadContent fix)
 - [x] #150 :337 — clicking italic with cursor on a plain word italicizes that word (FIXED: same)
 - [x] #151 :160 — toggling italic off on the middle word restores plain text (PASSED: cascade failure from loadContent fix)
-- [ ] #153 :196 — italicizing middle word of second paragraph produces correct markdown
+- [x] #153 :196 — italicizing middle word of second paragraph produces correct markdown (PASSED: cascade failure from loadContent fix)
 - [ ] :351 — clicking italic with cursor inside italic text removes italic
 
 ## cursor-sync.spec.js
