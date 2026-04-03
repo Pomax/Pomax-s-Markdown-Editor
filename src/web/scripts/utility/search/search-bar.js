@@ -632,15 +632,6 @@ export class SearchBar {
    * We walk the text nodes inside the `[data-node-id]` element,
    * accumulate offsets, and split/wrap the target range.
    *
-   * In **source mode** the searchable text is the full markdown line
-   * including the prefix (e.g. `## Heading`).  However the DOM
-   * separates the prefix into `span.md-syntax` and the content into
-   * `span.md-content` (or a bare text node for paragraphs).  We walk
-   * *all* text nodes inside the `[data-node-id]` element in document
-   * order, which naturally visits prefix text first and content text
-   * second — the accumulated offset therefore aligns with the
-   * `toMarkdown()` output.
-   *
    * In **writing mode** the searchable text comes from `toBareText()`
    * which strips formatting delimiters.  The DOM contains text nodes
    * interleaved with inline formatting elements (`<strong>`, `<em>`,

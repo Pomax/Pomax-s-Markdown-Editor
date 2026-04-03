@@ -34,10 +34,7 @@ export class ClipboardHandler {
   /**
    * Returns the raw markdown text for the current selection range.
    *
-   * **Source view** — returns the raw substring(s) of the node content
-   * strings, which already *is* markdown.
-   *
-   * **Writing view** — resolves start / end positions to the parse tree,
+   * Resolves start / end positions to the parse tree,
    * trims the first and last nodes' content to the selection boundaries,
    * repairs any HTML inline tags that were sliced open, and wraps every
    * node in its block-level markdown prefix so that the clipboard text
@@ -49,46 +46,7 @@ export class ClipboardHandler {
     this.editor.syncCursorFromDOM();
     if (!this.editor.treeRange || !this.editor.syntaxTree) return ``;
 
-    if (this.editor.viewMode === `writing`) {
-      return this.getSelectedMarkdownWriting();
-    }
-
-    return this.getSelectedMarkdownSource();
-  }
-
-  /**
-   * Source-view copy: raw content substrings joined with blank lines.
-   * @returns {string}
-   */
-  getSelectedMarkdownSource() {
-    const { startNodeId, startOffset, endNodeId, endOffset } = /** @type {TreeRange} */ (
-      this.editor.treeRange
-    );
-    const tree = /** @type {SyntaxTree} */ (this.editor.syntaxTree);
-
-    const startNode = tree.findNodeById(startNodeId);
-    const endNode = tree.findNodeById(endNodeId);
-    if (!startNode || !endNode) return ``;
-
-    // Same node — just the selected substring.
-    if (startNodeId === endNodeId) {
-      return startNode.content.substring(startOffset, endOffset);
-    }
-
-    // Cross-node: collect the tail of the first node, full intermediate
-    // nodes, and the head of the last node.
-    const siblings = this.editor.getSiblings(startNode);
-    const startIdx = siblings.indexOf(startNode);
-    const endIdx = siblings.indexOf(endNode);
-    if (startIdx === -1 || endIdx === -1) return ``;
-
-    const parts = [];
-    parts.push(startNode.content.substring(startOffset));
-    for (let i = startIdx + 1; i < endIdx; i++) {
-      parts.push(siblings[i].toMarkdown());
-    }
-    parts.push(endNode.content.substring(0, endOffset));
-    return parts.join(`\n\n`);
+    return this.getSelectedMarkdownWriting();
   }
 
   /**
