@@ -83,7 +83,7 @@ test(`toggle stays in sync when view mode changes via menu`, async () => {
   await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
   await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
 
-  await expect(toggle).toHaveText(`Source 2 View`);
+  await expect(toggle).toHaveText(`Source2 View`);
 
   // Switch back to writing programmatically.
   await page.evaluate(() => window.editorAPI?.setViewMode(`writing`));

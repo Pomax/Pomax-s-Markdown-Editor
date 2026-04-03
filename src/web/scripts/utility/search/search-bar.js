@@ -3,7 +3,7 @@
  *
  * Supports plain text and regex matching, case-sensitive and
  * case-insensitive modes.  Searches against `syntaxTree.toMarkdown()`
- * in source view and `syntaxTree.toBareText()` in writing view, then
+ * in source2 view and `syntaxTree.toBareText()` in writing view, then
  * maps match offsets back to individual syntax-tree nodes for DOM
  * highlighting.
  */
@@ -377,11 +377,11 @@ export class SearchBar {
       let first = isFirst;
       for (const node of nodes) {
         // html-block containers are virtual — their text is produced
-        // by their children.  In source mode the opening/closing tag
+        // by their children.  In source2 mode the opening/closing tag
         // lines are part of toMarkdown(), so we handle them as a unit.
         if (node.type === `html-block` && node.children.length > 0) {
           if (isSource) {
-            // Source mode: the whole block is one markdown chunk.
+            // Source2 mode: the whole block is one markdown chunk.
             const text = node.toMarkdown();
             if (!first) {
               pos += 2; // \n\n separator
@@ -639,7 +639,7 @@ export class SearchBar {
    * nodes, skipping empty ones, so the accumulated visible text
    * aligns with the `toBareText()` output.
    *
-   * **Code blocks** are a special case: in source mode the
+   * **Code blocks** are a special case: in source2 mode the
    * `toMarkdown()` output includes the fence lines
    * (` ```lang ` / ` ``` `) and the code content, separated by `\n`.
    * The DOM renders these as separate child `<div>` elements

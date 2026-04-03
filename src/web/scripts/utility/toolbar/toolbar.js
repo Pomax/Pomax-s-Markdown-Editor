@@ -375,8 +375,7 @@ export class Toolbar {
    */
   static VIEW_MODE_LABELS = {
     writing: `Writing View`,
-    source: `Source View`,
-    source2: `Source 2 View`,
+    source2: `Source2 View`,
   };
 
   /**

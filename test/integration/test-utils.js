@@ -225,7 +225,7 @@ export async function setWritingView(page) {
 }
 
 /**
- * Switch the editor to source 2 view via the editor API.
+ * Switch the editor to source2 view via the editor API.
  * If already in source2 view, this is a no-op.
  *
  * @param {import('@playwright/test').Page} page

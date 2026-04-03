@@ -1,5 +1,5 @@
 /**
- * @fileoverview Tree-based formatter for writing and source view modes.
+ * @fileoverview Tree-based formatter for writing view mode.
  * Delegates all formatting operations to the editor's existing tree-based
  * methods. Implements the {@link Formatter} interface.
  */
@@ -8,7 +8,7 @@
 
 /**
  * Formatter that operates on the syntax tree via the editor's existing methods.
- * Used for `writing` and `source` view modes.
+ * Used for `writing` view mode.
  * @implements {Formatter}
  */
 export class TreeFormatter {

@@ -182,7 +182,7 @@ export class MenuHandler {
   }
 
   /**
-   * Handles switching to Source 2 view.
+   * Handles switching to Source2 view.
    */
   async handleViewSource2() {
     await this.editor.setViewMode(`source2`);
