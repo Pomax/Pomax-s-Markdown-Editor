@@ -28,10 +28,7 @@ export function handleEnterKey(ops) {
   if (!node || !ops.editor.syntaxTree || !ops.editor.syntaxTree.treeCursor) return;
 
   // html-block tag lines and containers are not splittable.
-  if (
-    node.type === `html-block` &&
-    (ops.editor.syntaxTree.treeCursor.tagPart || node.children.length > 0)
-  ) {
+  if (node.type === `html-block` && node.children.length > 0) {
     return;
   }
 

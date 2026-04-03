@@ -21,28 +21,7 @@ export async function handleDelete(ops) {
   const node = ops.editor.getCurrentBlockNode();
   if (!node || !ops.editor.syntaxTree || !ops.editor.syntaxTree.treeCursor) return;
 
-  // When the cursor is on an html-block tag line (source view), edit
-  // the openingTag / closingTag attribute directly.
-  if (node.type === `html-block` && ops.editor.syntaxTree.treeCursor.tagPart) {
-    const attr =
-      ops.editor.syntaxTree.treeCursor.tagPart === `opening` ? `openingTag` : `closingTag`;
-    const old = node.attributes[attr] || ``;
-    if (ops.editor.syntaxTree.treeCursor.offset < old.length) {
-      const before = ops.editor.syntaxTree.toMarkdown();
-      const left = old.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-      const right = old.substring(ops.editor.syntaxTree.treeCursor.offset + 1);
-      node.attributes[attr] = left + right;
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: left.length,
-        tagPart: ops.editor.syntaxTree.treeCursor.tagPart,
-      };
-      ops.editor.recordAndRender(before, { updated: [node.id] });
-    }
-    return;
-  }
-
-  // html-block containers without tagPart are structural (writing view).
+  // html-block containers are structural (writing view).
   if (node.type === `html-block` && node.children.length > 0) return;
 
   // Table cell delete
@@ -67,48 +46,6 @@ export async function handleDelete(ops) {
       ops.editor.recordAndRender(before, { updated: [node.id] });
     }
     // At end of cell — no-op
-    return;
-  }
-
-  // Source-view prefix editing: the cursor is inside the `.md-syntax`
-  // span.  Reconstruct the full markdown line, delete the character
-  // after the cursor, and reparse.
-  if (ops.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
-    const absPos = ops.editor.syntaxTree.treeCursor.prefixOffset;
-    const fullLine = ops.editor.buildMarkdownLine(node.type, node.content, node.attributes);
-    if (absPos < fullLine.length) {
-      const before = ops.editor.syntaxTree.toMarkdown();
-      const newLine = fullLine.substring(0, absPos) + fullLine.substring(absPos + 1);
-
-      const wasBareText = !!node.attributes.bareText;
-      const parsed = await ops.editor.reparseLine(newLine);
-      if (parsed) {
-        node.type = parsed.type;
-        node.content = parsed.content;
-        node.attributes = parsed.attributes;
-      } else {
-        node.content = newLine;
-      }
-      if (wasBareText) {
-        node.attributes.bareText = true;
-      }
-
-      const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-      if (absPos < newPrefixLen) {
-        ops.editor.syntaxTree.treeCursor = {
-          nodeId: node.id,
-          offset: 0,
-          prefixOffset: absPos,
-        };
-      } else {
-        ops.editor.syntaxTree.treeCursor = {
-          nodeId: node.id,
-          offset: absPos - newPrefixLen,
-        };
-      }
-      ops.editor.recordAndRender(before, { updated: [node.id] });
-    }
-    // At end of line — no-op
     return;
   }
 
