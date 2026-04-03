@@ -3,12 +3,9 @@
  * paragraph that immediately follows a </details> closing tag.
  *
  * Loads test/fixtures/details.md and places the cursor at the beginning of
- * "And then this is the main doc again.".  In both source and writing view,
- * pressing Backspace once must NOT delete the entire line.
+ * "And then this is the main doc again.".  In writing view, pressing
+ * Backspace once must NOT delete the entire line.
  *
- *  • Source view  – the paragraph is a top-level node whose previous sibling
- *    is an html-block container.  Backspace at offset 0 should be a no-op
- *    (there is nothing meaningful to merge into).
  *  • Writing view – Backspace at offset 0 should merge the paragraph into the
  *    last child of the preceding html-block (the "better" paragraph), so the
  *    result is "betterAnd then this is the main doc again."

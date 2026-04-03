@@ -1,20 +1,8 @@
 /**
  * Writing-view styles — rich presentation of markdown elements.
- * Everything is nested under `.writing-view` so source view stays plain.
  */
 
 .writing-view {
-    /* Syntax markers: hidden by default, shown on focus */
-    .md-syntax {
-        display: none;
-    }
-
-    [data-has-focus] .md-syntax {
-        display: inline;
-        color: var(--color-syntax);
-        font-family: var(--font-family-mono);
-    }
-
     /* Focused-line highlight */
     [data-node-id][data-has-focus] {
         background-color: rgba(13, 110, 253, 0.05);

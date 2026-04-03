@@ -174,14 +174,6 @@ export class MenuHandler {
   }
 
   /**
-   * Handles switching to Source view.
-   */
-  async handleViewSource() {
-    await this.editor.setViewMode(`source`);
-    this.toolbar.setViewMode(`source`);
-  }
-
-  /**
    * Handles switching to Writing view.
    */
   async handleViewWriting() {
@@ -190,7 +182,7 @@ export class MenuHandler {
   }
 
   /**
-   * Handles switching to Source 2 view.
+   * Handles switching to Source2 view.
    */
   async handleViewSource2() {
     await this.editor.setViewMode(`source2`);

@@ -28,7 +28,7 @@ declare module 'better-sqlite3' {
 /**
  * View mode of the editor.
  */
-type ViewMode = 'source' | 'source2' | 'writing';
+type ViewMode = 'source2' | 'writing';
 
 /**
  * Tree-based cursor position mapped to syntax tree coordinates.
@@ -44,10 +44,10 @@ interface TreeCursor {
      *  relative to the block, not the inline). */
     offset: number;
     /** If set, cursor is on an html-block container's opening or closing tag
-     *  line (source view only). */
+     *  line (source2 view only). */
     tagPart?: 'opening' | 'closing';
-    /** Character offset within the syntax prefix (e.g. `- [ ] `, `## `)
-     *  when the cursor is inside the `.md-syntax` span in source view.
+    /** Character offset within the syntax prefix (e.g. `- [ ] `, `## `).
+     *  Used for source2↔writing view cursor conversion.
      *  When set, `offset` is 0. */
     prefixOffset?: number;
     /** Row index for table cell editing (0 = header). */

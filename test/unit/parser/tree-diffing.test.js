@@ -212,20 +212,6 @@ describe(`updateMatchedNode`, () => {
     assert.strictEqual(oldNode.endLine, newNode.endLine);
   });
 
-  it(`clears sourceEditText to null`, () => {
-    const oldContent = `console.log(1)`;
-    const newContent = `console.log(2)`;
-    const attrs = { language: `js`, fenceCount: 3 };
-    const oldNode = new SyntaxNode(`code-block`, oldContent);
-    oldNode.attributes = { ...attrs };
-    oldNode.sourceEditText = `\`\`\`js\n${oldContent}\n\`\`\``;
-    const newNode = new SyntaxNode(`code-block`, newContent);
-    newNode.attributes = { ...attrs };
-    updateMatchedNode(oldNode, newNode);
-    assert.strictEqual(oldNode.sourceEditText, null);
-    assert.strictEqual(oldNode.content, newContent);
-  });
-
   it(`rebuilds inline children after content update on a paragraph`, () => {
     const oldContent = `This is ~~struck~~ here.`;
     const newContent = `This is ~~struck~~ and **bold** here.`;

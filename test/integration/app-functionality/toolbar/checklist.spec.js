@@ -430,7 +430,7 @@ test(`multi-select across html-block aborts on cancel`, async () => {
   }
 });
 
-test(`typing x into checkbox brackets in source view checks the item`, async () => {
+test(`typing x into checkbox brackets in source2 view checks the item`, async () => {
   await loadContent(page, ``);
   await setWritingView(page);
 

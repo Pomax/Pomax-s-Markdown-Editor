@@ -57,7 +57,6 @@ export class WritingRenderer {
     // Clear and rebuild content
     container.innerHTML = ``;
     container.classList.add(`writing-view`);
-    container.classList.remove(`source-view`);
 
     const fragment = document.createDocumentFragment();
 

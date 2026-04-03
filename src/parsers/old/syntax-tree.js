@@ -178,9 +178,6 @@ export function updateMatchedNode(oldNode, newNode) {
   if (oldNode.endLine !== newNode.endLine) {
     oldNode.endLine = newNode.endLine;
   }
-  if (oldNode.sourceEditText !== null) {
-    oldNode.sourceEditText = null;
-  }
 
   if (oldNode.type === `html-block`) {
     if (newNode.children.length > 0) {

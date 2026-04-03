@@ -53,7 +53,6 @@ export class SourceRendererV2 {
 
     container.innerHTML = ``;
     container.classList.add(`source-view-v2`);
-    container.classList.remove(`source-view`);
     container.classList.remove(`writing-view`);
 
     const wrapper = document.createElement(`div`);

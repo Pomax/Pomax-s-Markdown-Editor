@@ -80,16 +80,6 @@ export class SyntaxNode {
     this.attributes = {};
 
     /**
-     * When non-null, holds the full markdown text of this
-     * code-block while it is being edited in source view.  All
-     * keystrokes operate on this string; the normal `content` /
-     * `attributes` fields are updated only when editing ends
-     * (cursor leaves or view mode switches).
-     * @type {string|null}
-     */
-    this.sourceEditText = null;
-
-    /**
      * Starting line in the source (0-based).
      * @type {number}
      */
@@ -232,49 +222,6 @@ export class SyntaxNode {
     return false;
   }
 
-  // Source-view code-block editing
-
-  /**
-   * Enters source edit mode for a code-block node.  The full markdown
-   * representation (fences + language + content) is stored in
-   * `sourceEditText` so the user can edit any part — including the
-   * fences and language tag — as plain text.
-   *
-   * Only valid for `code-block` nodes; no-ops for other types or when
-   * already in source edit mode.
-   */
-  enterSourceEditMode() {
-    if (this.type !== `code-block`) return;
-    if (this.sourceEditText !== null) return;
-
-    const lang = this.attributes.language || ``;
-    const fence = `\``.repeat(this.attributes.fenceCount || 3);
-    this.sourceEditText = `${fence}${lang}\n${this.content}\n${fence}`;
-  }
-
-  /**
-   * Returns the length of the source edit text, or 0 if not in source
-   * edit mode.  Used by edit operations to bounds-check the cursor.
-   * @returns {number}
-   */
-  get sourceEditLength() {
-    return this.sourceEditText?.length ?? 0;
-  }
-
-  /**
-   * Exits source edit mode without reparsing.  The caller is responsible
-   * for reparsing `sourceEditText` and updating the node (or replacing
-   * it) in the tree.
-   *
-   * @returns {string|null} The source edit text that was active, or null
-   *   if the node was not in source edit mode.
-   */
-  exitSourceEditMode() {
-    const text = this.sourceEditText;
-    this.sourceEditText = null;
-    return text;
-  }
-
   /**
    * Converts this node to markdown.
    * @returns {string}
@@ -301,7 +248,6 @@ export class SyntaxNode {
           .map((line) => `> ${line}`)
           .join(`\n`);
       case `code-block`: {
-        if (this.sourceEditText !== null) return this.sourceEditText;
         const lang = this.attributes.language || ``;
         const fence = `\``.repeat(this.attributes.fenceCount || 3);
         return `${fence}${lang}\n${this.content}\n${fence}`;

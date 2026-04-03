@@ -78,7 +78,7 @@ test.describe(`Writing-view code-block language tag spans`, () => {
     expect(topStyle.cursor).toBe(`pointer`);
   });
 
-  test(`source view does not render language tag spans`, async () => {
+  test(`source2 view does not render language tag spans`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
     await setSource2View(page);
     const tags = page.locator(`#editor .md-code-block [data-lang]`);
@@ -164,7 +164,7 @@ test.describe(`Code-block language tag dialog`, () => {
     expect(md).toContain(`\`\`\`\n`);
   });
 
-  test(`cursor offset is correct in source view after changing language in writing view`, async () => {
+  test(`cursor offset is correct in source2 view after changing language in writing view`, async () => {
     await loadContent(page, `\`\`\`js\ncode\n\`\`\``);
     // Wait for the code block to render with expected content
     await expect(page.locator(`#editor .md-code-block .md-content`)).toHaveText(`code`);

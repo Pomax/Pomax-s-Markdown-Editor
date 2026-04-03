@@ -152,7 +152,7 @@ export class APIRegistry {
       params: {
         mode: {
           type: `string`,
-          description: `The view mode: "source", "source2", or "writing"`,
+          description: `The view mode: "source2", or "writing"`,
           required: true,
         },
       },

@@ -106,8 +106,7 @@ function createHandle(side) {
 
 /**
  * Positions both handles at the current left/right edges of the paper
- * using fixed positioning (viewport coordinates).  Also hides the
- * handles when the editor is in source mode.
+ * using fixed positioning (viewport coordinates).
  *
  * @param {HTMLElement} editor
  * @param {HTMLDivElement} leftHandle

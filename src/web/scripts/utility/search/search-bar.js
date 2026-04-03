@@ -3,7 +3,7 @@
  *
  * Supports plain text and regex matching, case-sensitive and
  * case-insensitive modes.  Searches against `syntaxTree.toMarkdown()`
- * in source view and `syntaxTree.toBareText()` in writing view, then
+ * in source2 view and `syntaxTree.toBareText()` in writing view, then
  * maps match offsets back to individual syntax-tree nodes for DOM
  * highlighting.
  */
@@ -377,11 +377,11 @@ export class SearchBar {
       let first = isFirst;
       for (const node of nodes) {
         // html-block containers are virtual — their text is produced
-        // by their children.  In source mode the opening/closing tag
+        // by their children.  In source2 mode the opening/closing tag
         // lines are part of toMarkdown(), so we handle them as a unit.
         if (node.type === `html-block` && node.children.length > 0) {
           if (isSource) {
-            // Source mode: the whole block is one markdown chunk.
+            // Source2 mode: the whole block is one markdown chunk.
             const text = node.toMarkdown();
             if (!first) {
               pos += 2; // \n\n separator
@@ -632,15 +632,6 @@ export class SearchBar {
    * We walk the text nodes inside the `[data-node-id]` element,
    * accumulate offsets, and split/wrap the target range.
    *
-   * In **source mode** the searchable text is the full markdown line
-   * including the prefix (e.g. `## Heading`).  However the DOM
-   * separates the prefix into `span.md-syntax` and the content into
-   * `span.md-content` (or a bare text node for paragraphs).  We walk
-   * *all* text nodes inside the `[data-node-id]` element in document
-   * order, which naturally visits prefix text first and content text
-   * second — the accumulated offset therefore aligns with the
-   * `toMarkdown()` output.
-   *
    * In **writing mode** the searchable text comes from `toBareText()`
    * which strips formatting delimiters.  The DOM contains text nodes
    * interleaved with inline formatting elements (`<strong>`, `<em>`,
@@ -648,7 +639,7 @@ export class SearchBar {
    * nodes, skipping empty ones, so the accumulated visible text
    * aligns with the `toBareText()` output.
    *
-   * **Code blocks** are a special case: in source mode the
+   * **Code blocks** are a special case: in source2 mode the
    * `toMarkdown()` output includes the fence lines
    * (` ```lang ` / ` ``` `) and the code content, separated by `\n`.
    * The DOM renders these as separate child `<div>` elements

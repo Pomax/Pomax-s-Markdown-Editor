@@ -117,8 +117,7 @@ export class PreferencesModal {
                             <label for="default-view-select">View mode on startup</label>
                             <select id="default-view-select" name="defaultView">
                                 <option value="writing">Writing</option>
-                                <option value="source">Source</option>
-                                <option value="source2">Source 2</option>
+                                <option value="source2">Source</option>
                             </select>
                         </div>
                     </fieldset>
@@ -697,7 +696,7 @@ export class PreferencesModal {
     try {
       const result = await window.electronAPI.getSetting(`defaultView`);
       if (result.success && result.value) {
-        if (result.value === `source` || result.value === `source2`) return result.value;
+        if (result.value === `source2`) return result.value;
         return `writing`;
       }
     } catch {
@@ -880,7 +879,7 @@ export class PreferencesModal {
     const viewSelect = /** @type {HTMLSelectElement} */ (
       this.dialog.querySelector(`#default-view-select`)
     );
-    const defaultView = viewSelect.value === `source` ? `source` : `writing`;
+    const defaultView = viewSelect.value === `source2` ? `source2` : `writing`;
 
     const fixedCb = /** @type {HTMLInputElement} */ (
       this.dialog.querySelector(`#page-width-fixed`)
