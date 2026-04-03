@@ -110,7 +110,7 @@ test(`Ctrl+F while open selects the search text`, async () => {
   expect(selected).toBe(5);
 });
 
-test(`plain text search highlights matches in source view`, async () => {
+test(`plain text search highlights matches in source2 view`, async () => {
   await loadContent(page, FIXTURE);
   await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);

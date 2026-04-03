@@ -5,7 +5,7 @@
  * immediately convert the paragraph into a code-block node.  Pressing Enter
  * inside an existing code block should insert a newline rather than splitting.
  *
- * Typing tests are run in both writing view and source view to ensure the
+ * Typing tests are run in both writing view and source2 view to ensure the
  * fence-to-code-block conversion works in both rendering paths.
  */
 

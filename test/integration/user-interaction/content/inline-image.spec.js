@@ -72,7 +72,7 @@ test(`typing standalone ![alt](src) suppresses block-level image conversion`, as
   await expect(img).toBeVisible();
 });
 
-test(`image syntax round-trips through source view correctly`, async () => {
+test(`image syntax round-trips through source2 view correctly`, async () => {
   await setWritingView(page);
   await loadContent(page, `before ![alt](img.png) after`);
 
@@ -92,7 +92,7 @@ test(`image syntax round-trips through source view correctly`, async () => {
   await expect(imgAfter).toBeVisible();
 });
 
-test(`removing ! in source view converts inline image to link`, async () => {
+test(`removing ! in source2 view converts inline image to link`, async () => {
   // Type the image syntax so it stays a paragraph (block conversion suppressed)
   await setWritingView(page);
   await loadContent(page, ``);

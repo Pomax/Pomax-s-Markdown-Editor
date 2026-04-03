@@ -57,8 +57,8 @@ async function getMarkdown() {
 // clipboard writes from other workers cannot race with ours.
 test.describe.configure({ mode: `serial` });
 
-test.describe(`Paste in source view`, () => {
-  test(`multi-line paste with CRLF line endings normalizes to LF in source view`, async () => {
+test.describe(`Paste in source2 view`, () => {
+  test(`multi-line paste with CRLF line endings normalizes to LF in source2 view`, async () => {
     await loadContent(page, `\n`);
     await setSource2View(page);
 
