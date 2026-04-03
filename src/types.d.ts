@@ -474,7 +474,7 @@ type InlineTokenType = 'text' | 'bold-open' | 'bold-close' | 'italic-open' | 'it
     | 'strikethrough-open' | 'strikethrough-close' | 'code'
     | 'link-open' | 'link-close' | 'link-href'
     | 'image'
-    | 'html-open' | 'html-close';
+    | 'html-open' | 'html-close' | 'html-void' | 'html-entity';
 
 /**
  * A single inline token.
@@ -486,8 +486,10 @@ interface InlineToken {
     raw: string;
     /** Inner content (for code spans / text). */
     content?: string;
-    /** HTML tag name (for html-open / html-close). */
+    /** HTML tag name (for html-open / html-close / html-void). */
     tag?: string;
+    /** HTML attributes (for html-open / html-void). */
+    attrs?: Record<string, string>;
     /** Link URL (for link-href). */
     href?: string;
     /** Alt text (for image tokens). */
@@ -515,6 +517,8 @@ interface InlineSegment {
     src?: string;
     /** HTML tag name (for html inline elements). */
     tag?: string;
+    /** HTML attributes (for html inline elements). */
+    attrs?: Record<string, string>;
     /** Child segments for containers. */
     children?: InlineSegment[];
 }

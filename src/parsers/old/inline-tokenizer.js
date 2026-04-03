@@ -9,13 +9,88 @@
  * {@link buildInlineTree}, which a renderer can walk to produce DOM nodes.
  */
 
-//  Known inline HTML tags
-//
-// Adding support for a new inline HTML tag is a one-line change: just
-// add the tag name to this set.
+// Void HTML elements (self-closing, no closing tag needed)
 
 /** @type {Set<string>} */
-const INLINE_HTML_TAGS = new Set([`strong`, `em`, `del`, `s`, `sub`, `sup`, `mark`, `u`, `b`, `i`]);
+const VOID_HTML_ELEMENTS = new Set([
+  `area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`,
+  `link`, `meta`, `param`, `source`, `track`, `wbr`,
+]);
+
+// HTML helpers
+
+/**
+ * Finds the closing '>' for a tag, skipping '>' inside quoted attributes.
+ * @param {string} input
+ * @param {number} start - Position after the '<'
+ * @returns {number} Index of closing '>', or -1
+ */
+function findClosingAngle(input, start) {
+  let inDouble = false;
+  let inSingle = false;
+  for (let j = start; j < input.length; j++) {
+    const c = input[j];
+    if (c === `"` && !inSingle) inDouble = !inDouble;
+    else if (c === `'` && !inDouble) inSingle = !inSingle;
+    else if (c === `>` && !inDouble && !inSingle) return j;
+  }
+  return -1;
+}
+
+/**
+ * Parses HTML attribute key-value pairs from a string.
+ * @param {string} str - e.g. 'src="x.png" alt="pic"'
+ * @returns {Record<string, string>}
+ */
+function parseHTMLAttributes(str) {
+  /** @type {Record<string, string>} */
+  const attrs = {};
+  const re = /([a-zA-Z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
+  let m;
+  while ((m = re.exec(str)) !== null) {
+    attrs[m[1]] = m[2] ?? m[3] ?? m[4] ?? ``;
+  }
+  return attrs;
+}
+
+// HTML entity decoding
+
+/**
+ * Common named HTML entity map.
+ * @type {Record<string, string>}
+ */
+const NAMED_ENTITIES = {
+  amp: `&`, lt: `<`, gt: `>`, quot: `"`, apos: `'`,
+  nbsp: `\u00A0`, ndash: `\u2013`, mdash: `\u2014`,
+  lsquo: `\u2018`, rsquo: `\u2019`, ldquo: `\u201C`, rdquo: `\u201D`,
+  bull: `\u2022`, hellip: `\u2026`, copy: `\u00A9`, reg: `\u00AE`,
+  trade: `\u2122`, times: `\u00D7`, divide: `\u00F7`,
+  laquo: `\u00AB`, raquo: `\u00BB`, cent: `\u00A2`, pound: `\u00A3`,
+  yen: `\u00A5`, euro: `\u20AC`, deg: `\u00B0`, micro: `\u00B5`,
+  para: `\u00B6`, middot: `\u00B7`, frac14: `\u00BC`, frac12: `\u00BD`,
+  frac34: `\u00BE`, iexcl: `\u00A1`, iquest: `\u00BF`, sect: `\u00A7`,
+  uml: `\u00A8`, macr: `\u00AF`, acute: `\u00B4`, cedil: `\u00B8`,
+  ensp: `\u2002`, emsp: `\u2003`, thinsp: `\u2009`, zwnj: `\u200C`,
+  zwj: `\u200D`, lrm: `\u200E`, rlm: `\u200F`,
+};
+
+/**
+ * Decodes a single HTML entity reference to its character.
+ * @param {string} raw - e.g. `&nbsp;`, `&#160;`, `&#x00A0;`
+ * @returns {string} The decoded character, or the raw string if unrecognised.
+ */
+function decodeHTMLEntity(raw) {
+  const inner = raw.slice(1, -1); // strip & and ;
+  if (inner.startsWith(`#x`) || inner.startsWith(`#X`)) {
+    const code = Number.parseInt(inner.slice(2), 16);
+    return Number.isNaN(code) ? raw : String.fromCodePoint(code);
+  }
+  if (inner.startsWith(`#`)) {
+    const code = Number.parseInt(inner.slice(1), 10);
+    return Number.isNaN(code) ? raw : String.fromCodePoint(code);
+  }
+  return NAMED_ENTITIES[inner] ?? raw;
+}
 
 //  Tokenizer
 
@@ -247,42 +322,59 @@ export function tokenizeInline(input) {
       }
     }
 
-    //  <tag> / </tag> HTML inline tags
+    //  <tag> / </tag> / <tag /> HTML tags
     if (ch === `<`) {
-      const closeAngle = input.indexOf(`>`, i + 1);
+      const closeAngle = findClosingAngle(input, i + 1);
       if (closeAngle !== -1) {
         const tagContent = input.slice(i + 1, closeAngle);
         // Closing tag: </tagname>
-        const closeMatch = tagContent.match(/^\/([a-zA-Z][a-zA-Z0-9]*)$/);
+        const closeMatch = tagContent.match(/^\/([a-zA-Z][a-zA-Z0-9-]*)$/);
         if (closeMatch) {
           const tagName = closeMatch[1].toLowerCase();
-          if (INLINE_HTML_TAGS.has(tagName)) {
-            flushText(i);
-            tokens.push({
-              type: `html-close`,
-              raw: input.slice(i, closeAngle + 1),
-              tag: tagName,
-            });
-            i = closeAngle + 1;
-            textStart = i;
-            continue;
-          }
+          flushText(i);
+          tokens.push({
+            type: `html-close`,
+            raw: input.slice(i, closeAngle + 1),
+            tag: tagName,
+          });
+          i = closeAngle + 1;
+          textStart = i;
+          continue;
         }
-        // Opening tag: <tagname> (no attributes for inline tags)
-        const openMatch = tagContent.match(/^([a-zA-Z][a-zA-Z0-9]*)$/);
+        // Opening or void tag: <tagname ...> or <tagname ... />
+        const openMatch = tagContent.match(/^([a-zA-Z][a-zA-Z0-9-]*)([\s/].*)?$/);
         if (openMatch) {
           const tagName = openMatch[1].toLowerCase();
-          if (INLINE_HTML_TAGS.has(tagName)) {
-            flushText(i);
-            tokens.push({
-              type: `html-open`,
-              raw: input.slice(i, closeAngle + 1),
-              tag: tagName,
-            });
-            i = closeAngle + 1;
-            textStart = i;
-            continue;
-          }
+          const rest = (openMatch[2] || ``).trim();
+          const selfClosing = rest.endsWith(`/`);
+          const attrString = selfClosing ? rest.slice(0, -1).trim() : rest;
+          const attrs = attrString ? parseHTMLAttributes(attrString) : undefined;
+          const isVoid = selfClosing || VOID_HTML_ELEMENTS.has(tagName);
+          flushText(i);
+          tokens.push({
+            type: isVoid ? `html-void` : `html-open`,
+            raw: input.slice(i, closeAngle + 1),
+            tag: tagName,
+            attrs,
+          });
+          i = closeAngle + 1;
+          textStart = i;
+          continue;
+        }
+      }
+    }
+
+    //  &entity; HTML entities
+    if (ch === `&`) {
+      const semi = input.indexOf(`;`, i + 1);
+      if (semi !== -1 && semi - i <= 10) {
+        const candidate = input.slice(i, semi + 1);
+        if (/^&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z][a-zA-Z0-9]*);$/.test(candidate)) {
+          flushText(i);
+          tokens.push({ type: `html-entity`, raw: candidate });
+          i = semi + 1;
+          textStart = i;
+          continue;
         }
       }
     }
@@ -325,8 +417,8 @@ export function findMatchedTokenIndices(tokens) {
 
     if (token.type === `text` || token.type === `code`) continue;
 
-    // Image tokens are self-contained — always matched.
-    if (token.type === `image`) {
+    // Image and void HTML tokens are self-contained — always matched.
+    if (token.type === `image` || token.type === `html-void` || token.type === `html-entity`) {
       matched.add(i);
       continue;
     }
@@ -474,6 +566,16 @@ export function buildInlineTree(tokens) {
       continue;
     }
 
+    if (token.type === `html-void`) {
+      current.push({ type: token.tag, tag: token.tag, attrs: token.attrs });
+      continue;
+    }
+
+    if (token.type === `html-entity`) {
+      current.push({ type: `text`, text: decodeHTMLEntity(token.raw) });
+      continue;
+    }
+
     //  Markdown open tokens
     if (CLOSE_TYPE_FOR[token.type]) {
       const closeType = CLOSE_TYPE_FOR[token.type];
@@ -533,6 +635,7 @@ export function buildInlineTree(tokens) {
         closeType: `html-close:${tag}`,
         raw: token.raw,
         tag,
+        attrs: token.attrs,
       });
       stack.push([]);
       continue;
@@ -545,10 +648,10 @@ export function buildInlineTree(tokens) {
       const idx = findMatchingOpen(openStack, closeKey);
       if (idx !== -1) {
         collapseStack(stack, openStack, idx);
-        const meta = /** @type {{tag: string}} */ (openStack.pop());
+        const meta = /** @type {{tag: string, attrs?: Record<string, string>}} */ (openStack.pop());
         const children = /** @type {InlineSegment[]} */ (stack.pop());
         const parent = stack[stack.length - 1];
-        parent.push({ type: meta.tag, tag: meta.tag, children });
+        parent.push({ type: meta.tag, tag: meta.tag, attrs: meta.attrs, children });
       } else {
         // Unmatched close tag — emit as text
         current.push({ type: `text`, text: token.raw });

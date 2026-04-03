@@ -21,11 +21,15 @@ Each step must be committed individually upon completion (that includes checking
 - [x] Step 11: Improve switch-over performance
 - [x] Step 12: Run full test suite, fix any failures
 - [x] Step 13: Update docs
-- [ ] Step 14: Audit the code for mentions/use of code relating to the old "Source" (not the new "Source2") view
-- [ ] Step 15: Remove all mentions/use of code relating to the old  "Source" (not the new "Source2") view
-- [ ] Step 16: Fix "search" in source2 mode
-- [ ] Step 17: Remove old source view code, test, and docs
-- [ ] Step 18: Rename all `source2` related code, docs, and tests so they use `source`
+- [x] Step 14: Audit the code for mentions/use of code relating to the old "Source" (not the new "Source2") view
+- [x] Step 15: Remove all mentions/use of code relating to the old  "Source" (not the new "Source2") view
+
+Additional steps:
+
+- [ ] fix html-in-table-cells, https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/122
+- [ ] fix HTML round trip, https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/125
+- [ ] #16: fix search in source2 mode,
+- [ ] #18: Rename all `source2` related code, docs, and tests so they use `source`
 
 ## Step Details
 
@@ -190,10 +194,6 @@ audit pending.
 
 Using the search modal in source2 mode does not highlight text correctly. We should use `C:\Users\Mike\Documents\Git\released\are-we-flying\docs\index.md`, which is a huge document where we can find terms that are easily shown as being highlighted wrong.
 
-### Step 17: Remove old source view related code, docs, and tests
-
-details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each reference that gets removed.
-
 ### Step 18: Rename all `source2` related code, docs, and tests so they use `source`
 
-details pending, but any changes must be done on a per-file basis, with full test suite runs AND manual testing to confirm nothing broke after each updated reference.
+plan pending.

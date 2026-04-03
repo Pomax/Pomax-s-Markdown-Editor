@@ -1028,9 +1028,14 @@ export class WritingRenderer {
           break;
         }
         default: {
-          // HTML inline tags (sub, sup, mark, u, etc.)
+          // HTML inline tags (sub, sup, mark, span, br, etc.)
           if (seg.tag) {
             const el = document.createElement(seg.tag);
+            if (seg.attrs) {
+              for (const [key, value] of Object.entries(seg.attrs)) {
+                el.setAttribute(key, value);
+              }
+            }
             this.appendSegments(seg.children ?? [], el);
             container.appendChild(el);
             container.appendChild(document.createTextNode(``));
