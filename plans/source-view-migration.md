@@ -26,7 +26,7 @@ Each step must be committed individually upon completion (that includes checking
 
 Additional steps:
 
-- [ ] fix html-in-table-cells, https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/122
+- [x] fix html-in-table-cells, https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/122
 - [ ] fix HTML round trip, https://github.com/Pomax/Pomax-s-Markdown-Editor/issues/125
 - [ ] #16: fix search in source2 mode,
 - [ ] #18: Rename all `source2` related code, docs, and tests so they use `source`

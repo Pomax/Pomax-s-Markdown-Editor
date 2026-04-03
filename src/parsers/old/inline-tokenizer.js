@@ -13,8 +13,20 @@
 
 /** @type {Set<string>} */
 const VOID_HTML_ELEMENTS = new Set([
-  `area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`,
-  `link`, `meta`, `param`, `source`, `track`, `wbr`,
+  `area`,
+  `base`,
+  `br`,
+  `col`,
+  `embed`,
+  `hr`,
+  `img`,
+  `input`,
+  `link`,
+  `meta`,
+  `param`,
+  `source`,
+  `track`,
+  `wbr`,
 ]);
 
 // HTML helpers
@@ -60,18 +72,52 @@ function parseHTMLAttributes(str) {
  * @type {Record<string, string>}
  */
 const NAMED_ENTITIES = {
-  amp: `&`, lt: `<`, gt: `>`, quot: `"`, apos: `'`,
-  nbsp: `\u00A0`, ndash: `\u2013`, mdash: `\u2014`,
-  lsquo: `\u2018`, rsquo: `\u2019`, ldquo: `\u201C`, rdquo: `\u201D`,
-  bull: `\u2022`, hellip: `\u2026`, copy: `\u00A9`, reg: `\u00AE`,
-  trade: `\u2122`, times: `\u00D7`, divide: `\u00F7`,
-  laquo: `\u00AB`, raquo: `\u00BB`, cent: `\u00A2`, pound: `\u00A3`,
-  yen: `\u00A5`, euro: `\u20AC`, deg: `\u00B0`, micro: `\u00B5`,
-  para: `\u00B6`, middot: `\u00B7`, frac14: `\u00BC`, frac12: `\u00BD`,
-  frac34: `\u00BE`, iexcl: `\u00A1`, iquest: `\u00BF`, sect: `\u00A7`,
-  uml: `\u00A8`, macr: `\u00AF`, acute: `\u00B4`, cedil: `\u00B8`,
-  ensp: `\u2002`, emsp: `\u2003`, thinsp: `\u2009`, zwnj: `\u200C`,
-  zwj: `\u200D`, lrm: `\u200E`, rlm: `\u200F`,
+  amp: `&`,
+  lt: `<`,
+  gt: `>`,
+  quot: `"`,
+  apos: `'`,
+  nbsp: `\u00A0`,
+  ndash: `\u2013`,
+  mdash: `\u2014`,
+  lsquo: `\u2018`,
+  rsquo: `\u2019`,
+  ldquo: `\u201C`,
+  rdquo: `\u201D`,
+  bull: `\u2022`,
+  hellip: `\u2026`,
+  copy: `\u00A9`,
+  reg: `\u00AE`,
+  trade: `\u2122`,
+  times: `\u00D7`,
+  divide: `\u00F7`,
+  laquo: `\u00AB`,
+  raquo: `\u00BB`,
+  cent: `\u00A2`,
+  pound: `\u00A3`,
+  yen: `\u00A5`,
+  euro: `\u20AC`,
+  deg: `\u00B0`,
+  micro: `\u00B5`,
+  para: `\u00B6`,
+  middot: `\u00B7`,
+  frac14: `\u00BC`,
+  frac12: `\u00BD`,
+  frac34: `\u00BE`,
+  iexcl: `\u00A1`,
+  iquest: `\u00BF`,
+  sect: `\u00A7`,
+  uml: `\u00A8`,
+  macr: `\u00AF`,
+  acute: `\u00B4`,
+  cedil: `\u00B8`,
+  ensp: `\u2002`,
+  emsp: `\u2003`,
+  thinsp: `\u2009`,
+  zwnj: `\u200C`,
+  zwj: `\u200D`,
+  lrm: `\u200E`,
+  rlm: `\u200F`,
 };
 
 /**
@@ -544,7 +590,7 @@ export function buildInlineTree(tokens) {
 
   /**
    * Metadata for each open container on the stack.
-   * @type {Array<{type: string, closeType: string, raw: string, href?: string, tag?: string}>}
+   * @type {Array<{type: string, closeType: string, raw: string, href?: string, tag?: string, attrs?: Record<string, string>}>}
    */
   const openStack = [];
 
@@ -567,7 +613,8 @@ export function buildInlineTree(tokens) {
     }
 
     if (token.type === `html-void`) {
-      current.push({ type: token.tag, tag: token.tag, attrs: token.attrs });
+      const tag = /** @type {string} */ (token.tag);
+      current.push({ type: tag, tag, attrs: token.attrs });
       continue;
     }
 
