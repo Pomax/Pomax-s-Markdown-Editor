@@ -116,12 +116,7 @@ export async function handleDelete(ops) {
   /** @type {{ updated?: string[], added?: string[], removed?: string[] }} */
   let renderHints = { updated: [node.id] };
 
-  // For code-blocks in source-edit mode, the effective length is
-  // the full source text, not just node.content.
-  const effectiveLength =
-    node.type === `code-block` && node.sourceEditText !== null
-      ? node.sourceEditText.length
-      : node.content.length;
+  const effectiveLength = node.content.length;
 
   if (ops.editor.syntaxTree.treeCursor.offset < effectiveLength) {
     // Delete one character after the cursor
@@ -133,15 +128,11 @@ export async function handleDelete(ops) {
 
     // Code-block content is raw code — skip re-parsing.
     if (node.type === `code-block`) {
-      if (ops.editor.viewMode === `source` && node.sourceEditText !== null) {
-        const srcLeft = node.sourceEditText.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-        const srcRight = node.sourceEditText.substring(ops.editor.syntaxTree.treeCursor.offset + 1);
-        node.sourceEditText = srcLeft + srcRight;
-        ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length };
-      } else {
-        node.content = newContent;
-        ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length };
-      }
+      node.content = newContent;
+      ops.editor.syntaxTree.treeCursor = {
+        nodeId: node.id,
+        offset: left.length,
+      };
       ops.editor.recordAndRender(before, { updated: [node.id] });
       return;
     }
@@ -168,51 +159,38 @@ export async function handleDelete(ops) {
     // change on delete — only the character to the right is removed.
     const absPos = oldPrefixLen + left.length;
     const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-    if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
-      ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
-    } else {
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: Math.max(0, absPos - newPrefixLen),
-      };
-    }
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: Math.max(0, absPos - newPrefixLen),
+    };
   } else {
     // Cursor is at the end — merge with the next node.
-    // If this is a code-block in source-edit mode, finalize it
-    // first so the tree is consistent before merging.
-    if (node.type === `code-block` && node.sourceEditText !== null) {
-      await ops.editor.finalizeCodeBlockSourceEdit(node);
-    }
-
     const siblings = ops.editor.getSiblings(node);
     const idx = siblings.indexOf(node);
     if (idx < siblings.length - 1) {
       const next = siblings[idx + 1];
 
       if (next.type === `html-block` && next.children.length > 0) {
-        // Next sibling is a container html-block.
-        if (ops.editor.viewMode === `source`) {
-          // In source view the container boundary is
-          // structural — delete is a no-op.
-        } else {
-          // In writing view, merge the first child of the
-          // html-block container into this node.
-          const firstChild = next.children[0];
-          const curLen = node.content.length;
-          node.content += firstChild.content;
-          next.children.splice(0, 1);
-          firstChild.parent = null;
-          // If the html-block is now empty, remove it too.
-          if (next.children.length === 0) {
-            siblings.splice(idx + 1, 1);
-            next.parent = null;
-          }
-          ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
-          renderHints =
-            next.children.length === 0
-              ? { updated: [node.id], removed: [next.id] }
-              : { updated: [node.id, next.id] };
+        // In writing view, merge the first child of the
+        // html-block container into this node.
+        const firstChild = next.children[0];
+        const curLen = node.content.length;
+        node.content += firstChild.content;
+        next.children.splice(0, 1);
+        firstChild.parent = null;
+        // If the html-block is now empty, remove it too.
+        if (next.children.length === 0) {
+          siblings.splice(idx + 1, 1);
+          next.parent = null;
         }
+        ops.editor.syntaxTree.treeCursor = {
+          nodeId: node.id,
+          offset: curLen,
+        };
+        renderHints =
+          next.children.length === 0
+            ? { updated: [node.id], removed: [next.id] }
+            : { updated: [node.id, next.id] };
       } else {
         const curLen = node.content.length;
         node.content += next.content;

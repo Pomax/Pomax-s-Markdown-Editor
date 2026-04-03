@@ -88,17 +88,13 @@ export function handleEnterKey(ops) {
 
   // Enter inside a code block → insert newline
   if (node.type === `code-block`) {
-    if (ops.editor.viewMode === `source` && node.sourceEditText !== null) {
-      const srcLeft = node.sourceEditText.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-      const srcRight = node.sourceEditText.substring(ops.editor.syntaxTree.treeCursor.offset);
-      node.sourceEditText = `${srcLeft}\n${srcRight}`;
-      ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: srcLeft.length + 1 };
-    } else {
-      const left = node.content.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-      const right = node.content.substring(ops.editor.syntaxTree.treeCursor.offset);
-      node.content = `${left}\n${right}`;
-      ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: left.length + 1 };
-    }
+    const left = node.content.substring(0, ops.editor.syntaxTree.treeCursor.offset);
+    const right = node.content.substring(ops.editor.syntaxTree.treeCursor.offset);
+    node.content = `${left}\n${right}`;
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: left.length + 1,
+    };
     ops.editor.recordAndRender(before, { updated: [node.id] });
     return;
   }
@@ -150,7 +146,10 @@ export function handleEnterKey(ops) {
 
     ops.editor.syntaxTree.treeCursor = { nodeId: newItem.id, offset: 0 };
     /** @type {{ updated: string[], added: string[], removed?: string[] }} */
-    const listHints = { updated: [node.id, ...renumbered], added: [newItem.id] };
+    const listHints = {
+      updated: [node.id, ...renumbered],
+      added: [newItem.id],
+    };
     if (rangeRemovedIds.length > 0) listHints.removed = rangeRemovedIds;
     ops.editor.recordAndRender(before, listHints);
     return;

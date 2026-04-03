@@ -127,23 +127,11 @@ export async function insertTextAtCursor(ops, text) {
   // Code-block content is raw code, not markdown — skip re-parsing
   // to avoid misidentifying code lines as headings, lists, etc.
   if (node.type === `code-block`) {
-    // In source view, edits target the full markdown text
-    // (fences + language + content) stored in sourceEditText.
-    if (ops.editor.viewMode === `source` && node.sourceEditText !== null) {
-      const srcLeft = node.sourceEditText.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-      const srcRight = node.sourceEditText.substring(ops.editor.syntaxTree.treeCursor.offset);
-      node.sourceEditText = srcLeft + text + srcRight;
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: srcLeft.length + text.length,
-      };
-    } else {
-      node.content = newContent;
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: left.length + text.length,
-      };
-    }
+    node.content = newContent;
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: left.length + text.length,
+    };
     ops.editor.recordAndRender(before, { updated: [node.id] });
     return;
   }
@@ -246,14 +234,11 @@ export async function insertTextAtCursor(ops, text) {
   // markdown line advances by the inserted text length.
   const absPos = oldPrefixLen + left.length + text.length;
   const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-  if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
-    ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
-  } else {
-    ops.editor.syntaxTree.treeCursor = {
-      nodeId: node.id,
-      offset: Math.max(0, absPos - newPrefixLen),
-    };
-  }
+  ops.editor.syntaxTree.treeCursor = {
+    nodeId: node.id,
+    offset: Math.max(0, absPos - newPrefixLen),
+  };
+
   /** @type {{ updated: string[], removed?: string[] }} */
   const hints = { updated: [node.id] };
   if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;

@@ -138,13 +138,6 @@ export class CursorManager {
           if (inPrefix) {
             cursor.prefixOffset = -(rawOffset + 1);
           }
-          // If this element represents an html-block tag line in
-          // source view, record which part so edit methods can
-          // route changes to the correct attribute.
-          const tagPart = htmlEl.dataset?.tagPart;
-          if (tagPart === `opening` || tagPart === `closing`) {
-            cursor.tagPart = tagPart;
-          }
           return { cursor };
         }
       }
@@ -185,12 +178,6 @@ export class CursorManager {
     }
 
     if (syntaxSpan) {
-      // In source view, compute the actual position within the prefix.
-      if (this.editor.viewMode === `source`) {
-        const prefixOff = this.computePrefixOffset(syntaxSpan, cursorNode, cursorOffset);
-        // Return as negative to signal "inside prefix" to the caller.
-        return -(prefixOff + 1);
-      }
       return 0;
     }
 
@@ -347,19 +334,8 @@ export class CursorManager {
     const blockId =
       this.editor.syntaxTree.treeCursor.blockNodeId ?? this.editor.syntaxTree.treeCursor.nodeId;
 
-    // When the cursor targets a tag line (source view), there may be
-    // multiple elements with the same data-node-id (opening & closing).
-    // Select the one matching the tagPart.
     /** @type {Element|null} */
-    let nodeElement = null;
-    if (this.editor.syntaxTree.treeCursor.tagPart) {
-      nodeElement = this.editor.container.querySelector(
-        `[data-node-id="${blockId}"][data-tag-part="${this.editor.syntaxTree.treeCursor.tagPart}"]`,
-      );
-    }
-    if (!nodeElement) {
-      nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
-    }
+    const nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
     if (!nodeElement) return;
 
     // Table cell cursor placement

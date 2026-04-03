@@ -28,7 +28,7 @@ declare module 'better-sqlite3' {
 /**
  * View mode of the editor.
  */
-type ViewMode = 'source' | 'source2' | 'writing';
+type ViewMode = 'source2' | 'writing';
 
 /**
  * Tree-based cursor position mapped to syntax tree coordinates.

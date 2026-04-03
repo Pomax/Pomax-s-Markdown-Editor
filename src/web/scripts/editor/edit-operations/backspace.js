@@ -165,18 +165,15 @@ export async function handleBackspace(ops) {
   } else {
     // Cursor is at the start of the node.
 
-    // Code-block at offset 0: in source view the full text is in
-    // sourceEditText so offset 0 means the very start of the
-    // opening fence — there is nothing before it to merge into
-    // while still preserving the code-block structure, so this
+    // Code-block at offset 0: there is nothing before it to merge
+    // into while still preserving the code-block structure, so this
     // is a no-op (consistent with html-block boundary behaviour).
-    // In writing view with empty content, convert to paragraph.
+    // With empty content, convert to paragraph.
     if (node.type === `code-block`) {
       if (node.content === ``) {
         node.type = `paragraph`;
         node.content = ``;
         node.attributes = {};
-        node.sourceEditText = null;
         ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
         ops.editor.recordAndRender(before, { updated: [node.id] });
         return;

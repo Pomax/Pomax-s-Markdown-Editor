@@ -32,7 +32,6 @@ import { TableManager } from './content-types/table/table-manager.js';
 import { ImageHelper } from './content-types/image/image-helper.js';
 import { LinkHelper } from './content-types/link/link-helper.js';
 
-import { SourceRenderer } from './renderers/source-renderer.js';
 import { SourceRendererV2 } from './renderers/source-renderer-v2.js';
 import { WritingRenderer } from './renderers/writing-renderer.js';
 
@@ -55,9 +54,6 @@ export class Editor {
 
     /** @type {SyntaxTree|null} */
     this.syntaxTree = null;
-
-    /** @type {SourceRenderer} */
-    this.sourceRenderer = new SourceRenderer(this);
 
     /** @type {WritingRenderer} */
     this.writingRenderer = new WritingRenderer(this);
@@ -181,66 +177,6 @@ export class Editor {
    */
   async parseMultiLine(combined) {
     return [...(await parser.parse(combined)).children];
-  }
-
-  /**
-   * Finalizes source-edit mode for a code-block node.  The raw text
-   * stored in `sourceEditText` is reparsed through the DFA parser.
-   *
-   * - If the result is still a single code-block, the node's `content`
-   *   and `attributes` are updated in place.
-   * - If the text no longer parses as a code-block (e.g. the user
-   *   deleted the fences), the node is replaced with whatever the
-   *   parser produces (possibly multiple nodes).
-   *
-   * @param {SyntaxNode} node - The code-block node to finalize.
-   * @returns {Promise<{ updated: string[], added?: string[], removed?: string[] } | null>}
-   *   Render hints, or null if the node was not in source-edit mode.
-   */
-  async finalizeCodeBlockSourceEdit(node) {
-    const text = node.exitSourceEditMode();
-    if (text === null) return null;
-
-    const parsed = await this.parseMultiLine(text);
-
-    if (parsed.length === 1 && parsed[0].type === `code-block`) {
-      // Still a valid code block — update attributes in place.
-      node.content = parsed[0].content;
-      node.attributes = parsed[0].attributes;
-      return { updated: [node.id] };
-    }
-
-    // The text is no longer a single code block.  Replace this node
-    // with whatever the parser produced.
-    const siblings = this.getSiblings(node);
-    const idx = siblings.indexOf(node);
-    if (idx === -1) {
-      // Shouldn't happen, but fall back gracefully.
-      node.content = text;
-      node.type = `paragraph`;
-      node.attributes = {};
-      return { updated: [node.id] };
-    }
-
-    // First parsed node replaces the current node in-place.
-    const first = parsed[0];
-    node.type = first.type;
-    node.content = first.content;
-    node.attributes = first.attributes;
-    node.sourceEditText = null;
-
-    const addedIds = [];
-    for (let j = 1; j < parsed.length; j++) {
-      const newNode = parsed[j];
-      if (node.parent) newNode.parent = node.parent;
-      siblings.splice(idx + j, 0, newNode);
-      addedIds.push(newNode.id);
-    }
-
-    /** @type {{ updated: string[], added?: string[] }} */
-    const hints = { updated: [node.id] };
-    if (addedIds.length > 0) hints.added = addedIds;
-    return hints;
   }
 
   /**
@@ -503,8 +439,7 @@ export class Editor {
       return;
     }
 
-    const renderer = this.viewMode === `writing` ? this.writingRenderer : this.sourceRenderer;
-
+    const renderer = this.writingRenderer;
     this.isRendering = true;
     try {
       renderer.renderNodes(this.container, hints);
@@ -807,28 +742,6 @@ export class Editor {
       ) ?? { nodeId: this.syntaxTree.children[0].id, offset: 0 };
 
       this.container.setAttribute(`contenteditable`, `true`);
-    }
-
-    // Finalize any code-block that is still in source-edit mode
-    // before switching views, so the tree is clean for the new renderer.
-    if (mode !== `source2` && this.syntaxTree) {
-      const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
-      for (const child of this.syntaxTree.children) {
-        if (child.type === `code-block` && child.sourceEditText !== null) {
-          // Source → writing: convert the offset from
-          // sourceEditText-relative to content-relative by
-          // subtracting the opening-fence preamble length.
-          if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
-            const attrs = /** @type {NodeAttributes} */ (child.attributes);
-            const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
-            this.syntaxTree.treeCursor = {
-              nodeId: child.id,
-              offset: this.syntaxTree.treeCursor.offset - preamble,
-            };
-          }
-          await this.finalizeCodeBlockSourceEdit(child);
-        }
-      }
     }
 
     // Anchor on the cursor's node if one exists, since that is what
