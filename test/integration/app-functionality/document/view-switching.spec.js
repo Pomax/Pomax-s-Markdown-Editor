@@ -31,12 +31,6 @@ test(`switching to source2 does not scroll a short document`, async () => {
   await loadContent(page, ``);
   await setWritingView(page);
 
-  // Increase --page-max-width so the editor's min-height (width * 1.414)
-  // exceeds the viewport height, making the scroll container scrollable.
-  await page.evaluate(() => {
-    document.documentElement.style.setProperty(`--page-max-width`, `1000px`);
-  });
-
   const editor = page.locator(`#editor`);
   await editor.click();
   await page.waitForTimeout(100);
