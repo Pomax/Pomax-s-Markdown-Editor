@@ -151,10 +151,10 @@ export class ClipboardHandlerData {
 export class SelectionManagerData {
   /** @type {Editor} */
   editor;
-  /** @type {SelectionState|null} */
-  currentSelection = null;
-  /** @type {SyntaxNode|null} */
-  currentNode = null;
+  /** @type {SelectionState | undefined} */
+  currentSelection;
+  /** @type {SyntaxNode | undefined} */
+  currentNode;
 }
 
 export class CursorManagerData {

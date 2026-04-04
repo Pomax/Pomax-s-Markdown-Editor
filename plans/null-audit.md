@@ -280,44 +280,44 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/managers/selection-manager.js`
 
-- [ ] L21: `this.currentSelection = null`
-- [ ] L22: `this.currentNode = null`
-- [ ] L89: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L110: `this.currentNode = null`
-- [ ] L132: JSDoc `SelectionState|null` return type
-- [ ] L140: JSDoc `SyntaxNode|null` return type
-- [ ] L211: JSDoc `{node, offset}|null` return type
-- [ ] L215: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L241: `return null`
+- [x] L21: `this.currentSelection = null`
+- [x] L22: `this.currentNode = null`
+- [x] L89: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L110: `this.currentNode = null`
+- [x] L132: JSDoc `SelectionState|null` return type
+- [x] L140: JSDoc `SyntaxNode|null` return type
+- [x] L211: JSDoc `{node, offset}|null` return type
+- [x] L215: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L241: `return null`
 
 ## `src/web/scripts/editor/managers/cursor-manager.js`
 
 - [x] L54: `this.editor.treeRange = null`
 - [x] L61: `this.editor.treeRange = null`
-- [ ] L84: JSDoc `{cursor}|null` return type
-- [ ] L87–88: JSDoc `string|null` + `let inlineNodeId = null`
-- [ ] L90: `/** @type {Node|null} */` cast
-- [ ] L138: `return null`
-- [ ] L160: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L280: `/** @type {Element|null} */` cast
-- [ ] L314: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L394: JSDoc `{node, offset}|null` return type
-- [ ] L398: `return null`
-- [ ] L411: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L429: `return null`
+- [x] L84: JSDoc `{cursor}|null` return type
+- [x] L87–88: JSDoc `string|null` + `let inlineNodeId = null`
+- [x] L90: `/** @type {Node|null} */` cast
+- [x] L138: `return null`
+- [x] L160: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L280: `/** @type {Element|null} */` cast
+- [x] L314: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L394: JSDoc `{node, offset}|null` return type
+- [x] L398: `return null`
+- [x] L411: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L429: `return null`
 
 ## `src/web/scripts/editor/managers/cursor-persistence.js`
 
-- [ ] L123: JSDoc `TreeCursor|null` return type (×2)
-- [ ] L131: JSDoc `TreeCursor|null` return type
-- [ ] L213: `return null`
-- [ ] L224: `return null`
+- [x] L123: JSDoc `TreeCursor|null` return type (×2)
+- [x] L131: JSDoc `TreeCursor|null` return type
+- [x] L213: `return null`
+- [x] L224: `return null`
 
 ## `src/web/scripts/editor/content-types/table/table-modal.js`
 
-- [ ] L16–17: JSDoc `TableData|null` + `existing = null`
-- [ ] L59: JSDoc `TableData|null` param
-- [ ] L62: `existing ?? null`
+- [x] L16–17: JSDoc `TableData|null` + `existing = null`
+- [x] L59: JSDoc `TableData|null` param
+- [x] L62: `existing ?? null`
 
 ## `src/web/scripts/editor/content-types/table/table-manager.js`
 

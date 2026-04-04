@@ -18,8 +18,8 @@ export class SelectionManager extends SelectionManagerData {
   updateFromDOM() {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-      this.currentSelection = null;
-      this.currentNode = null;
+      this.currentSelection = undefined;
+      this.currentNode = undefined;
       return;
     }
 
@@ -107,7 +107,7 @@ export class SelectionManager extends SelectionManagerData {
    */
   updateCurrentNode() {
     if (!this.currentSelection || !this.editor.syntaxTree) {
-      this.currentNode = null;
+      this.currentNode = undefined;
       return;
     }
 
@@ -116,20 +116,21 @@ export class SelectionManager extends SelectionManagerData {
     // calculation can be thrown off by html-block container elements.
     const cursorNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
     if (cursorNodeId) {
-      this.currentNode = this.editor.syntaxTree.findNodeById(cursorNodeId);
+      this.currentNode = this.editor.syntaxTree.findNodeById(cursorNodeId) ?? undefined;
       if (this.currentNode) return;
     }
 
     // Fallback: find the node at the current cursor position
-    this.currentNode = this.editor.syntaxTree.findNodeAtPosition(
-      this.currentSelection.startLine,
-      this.currentSelection.startColumn,
-    );
+    this.currentNode =
+      this.editor.syntaxTree.findNodeAtPosition(
+        this.currentSelection.startLine,
+        this.currentSelection.startColumn,
+      ) ?? undefined;
   }
 
   /**
    * Gets the current selection state.
-   * @returns {SelectionState|null}
+   * @returns {SelectionState | undefined}
    */
   getSelection() {
     return this.currentSelection;
@@ -137,7 +138,7 @@ export class SelectionManager extends SelectionManagerData {
 
   /**
    * Gets the current syntax tree node at the cursor.
-   * @returns {SyntaxNode|null}
+   * @returns {SyntaxNode | undefined}
    */
   getCurrentNode() {
     return this.currentNode;
@@ -208,7 +209,7 @@ export class SelectionManager extends SelectionManagerData {
   /**
    * Converts a text offset to a DOM position.
    * @param {number} targetOffset - The target text offset
-   * @returns {{node: Node, offset: number}|null}
+   * @returns {{node: Node, offset: number} | undefined}
    */
   offsetToDOM(targetOffset) {
     const container = this.editor.container;
@@ -238,7 +239,7 @@ export class SelectionManager extends SelectionManagerData {
       };
     }
 
-    return null;
+    return undefined;
   }
 
   /**

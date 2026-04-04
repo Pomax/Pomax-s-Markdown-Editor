@@ -81,13 +81,13 @@ export class CursorManager extends CursorManagerData {
    *
    * @param {Node} domNode - The DOM node the position is in
    * @param {number} domOffset - The offset within `domNode`
-   * @returns {{ cursor: TreeCursor } | null}
+   * @returns {{ cursor: TreeCursor } | undefined}
    */
   mapDOMPositionToTree(domNode, domOffset) {
-    /** @type {string|null} */
-    let inlineNodeId = null;
+    /** @type {string | undefined} */
+    let inlineNodeId;
 
-    /** @type {Node|null} */
+    /** @type {Node | undefined} */
     let el = domNode;
     while (el && el !== this.editor.container) {
       if (el.nodeType === Node.ELEMENT_NODE) {
@@ -100,7 +100,7 @@ export class CursorManager extends CursorManagerData {
           // record its id and keep walking to find the block parent.
           if (node?.isInlineNode()) {
             if (!inlineNodeId) inlineNodeId = nodeId;
-            el = el.parentNode;
+            el = el.parentNode ?? undefined;
             continue;
           }
 
@@ -133,9 +133,9 @@ export class CursorManager extends CursorManagerData {
           return { cursor };
         }
       }
-      el = el.parentNode;
+      el = el.parentNode ?? undefined;
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -277,8 +277,9 @@ export class CursorManager extends CursorManagerData {
     const blockId =
       this.editor.syntaxTree.treeCursor.blockNodeId ?? this.editor.syntaxTree.treeCursor.nodeId;
 
-    /** @type {Element|null} */
-    const nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
+    /** @type {Element | undefined} */
+    const nodeElement =
+      this.editor.container.querySelector(`[data-node-id="${blockId}"]`) ?? undefined;
     if (!nodeElement) return;
 
     // Table cell cursor placement
@@ -391,11 +392,11 @@ export class CursorManager extends CursorManagerData {
    *
    * @param {string} nodeId
    * @param {number} offset
-   * @returns {{ node: Node, offset: number } | null}
+   * @returns {{ node: Node, offset: number } | undefined}
    */
   resolveOffsetInDOM(nodeId, offset) {
     const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
-    if (!nodeElement) return null;
+    if (!nodeElement) return undefined;
 
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
@@ -426,7 +427,7 @@ export class CursorManager extends CursorManagerData {
     if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
       return { node: lastChild, offset: lastChild.textContent?.length ?? 0 };
     }
-    return null;
+    return undefined;
   }
 
   /** @type {Set<string>} */

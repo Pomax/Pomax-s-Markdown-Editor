@@ -13,8 +13,8 @@ import { BaseModal } from '../../../utility/modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class TableModal extends BaseModal {
-  /** @type {TableData|null} */
-  existing = null;
+  /** @type {TableData | undefined} */
+  existing;
 
   constructor() {
     super();
@@ -56,10 +56,10 @@ export class TableModal extends BaseModal {
   }
 
   /**
-   * @param {TableData|null} [existing]
+   * @param {TableData | undefined} [existing]
    */
   populateFields(existing) {
-    this.existing = existing ?? null;
+    this.existing = existing ?? undefined;
 
     const colsInput = this.getInput(`table-columns`);
     const rowsInput = this.getInput(`table-rows`);
