@@ -68,10 +68,10 @@ export class Editor extends EditorData {
    * Re-parses a single markdown line to detect type changes during
    * editing.
    * @param {string} text
-   * @returns {Promise<SyntaxNode|null>}
+   * @returns {Promise<SyntaxNode | undefined>}
    */
   async reparseLine(text) {
-    return (await parser.parse(text)).children[0] ?? null;
+    return (await parser.parse(text)).children[0] ?? undefined;
   }
 
   /**
@@ -178,21 +178,21 @@ export class Editor extends EditorData {
    * Returns the SyntaxNode that the tree cursor currently points at.
    * When the cursor is inside inline formatting, this returns the
    * inline child node.
-   * @returns {SyntaxNode|null}
+   * @returns {SyntaxNode | undefined}
    */
   getCurrentNode() {
-    if (!this.syntaxTree?.treeCursor) return null;
-    return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId);
+    if (!this.syntaxTree?.treeCursor) return undefined;
+    return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId) ?? undefined;
   }
 
   /**
    * Returns the block-level node ID from the tree cursor.
    * Uses `blockNodeId` when set (cursor is inside inline formatting),
    * otherwise falls back to `nodeId`.
-   * @returns {string|null}
+   * @returns {string | undefined}
    */
   getBlockNodeId() {
-    if (!this.syntaxTree?.treeCursor) return null;
+    if (!this.syntaxTree?.treeCursor) return undefined;
     return this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
   }
 
@@ -214,12 +214,12 @@ export class Editor extends EditorData {
    * When the cursor is inside inline formatting, this resolves through
    * `blockNodeId` to return the paragraph/heading/list-item that owns
    * the raw content string.
-   * @returns {SyntaxNode|null}
+   * @returns {SyntaxNode | undefined}
    */
   getCurrentBlockNode() {
     const blockId = this.getBlockNodeId();
-    if (!blockId || !this.syntaxTree) return null;
-    return this.syntaxTree.findNodeById(blockId);
+    if (!blockId || !this.syntaxTree) return undefined;
+    return this.syntaxTree.findNodeById(blockId) ?? undefined;
   }
 
   /**
@@ -282,14 +282,14 @@ export class Editor extends EditorData {
     if (!selection || selection.rangeCount === 0) return false;
 
     // Is the selection anchor inside the phantom?
-    let node = /** @type {Node|null} */ (selection.anchorNode);
+    let node = /** @type {Node | undefined} */ (selection.anchorNode);
     let inside = false;
     while (node) {
       if (node === phantom) {
         inside = true;
         break;
       }
-      node = node.parentNode;
+      node = node.parentNode ?? undefined;
     }
     if (!inside) return false;
 
@@ -500,16 +500,16 @@ export class Editor extends EditorData {
    * top-level node is a container html-block.
    */
   ensureTrailingParagraph() {
-    if (!this.syntaxTree) return null;
+    if (!this.syntaxTree) return undefined;
     const children = this.syntaxTree.children;
-    if (children.length === 0) return null;
+    if (children.length === 0) return undefined;
     const last = children[children.length - 1];
     if (last.type === `html-block` && last.children.length > 0) {
       const para = new SyntaxNode(`paragraph`, ``);
       this.syntaxTree.appendChild(para);
       return para;
     }
-    return null;
+    return undefined;
   }
 
   /**

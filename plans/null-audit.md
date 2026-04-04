@@ -186,21 +186,21 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/index.js`
 
-- [ ] L71: JSDoc `SyntaxNode|null` return type
-- [ ] L74: `?? null` fallback
-- [ ] L181: JSDoc `SyntaxNode|null` return type
-- [ ] L184: `return null`
-- [ ] L192: JSDoc `string|null` return type
-- [ ] L195: `return null`
+- [x] L71: JSDoc `SyntaxNode|null` return type
+- [x] L74: `?? null` fallback
+- [x] L181: JSDoc `SyntaxNode|null` return type
+- [x] L184: `return null`
+- [x] L192: JSDoc `string|null` return type
+- [x] L195: `return null`
 - [x] L202–203: JSDoc `string|null` param + `string|null` return type
-- [ ] L206: `return null`
-- [ ] L217: JSDoc `SyntaxNode|null` return type
-- [ ] L221: `return null`
-- [ ] L285: `/** @type {Node|null} */` cast
+- [x] L206: `return null`
+- [x] L217: JSDoc `SyntaxNode|null` return type
+- [x] L221: `return null`
+- [x] L285: `/** @type {Node|null} */` cast
 - [x] L362: `treeCursor?.nodeId ?? null`
-- [ ] L503: `return null`
-- [ ] L505: `return null`
-- [ ] L512: `return null`
+- [x] L503: `return null`
+- [x] L505: `return null`
+- [x] L512: `return null`
 - [x] L572: `this.currentFilePath = null`
 - [x] L741: `currentNode.parent = null`
 - [x] L894: `child.parent = null`
