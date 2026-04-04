@@ -31,11 +31,11 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/electron/menu-builder.js`
 
-- [ ] L27: JSDoc `string|null` type for `filePath` in tabs array
-- [ ] L365: `settings.get('openFiles', null)` — default value
-- [ ] L374: JSDoc `number[]|null` types for `cursorPath` and `tocHeadingPath` (×2)
-- [ ] L386: `entry.cursorPath ?? null`
-- [ ] L387: `entry.tocHeadingPath ?? null`
+- [x] L27: JSDoc `string|null` type for `filePath` in tabs array
+- [x] L365: `settings.get('openFiles', null)` — default value
+- [x] L374: JSDoc `number[]|null` types for `cursorPath` and `tocHeadingPath` (×2)
+- [x] L386: `entry.cursorPath ?? null`
+- [x] L387: `entry.tocHeadingPath ?? null`
 
 ## `src/electron/main.js`
 
@@ -69,20 +69,20 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/electron/file-manager.js`
 
-- [ ] L18–19: JSDoc comment "or null" + `string|null` type
-- [ ] L21: `this.currentFilePath = null`
-- [ ] L160: `this.currentFilePath = null`
-- [ ] L175: JSDoc `string|null` return type + "or null" text (×2)
-- [ ] L179: `return null`
-- [ ] L186: JSDoc `string|null` return type + "or null" text (×2)
+- [x] L18–19: JSDoc comment "or null" + `string|null` type
+- [x] L21: `this.currentFilePath = null`
+- [x] L160: `this.currentFilePath = null`
+- [x] L175: JSDoc `string|null` return type + "or null" text (×2)
+- [x] L179: `return null`
+- [x] L186: JSDoc `string|null` return type + "or null" text (×2)
 
 ## `src/web/scripts/app.js`
 
 - [ ] L53: `initPageResizeHandles(editorContainer) ?? null`
-- [ ] L92: `this.tabBar.addTab(firstTabId, null, true)`
+- [x] L92: `this.tabBar.addTab(firstTabId, null, true)`
 - [ ] L112: `this.cursorDebounce = null`
-- [ ] L152: `await this.createNewTab(null, '')`
-- [ ] L160: `detail.filePath || null`
+- [x] L152: `await this.createNewTab(null, '')`
+- [x] L160: `detail.filePath || null`
 - [ ] L299: `this.toc?.lockedHeadingId ?? null`
 - [ ] L303: `dataset.nodeId ?? null`
 - [ ] L311: `treeCursor ? { ...treeCursor } : null`
@@ -91,19 +91,19 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [ ] L357: `treeCursor?.nodeId ?? null`
 - [ ] L385: `state?.treeRange ? { ...state.treeRange } : null`
 - [ ] L399: `state?.tocActiveHeadingId ?? null`
-- [ ] L429: `tab.filePath === null`
+- [x] L429: `tab.filePath === null`
 - [ ] L440: JSDoc `number[]|null` types (×2)
 - [ ] L471: `treeCursor ? { ...treeCursor } : null`
 - [ ] L489: `let tocNode = null`
 - [ ] L550: JSDoc `string|null`
 - [ ] L568: JSDoc `string|null` + "or null" text (×2)
-- [ ] L697: `this.tabBar.addTab(newId, null, true)`
-- [ ] L745: `cursorPath: /** @type {number[]|null} */ (null)` (×2)
-- [ ] L746: `tocHeadingPath: /** @type {number[]|null} */ (null)` (×2)
-- [ ] L763: `/** @type {HTMLElement|null} */` cast
-- [ ] L765: `null` (ternary false branch)
-- [ ] L776: `getPathToCursor() ?? null`
-- [ ] L777: `state.tocActiveHeadingId ?? null`
+- [x] L697: `this.tabBar.addTab(newId, null, true)`
+- [x] L745: `cursorPath: /** @type {number[]|null} */ (null)` (×2)
+- [x] L746: `tocHeadingPath: /** @type {number[]|null} */ (null)` (×2)
+- [x] L763: `/** @type {HTMLElement|null} */` cast
+- [x] L765: `null` (ternary false branch)
+- [x] L776: `getPathToCursor() ?? null`
+- [x] L777: `state.tocActiveHeadingId ?? null`
 - [ ] L835: `result.value !== null`
 - [ ] L862: `result.value !== null`
 - [ ] L873: `result.value !== null`
@@ -111,14 +111,14 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [ ] L926: `this.cursorDebounce = null`
 - [ ] L934: `this.editor?.currentFilePath ?? null`
 - [ ] L942: `treeCursor?.nodeId ?? null`
-- [ ] L979: `await this.createNewTab(null, '')`
+- [x] L979: `await this.createNewTab(null, '')`
 
 ## `src/web/scripts/editor/types.js`
 
 This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
 
 - [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
-- [ ] L77–78: `string|null` + `currentFilePath = null`
+- [x] L77–78: `string|null` + `currentFilePath = null`
 - [ ] L89–90: `TreeRange|null` + `treeRange = null`
 - [ ] L91–92: `string|null` + `lastRenderedNodeId = null`
 - [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
@@ -199,7 +199,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L503: `return null`
 - [ ] L505: `return null`
 - [ ] L512: `return null`
-- [ ] L572: `this.currentFilePath = null`
+- [x] L572: `this.currentFilePath = null`
 - [ ] L741: `currentNode.parent = null`
 - [ ] L894: `child.parent = null`
 - [ ] L910: `this.treeRange = null`
@@ -258,8 +258,8 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 ## `src/web/scripts/editor/handlers/menu-handler.js`
 
 - [ ] L40: `this.cleanupMenuListener = null`
-- [ ] L138: `result.filePath || null`
-- [ ] L153: `result.filePath || null`
+- [x] L138: `result.filePath || null`
+- [x] L153: `result.filePath || null`
 
 ## `src/web/scripts/editor/handlers/keyboard-handler.js`
 
@@ -381,9 +381,9 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/utility/tab-bar/tab-bar.js`
 
-- [ ] L3: JSDoc `string|null`
-- [ ] L120: JSDoc `string|null` + "or null" text (×2)
-- [ ] L168: JSDoc `string|null`
+- [x] L3: JSDoc `string|null`
+- [x] L120: JSDoc `string|null` + "or null" text (×2)
+- [x] L168: JSDoc `string|null`
 
 ## `src/web/scripts/utility/modal/base-modal.js`
 
@@ -452,12 +452,12 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L98: `number | null` for `savedCaretTop`
 - [ ] L100: `string | null` for `anchorNodeId`
 - [ ] L102: `number | null` for `savedOffsetFromTop`
-- [ ] L145–146: comment "or null" + `string | null` for `filePath`
+- [x] L145–146: comment "or null" + `string | null` for `filePath`
 - [ ] L150: `TreeCursor | null` for `cursor`
 - [ ] L158: `TreeRange | null` for `treeRange`
 - [ ] L162: `string | null` for `tocActiveHeadingId`
-- [ ] L210: `string | null` in `notifyOpenFiles` param
-- [ ] L293–294: comment "or null" + `string | null` for `filePath`
+- [x] L210: `string | null` in `notifyOpenFiles` param
+- [x] L293–294: comment "or null" + `string | null` for `filePath`
 
 ## `scripts/generate-api-docs.js`
 

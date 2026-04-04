@@ -74,8 +74,8 @@ export class EditorData {
   viewMode = `writing`;
   /** @type {boolean} */
   hasUnsavedChanges = false;
-  /** @type {string|null} */
-  currentFilePath = null;
+  /** @type {string | undefined} */
+  currentFilePath;
   /** @type {boolean} */
   ensureLocalPaths = true;
   /** @type {boolean} */

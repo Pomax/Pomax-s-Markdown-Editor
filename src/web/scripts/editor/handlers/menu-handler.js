@@ -135,7 +135,7 @@ export class MenuHandler extends MenuHandlerData {
     const result = await window.electronAPI.saveFile(content);
 
     if (result.success) {
-      this.editor.currentFilePath = result.filePath || null;
+      this.editor.currentFilePath = result.filePath;
       this.editor.setUnsavedChanges(false);
     }
   }
@@ -150,7 +150,7 @@ export class MenuHandler extends MenuHandlerData {
     const result = await window.electronAPI.saveFileAs(content);
 
     if (result.success) {
-      this.editor.currentFilePath = result.filePath || null;
+      this.editor.currentFilePath = result.filePath;
       this.editor.setUnsavedChanges(false);
     }
   }

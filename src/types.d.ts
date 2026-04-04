@@ -142,8 +142,8 @@ interface CodeLanguageData {
 interface DocumentState {
     /** The markdown content. */
     content: string;
-    /** Full file path or null for untitled. */
-    filePath: string | null;
+    /** Full file path or undefined for untitled. */
+    filePath?: string;
     /** Whether there are unsaved changes. */
     modified: boolean;
     /** Cursor position. */
@@ -207,7 +207,7 @@ interface ElectronAPI {
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
-    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
+    notifyOpenFiles(files: Array<{ id: string; filePath?: string; label: string; active: boolean }>): Promise<{ success: boolean }>;
 }
 
 /**
@@ -290,8 +290,8 @@ interface TabInfo {
     id: string;
     /** Display label (filename). */
     label: string;
-    /** Full file path, or null for untitled. */
-    filePath: string | null;
+    /** Full file path, or undefined for untitled. */
+    filePath?: string;
     /** Whether the tab has unsaved changes. */
     modified: boolean;
     /** Whether the tab is currently active. */

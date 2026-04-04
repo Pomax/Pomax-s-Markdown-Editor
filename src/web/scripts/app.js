@@ -89,7 +89,7 @@ class App extends AppData {
 
       // Register the initial #editor element as the first tab's container
       const firstTabId = this.nextTabId();
-      this.tabBar.addTab(firstTabId, null, true);
+      this.tabBar.addTab(firstTabId, undefined, true);
       this.tabContainers.set(firstTabId, editorContainer);
 
       this.tabBar.onTabSelect = (tabId) => this.switchToTab(tabId);
@@ -149,7 +149,7 @@ class App extends AppData {
 
     // Handle File → New: create a new tab with an empty document
     document.addEventListener(`file:new`, async () => {
-      await this.createNewTab(null, ``);
+      await this.createNewTab(undefined, ``);
     });
 
     // Handle File → Load / Open Recent: open in a new tab (or switch
@@ -157,7 +157,7 @@ class App extends AppData {
     document.addEventListener(`file:loaded`, async (e) => {
       const detail = /** @type {CustomEvent} */ (e).detail;
       if (!detail) return;
-      const filePath = detail.filePath || null;
+      const filePath = detail.filePath || undefined;
       // If this file is already open in another tab, switch to it
       if (filePath && this.tabBar) {
         const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
@@ -426,9 +426,7 @@ class App extends AppData {
     if (!tab) return false;
 
     return (
-      tab.filePath === null &&
-      !this.editor.hasUnsavedChanges &&
-      this.editor.getMarkdown().trim() === ``
+      !tab.filePath && !this.editor.hasUnsavedChanges && this.editor.getMarkdown().trim() === ``
     );
   }
 
@@ -547,7 +545,7 @@ class App extends AppData {
   /**
    * Loads a file into the current (active) tab, replacing its content
    * without creating a new tab.
-   * @param {string|null} filePath
+   * @param {string} filePath
    * @param {string} content
    */
   async loadIntoCurrentTab(filePath, content) {
@@ -565,8 +563,8 @@ class App extends AppData {
 
   /**
    * Creates a new tab and loads content into it.
-   * @param {string|null} filePath - File path, or null for untitled
-   * @param {string} content - Markdown content to load
+   * @param {string | undefined} filePath
+   * @param {string} content
    */
   async createNewTab(filePath, content) {
     if (!this.editor || !this.tabBar || !this.scrollContainer) return;
@@ -694,7 +692,7 @@ class App extends AppData {
     if (this.tabBar.tabs.length === 0) {
       // Last tab was closed — create a fresh untitled tab
       const newId = this.nextTabId();
-      this.tabBar.addTab(newId, null, true);
+      this.tabBar.addTab(newId, undefined, true);
 
       // Create a new container for the fresh tab
       const newContainer = document.createElement(`div`);
@@ -742,8 +740,8 @@ class App extends AppData {
         cursorOffset: 0,
         contentHash: 0,
         scrollTop: 0,
-        cursorPath: /** @type {number[]|null} */ (null),
-        tocHeadingPath: /** @type {number[]|null} */ (null),
+        cursorPath: /** @type {number[] | undefined} */ (undefined),
+        tocHeadingPath: /** @type {number[] | undefined} */ (undefined),
       };
 
       if (tab.id === activeTabId && this.editor?.syntaxTree?.treeCursor) {
@@ -756,15 +754,14 @@ class App extends AppData {
           this.editor.buildMarkdownLine.bind(this.editor),
           this.editor.getPrefixLength.bind(this.editor),
         );
-        entry.cursorPath = this.editor.syntaxTree.getPathToCursor();
+        entry.cursorPath = this.editor.syntaxTree.getPathToCursor() ?? undefined;
         entry.scrollTop = this.scrollContainer ? this.scrollContainer.scrollTop : 0;
         const tocId =
           this.toc?.lockedHeadingId ??
-          /** @type {HTMLElement|null} */ (this.toc?.container.querySelector(`.toc-active`))
-            ?.dataset?.nodeId ??
-          null;
+          /** @type {HTMLElement} */ (this.toc?.container.querySelector(`.toc-active`))?.dataset
+            ?.nodeId;
         if (tocId && this.editor.syntaxTree) {
-          entry.tocHeadingPath = this.editor.syntaxTree.getPathToNode(tocId);
+          entry.tocHeadingPath = this.editor.syntaxTree.getPathToNode(tocId) ?? undefined;
         }
       } else {
         // Background tab — read from cached document state
@@ -773,10 +770,10 @@ class App extends AppData {
           entry.cursorOffset = state.cursorOffset;
           entry.contentHash = state.contentHash;
           entry.scrollTop = state.scrollTop ?? 0;
-          entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? null;
-          const bgTocId = state.tocActiveHeadingId ?? null;
+          entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? undefined;
+          const bgTocId = state.tocActiveHeadingId;
           if (bgTocId && state.syntaxTree) {
-            entry.tocHeadingPath = state.syntaxTree.getPathToNode(bgTocId);
+            entry.tocHeadingPath = state.syntaxTree.getPathToNode(bgTocId) ?? undefined;
           }
         }
       }
@@ -976,7 +973,7 @@ class App extends AppData {
 
     switch (method) {
       case `file:new`:
-        await this.createNewTab(null, ``);
+        await this.createNewTab(undefined, ``);
         break;
       case `file:save`:
         this.menuHandler.handleSave();

@@ -569,7 +569,7 @@ export class Editor extends EditorData {
     this.syntaxTree.appendChild(node);
     this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
     this.undoManager.clear();
-    this.currentFilePath = null;
+    this.currentFilePath = undefined;
     this.setUnsavedChanges(false);
     this.fullRenderAndPlaceCursor();
   }

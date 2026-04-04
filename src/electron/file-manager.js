@@ -14,11 +14,10 @@ const MAX_RECENT_FILES = 10;
  */
 export class FileManager {
   constructor() {
-    /**
-     * The current file path, or null if no file is open.
-     * @type {string|null}
+    /** The current file path, or undefined if no file is open.
+     * @type {string | undefined}
      */
-    this.currentFilePath = null;
+    this.currentFilePath = undefined;
 
     /**
      * Whether the current document has unsaved changes.
@@ -157,7 +156,7 @@ export class FileManager {
    * @returns {{success: boolean}}
    */
   newDocument() {
-    this.currentFilePath = null;
+    this.currentFilePath = undefined;
     this.hasUnsavedChanges = false;
     return { success: true };
   }
@@ -172,18 +171,18 @@ export class FileManager {
 
   /**
    * Gets the current file name without path.
-   * @returns {string|null} The file name or null if no file is open
+   * @returns {string | undefined} The file name or undefined if no file is open
    */
   getFileName() {
     if (!this.currentFilePath) {
-      return null;
+      return;
     }
     return path.basename(this.currentFilePath);
   }
 
   /**
    * Gets the current file path.
-   * @returns {string|null} The file path or null if no file is open
+   * @returns {string | undefined} The file path or undefined if no file is open
    */
   getFilePath() {
     return this.currentFilePath;
