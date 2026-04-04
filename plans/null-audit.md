@@ -209,11 +209,11 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/edit-operations/insert.js`
 
-- [ ] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
+- [x] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
 
 ## `src/web/scripts/editor/edit-operations/enter.js`
 
-- [ ] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
+- [x] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
 
 ## `src/web/scripts/editor/edit-operations/index.js`
 
@@ -232,30 +232,29 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/handlers/clipboard-handler.js`
 
-- [ ] L187: `m !== null` in regex loop
-- [ ] L191: `m !== null` in regex loop
+- [x] L187: `m !== null` in regex loop — **EXCEPTION** (built-in API)\n- [x] L191: `m !== null` in regex loop — **EXCEPTION** (built-in API)
 
 ## `src/web/scripts/editor/handlers/event-handler.js`
 
-- [ ] L39: ternary `? event.target : null`
-- [ ] L44: ternary `: null`
-- [ ] L70: `/** @type {HTMLElement|null} */` cast
-- [ ] L76: `? findNodeById(nodeId) : null`
-- [ ] L103: `this.mouseDownLanguageTag = null`
-- [ ] L109: `/** @type {HTMLElement|null} */` cast
-- [ ] L110: `.closest?.() ?? null`
-- [ ] L113: `? findNodeById(nodeId) : null`
-- [ ] L131: `/** @type {HTMLElement|null} */` cast
-- [ ] L156: `this.mouseDownAnchor = null`
+- [x] L39: ternary `? event.target : null`
+- [x] L44: ternary `: null`
+- [x] L70: `/** @type {HTMLElement|null} */` cast
+- [x] L76: `? findNodeById(nodeId) : null`
+- [x] L103: `this.mouseDownLanguageTag = null`
+- [x] L109: `/** @type {HTMLElement|null} */` cast
+- [x] L110: `.closest?.() ?? null`
+- [x] L113: `? findNodeById(nodeId) : null`
+- [x] L131: `/** @type {HTMLElement|null} */` cast
+- [x] L156: `this.mouseDownAnchor = null`
 - [x] L175: `treeCursor?.nodeId ?? null`
 - [x] L294: `currentNode.parent = null`
-- [ ] L345: `/** @type {HTMLElement|null} */` cast
-- [ ] L373: `/** @type {Node|null} */` cast
+- [x] L345: `/** @type {HTMLElement|null} */` cast
+- [x] L373: `/** @type {Node|null} */` cast
 - [x] L403: `treeCursor?.nodeId ?? null`
-- [ ] L420: `this.mouseDownAnchor = null`
-- [ ] L430: `this.mouseDownLanguageTag = null`
-- [ ] L463: ternary `: null`
-- [ ] L464: `treeRange ? { ...treeRange } : null`
+- [x] L420: `this.mouseDownAnchor = null`
+- [x] L430: `this.mouseDownLanguageTag = null`
+- [x] L463: ternary `: null`
+- [x] L464: `treeRange ? { ...treeRange } : null`
 
 ## `src/web/scripts/editor/handlers/menu-handler.js`
 

@@ -110,12 +110,12 @@ export class SourceRendererV2Data {
 export class EventHandlerData {
   /** @type {Editor} */
   editor;
-  /** @type {HTMLElement|null} */
-  mouseDownAnchor = null;
-  /** @type {HTMLElement|null} */
-  mouseDownLanguageTag = null;
-  /** @type {CodeLanguageModal|null} */
-  codeLanguageModal = null;
+  /** @type {HTMLElement | undefined} */
+  mouseDownAnchor;
+  /** @type {HTMLElement | undefined} */
+  mouseDownLanguageTag;
+  /** @type {CodeLanguageModal | undefined} */
+  codeLanguageModal;
   /** @type {boolean} */
   blurredByModal = false;
 }

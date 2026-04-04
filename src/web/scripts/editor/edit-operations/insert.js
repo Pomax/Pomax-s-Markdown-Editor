@@ -11,8 +11,8 @@ export async function insertTextAtCursor(ops, text) {
 
   // If there is a non-collapsed selection, delete it first so the
   // typed text replaces the selection.
-  /** @type {string|null} */
-  let rangeDeleteBefore = null;
+  /** @type {string | undefined} */
+  let rangeDeleteBefore;
   /** @type {string[]} */
   let rangeRemovedIds = [];
   if (ops.editor.treeRange) {
