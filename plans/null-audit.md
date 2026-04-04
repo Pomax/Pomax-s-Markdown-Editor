@@ -1,0 +1,717 @@
+# Null Usage Audit
+
+Audit of all `null` usage in the codebase. Every occurrence should be replaced with `undefined`, or removed entirely where the assignment is unnecessary. JSDoc type annotations using `|null` should become `|undefined`.
+
+**Exception:** SQL keywords like `NOT NULL` are left as-is — that's SQL, not JS.
+
+**Principle:** `null` assignments become `undefined` (or are deleted if redundant). `null` comparisons become `undefined` comparisons. `?? null` becomes `?? undefined`. JSDoc `|null` becomes `|undefined`.
+
+**Cascade rule:** Removing `null` from one site can trigger a chain of required updates. For example, if `findNodeById()` changes from returning `null` to returning `undefined`, then every caller that does `=== null` on its result must also change, the JSDoc `@returns {SyntaxNode|null}` must become `@returns {SyntaxNode|undefined}`, the corresponding `.d.ts` type must update, and any test that asserts `strictEqual(result, null)` must assert `strictEqual(result, undefined)`. Each checklist item therefore covers the **full cascade** — the originating site plus every downstream consumer — as a single atomic change. Do not check off an item until every part of its cascade has been updated and tested.
+
+**RULES FOR EACH CHECKLIST ITEM:**
+
+1. Re-read `.instructions.md`
+2. Describe the planned change, ask for approval — NO tool calls with the question
+3. Wait for explicit approval
+4. Make the edit
+5. Run `npm test`
+6. Immediately ask the user to tell you when tests are done — NO tool calls, NO checking output, NO reading terminal
+7. Wait for test results
+8. Ask the user to manually test, describe how — NO tool calls with the question
+9. Wait for manual test confirmation
+10. Check off the item in this document
+11. Commit (`git add -A`, then `git commit` — as SEPARATE commands, never compound)
+12. Go to the next item — start at step 1 again
+
+**Comment-only and doc-only changes still need manual testing confirmation. No exceptions.**
+
+## `src/electron/settings-manager.js`
+
+- [ ] L19: JSDoc `|null` type annotation for `this.db`
+- [ ] L20: `this.db = null` — constructor assignment
+- [ ] L45: JSDoc `[defaultValue=null]` param description
+- [ ] L48: `defaultValue = null` — default parameter value
+- [ ] L121: `this.db = null` — teardown assignment
+
+## `src/electron/menu-builder.js`
+
+- [ ] L27: JSDoc `string|null` type for `filePath` in tabs array
+- [ ] L365: `settings.get('openFiles', null)` — default value
+- [ ] L374: JSDoc `number[]|null` types for `cursorPath` and `tocHeadingPath` (×2)
+- [ ] L386: `entry.cursorPath ?? null`
+- [ ] L387: `entry.tocHeadingPath ?? null`
+
+## `src/electron/main.js`
+
+- [ ] L13–14: JSDoc `BrowserWindow|null` + `let mainWindow = null`
+- [ ] L27–29: JSDoc `ReturnType<typeof setTimeout>|null` + `let boundsDebounce = null`
+- [ ] L79: JSDoc `string|null` in filter param
+- [ ] L81: JSDoc `string|null` + `number[]|null` (×3) in map param
+- [ ] L89: `f.cursorPath ?? null`
+- [ ] L90: `f.tocHeadingPath ?? null`
+- [ ] L122: `!= null` comparisons (×2) — loose equality, catches both null and undefined
+- [ ] L149: `!= null` comparisons (×2) — same pattern
+- [ ] L179: `boundsDebounce = null`
+- [ ] L215: `mainWindow = null`
+- [ ] L291: JSDoc `string|null` return type (×2)
+- [ ] L315: `return null`
+- [ ] L337: JSDoc `number[]|null` types (×2)
+- [ ] L341: JSDoc `number[]|null` types (×2)
+- [ ] L353: `entry.cursorPath ?? null`
+- [ ] L354: `entry.tocHeadingPath ?? null`
+- [ ] L443: `settings.get('openFiles', null)`
+
+## `src/electron/ipc-handler.js`
+
+- [ ] L34: JSDoc `string|null` + `number[]|null` (×3)
+- [ ] L38: JSDoc `string|null` in filter param
+- [ ] L40: JSDoc `string|null` + `number[]|null` (×3) in map param
+- [ ] L48: `f.cursorPath ?? null`
+- [ ] L49: `f.tocHeadingPath ?? null`
+- [ ] L67: `menuBuilder ?? null`
+- [ ] L199: `activeFile.filePath ?? null`
+
+## `src/electron/file-manager.js`
+
+- [ ] L18–19: JSDoc comment "or null" + `string|null` type
+- [ ] L21: `this.currentFilePath = null`
+- [ ] L160: `this.currentFilePath = null`
+- [ ] L175: JSDoc `string|null` return type + "or null" text (×2)
+- [ ] L179: `return null`
+- [ ] L186: JSDoc `string|null` return type + "or null" text (×2)
+
+## `src/web/scripts/app.js`
+
+- [ ] L53: `initPageResizeHandles(editorContainer) ?? null`
+- [ ] L92: `this.tabBar.addTab(firstTabId, null, true)`
+- [ ] L112: `this.cursorDebounce = null`
+- [ ] L152: `await this.createNewTab(null, '')`
+- [ ] L160: `detail.filePath || null`
+- [ ] L299: `this.toc?.lockedHeadingId ?? null`
+- [ ] L303: `dataset.nodeId ?? null`
+- [ ] L311: `treeCursor ? { ...treeCursor } : null`
+- [ ] L315: `treeRange ? { ...treeRange } : null`
+- [ ] L356: `state.cursor ? { ...state.cursor } : null`
+- [ ] L357: `treeCursor?.nodeId ?? null`
+- [ ] L385: `state?.treeRange ? { ...state.treeRange } : null`
+- [ ] L399: `state?.tocActiveHeadingId ?? null`
+- [ ] L429: `tab.filePath === null`
+- [ ] L440: JSDoc `number[]|null` types (×2)
+- [ ] L471: `treeCursor ? { ...treeCursor } : null`
+- [ ] L489: `let tocNode = null`
+- [ ] L550: JSDoc `string|null`
+- [ ] L568: JSDoc `string|null` + "or null" text (×2)
+- [ ] L697: `this.tabBar.addTab(newId, null, true)`
+- [ ] L745: `cursorPath: /** @type {number[]|null} */ (null)` (×2)
+- [ ] L746: `tocHeadingPath: /** @type {number[]|null} */ (null)` (×2)
+- [ ] L763: `/** @type {HTMLElement|null} */` cast
+- [ ] L765: `null` (ternary false branch)
+- [ ] L776: `getPathToCursor() ?? null`
+- [ ] L777: `state.tocActiveHeadingId ?? null`
+- [ ] L835: `result.value !== null`
+- [ ] L862: `result.value !== null`
+- [ ] L873: `result.value !== null`
+- [ ] L884: `result.value !== null`
+- [ ] L926: `this.cursorDebounce = null`
+- [ ] L934: `this.editor?.currentFilePath ?? null`
+- [ ] L942: `treeCursor?.nodeId ?? null`
+- [ ] L979: `await this.createNewTab(null, '')`
+
+## `src/web/scripts/editor/types.js`
+
+This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
+
+- [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
+- [ ] L77–78: `string|null` + `currentFilePath = null`
+- [ ] L89–90: `TreeRange|null` + `treeRange = null`
+- [ ] L91–92: `string|null` + `lastRenderedNodeId = null`
+- [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
+- [ ] L102–103: `HTMLPreElement|null` + `pre = null`
+- [ ] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
+- [ ] L115–116: `HTMLElement|null` + `mouseDownLanguageTag = null`
+- [ ] L117–118: `CodeLanguageModal|null` + `codeLanguageModal = null`
+- [ ] L128–129: `((event: KeyboardEvent) => void)|null` + `keydownHandler = null`
+- [ ] L137–138: `function|null` + `cleanupMenuListener = null`
+- [ ] L154–155: `SelectionState|null` + `currentSelection = null`
+- [ ] L156–157: `SyntaxNode|null` + `currentNode = null`
+- [ ] L180–181: `LinkModal|null` + `linkModal = null`
+- [ ] L187–188: `ImageModal|null` + `imageModal = null`
+- [ ] L215–216: `HTMLElement|null` + `toolbarElement = null`
+- [ ] L219–220: `HTMLButtonElement|null` + `viewModeToggle = null`
+- [ ] L221–222: `LinkModal|null` + `linkModal = null`
+- [ ] L223–224: `TableModal|null` + `tableModal = null`
+- [ ] L245–246: `HTMLElement|null` + `container = null`
+- [ ] L247–248: `HTMLInputElement|null` + `input = null`
+- [ ] L249–250: `HTMLElement|null` + `matchCount = null`
+- [ ] L265–266: `string|null` + `searchViewMode = null`
+- [ ] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
+- [ ] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
+- [ ] L286–287: `string|null` + `lockedHeadingId = null`
+- [ ] L297–298: `string|null` + `activeTabId = null`
+- [ ] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
+- [ ] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
+- [ ] L306–307: `HTMLDialogElement|null` + `dialog = null` (LinkModal)
+- [ ] L312–313: `HTMLElement|null` + `previousFocus = null`
+- [ ] L317–318: `HTMLDialogElement|null` + `dialog = null` (TableModal)
+- [ ] L324–325: `HTMLDialogElement|null` + `dialog = null` (ImageModal)
+- [ ] L337–338: `Editor|null` + `editor = null`
+- [ ] L339–340: `Toolbar|null` + `toolbar = null`
+- [ ] L341–342: `MenuHandler|null` + `menuHandler = null`
+- [ ] L343–344: `KeyboardHandler|null` + `keyboardHandler = null`
+- [ ] L345–346: `SearchBar|null` + `searchBar = null`
+- [ ] L347–348: `TableOfContents|null` + `toc = null`
+- [ ] L349–350: `TabBar|null` + `tabBar = null`
+- [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`
+- [ ] L359–360: `ReturnType<typeof setTimeout>|null` + `cursorDebounce = null`
+
+## `src/web/scripts/editor/crc32.js`
+
+- [ ] L9–10: JSDoc `Uint32Array|null` + `let TABLE = null`
+
+## `src/web/scripts/editor/page-resize.js`
+
+- [ ] L160–161: JSDoc `number|null` + `let rafId = null`
+- [ ] L182: `if (rafId !== null) return`
+- [ ] L185: `rafId = null` — inside rAF callback
+- [ ] L204: `if (rafId !== null)` — cleanup guard
+- [ ] L206: `rafId = null` — cleanup assignment
+
+## `src/web/scripts/editor/range-operations.js`
+
+- [ ] L66–67: JSDoc `|null` return type + "or null" comment
+- [ ] L71: `return null` — no range/tree guard
+- [ ] L76: `return null` — no start/end node guard
+- [ ] L88: `this.editor.treeRange = null` — clear after same-node delete
+- [ ] L98: `return null` — sibling index guard
+- [ ] L122: `siblings[i].parent = null` — detach removed nodes
+- [ ] L131: `this.editor.treeRange = null` — clear after cross-node delete
+
+## `src/web/scripts/editor/index.js`
+
+- [ ] L71: JSDoc `SyntaxNode|null` return type
+- [ ] L74: `?? null` fallback
+- [ ] L181: JSDoc `SyntaxNode|null` return type
+- [ ] L184: `return null`
+- [ ] L192: JSDoc `string|null` return type
+- [ ] L195: `return null`
+- [ ] L202–203: JSDoc `string|null` param + `string|null` return type
+- [ ] L206: `return null`
+- [ ] L217: JSDoc `SyntaxNode|null` return type
+- [ ] L221: `return null`
+- [ ] L285: `/** @type {Node|null} */` cast
+- [ ] L362: `treeCursor?.nodeId ?? null`
+- [ ] L503: `return null`
+- [ ] L505: `return null`
+- [ ] L512: `return null`
+- [ ] L572: `this.currentFilePath = null`
+- [ ] L741: `currentNode.parent = null`
+- [ ] L894: `child.parent = null`
+- [ ] L910: `this.treeRange = null`
+- [ ] L1119: `this.treeRange = null`
+
+## `src/web/scripts/editor/edit-operations/insert.js`
+
+- [ ] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
+
+## `src/web/scripts/editor/edit-operations/enter.js`
+
+- [ ] L14–15: JSDoc `string|null` + `let rangeDeleteBefore = null`
+
+## `src/web/scripts/editor/edit-operations/index.js`
+
+- [ ] L84: `node.parent = null`
+
+## `src/web/scripts/editor/edit-operations/delete.js`
+
+- [ ] L117: `firstChild.parent = null`
+- [ ] L121: `next.parent = null`
+- [ ] L135: `next.parent = null`
+
+## `src/web/scripts/editor/edit-operations/backspace.js`
+
+- [ ] L166: `node.parent = null`
+- [ ] L176: `node.parent = null`
+
+## `src/web/scripts/editor/handlers/clipboard-handler.js`
+
+- [ ] L187: `m !== null` in regex loop
+- [ ] L191: `m !== null` in regex loop
+
+## `src/web/scripts/editor/handlers/event-handler.js`
+
+- [ ] L39: ternary `? event.target : null`
+- [ ] L44: ternary `: null`
+- [ ] L70: `/** @type {HTMLElement|null} */` cast
+- [ ] L76: `? findNodeById(nodeId) : null`
+- [ ] L103: `this.mouseDownLanguageTag = null`
+- [ ] L109: `/** @type {HTMLElement|null} */` cast
+- [ ] L110: `.closest?.() ?? null`
+- [ ] L113: `? findNodeById(nodeId) : null`
+- [ ] L131: `/** @type {HTMLElement|null} */` cast
+- [ ] L156: `this.mouseDownAnchor = null`
+- [ ] L175: `treeCursor?.nodeId ?? null`
+- [ ] L294: `currentNode.parent = null`
+- [ ] L345: `/** @type {HTMLElement|null} */` cast
+- [ ] L373: `/** @type {Node|null} */` cast
+- [ ] L403: `treeCursor?.nodeId ?? null`
+- [ ] L420: `this.mouseDownAnchor = null`
+- [ ] L430: `this.mouseDownLanguageTag = null`
+- [ ] L463: ternary `: null`
+- [ ] L464: `treeRange ? { ...treeRange } : null`
+
+## `src/web/scripts/editor/handlers/menu-handler.js`
+
+- [ ] L40: `this.cleanupMenuListener = null`
+- [ ] L138: `result.filePath || null`
+- [ ] L153: `result.filePath || null`
+
+## `src/web/scripts/editor/handlers/keyboard-handler.js`
+
+- [ ] L74: `this.keydownHandler = null`
+- [ ] L101: JSDoc `ShortcutConfig|null` return type
+- [ ] L109: `return null`
+- [ ] L157: `/** @type {HTMLElement|null} */` cast
+
+## `src/web/scripts/editor/managers/undo-manager.js`
+
+- [ ] L40: JSDoc `Change|null` return type (×2)
+- [ ] L44: `return null`
+- [ ] L52: `return null`
+- [ ] L57: JSDoc `Change|null` return type (×2)
+- [ ] L61: `return null`
+- [ ] L69: `return null`
+
+## `src/web/scripts/editor/managers/selection-manager.js`
+
+- [ ] L21: `this.currentSelection = null`
+- [ ] L22: `this.currentNode = null`
+- [ ] L89: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L110: `this.currentNode = null`
+- [ ] L132: JSDoc `SelectionState|null` return type
+- [ ] L140: JSDoc `SyntaxNode|null` return type
+- [ ] L211: JSDoc `{node, offset}|null` return type
+- [ ] L215: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L241: `return null`
+
+## `src/web/scripts/editor/managers/cursor-manager.js`
+
+- [ ] L54: `this.editor.treeRange = null`
+- [ ] L61: `this.editor.treeRange = null`
+- [ ] L84: JSDoc `{cursor}|null` return type
+- [ ] L87–88: JSDoc `string|null` + `let inlineNodeId = null`
+- [ ] L90: `/** @type {Node|null} */` cast
+- [ ] L138: `return null`
+- [ ] L160: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L280: `/** @type {Element|null} */` cast
+- [ ] L314: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L394: JSDoc `{node, offset}|null` return type
+- [ ] L398: `return null`
+- [ ] L411: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L429: `return null`
+
+## `src/web/scripts/editor/managers/cursor-persistence.js`
+
+- [ ] L123: JSDoc `TreeCursor|null` return type (×2)
+- [ ] L131: JSDoc `TreeCursor|null` return type
+- [ ] L213: `return null`
+- [ ] L224: `return null`
+
+## `src/web/scripts/editor/content-types/table/table-modal.js`
+
+- [ ] L16–17: JSDoc `TableData|null` + `existing = null`
+- [ ] L59: JSDoc `TableData|null` param
+- [ ] L62: `existing ?? null`
+
+## `src/web/scripts/editor/content-types/table/table-manager.js`
+
+- [ ] L86–87: JSDoc `HTMLElement|null` + `let cell = null`
+- [ ] L88: `/** @type {Node|null} */` cast
+- [ ] L120: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [ ] L142–143: JSDoc `HTMLTableCellElement|null` + `let cell = null`
+- [ ] L148: `headerRow?.cells[col] ?? null`
+- [ ] L154: `bodyRow?.cells[col] ?? null`
+- [ ] L159: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+
+## `src/web/scripts/editor/content-types/image/image-helper.js`
+
+- [ ] L115: `currentNode.parent = null` — detach replaced paragraph node
+
+## `src/web/scripts/editor/formatters/source2-formatter.js`
+
+- [ ] L173: JSDoc `HTMLTextAreaElement|null` return type
+- [ ] L423: JSDoc comment "Returns null"
+- [ ] L426: JSDoc `{start, end}|null` return type
+- [ ] L430: `return null`
+- [ ] L438: `return null`
+
+## `src/web/scripts/editor/renderers/source/index.js`
+
+- [ ] L107: JSDoc `DOMRect|null` return type
+- [ ] L110: `return null`
+- [ ] L115: `return null`
+- [ ] L134: `let savedCaretTop = null`
+- [ ] L179: `absoluteCursorOffset: null`
+- [ ] L181: `anchorNodeId: null`
+- [ ] L182: `savedOffsetFromTop: null`
+- [ ] L204: `absoluteCursorOffset !== null`
+- [ ] L214: `savedCaretTop !== null && absoluteCursorOffset !== null` (×2)
+- [ ] L225: `{ detail: { node: null } }`
+
+## `src/web/scripts/editor/renderers/writing/index.js`
+
+- [ ] L221: `? children[children.length - 1] : null`
+- [ ] L264: JSDoc `HTMLElement|null` return type
+- [ ] L452–453: JSDoc `HTMLInputElement|null` + `let checkbox = null`
+- [ ] L495: `visualNumber != null` — loose equality, leave as `!= null` or change to `!= undefined`
+- [ ] L730–731: JSDoc `SyntaxNode|null` + `let summaryNode = null`
+- [ ] L1061: `let absoluteCursorOffset = null`
+- [ ] L1073: `let savedCaretTop = null`
+- [ ] L1093–1094: JSDoc `string|null` + `let anchorNodeId = null`
+- [ ] L1095: `let savedOffsetFromTop = null`
+- [ ] L1105: ternary `: null`
+- [ ] L1124: `dataset.nodeId ?? null`
+- [ ] L1162: `savedOffsetFromTop !== null`
+- [ ] L1173: `savedCaretTop !== null`
+
+## `src/web/scripts/editor/syntax-highlighter/patterns.js`
+
+- [ ] L84: JSDoc `string|null` return type
+- [ ] L89: `return m ? m[0] : null`
+
+## `src/web/scripts/editor/syntax-highlighter/sql.js`
+
+- [ ] L20: `'null'` in keyword list — **leave as-is** (SQL keyword, not JS null)
+- [ ] L126: `'NULL'` in constants set — **leave as-is** (SQL constant)
+
+## `src/web/scripts/utility/tab-bar/tab-bar.js`
+
+- [ ] L3: JSDoc `string|null`
+- [ ] L120: JSDoc `string|null` + "or null" text (×2)
+- [ ] L168: JSDoc `string|null`
+
+## `src/web/scripts/utility/modal/base-modal.js`
+
+- [ ] L68: JSDoc "may be null/undefined"
+- [ ] L135–136: JSDoc `EventTarget|null` + `let mouseDownTarget = null`
+- [ ] L144: `mouseDownTarget = null`
+- [ ] L164: JSDoc "or `null` if cancelled"
+- [ ] L168: `Promise.resolve(null)`
+- [ ] L172: `/** @type {HTMLElement|null} */` cast
+- [ ] L191: `this.resolve(null)` — cancel signal
+- [ ] L214: `this.previousFocus = null`
+- [ ] L229: JSDoc `Element|null` return type
+- [ ] L232: `?? null`
+- [ ] L237: JSDoc `HTMLButtonElement|null` return type
+- [ ] L240–241: `/** @type {HTMLButtonElement|null} */` cast + `?? null`
+
+## `src/web/scripts/utility/preferences/preferences-modal.js`
+
+- [ ] L462–463: JSDoc `Element|null` + `let closest = null`
+- [ ] L559: JSDoc comment "or `null`"
+- [ ] L561: JSDoc `string|null` return type
+- [ ] L571: `return null`
+- [ ] L776: `result.value !== null`
+- [ ] L814: `result.value !== null`
+- [ ] L833: `result.value !== null`
+- [ ] L852: `result.value !== null`
+
+## `src/web/scripts/utility/word-count/word-count-modal.js`
+
+- [ ] L56: JSDoc `SyntaxTree|null` param
+- [ ] L141: JSDoc `SyntaxTree|null` param
+
+## `src/web/scripts/utility/toc/toc.js`
+
+- [ ] L53: `this.lockedHeadingId = null`
+- [ ] L510: `this.observer = null`
+- [ ] L517: `this.scrollHandler = null`
+- [ ] L525: JSDoc `TableOfContents|null` param
+- [ ] L536: JSDoc `TableOfContents|null` param
+- [ ] L547: JSDoc `TableOfContents|null` param
+
+## `src/web/scripts/utility/search/search-bar.js`
+
+- [ ] L196: `this.renderCompleteHandler = null`
+- [ ] L262: `/** @type {HTMLTextAreaElement|null} */` cast
+- [ ] L436: `m !== null` in regex loop — **leave as-is** (regex exec returns null)
+- [ ] L454: `m !== null` in regex loop — **leave as-is**
+- [ ] L540: `/** @type {HTMLTextAreaElement|null} */` cast
+- [ ] L615: `/** @type {Text|null} */` cast
+- [ ] L618: `/** @type {Text|null} */` cast in while loop
+
+## `src/web/scripts/utility/toolbar/toolbar.js`
+
+- [ ] L323: `this.updateButtonStates(null)`
+- [ ] L624–625: JSDoc `TableData|null` + `let existing = null`
+- [ ] L678: JSDoc `SyntaxNode|null` param
+- [ ] L696: `/** @type {SyntaxNode|null} */` cast
+
+## `src/electron/preload.cjs`
+
+- [ ] L97: JSDoc `string|null` type
+
+## `src/types.d.ts`
+
+- [ ] L96: `number | null` for `absoluteCursorOffset`
+- [ ] L98: `number | null` for `savedCaretTop`
+- [ ] L100: `string | null` for `anchorNodeId`
+- [ ] L102: `number | null` for `savedOffsetFromTop`
+- [ ] L145–146: comment "or null" + `string | null` for `filePath`
+- [ ] L150: `TreeCursor | null` for `cursor`
+- [ ] L158: `TreeRange | null` for `treeRange`
+- [ ] L162: `string | null` for `tocActiveHeadingId`
+- [ ] L210: `string | null` in `notifyOpenFiles` param
+- [ ] L293–294: comment "or null" + `string | null` for `filePath`
+
+## `scripts/generate-api-docs.js`
+
+- [ ] L49: `JSON.stringify(schema, null, 4)` — **leave as-is** (built-in API requires null)
+- [ ] L232: `return null`
+
+## Parsers — `src/parsers/old/`
+
+### `src/parsers/old/dfa-tokenizer.js`
+
+- [ ] L14: JSDoc `DFATokenType|null` return type (×2)
+- [ ] L62: `return null`
+- [ ] L89: `if (type === null)` comparison
+
+### `src/parsers/old/syntax-tree.js`
+
+- [ ] L261: JSDoc `TreeCursor|null` type
+- [ ] L263: `this.treeCursor = null`
+- [ ] L271: `node.parent = null`
+- [ ] L284: `node.parent = null`
+- [ ] L293: JSDoc `SyntaxNode|null` return type
+- [ ] L305: `return null`
+- [ ] L312: JSDoc `SyntaxNode|null` return type
+- [ ] L324: `return null`
+- [ ] L333: JSDoc `SyntaxNode|null` return type
+- [ ] L341: `return null`
+- [ ] L524: JSDoc comment "or `null`"
+- [ ] L538: JSDoc `|null` return type
+- [ ] L562: `return null`
+- [ ] L594: `return null`
+- [ ] L618: `return null`
+- [ ] L674: `return null`
+- [ ] L808: JSDoc comment "Returns `null`"
+- [ ] L811: JSDoc `number[]|null` return type
+- [ ] L818: `return null`
+- [ ] L843: `return null`
+- [ ] L855: JSDoc comment "`null`"
+- [ ] L858: JSDoc `number[]|null` param
+- [ ] L884: JSDoc comment "Returns `null`"
+- [ ] L887: JSDoc `number[]|null` return type
+- [ ] L912: `return ... ? path : null`
+- [ ] L919: JSDoc comment "Returns `null`"
+- [ ] L921: JSDoc `number[]|null` param
+- [ ] L922: JSDoc `SyntaxNode|null` return type
+- [ ] L925: `return null`
+- [ ] L930: `return null`
+- [ ] L934: `return null`
+- [ ] L953: `matched.parent !== null` comparison
+- [ ] L954: `matched.parent = null`
+- [ ] L961: `nc.parent !== null` comparison
+- [ ] L962: `nc.parent = null`
+
+### `src/parsers/old/syntax-node.js`
+
+- [ ] L72: JSDoc `SyntaxNode|null` type
+- [ ] L74: `this.parent = null`
+- [ ] L203: `child.parent = null`
+
+### `src/parsers/old/dfa-parser.js`
+
+- [ ] L155: JSDoc `SyntaxNode|null` return type
+- [ ] L247: JSDoc `SyntaxNode|null` return type
+- [ ] L261: `return null`
+- [ ] L284: JSDoc `SyntaxNode|null` return type
+- [ ] L313: `return null`
+- [ ] L592: JSDoc comment "Returns null"
+- [ ] L594: JSDoc `SyntaxNode|null` return type
+- [ ] L600–643: many `return null` (parse failure early-returns)
+- [ ] L659: JSDoc comment "Returns null"
+- [ ] L661: JSDoc `SyntaxNode|null` return type
+- [ ] L667–732: many `return null` (parse failure early-returns)
+- [ ] L931: JSDoc comment "or null"
+- [ ] L935: JSDoc `{name, count}|null` return type
+- [ ] L939: `return null`
+- [ ] L1069: JSDoc comment "Returns null"
+- [ ] L1071: JSDoc `string|null` return type
+- [ ] L1074: `return null`
+- [ ] L1076: `return null`
+- [ ] L1256: JSDoc `SyntaxNode|null` return type
+- [ ] L1286: `return null`
+
+### `src/parsers/old/inline-tokenizer.js`
+
+- [ ] L62: `m !== null` in regex loop — **leave as-is**
+
+## Parsers — `src/parsers/new/src/`
+
+### `src/parsers/new/src/syntax-tree/syntax-node.js`
+
+- [ ] L58: JSDoc `SyntaxNode|null` type
+- [ ] L60: `this.parent = null`
+- [ ] L76: JSDoc comment "null until rendered"
+- [ ] L77: JSDoc `Element|null` type
+- [ ] L79: `this.domNode = null`
+- [ ] L134: `child.parent = null`
+
+### `src/parsers/new/src/syntax-tree/syntax-tree.js`
+
+- [ ] L25: JSDoc comment "parent = null"
+- [ ] L30: `node.parent = null`
+- [ ] L51: `node.parent = null`
+
+### `src/parsers/new/src/syntax-tree/tree-utils.js`
+
+- [ ] L30: JSDoc `SyntaxNode|null` return type
+- [ ] L38: `return null`
+- [ ] L47: JSDoc `SyntaxNode|null` return type
+- [ ] L53–54: `child.startLine != null && child.endLine != null` — loose equality, catches both
+- [ ] L62: `return null`
+- [ ] L67: JSDoc comment "or null"
+- [ ] L69: JSDoc `SyntaxNode|null` return type
+- [ ] L73: `while (current != null)` — loose equality
+- [ ] L74: JSDoc comment "return null"
+- [ ] L75: `return null`
+- [ ] L80: `return null`
+- [ ] L105: JSDoc `number[]|null` return type
+- [ ] L114: `return null`
+- [ ] L121: JSDoc `SyntaxNode|null` return type
+- [ ] L124: `return null`
+- [ ] L129: `return null`
+
+### `src/parsers/new/src/syntax-tree/tree-selection.js`
+
+- [ ] L117: JSDoc `number[]|null` return type
+- [ ] L139: `return null`
+- [ ] L147: JSDoc comment "or null"
+- [ ] L151: JSDoc `number[]|null` param
+- [ ] L152: JSDoc `TreePosition|null` return type
+- [ ] L155: `return null`
+- [ ] L156: `return null`
+- [ ] L161: `return null`
+- [ ] L168: `return null`
+
+### `src/parsers/new/src/syntax-tree/tree-mutations.js`
+
+- [ ] L142: `selection: null`
+- [ ] L266: JSDoc comment "or `null`"
+- [ ] L272: JSDoc `|null` return type
+- [ ] L296: `return null`
+- [ ] L305: `return null`
+- [ ] L328: `return null`
+- [ ] L381: `return null`
+- [ ] L521: JSDoc `SyntaxNode|null` return type
+- [ ] L524: `return null`
+- [ ] L526: `return null`
+- [ ] L528: `return cell ?? null`
+- [ ] L584: `let headerCell = null`
+- [ ] L610: `selection: null`
+- [ ] L621: `selection: null`
+- [ ] L636: `selection: null`
+- [ ] L653: `selection: null`
+- [ ] L716: JSDoc `SyntaxNode|null` in parseFn param
+- [ ] L718: JSDoc `selection: null` in return type (×2)
+- [ ] L719: JSDoc comment "or null"
+- [ ] L732: `return null`
+- [ ] L740: `return null`
+- [ ] L751: `selection: null`
+- [ ] L759: JSDoc comment "returned null"
+- [ ] L764: `return null`
+- [ ] L771: JSDoc comment "`null`"
+
+### `src/parsers/new/src/parser/dfa-parser.js`
+
+- [ ] L165: JSDoc `SyntaxNode|null` return type
+- [ ] L259: JSDoc `SyntaxNode|null` return type
+- [ ] L273: `return null`
+- [ ] L295: JSDoc `SyntaxNode|null` return type
+- [ ] L324: `return null`
+- [ ] L712: JSDoc comment "Returns null"
+- [ ] L714: JSDoc `SyntaxNode|null` return type
+- [ ] L720–763: many `return null` (parse failure early-returns)
+- [ ] L779: JSDoc comment "Returns null"
+- [ ] L781: JSDoc `SyntaxNode|null` return type
+- [ ] L787–852: many `return null` (parse failure early-returns)
+- [ ] L984: JSDoc comment "or null"
+- [ ] L988: JSDoc `{name, count}|null` return type
+- [ ] L992: `return null`
+- [ ] L1026: JSDoc comment "Returns null"
+- [ ] L1028: JSDoc `string|null` return type
+- [ ] L1031: `return null`
+- [ ] L1033: `return null`
+- [ ] L1189: JSDoc `SyntaxNode|null` return type
+- [ ] L1219: `return null`
+
+### `src/parsers/new/src/parser/dfa-tokenizer.js`
+
+- [ ] L27: JSDoc `DFATokenType|null` return type (×2)
+- [ ] L75: `return null`
+- [ ] L102: `if (type === null)` comparison
+
+### `src/parsers/new/src/parser/inline-tokenizer.js`
+
+- [ ] L62: `m !== null` in regex loop — **leave as-is**
+
+### `src/parsers/new/src/parser/parse-line.js`
+
+- [ ] L21: JSDoc `SyntaxNode|null` return type
+- [ ] L23: JSDoc comment "or null"
+- [ ] L26: `return null`
+- [ ] L40: `return null`
+- [ ] L52: JSDoc comment "returns null"
+
+## Exceptions — DO NOT CHANGE
+
+These occurrences of `null` should be left alone:
+
+1. **SQL keywords**: `NOT NULL` in SQL strings (`settings-manager.js` L37), `'null'`/`'NULL'` in SQL syntax highlighter (`sql.js` L20, L126)
+2. **`JSON.stringify(x, null, n)`**: Built-in API requires `null` as second arg (`generate-api-docs.js` L49)
+3. **`document.createTreeWalker(el, filter, null)`**: DOM API requires `null` for optional filter (`selection-manager.js` L89/L215, `cursor-manager.js` L160/L314/L411, `table-manager.js` L120/L159, `cursor-typing-delimiters.spec.js` L78)
+4. **`regex.exec() !== null`** in while loops: This is the canonical regex iteration pattern (`clipboard-handler.js` L187/L191, `inline-tokenizer.js` L62, `search-bar.js` L436/L454)
+5. **`!= null` loose equality checks** that intentionally catch both null and undefined: These can stay as-is or be changed to `!== undefined` — noted per-item above
+6. **Syntax-highlighter language constants**: These are language keyword/constant strings, not JS null values — `c.js` L83 (`nullptr`), L140 (`NULL`); `java.js` L94 (`null`); `json.js` L79 (`null`); `javascript.js` L90 (`null`); `php.js` L86 (`null`/`NULL`)
+
+## Tests
+
+Test files also contain `null` usage (assertions, setup values, evaluate callbacks). These should be updated to match the new source conventions after each source file is changed.
+
+### `test/unit/word-count/word-count-modal.test.js`
+
+- [ ] L12–13: `getWordCounts(null)` — test with null input
+
+### `test/unit/editor/undo-manager.test.js`
+
+- [ ] L58: `assert.ok(change !== null)`
+- [ ] L63/65: test "return null" + `assert.strictEqual(change, null)`
+- [ ] L87: `assert.ok(change !== null)`
+- [ ] L92/94: test "return null" + `assert.strictEqual(change, null)`
+
+### `test/unit/parser/syntax-tree.test.js`
+
+- [ ] L76: `assert.strictEqual(child.parent, null)`
+- [ ] L214/216: test "return null" + `assert.strictEqual(found, null)`
+- [ ] L231/238: test "return null" + `assert.strictEqual(found, null)`
+- [ ] L392–396: test "null when treeCursor is null" + `tree.treeCursor = null` + assertion
+- [ ] L399/403: test "null when cursor node not in tree" + assertion
+- [ ] L497–502: test "does nothing when path is null" + `setCursorPath(null)` + assertions
+- [ ] L508/510/516/518/534: `tree.treeCursor = null` setup
+
+### `test/unit/parser/update-using.test.js`
+
+- [ ] L277/284: test "sets parent to null" + `assert.strictEqual(child.parent, null)`
+
+### `test/unit/editor/cursor-persistence.test.js`
+
+- [ ] L179/182: test "returns null" + `assert.equal(cursor, null)`
+
+### `test/integration/test-utils.js`
+
+- [ ] L135: `/** @type {HTMLElement|null} */` cast in `page.evaluate()`
+
+### `test/integration/` files
+
+Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
