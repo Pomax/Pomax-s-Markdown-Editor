@@ -59,13 +59,13 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/electron/ipc-handler.js`
 
-- [ ] L34: JSDoc `string|null` + `number[]|null` (×3)
-- [ ] L38: JSDoc `string|null` in filter param
-- [ ] L40: JSDoc `string|null` + `number[]|null` (×3) in map param
-- [ ] L48: `f.cursorPath ?? null`
-- [ ] L49: `f.tocHeadingPath ?? null`
-- [ ] L67: `menuBuilder ?? null`
-- [ ] L199: `activeFile.filePath ?? null`
+- [x] L34: JSDoc `string|null` + `number[]|null` (×3)
+- [x] L38: JSDoc `string|null` in filter param
+- [x] L40: JSDoc `string|null` + `number[]|null` (×3) in map param
+- [x] L48: `f.cursorPath ?? null`
+- [x] L49: `f.tocHeadingPath ?? null`
+- [x] L67: `menuBuilder ?? null`
+- [x] L199: `activeFile.filePath ?? null`
 
 ## `src/electron/file-manager.js`
 
