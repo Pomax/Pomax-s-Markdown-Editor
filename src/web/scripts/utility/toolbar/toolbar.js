@@ -320,7 +320,7 @@ export class Toolbar extends ToolbarData {
     );
 
     // Initial state
-    this.updateButtonStates(null);
+    this.updateButtonStates(undefined);
   }
 
   /**
@@ -675,7 +675,7 @@ export class Toolbar extends ToolbarData {
    * to determine block-level state (heading, list, etc.) and collect
    * the set of active inline formats along the way.
    *
-   * @param {SyntaxNode|null} node - The current node
+   * @param {SyntaxNode | undefined} node - The current node
    */
   updateButtonStates(node) {
     // In source2 mode there is no syntax tree — enable all buttons.
@@ -693,7 +693,7 @@ export class Toolbar extends ToolbarData {
     const activeFormats = new Set();
     let blockNode = node;
     if (node?.isInlineNode()) {
-      /** @type {SyntaxNode|null} */
+      /** @type {SyntaxNode | undefined} */
       let walk = node;
       while (walk?.isInlineNode()) {
         const buttons = Toolbar.INLINE_TYPE_TO_BUTTONS[walk.type];

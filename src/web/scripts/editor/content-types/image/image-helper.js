@@ -112,7 +112,7 @@ export class ImageHelper extends ImageHelperData {
         if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, imageNode);
           imageNode.parent = currentNode.parent;
-          currentNode.parent = null;
+          currentNode.parent = undefined;
           renderHints = { added: [imageNode.id], removed: [currentNode.id] };
         } else {
           // Insert after current node

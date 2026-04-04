@@ -176,12 +176,12 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/range-operations.js`
 
-- [ ] L66–67: JSDoc `|null` return type + "or null" comment
-- [ ] L71: `return null` — no range/tree guard
-- [ ] L76: `return null` — no start/end node guard
+- [x] L66–67: JSDoc `|null` return type + "or null" comment
+- [x] L71: `return null` — no range/tree guard
+- [x] L76: `return null` — no start/end node guard
 - [x] L88: `this.editor.treeRange = null` — clear after same-node delete
-- [ ] L98: `return null` — sibling index guard
-- [ ] L122: `siblings[i].parent = null` — detach removed nodes
+- [x] L98: `return null` — sibling index guard
+- [x] L122: `siblings[i].parent = null` — detach removed nodes
 - [x] L131: `this.editor.treeRange = null` — clear after cross-node delete
 
 ## `src/web/scripts/editor/index.js`
@@ -202,8 +202,8 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L505: `return null`
 - [ ] L512: `return null`
 - [x] L572: `this.currentFilePath = null`
-- [ ] L741: `currentNode.parent = null`
-- [ ] L894: `child.parent = null`
+- [x] L741: `currentNode.parent = null`
+- [x] L894: `child.parent = null`
 - [x] L910: `this.treeRange = null`
 - [x] L1119: `this.treeRange = null`
 
@@ -217,18 +217,18 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/edit-operations/index.js`
 
-- [ ] L84: `node.parent = null`
+- [x] L84: `node.parent = null`
 
 ## `src/web/scripts/editor/edit-operations/delete.js`
 
-- [ ] L117: `firstChild.parent = null`
-- [ ] L121: `next.parent = null`
-- [ ] L135: `next.parent = null`
+- [x] L117: `firstChild.parent = null`
+- [x] L121: `next.parent = null`
+- [x] L135: `next.parent = null`
 
 ## `src/web/scripts/editor/edit-operations/backspace.js`
 
-- [ ] L166: `node.parent = null`
-- [ ] L176: `node.parent = null`
+- [x] L166: `node.parent = null`
+- [x] L176: `node.parent = null`
 
 ## `src/web/scripts/editor/handlers/clipboard-handler.js`
 
@@ -248,7 +248,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L131: `/** @type {HTMLElement|null} */` cast
 - [ ] L156: `this.mouseDownAnchor = null`
 - [x] L175: `treeCursor?.nodeId ?? null`
-- [ ] L294: `currentNode.parent = null`
+- [x] L294: `currentNode.parent = null`
 - [ ] L345: `/** @type {HTMLElement|null} */` cast
 - [ ] L373: `/** @type {Node|null} */` cast
 - [x] L403: `treeCursor?.nodeId ?? null`
@@ -332,7 +332,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/content-types/image/image-helper.js`
 
-- [ ] L115: `currentNode.parent = null` — detach replaced paragraph node
+- [x] L115: `currentNode.parent = null` — detach replaced paragraph node
 
 ## `src/web/scripts/editor/formatters/source2-formatter.js`
 
@@ -439,10 +439,10 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/utility/toolbar/toolbar.js`
 
-- [ ] L323: `this.updateButtonStates(null)`
+- [x] L323: `this.updateButtonStates(null)`
 - [ ] L624–625: JSDoc `TableData|null` + `let existing = null`
-- [ ] L678: JSDoc `SyntaxNode|null` param
-- [ ] L696: `/** @type {SyntaxNode|null} */` cast
+- [x] L678: JSDoc `SyntaxNode|null` param
+- [x] L696: `/** @type {SyntaxNode|null} */` cast
 
 ## `src/electron/preload.cjs`
 
@@ -478,8 +478,8 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 - [ ] L261: JSDoc `TreeCursor|null` type
 - [ ] L263: `this.treeCursor = null`
-- [ ] L271: `node.parent = null`
-- [ ] L284: `node.parent = null`
+- [x] L271: `node.parent = null`
+- [x] L284: `node.parent = null`
 - [ ] L293: JSDoc `SyntaxNode|null` return type
 - [ ] L305: `return null`
 - [ ] L312: JSDoc `SyntaxNode|null` return type
@@ -507,16 +507,16 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L925: `return null`
 - [ ] L930: `return null`
 - [ ] L934: `return null`
-- [ ] L953: `matched.parent !== null` comparison
-- [ ] L954: `matched.parent = null`
-- [ ] L961: `nc.parent !== null` comparison
-- [ ] L962: `nc.parent = null`
+- [x] L953: `matched.parent !== null` comparison
+- [x] L954: `matched.parent = null`
+- [x] L961: `nc.parent !== null` comparison
+- [x] L962: `nc.parent = null`
 
 ### `src/parsers/old/syntax-node.js`
 
-- [ ] L72: JSDoc `SyntaxNode|null` type
-- [ ] L74: `this.parent = null`
-- [ ] L203: `child.parent = null`
+- [x] L72: JSDoc `SyntaxNode|null` type
+- [x] L74: `this.parent = null`
+- [x] L203: `child.parent = null`
 
 ### `src/parsers/old/dfa-parser.js`
 

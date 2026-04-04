@@ -738,7 +738,7 @@ export class Editor extends EditorData {
         if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, tableNode);
           tableNode.parent = currentNode.parent;
-          currentNode.parent = null;
+          currentNode.parent = undefined;
           renderHints = { added: [tableNode.id], removed: [currentNode.id] };
         } else {
           siblings.splice(idx + 1, 0, tableNode);
@@ -891,7 +891,7 @@ export class Editor extends EditorData {
           // Splice the children into the tree at the html-block's position
           treeChildren.splice(idx, 1, ...lifted);
           for (const child of lifted) {
-            child.parent = null;
+            child.parent = undefined;
           }
         }
       }

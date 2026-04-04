@@ -114,11 +114,11 @@ export async function handleDelete(ops) {
         const curLen = node.content.length;
         node.content += firstChild.content;
         next.children.splice(0, 1);
-        firstChild.parent = null;
+        firstChild.parent = undefined;
         // If the html-block is now empty, remove it too.
         if (next.children.length === 0) {
           siblings.splice(idx + 1, 1);
-          next.parent = null;
+          next.parent = undefined;
         }
         ops.editor.syntaxTree.treeCursor = {
           nodeId: node.id,
@@ -132,7 +132,7 @@ export async function handleDelete(ops) {
         const curLen = node.content.length;
         node.content += next.content;
         siblings.splice(idx + 1, 1);
-        next.parent = null;
+        next.parent = undefined;
         ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: curLen };
         renderHints = { updated: [node.id], removed: [next.id] };
       }

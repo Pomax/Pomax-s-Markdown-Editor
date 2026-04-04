@@ -291,7 +291,7 @@ export class EventHandler extends EventHandlerData {
       const idx = siblings.indexOf(currentNode);
       siblings.splice(idx, 1, imageNode);
       imageNode.parent = currentNode.parent;
-      currentNode.parent = null;
+      currentNode.parent = undefined;
     } else {
       // Cursor is on a non-empty element — insert image after it
       const siblings = this.editor.getSiblings(currentNode);

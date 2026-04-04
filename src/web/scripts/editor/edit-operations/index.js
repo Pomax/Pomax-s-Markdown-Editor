@@ -81,7 +81,7 @@ export class EditOperations extends EditOperationsData {
 
     // Remove the empty node from the tree.
     siblings.splice(idx, 1);
-    node.parent = null;
+    node.parent = undefined;
     if (!result.hints.removed) result.hints.removed = [];
     result.hints.removed.push(node.id);
 

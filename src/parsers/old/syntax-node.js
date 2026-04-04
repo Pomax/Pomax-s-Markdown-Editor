@@ -69,9 +69,9 @@ export class SyntaxNode {
 
     /**
      * Parent node reference.
-     * @type {SyntaxNode|null}
+     * @type {SyntaxNode | undefined}
      */
-    this.parent = null;
+    this.parent;
 
     /**
      * Additional attributes for the node.
@@ -200,7 +200,7 @@ export class SyntaxNode {
     const index = this.children.indexOf(child);
     if (index !== -1) {
       this.children.splice(index, 1);
-      child.parent = null;
+      child.parent = undefined;
       return true;
     }
     return false;
