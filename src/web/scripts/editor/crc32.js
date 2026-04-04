@@ -6,8 +6,8 @@
  * hash, not a cryptographic hash — collisions are acceptable.
  */
 
-/** @type {Uint32Array|null} */
-let TABLE = null;
+/** @type {Uint32Array | undefined} */
+let TABLE;
 
 /**
  * Lazily initialises the CRC32 lookup table (256 entries).

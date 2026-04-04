@@ -95,8 +95,8 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [x] L440: JSDoc `number[]|null` types (×2)
 - [x] L471: `treeCursor ? { ...treeCursor } : null`
 - [x] L489: `let tocNode = null`
-- [ ] L550: JSDoc `string|null`
-- [ ] L568: JSDoc `string|null` + "or null" text (×2)
+- [x] L550: JSDoc `string|null`
+- [x] L568: JSDoc `string|null` + "or null" text (×2)
 - [x] L697: `this.tabBar.addTab(newId, null, true)`
 - [x] L745: `cursorPath: /** @type {number[]|null} */ (null)` (×2)
 - [x] L746: `tocHeadingPath: /** @type {number[]|null} */ (null)` (×2)
@@ -114,6 +114,8 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [x] L979: `await this.createNewTab(null, '')`
 
 ## `src/web/scripts/editor/types.js`
+
+> **⚠️ DO LAST** — This file declares class field types used everywhere. Changing it triggers cascades in almost every consumer. Process every other file first, then do types.js as the final pass.
 
 This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
 
@@ -162,15 +164,15 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/crc32.js`
 
-- [ ] L9–10: JSDoc `Uint32Array|null` + `let TABLE = null`
+- [x] L9–10: JSDoc `Uint32Array|null` + `let TABLE = null`
 
 ## `src/web/scripts/editor/page-resize.js`
 
-- [ ] L160–161: JSDoc `number|null` + `let rafId = null`
-- [ ] L182: `if (rafId !== null) return`
-- [ ] L185: `rafId = null` — inside rAF callback
-- [ ] L204: `if (rafId !== null)` — cleanup guard
-- [ ] L206: `rafId = null` — cleanup assignment
+- [x] L160–161: JSDoc `number|null` + `let rafId = null`
+- [x] L182: `if (rafId !== null) return`
+- [x] L185: `rafId = null` — inside rAF callback
+- [x] L204: `if (rafId !== null)` — cleanup guard
+- [x] L206: `rafId = null` — cleanup assignment
 
 ## `src/web/scripts/editor/range-operations.js`
 
