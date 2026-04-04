@@ -356,16 +356,16 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/renderers/writing/index.js`
 
-- [ ] L221: `? children[children.length - 1] : null`
-- [ ] L264: JSDoc `HTMLElement|null` return type
-- [ ] L452–453: JSDoc `HTMLInputElement|null` + `let checkbox = null`
-- [ ] L495: `visualNumber != null` — loose equality, leave as `!= null` or change to `!= undefined`
-- [ ] L730–731: JSDoc `SyntaxNode|null` + `let summaryNode = null`
+- [x] L221: `? children[children.length - 1] : null`
+- [x] L264: JSDoc `HTMLElement|null` return type
+- [x] L452–453: JSDoc `HTMLInputElement|null` + `let checkbox = null`
+- [x] L495: `visualNumber != null` — loose equality, leave as `!= null` or change to `!= undefined`
+- [x] L730–731: JSDoc `SyntaxNode|null` + `let summaryNode = null`
 - [x] L1061: `let absoluteCursorOffset = null`
 - [x] L1073: `let savedCaretTop = null`
 - [x] L1093–1094: JSDoc `string|null` + `let anchorNodeId = null`
 - [x] L1095: `let savedOffsetFromTop = null`
-- [ ] L1105: ternary `: null`
+- [x] L1105: ternary `: null`
 - [x] L1124: `dataset.nodeId ?? null`
 - [x] L1162: `savedOffsetFromTop !== null`
 - [x] L1173: `savedCaretTop !== null`

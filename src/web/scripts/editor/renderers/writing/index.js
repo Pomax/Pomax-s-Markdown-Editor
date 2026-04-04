@@ -218,7 +218,7 @@ export class WritingRenderer extends WritingRendererData {
   ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector(`[data-is-phantom]`);
     const children = tree.children;
-    const last = children.length > 0 ? children[children.length - 1] : null;
+    const last = children.length > 0 ? children[children.length - 1] : undefined;
     const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
@@ -261,7 +261,7 @@ export class WritingRenderer extends WritingRendererData {
    * @param {SyntaxNode} node - The node to render
    * @param {boolean} isFocused - Whether this node has focus
    * @param {number} [visualNumber] - 1-based position for ordered list items
-   * @returns {HTMLElement|null}
+   * @returns {HTMLElement | undefined}
    */
   renderNode(node, isFocused, visualNumber) {
     const element = document.createElement(`div`);
@@ -449,8 +449,8 @@ export class WritingRenderer extends WritingRendererData {
     const isChecklist = typeof attrs.checked === `boolean`;
     const number = attrs.number || 1;
 
-    /** @type {HTMLInputElement|null} */
-    let checkbox = null;
+    /** @type {HTMLInputElement | undefined} */
+    let checkbox;
 
     if (isChecklist) {
       // Checklist: no bullet/number, show a checkbox
@@ -492,7 +492,7 @@ export class WritingRenderer extends WritingRendererData {
       element.style.listStyleType = isOrdered ? `decimal` : `disc`;
       element.style.display = `list-item`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-      if (isOrdered && visualNumber != null) {
+      if (isOrdered && visualNumber !== undefined) {
         element.style.counterSet = `list-item ${visualNumber}`;
       }
     }
@@ -727,8 +727,8 @@ export class WritingRenderer extends WritingRendererData {
     const currentNodeId = this.editor.getBlockNodeId();
 
     // Split children into summary child and body children
-    /** @type {SyntaxNode|null} */
-    let summaryNode = null;
+    /** @type {SyntaxNode | undefined} */
+    let summaryNode;
     /** @type {SyntaxNode[]} */
     const bodyChildren = [];
 
@@ -1102,7 +1102,7 @@ export class WritingRenderer extends WritingRendererData {
         const blockId = editor.getBlockNodeId();
         const cursorEl = blockId
           ? editor.container.querySelector(`[data-node-id="${blockId}"]`)
-          : null;
+          : undefined;
         if (cursorEl && blockId) {
           anchorNodeId = blockId;
           savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
