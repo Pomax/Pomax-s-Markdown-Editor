@@ -10,8 +10,8 @@ import { settings } from './settings-manager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** @type {BrowserWindow|null} */
-let mainWindow = null;
+/** @type {BrowserWindow | undefined} */
+let mainWindow;
 
 /** @type {FileManager} */
 let fileManager;
@@ -24,9 +24,9 @@ let menuBuilder;
 
 /**
  * Debounce timeout handle for saving window bounds.
- * @type {ReturnType<typeof setTimeout>|null}
+ * @type {ReturnType<typeof setTimeout> | undefined}
  */
-let boundsDebounce = null;
+let boundsDebounce;
 
 /**
  * Saves the current window bounds as screen-relative ratios so that the
@@ -76,9 +76,9 @@ function saveOpenFiles() {
   }
 
   const entries = menuBuilder.openFiles
-    .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
+    .filter(/** @param {{filePath: string}} f */ (f) => f.filePath)
     .map(
-      /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}} f */ (
+      /** @param {{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[], tocHeadingPath?: number[]}} f */ (
         f,
       ) => ({
         filePath: f.filePath,
@@ -86,8 +86,8 @@ function saveOpenFiles() {
         cursorOffset: f.cursorOffset ?? 0,
         contentHash: f.contentHash ?? 0,
         scrollTop: f.scrollTop ?? 0,
-        cursorPath: f.cursorPath ?? null,
-        tocHeadingPath: f.tocHeadingPath ?? null,
+        cursorPath: f.cursorPath,
+        tocHeadingPath: f.tocHeadingPath,
       }),
     );
 
@@ -119,7 +119,7 @@ function createWindow() {
   /** @type {number|undefined} */
   let restoredY;
 
-  if (saved?.xRatio != null && saved?.yRatio != null) {
+  if (saved?.xRatio !== undefined && saved?.yRatio !== undefined) {
     restoredX = Math.round(saved.xRatio * work.width) + work.x;
     restoredY = Math.round(saved.yRatio * work.height) + work.y;
 
@@ -146,7 +146,7 @@ function createWindow() {
   };
 
   // Only set position if we have saved values (otherwise let the OS decide)
-  if (restoredX != null && restoredY != null) {
+  if (restoredX !== undefined && restoredY !== undefined) {
     windowOptions.x = restoredX;
     windowOptions.y = restoredY;
   }
@@ -176,7 +176,7 @@ function createWindow() {
     // Flush any pending debounced save immediately
     if (boundsDebounce) {
       clearTimeout(boundsDebounce);
-      boundsDebounce = null;
+      boundsDebounce = undefined;
     }
     saveWindowBounds();
 
@@ -212,7 +212,7 @@ function createWindow() {
   });
 
   win.on(`closed`, () => {
-    mainWindow = null;
+    mainWindow = undefined;
   });
 
   return win;
@@ -288,7 +288,7 @@ async function initialize(window) {
  * or the app itself (when packaged).  User-supplied arguments start at
  * argv[2] in dev mode and argv[1] in a packaged app.
  *
- * @returns {string|null} The resolved absolute path, or null if none provided
+ * @returns {string | undefined} The resolved absolute path, or undefined if none provided
  */
 function getFilePathFromArgs() {
   // In dev: [electron, main.js, ...userArgs]
@@ -312,7 +312,7 @@ function getFilePathFromArgs() {
     }
   }
 
-  return null;
+  return;
 }
 
 /**
@@ -334,11 +334,11 @@ async function loadFileFromPath(window, filePath) {
  * replaces the initial pristine tab), and subsequent files are sent
  * as `file:loaded` menu actions so the renderer creates new tabs.
  * @param {BrowserWindow} window - The main window
- * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
+ * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[], tocHeadingPath?: number[]}>} entries
  */
 async function restoreOpenFiles(window, entries) {
   // Read all files up-front, dropping any that can no longer be loaded
-  /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[]|null, tocHeadingPath: number[]|null}>} */
+  /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath?: number[], tocHeadingPath?: number[]}>} */
   const loaded = [];
   for (const entry of entries) {
     const result = await fileManager.loadRecent(entry.filePath);
@@ -350,8 +350,8 @@ async function restoreOpenFiles(window, entries) {
         cursorOffset: entry.cursorOffset ?? 0,
         contentHash: entry.contentHash ?? 0,
         scrollTop: entry.scrollTop ?? 0,
-        cursorPath: entry.cursorPath ?? null,
-        tocHeadingPath: entry.tocHeadingPath ?? null,
+        cursorPath: entry.cursorPath,
+        tocHeadingPath: entry.tocHeadingPath,
       });
     }
   }
@@ -440,7 +440,7 @@ app.whenReady().then(async () => {
       loadFileFromPath(window, cliFilePath);
     });
   } else if (!process.env.TESTING) {
-    const openFiles = settings.get(`openFiles`, null);
+    const openFiles = settings.get(`openFiles`);
     if (Array.isArray(openFiles) && openFiles.length > 0) {
       // Filter to files that still exist on disk
       const valid = openFiles.filter(

@@ -39,23 +39,23 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/electron/main.js`
 
-- [ ] L13–14: JSDoc `BrowserWindow|null` + `let mainWindow = null`
-- [ ] L27–29: JSDoc `ReturnType<typeof setTimeout>|null` + `let boundsDebounce = null`
-- [ ] L79: JSDoc `string|null` in filter param
-- [ ] L81: JSDoc `string|null` + `number[]|null` (×3) in map param
-- [ ] L89: `f.cursorPath ?? null`
-- [ ] L90: `f.tocHeadingPath ?? null`
-- [ ] L122: `!= null` comparisons (×2) — loose equality, catches both null and undefined
-- [ ] L149: `!= null` comparisons (×2) — same pattern
-- [ ] L179: `boundsDebounce = null`
-- [ ] L215: `mainWindow = null`
-- [ ] L291: JSDoc `string|null` return type (×2)
-- [ ] L315: `return null`
-- [ ] L337: JSDoc `number[]|null` types (×2)
-- [ ] L341: JSDoc `number[]|null` types (×2)
-- [ ] L353: `entry.cursorPath ?? null`
-- [ ] L354: `entry.tocHeadingPath ?? null`
-- [ ] L443: `settings.get('openFiles', null)`
+- [x] L13–14: JSDoc `BrowserWindow|null` + `let mainWindow = null`
+- [x] L27–29: JSDoc `ReturnType<typeof setTimeout>|null` + `let boundsDebounce = null`
+- [x] L79: JSDoc `string|null` in filter param
+- [x] L81: JSDoc `string|null` + `number[]|null` (×3) in map param
+- [x] L89: `f.cursorPath ?? null`
+- [x] L90: `f.tocHeadingPath ?? null`
+- [x] L122: `!= null` comparisons (×2) — loose equality, catches both null and undefined
+- [x] L149: `!= null` comparisons (×2) — same pattern
+- [x] L179: `boundsDebounce = null`
+- [x] L215: `mainWindow = null`
+- [x] L291: JSDoc `string|null` return type (×2)
+- [x] L315: `return null`
+- [x] L337: JSDoc `number[]|null` types (×2)
+- [x] L341: JSDoc `number[]|null` types (×2)
+- [x] L353: `entry.cursorPath ?? null`
+- [x] L354: `entry.tocHeadingPath ?? null`
+- [x] L443: `settings.get('openFiles', null)`
 
 ## `src/electron/ipc-handler.js`
 
