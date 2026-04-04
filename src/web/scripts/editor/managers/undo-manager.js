@@ -1,32 +1,11 @@
+import { UndoManagerData } from '../types.js';
+
 /**
  * Manages undo/redo history with unlimited capacity.
  */
-export class UndoManager {
+export class UndoManager extends UndoManagerData {
   constructor() {
-    /**
-     * Stack of changes for undo.
-     * @type {Change[]}
-     */
-    this.undoStack = [];
-
-    /**
-     * Stack of changes for redo.
-     * @type {Change[]}
-     */
-    this.redoStack = [];
-
-    /**
-     * Minimum time between recorded changes (ms).
-     * Used to batch rapid changes together.
-     * @type {number}
-     */
-    this.batchTimeout = 300;
-
-    /**
-     * Timestamp of the last recorded change.
-     * @type {number}
-     */
-    this.lastChangeTime = 0;
+    super();
   }
 
   /**

@@ -152,22 +152,20 @@ function applyTextareaEdit(
   textarea.selectionEnd = cursorEnd;
 }
 
+import { Source2FormatterData } from '../types.js';
+
 /**
  * Formatter that operates on the textarea's text and selection directly.
  * Used for `source2` view mode.
  * @implements {Formatter}
  */
-export class Source2Formatter {
+export class Source2Formatter extends Source2FormatterData {
   /**
-   * @param {import('../renderers/source-renderer-v2.js').SourceRendererV2} renderer
+   * @param {import('../renderers/source/index.js').SourceRendererV2} renderer
    */
   constructor(renderer) {
-    /** @type {import('../renderers/source-renderer-v2.js').SourceRendererV2} */
+    super();
     this.renderer = renderer;
-    /** @type {number} */
-    this.savedSelectionStart = 0;
-    /** @type {number} */
-    this.savedSelectionEnd = 0;
   }
 
   /**

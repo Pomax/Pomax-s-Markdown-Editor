@@ -6,38 +6,20 @@
 import { LinkModal } from '../../editor/content-types/link/link-modal.js';
 import { TableModal } from '../../editor/content-types/table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
+import { ToolbarData } from '../../editor/types.js';
 
 /**
  * Toolbar component for the markdown editor.
  */
-export class Toolbar {
+export class Toolbar extends ToolbarData {
   /**
    * @param {HTMLElement} container - The toolbar container element
    * @param {Editor} editor - The editor instance
    */
   constructor(container, editor) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {Editor} */
     this.editor = editor;
-
-    /** @type {HTMLElement|null} */
-    this.toolbarElement = null;
-
-    /** @type {ToolbarButton[]} */
-    this.buttons = [];
-
-    /** @type {HTMLButtonElement|null} */
-    this.viewModeToggle = null;
-
-    /** @type {LinkModal|null} */
-    this.linkModal = null;
-
-    /** @type {TableModal|null} */
-    this.tableModal = null;
-
-    /** @type {ButtonConfig[]} */
     this.buttonConfigs = this.getButtonConfigs();
   }
 
@@ -448,12 +430,12 @@ export class Toolbar {
     button.className = `toolbar-view-mode-toggle`;
     button.setAttribute(`aria-label`, `Toggle view mode`);
 
-    const currentMode = this.editor.getViewMode();
+    const currentMode = this.editor.viewMode;
     button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
     button.addEventListener(`click`, async () => {
       const cycle = Toolbar.VIEW_MODE_CYCLE;
-      const currentIndex = cycle.indexOf(/** @type {ViewMode} */ (this.editor.getViewMode()));
+      const currentIndex = cycle.indexOf(/** @type {ViewMode} */ (this.editor.viewMode));
       const newMode = cycle[(currentIndex + 1) % cycle.length];
       await this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;

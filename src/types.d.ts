@@ -89,6 +89,20 @@ interface TocHeading {
 }
 
 /**
+ * Data passed between view-mode switch phases (leave → transition → enter).
+ */
+interface ViewSwitchData {
+    /** Absolute character offset of the cursor in the markdown source. */
+    absoluteCursorOffset: number | null;
+    /** Pixel distance from the caret to the top of the scroll container. */
+    savedCaretTop: number | null;
+    /** Node ID used as a scroll anchor across the switch. */
+    anchorNodeId: string | null;
+    /** Pixel offset of the anchor node from the top of the scroll container. */
+    savedOffsetFromTop: number | null;
+}
+
+/**
  * Data for a link insertion or edit.
  */
 interface LinkData {

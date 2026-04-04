@@ -1,19 +1,16 @@
+import { KeyboardHandlerData } from '../types.js';
+
 /**
  * Handles keyboard shortcuts for the editor.
  */
-export class KeyboardHandler {
+export class KeyboardHandler extends KeyboardHandlerData {
   /**
    * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {ShortcutConfig[]} */
     this.shortcuts = this.getShortcuts();
-
-    /** @type {((event: KeyboardEvent) => void)|null} */
-    this.keydownHandler = null;
   }
 
   /**

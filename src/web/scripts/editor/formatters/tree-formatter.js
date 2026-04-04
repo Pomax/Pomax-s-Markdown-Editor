@@ -6,17 +6,19 @@
 
 /// <reference path="../../../../types.d.ts" />
 
+import { TreeFormatterData } from '../types.js';
+
 /**
  * Formatter that operates on the syntax tree via the editor's existing methods.
  * Used for `writing` view mode.
  * @implements {Formatter}
  */
-export class TreeFormatter {
+export class TreeFormatter extends TreeFormatterData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

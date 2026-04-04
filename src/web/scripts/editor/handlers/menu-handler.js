@@ -2,24 +2,20 @@
 
 import { PreferencesModal } from '../../utility/preferences/preferences-modal.js';
 import { WordCountModal } from '../../utility/word-count/word-count-modal.js';
+import { MenuHandlerData } from '../types.js';
 
 /**
  * Handles menu actions from the main process.
  */
-export class MenuHandler {
+export class MenuHandler extends MenuHandlerData {
   /**
    * @param {Editor} editor - The editor instance
    * @param {Toolbar} toolbar - The toolbar instance
    */
   constructor(editor, toolbar) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {Toolbar} */
     this.toolbar = toolbar;
-
-    /** @type {function|null} */
-    this.cleanupMenuListener = null;
   }
 
   /**

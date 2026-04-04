@@ -83,13 +83,11 @@ export function getWordCounts(syntaxTree) {
 /**
  * A modal dialog that displays the word count of the current document.
  */
-export class WordCountModal {
-  constructor() {
-    /** @type {HTMLDialogElement|null} */
-    this.dialog = null;
+import { WordCountModalData } from '../../editor/types.js';
 
-    /** @type {boolean} */
-    this.built = false;
+export class WordCountModal extends WordCountModalData {
+  constructor() {
+    super();
   }
 
   /**

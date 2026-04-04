@@ -16,6 +16,7 @@ import { insertTextAtCursor } from './insert.js';
 import { handleBackspace } from './backspace.js';
 import { handleDelete } from './delete.js';
 import { handleEnterKey } from './enter.js';
+import { EditOperationsData } from '../types.js';
 
 /**
  * Node types that should be removed when left empty after a
@@ -40,12 +41,12 @@ const REMOVABLE_WHEN_EMPTY = new Set([
 /**
  * Handles tree-level edit operations on the syntax tree.
  */
-export class EditOperations {
+export class EditOperations extends EditOperationsData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

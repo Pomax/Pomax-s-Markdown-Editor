@@ -7,44 +7,18 @@
 
 import { SyntaxNode } from '../../../../parsers/old/syntax-node.js';
 import { CodeLanguageModal } from '../content-types/code-block/code-language/code-language-modal.js';
+import { EventHandlerData } from '../types.js';
 
 /**
  * Handles non-editing DOM events for the editor.
  */
-export class EventHandler {
+export class EventHandler extends EventHandlerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /**
-     * Stashed anchor element from mousedown, in case selectionchange
-     * re-renders the node before the click event fires.
-     * @type {HTMLElement|null}
-     */
-    this.mouseDownAnchor = null;
-
-    /**
-     * Stashed language-tag span from mousedown, in case selectionchange
-     * re-renders the code block before the click event fires.
-     * @type {HTMLElement|null}
-     */
-    this.mouseDownLanguageTag = null;
-
-    /**
-     * Lazily-created modal for editing code-block language tags.
-     * @type {CodeLanguageModal|null}
-     */
-    this.codeLanguageModal = null;
-
-    /**
-     * Set to true when the editor loses focus to a modal dialog,
-     * so handleFocus can restore the caret when the modal closes.
-     * @type {boolean}
-     */
-    this.blurredByModal = false;
   }
 
   /**

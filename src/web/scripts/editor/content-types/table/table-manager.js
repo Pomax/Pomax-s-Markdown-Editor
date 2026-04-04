@@ -7,16 +7,17 @@
 /// <reference path="../../../../../types.d.ts" />
 
 import { TableModal } from './table-modal.js';
+import { TableManagerData } from '../../types.js';
 
 /**
  * Manages table-specific editing operations.
  */
-export class TableManager {
+export class TableManager extends TableManagerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

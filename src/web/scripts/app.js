@@ -15,59 +15,15 @@ import { SearchBar } from './utility/search/search-bar.js';
 import { TabBar, getDisambiguatedLabels } from './utility/tab-bar/tab-bar.js';
 import { TableOfContents } from './utility/toc/toc.js';
 import { Toolbar } from './utility/toolbar/toolbar.js';
+import { AppData } from './editor/types.js';
 
 /**
  * Main application class.
  * Coordinates all editor components.
  */
-class App {
+class App extends AppData {
   constructor() {
-    /** @type {Editor|null} */
-    this.editor = null;
-
-    /** @type {Toolbar|null} */
-    this.toolbar = null;
-
-    /** @type {MenuHandler|null} */
-    this.menuHandler = null;
-
-    /** @type {KeyboardHandler|null} */
-    this.keyboardHandler = null;
-
-    /** @type {SearchBar|null} */
-    this.searchBar = null;
-
-    /** @type {TableOfContents|null} */
-    this.toc = null;
-
-    /** @type {TabBar|null} */
-    this.tabBar = null;
-
-    /**
-     * Per-tab document state storage.
-     * @type {Map<string, DocumentState>}
-     */
-    this.documentStates = new Map();
-
-    /**
-     * Per-tab contenteditable container elements.
-     * Each tab gets its own div; only the active one is visible.
-     * @type {Map<string, HTMLElement>}
-     */
-    this.tabContainers = new Map();
-
-    /**
-     * The scroll container (parent of contenteditable divs).
-     * scrollTop is saved/restored per-tab since it's shared.
-     * @type {HTMLElement|null}
-     */
-    this.scrollContainer = null;
-
-    /** @type {number} Counter for generating unique tab IDs */
-    this.tabCounter = 0;
-
-    /** @type {ReturnType<typeof setTimeout>|null} */
-    this.cursorDebounce = null;
+    super();
   }
 
   /**
@@ -946,7 +902,7 @@ class App {
       setContent: async (content) => {
         await this.editor?.loadMarkdown(content);
       },
-      getViewMode: () => this.editor?.getViewMode() ?? `writing`,
+      getViewMode: () => this.editor?.viewMode ?? `writing`,
       setViewMode: async (/** @type {string} */ mode) => {
         await this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);

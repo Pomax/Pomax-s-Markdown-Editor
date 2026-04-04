@@ -8,16 +8,18 @@
 
 /// <reference path="../../../../types.d.ts" />
 
+import { InputHandlerData } from '../types.js';
+
 /**
  * Dispatches keyboard and beforeinput events to the appropriate editor
  * operations.
  */
-export class InputHandler {
+export class InputHandler extends InputHandlerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

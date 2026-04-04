@@ -6,24 +6,18 @@
 /// <reference path="../../../types.d.ts" />
 
 import { SyntaxNode } from '../../../parsers/old/syntax-node.js';
+import { RangeOperationsData } from './types.js';
 
 /**
  * Handles selection-range operations on the syntax tree.
  */
-export class RangeOperations {
+export class RangeOperations extends RangeOperationsData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /**
-     * Tracks the current select-all cycling level.
-     * 0 = no select-all active, 1 = node, 2 = parent group, 3 = document.
-     * @type {number}
-     */
-    this.selectAllLevel = 0;
   }
 
   /**

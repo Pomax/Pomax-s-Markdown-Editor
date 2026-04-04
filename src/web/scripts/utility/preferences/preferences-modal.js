@@ -60,25 +60,14 @@ const DEFAULT_DETAILS_CLOSED = false;
  */
 const DEFAULT_ENABLE_STYLE_ELEMENTS = false;
 
+import { PreferencesModalData } from '../../editor/types.js';
+
 /**
  * A modal dialog for editing application preferences.
  */
-export class PreferencesModal {
+export class PreferencesModal extends PreferencesModalData {
   constructor() {
-    /** @type {HTMLDialogElement|null} */
-    this.dialog = null;
-
-    /** @type {boolean} */
-    this.built = false;
-
-    /** @type {boolean} */
-    this.linkTopBottom = false;
-
-    /** @type {boolean} */
-    this.linkLeftRight = false;
-
-    /** @type {boolean} */
-    this.linkAll = false;
+    super();
   }
 
   /**

@@ -13,14 +13,11 @@ import { BaseModal } from '../../../utility/modal/base-modal.js';
  * @extends {BaseModal}
  */
 export class TableModal extends BaseModal {
+  /** @type {TableData|null} */
+  existing = null;
+
   constructor() {
     super();
-
-    /**
-     * The existing table data when editing (null for insert).
-     * @type {TableData|null}
-     */
-    this.existing = null;
   }
 
   get prefix() {

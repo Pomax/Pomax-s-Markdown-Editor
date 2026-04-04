@@ -6,6 +6,7 @@
         "moduleResolution": "node",
         "target": "ESNext",
         "strict": true,
+        "strictPropertyInitialization": false,
         "noEmit": true,
         "esModuleInterop": true,
         "skipLibCheck": true,

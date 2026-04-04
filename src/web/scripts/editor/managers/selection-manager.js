@@ -1,19 +1,15 @@
+import { SelectionManagerData } from '../types.js';
+
 /**
  * Manages text selection within the editor.
  */
-export class SelectionManager {
+export class SelectionManager extends SelectionManagerData {
   /**
-   * @param {Editor} editor - The editor instance
+   * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {SelectionState|null} */
-    this.currentSelection = null;
-
-    /** @type {SyntaxNode|null} */
-    this.currentNode = null;
   }
 
   /**

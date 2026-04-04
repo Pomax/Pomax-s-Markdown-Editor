@@ -8,63 +8,15 @@
  * highlighting.
  */
 
-export class SearchBar {
+import { SearchBarData } from '../../editor/types.js';
+
+export class SearchBar extends SearchBarData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {HTMLElement|null} */
-    this.container = null;
-
-    /** @type {HTMLInputElement|null} */
-    this.input = null;
-
-    /** @type {HTMLElement|null} */
-    this.matchCount = null;
-
-    /** @type {boolean} */
-    this.useRegex = false;
-
-    /** @type {boolean} */
-    this.caseSensitive = false;
-
-    /** @type {boolean} */
-    this.visible = false;
-
-    /** @type {SearchMatch[]} */
-    this.matches = [];
-
-    /** @type {number} */
-    this.currentIndex = -1;
-
-    /** @type {OffsetMapEntry[]} */
-    this.offsetMap = [];
-
-    /** @type {string} */
-    this.documentText = ``;
-
-    /**
-     * The view mode the current offset map was built for.
-     * Used to detect view-mode switches so we can rebuild.
-     * @type {string|null}
-     */
-    this.searchViewMode = null;
-
-    /**
-     * Saved scroll position so we can restore it when a search
-     * yields zero results.
-     * @type {number|undefined}
-     */
-    this.savedScrollTop = undefined;
-
-    /**
-     * Bound handler for render-complete events so we can remove it.
-     * @type {(() => void)|null}
-     */
-    this.renderCompleteHandler = null;
   }
 
   /**

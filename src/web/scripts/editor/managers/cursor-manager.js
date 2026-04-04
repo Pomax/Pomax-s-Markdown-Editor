@@ -6,16 +6,17 @@
 /// <reference path="../../../../types.d.ts" />
 
 import { rawOffsetToRenderedOffset, renderedOffsetToRawOffset } from '../offset-mapping.js';
+import { CursorManagerData } from '../types.js';
 
 /**
  * Manages cursor synchronization between the DOM and the syntax tree.
  */
-export class CursorManager {
+export class CursorManager extends CursorManagerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

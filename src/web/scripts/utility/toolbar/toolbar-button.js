@@ -1,4 +1,5 @@
 import { icons } from './icons.js';
+import { ToolbarButtonData } from '../../editor/types.js';
 
 const isMac = navigator.platform.toUpperCase().includes(`MAC`);
 
@@ -15,26 +16,16 @@ function formatShortcut(shortcut) {
 /**
  * Represents a single toolbar button.
  */
-export class ToolbarButton {
+export class ToolbarButton extends ToolbarButtonData {
   /**
    * @param {ButtonConfig} config - The button configuration
    * @param {function(ButtonConfig): void} onClick - Click handler
    */
   constructor(config, onClick) {
-    /** @type {ButtonConfig} */
+    super();
     this.config = config;
-
-    /** @type {function(ButtonConfig): void} */
     this.onClick = onClick;
-
-    /** @type {HTMLButtonElement} */
     this.element = this.createElement();
-
-    /** @type {boolean} */
-    this.isEnabled = true;
-
-    /** @type {boolean} */
-    this.isActive = false;
   }
 
   /**

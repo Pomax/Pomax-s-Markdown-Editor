@@ -10,30 +10,16 @@
  * template, field population logic, and submit behaviour.
  */
 
+import { BaseModalData } from '../../editor/types.js';
+
 /**
  * Base class for all modal dialogs in the editor.
  *
  * @abstract
  */
-export class BaseModal {
+export class BaseModal extends BaseModalData {
   constructor() {
-    /** @type {HTMLDialogElement|null} */
-    this.dialog = null;
-
-    /** @type {boolean} */
-    this.built = false;
-
-    /**
-     * Resolve function for the current open() promise.
-     * @type {function(*): void}
-     */
-    this.resolve = () => {};
-
-    /**
-     * The element that had focus before the modal opened.
-     * @type {HTMLElement|null}
-     */
-    this.previousFocus = null;
+    super();
   }
 
   /**

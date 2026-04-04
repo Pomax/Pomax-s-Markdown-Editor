@@ -91,28 +91,18 @@ function createCloseButton() {
   return btn;
 }
 
+import { TabBarData } from '../../editor/types.js';
+
 /**
  * Tab bar for switching between open files.
  */
-export class TabBar {
+export class TabBar extends TabBarData {
   /**
    * @param {HTMLElement} container - The tab bar container element
    */
   constructor(container) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {TabInfo[]} */
-    this.tabs = [];
-
-    /** @type {string|null} */
-    this.activeTabId = null;
-
-    /** @type {((tabId: string) => void)|null} */
-    this.onTabSelect = null;
-
-    /** @type {((tabId: string) => void)|null} */
-    this.onTabClose = null;
   }
 
   /**

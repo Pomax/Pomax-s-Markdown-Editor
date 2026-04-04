@@ -6,51 +6,20 @@
 
 /// <reference path="../../../../types.d.ts" />
 
+import { TableOfContentsData } from '../../editor/types.js';
+
 /**
  * Table of Contents sidebar component.
  */
-export class TableOfContents {
+export class TableOfContents extends TableOfContentsData {
   /**
    * @param {HTMLElement} container - The TOC sidebar container element
    * @param {Editor} editor - The editor instance
    */
   constructor(container, editor) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {Editor} */
     this.editor = editor;
-
-    /** @type {boolean} */
-    this.visible = true;
-
-    /** @type {TocPosition} */
-    this.position = `left`;
-
-    /**
-     * Maps every tree node ID to the ID of the h1–h3 heading whose
-     * section it belongs to.  Rebuilt on every `refresh()`.
-     * @type {Map<string, string>}
-     */
-    this.nodeToHeadingId = new Map();
-
-    /** @type {((e: Event) => void) | null} */
-    this.scrollHandler = null;
-
-    /**
-     * When non-null, the ToC link for this heading ID stays highlighted
-     * regardless of scroll position.  Set when the user clicks a ToC
-     * link and cleared on the next user-initiated scroll.
-     * @type {string|null}
-     */
-    this.lockedHeadingId = null;
-
-    /**
-     * True while a programmatic scroll (from scrollToHeading) is in
-     * progress so we can distinguish it from a user scroll.
-     * @type {boolean}
-     */
-    this.programmaticScroll = false;
   }
 
   /**

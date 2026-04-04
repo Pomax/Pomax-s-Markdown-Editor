@@ -13,29 +13,23 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { EditorData } from './types.js';
 import { parser } from '../../../parsers/old/dfa-parser.js';
 import { SyntaxNode } from '../../../parsers/old/syntax-node.js';
 import { SyntaxTree } from '../../../parsers/old/syntax-tree.js';
-
 import { ClipboardHandler } from './handlers/clipboard-handler.js';
 import { InputHandler } from './handlers/input-handler.js';
 import { EventHandler } from './handlers/event-handler.js';
-
 import { CursorManager } from './managers/cursor-manager.js';
 import { SelectionManager } from './managers/selection-manager.js';
 import { UndoManager } from './managers/undo-manager.js';
-
 import { EditOperations } from './edit-operations/index.js';
 import { RangeOperations } from './range-operations.js';
-
 import { TableManager } from './content-types/table/table-manager.js';
 import { ImageHelper } from './content-types/image/image-helper.js';
 import { LinkHelper } from './content-types/link/link-helper.js';
-
-import { SourceRendererV2 } from './renderers/source-renderer-v2.js';
-import { WritingRenderer } from './renderers/writing-renderer.js';
-
-import { absoluteOffsetToCursor, cursorToAbsoluteOffset } from './managers/cursor-persistence.js';
+import { SourceRendererV2 } from './renderers/source/index.js';
+import { WritingRenderer } from './renderers/writing/index.js';
 import { TreeFormatter } from './formatters/tree-formatter.js';
 import { Source2Formatter } from './formatters/source2-formatter.js';
 
@@ -44,119 +38,30 @@ const VIEW_MODES = [`writing`, `source2`];
 /**
  * Main editor class that manages the markdown editing experience.
  */
-export class Editor {
+export class Editor extends EditorData {
   /**
    * @param {HTMLElement} container - The editor container element
    */
   constructor(container) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {SyntaxTree|null} */
-    this.syntaxTree = null;
-
-    /** @type {WritingRenderer} */
-    this.writingRenderer = new WritingRenderer(this);
-
-    /** @type {SourceRendererV2} */
-    this.sourceRendererV2 = new SourceRendererV2(this);
-
-    /** @type {TreeFormatter} */
-    this.treeFormatter = new TreeFormatter(this);
-
-    /** @type {Source2Formatter} */
-    this.source2Formatter = new Source2Formatter(this.sourceRendererV2);
-
-    /** @type {UndoManager} */
-    this.undoManager = new UndoManager();
-
-    /** @type {SelectionManager} */
-    this.selectionManager = new SelectionManager(this);
-
-    /** @type {CursorManager} */
-    this.cursorManager = new CursorManager(this);
-
-    /** @type {TableManager} */
-    this.tableManager = new TableManager(this);
-
-    /** @type {InputHandler} */
-    this.inputHandler = new InputHandler(this);
-
-    /** @type {EditOperations} */
-    this.editOperations = new EditOperations(this);
-
-    /** @type {RangeOperations} */
-    this.rangeOperations = new RangeOperations(this);
-
-    /** @type {ClipboardHandler} */
-    this.clipboardHandler = new ClipboardHandler(this);
-
-    /** @type {EventHandler} */
-    this.eventHandler = new EventHandler(this);
-
-    /** @type {ImageHelper} */
-    this.imageHelper = new ImageHelper(this);
-
-    /** @type {LinkHelper} */
-    this.linkHelper = new LinkHelper(this);
-
-    /** @type {ViewMode} */
-    this.viewMode = `writing`;
     this.container.dataset.viewMode = `writing`;
-
-    /** @type {boolean} */
-    this.hasUnsavedChanges = false;
-
-    /** @type {string|null} */
-    this.currentFilePath = null;
-
-    /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
-    this.ensureLocalPaths = true;
-
-    /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in writing view. */
-    this.detailsClosed = false;
-
-    /** @type {boolean} Whether &lt;style&gt; elements are injected into the DOM as real CSS. */
-    this.enableStyleElements = false;
-
-    /**
-     * Whether we are currently rendering (used to suppress input events).
-     * @type {boolean}
-     */
-    this.isRendering = false;
-
-    /**
-     * Set by mousedown / keydown on the editor container to signal that
-     * the next selectionchange was caused by an in-editor interaction.
-     * handleSelectionChange reads (and clears) this flag to decide
-     * whether a collapsed selection should clear treeRange.
-     * @type {boolean}
-     */
-    this.editorInteractionPending = false;
-
-    /**
-     * Non-collapsed selection range mapped to tree coordinates.
-     * null when the selection is collapsed (i.e. just a cursor).
-     * @type {TreeRange|null}
-     */
-    this.treeRange = null;
-
-    /**
-     * The node ID that was last rendered as "active" in writing mode.
-     * Used by handleSelectionChange / handleClick to detect node
-     * transitions reliably — reading from treeCursor is unreliable
-     * because syncCursorFromDOM mutates it before the re-render
-     * decision is made.
-     * @type {string|null}
-     */
-    this.lastRenderedNodeId = null;
-
-    /**
-     * Bound event handlers, keyed by event name.
-     * Stored so they can be detached/reattached when swapping containers.
-     * @type {Record<string, EventListener>}
-     */
-    this.boundHandlers = {};
+    this.writingRenderer = new WritingRenderer(this);
+    this.sourceRendererV2 = new SourceRendererV2(this);
+    this.renderer = /** @type {WritingRenderer|SourceRendererV2} */ (this.writingRenderer);
+    this.treeFormatter = new TreeFormatter(this);
+    this.source2Formatter = new Source2Formatter(this.sourceRendererV2);
+    this.undoManager = new UndoManager();
+    this.selectionManager = new SelectionManager(this);
+    this.cursorManager = new CursorManager(this);
+    this.tableManager = new TableManager(this);
+    this.inputHandler = new InputHandler(this);
+    this.editOperations = new EditOperations(this);
+    this.rangeOperations = new RangeOperations(this);
+    this.clipboardHandler = new ClipboardHandler(this);
+    this.eventHandler = new EventHandler(this);
+    this.imageHelper = new ImageHelper(this);
+    this.linkHelper = new LinkHelper(this);
   }
 
   /**
@@ -670,6 +575,15 @@ export class Editor {
   }
 
   /**
+   * Returns the renderer for a given view mode.
+   * @param {ViewMode} mode
+   * @returns {SourceRendererV2|WritingRenderer}
+   */
+  getRendererForMode(mode) {
+    return mode === `source2` ? this.sourceRendererV2 : this.writingRenderer;
+  }
+
+  /**
    * Sets the view mode.
    * @param {ViewMode} mode
    */
@@ -682,209 +596,28 @@ export class Editor {
     // Nothing to do if already in the requested mode.
     if (mode === this.viewMode) return;
 
-    // When entering source2, compute the absolute cursor offset so we
-    // can place the textarea caret in the same position.
-    let absoluteCursorOffset = null;
-    if (mode === `source2` && this.syntaxTree?.treeCursor) {
-      absoluteCursorOffset = cursorToAbsoluteOffset(
-        this.syntaxTree,
-        this.syntaxTree.treeCursor,
-        this.buildMarkdownLine.bind(this),
-        this.getPrefixLength.bind(this),
-      );
-    }
+    // Perform all steps related to leaving the current view.
+    const switchData = await this.renderer.leaveView();
 
-    // When leaving source2, capture the textarea caret's pixel position
-    // so we can restore it after re-rendering in writing mode.
-    let savedSource2CaretTop = null;
-    if (this.viewMode === `source2`) {
-      const sc = this.container.parentElement;
-      if (sc) {
-        const offset = this.sourceRendererV2.textarea?.selectionStart ?? 0;
-        const caretRect = this.sourceRendererV2.getCaretRect(offset);
-        if (caretRect) {
-          const containerRect = sc.getBoundingClientRect();
-          savedSource2CaretTop = caretRect.top - containerRect.top;
-        }
-      }
-    }
+    // At this point, the old view is "dead"; perform any tasks
+    // that should happen after "switching away from" the current
+    // view, but before "switching to" the requested view.
+    this.transitionView(mode, switchData);
 
-    // When leaving source2, reparse the textarea content into a fresh
-    // syntax tree so that edits made in source2 mode are reflected in
-    // writing view.  Skip reparse when nothing changed.
-    if (this.viewMode === `source2` && this.syntaxTree) {
-      const selectionStart = this.sourceRendererV2.textarea?.selectionStart ?? 0;
-
-      if (this.sourceRendererV2.hasChanges()) {
-        const rawText = this.sourceRendererV2.getContent();
-        const normalised = rawText.replace(/\n{3,}/g, `\n\n`);
-
-        const newTree = await parser.parse(normalised);
-        this.syntaxTree.updateUsing(newTree);
-
-        // Ensure there is at least one node so the editor is never empty
-        if (this.syntaxTree.children.length === 0) {
-          const node = new SyntaxNode(`paragraph`, ``);
-          this.syntaxTree.appendChild(node);
-        }
-
-        this.ensureTrailingParagraph();
-        this.setUnsavedChanges(true);
-      }
-
-      // Always restore the cursor position from the textarea caret
-      // offset, even if the content didn't change (the user may have
-      // moved the caret without editing).
-      this.syntaxTree.treeCursor = absoluteOffsetToCursor(
-        this.syntaxTree,
-        selectionStart,
-        this.getPrefixLength.bind(this),
-      ) ?? { nodeId: this.syntaxTree.children[0].id, offset: 0 };
-
-      this.container.setAttribute(`contenteditable`, `true`);
-    }
-
-    // Anchor on the cursor's node if one exists, since that is what
-    // the user is focused on.  Fall back to the node closest to the
-    // viewport centre so content doesn't jump when there is no cursor.
-    const scrollContainer = this.container.parentElement;
-
-    // When entering source2, capture the actual caret pixel position
-    // from the browser selection so we can match it after the switch.
-    let savedCaretTop = null;
-    if (mode === `source2` && scrollContainer) {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        // Firefox returns a zero-height rect for collapsed selections
-        // after inline elements (e.g. <em>), producing a bogus top
-        // value that would scroll the content off-screen.
-        if (rect.height > 0) {
-          const containerRect = scrollContainer.getBoundingClientRect();
-          savedCaretTop = rect.top - containerRect.top;
-        }
-      }
-    }
-
-    /** @type {string|null} */
-    let anchorNodeId = null;
-    let savedOffsetFromTop = null;
-
-    if (scrollContainer) {
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      // Prefer the cursor's node as anchor.
-      if (this.syntaxTree?.treeCursor) {
-        const blockId = this.getBlockNodeId();
-        const cursorEl = blockId
-          ? this.container.querySelector(`[data-node-id="${blockId}"]`)
-          : null;
-        if (cursorEl && blockId) {
-          anchorNodeId = blockId;
-          savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
-        }
-      }
-
-      // Fallback: node closest to the viewport centre.
-      if (!anchorNodeId) {
-        const centreY = containerRect.top + containerRect.height / 2;
-        const nodeEls = this.container.querySelectorAll(`[data-node-id]`);
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const el of nodeEls) {
-          const rect = el.getBoundingClientRect();
-          const mid = rect.top + rect.height / 2;
-          const dist = Math.abs(mid - centreY);
-          if (dist < bestDistance) {
-            bestDistance = dist;
-            anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
-            savedOffsetFromTop = rect.top - containerRect.top;
-          }
-        }
-      }
-    }
-
-    // When entering source2, remove contenteditable so the textarea
-    // can own focus and input.
-    if (mode === `source2`) {
-      this.container.removeAttribute(`contenteditable`);
-    }
-
-    this.viewMode = mode;
-    this.container.dataset.viewMode = mode;
-    this.fullRenderAndPlaceCursor();
-
-    // Place the textarea caret at the previously computed offset.
-    if (mode === `source2` && absoluteCursorOffset !== null && absoluteCursorOffset >= 0) {
-      const textarea = this.sourceRendererV2.textarea;
-      if (textarea) {
-        textarea.selectionStart = absoluteCursorOffset;
-        textarea.selectionEnd = absoluteCursorOffset;
-        textarea.focus();
-      }
-    }
-
-    // Scroll-preserve for source2: use getCaretRect to find where the
-    // caret landed and adjust scroll so it sits at the saved position.
-    if (
-      mode === `source2` &&
-      scrollContainer &&
-      savedCaretTop !== null &&
-      absoluteCursorOffset !== null
-    ) {
-      const caretRect = this.sourceRendererV2.getCaretRect(absoluteCursorOffset);
-      if (caretRect) {
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const currentOffsetFromTop = caretRect.top - containerRect.top;
-        scrollContainer.scrollTop += currentOffsetFromTop - savedCaretTop;
-      }
-    }
-
-    // In source2 mode, notify the toolbar to update button states
-    // (no syntax tree node to report — the toolbar will enable all buttons).
-    if (mode === `source2`) {
-      document.dispatchEvent(new CustomEvent(`editor:selectionchange`, { detail: { node: null } }));
-    }
-
-    // If the tree owns a non-collapsed selection, rebuild it in the
-    // new DOM so the user's selection survives the view-mode switch.
-    if (mode !== `source2` && this.treeRange) {
-      this.placeSelection();
-    }
-
-    // Restore scroll so the anchor node sits at the same viewport offset.
-    // Source2 is a plain textarea with no [data-node-id] elements, so
-    // anchor-based scroll restore cannot work — skip it entirely.
-    if (mode !== `source2` && anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
-      const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
-      if (el) {
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
-        scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
-      }
-    }
-
-    // Scroll-preserve for source2 → writing: match the writing-mode
-    // caret position to where it was in the source2 textarea.
-    if (savedSource2CaretTop !== null && scrollContainer) {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const currentOffsetFromTop = rect.top - containerRect.top;
-        scrollContainer.scrollTop += currentOffsetFromTop - savedSource2CaretTop;
-      }
-    }
+    // At this point we have everything ready to switch over.
+    this.renderer = this.getRendererForMode(mode);
+    this.renderer.enterView(switchData);
   }
 
   /**
-   * Gets the current view mode.
-   * @returns {ViewMode}
+   * Hook for transition-specific work between leaving one view and
+   * entering another.  Currently a no-op; exists so that future
+   * cross-view transitions can be handled without touching renderers.
+   * @param {ViewMode} _mode - the target view mode
+   * @param {ViewSwitchData} _switchData
    */
-  getViewMode() {
-    return this.viewMode;
+  transitionView(_mode, _switchData) {
+    // Nothing to do for the current set of view modes.
   }
 
   /**
