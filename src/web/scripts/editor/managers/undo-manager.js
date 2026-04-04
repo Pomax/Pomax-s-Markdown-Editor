@@ -37,11 +37,11 @@ export class UndoManager extends UndoManagerData {
 
   /**
    * Undoes the last change.
-   * @returns {Change|null} The undone change, or null if nothing to undo
+   * @returns {Change | undefined} The undone change, or undefined if nothing to undo
    */
   undo() {
     if (this.undoStack.length === 0) {
-      return null;
+      return undefined;
     }
 
     const change = this.undoStack.pop();
@@ -49,16 +49,16 @@ export class UndoManager extends UndoManagerData {
       this.redoStack.push(change);
       return change;
     }
-    return null;
+    return undefined;
   }
 
   /**
    * Redoes the last undone change.
-   * @returns {Change|null} The redone change, or null if nothing to redo
+   * @returns {Change | undefined} The redone change, or undefined if nothing to redo
    */
   redo() {
     if (this.redoStack.length === 0) {
-      return null;
+      return undefined;
     }
 
     const change = this.redoStack.pop();
@@ -66,7 +66,7 @@ export class UndoManager extends UndoManagerData {
       this.undoStack.push(change);
       return change;
     }
-    return null;
+    return undefined;
   }
 
   /**

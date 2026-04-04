@@ -37,7 +37,7 @@ export class MenuHandler extends MenuHandlerData {
   destroy() {
     if (this.cleanupMenuListener) {
       this.cleanupMenuListener();
-      this.cleanupMenuListener = null;
+      this.cleanupMenuListener = undefined;
     }
   }
 

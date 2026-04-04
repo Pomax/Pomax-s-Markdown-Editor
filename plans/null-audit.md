@@ -258,25 +258,25 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/handlers/menu-handler.js`
 
-- [ ] L40: `this.cleanupMenuListener = null`
+- [x] L40: `this.cleanupMenuListener = null`
 - [x] L138: `result.filePath || null`
 - [x] L153: `result.filePath || null`
 
 ## `src/web/scripts/editor/handlers/keyboard-handler.js`
 
-- [ ] L74: `this.keydownHandler = null`
-- [ ] L101: JSDoc `ShortcutConfig|null` return type
-- [ ] L109: `return null`
-- [ ] L157: `/** @type {HTMLElement|null} */` cast
+- [x] L74: `this.keydownHandler = null`
+- [x] L101: JSDoc `ShortcutConfig|null` return type
+- [x] L109: `return null`
+- [x] L157: `/** @type {HTMLElement|null} */` cast
 
 ## `src/web/scripts/editor/managers/undo-manager.js`
 
-- [ ] L40: JSDoc `Change|null` return type (×2)
-- [ ] L44: `return null`
-- [ ] L52: `return null`
-- [ ] L57: JSDoc `Change|null` return type (×2)
-- [ ] L61: `return null`
-- [ ] L69: `return null`
+- [x] L40: JSDoc `Change|null` return type (×2)
+- [x] L44: `return null`
+- [x] L52: `return null`
+- [x] L57: JSDoc `Change|null` return type (×2)
+- [x] L61: `return null`
+- [x] L69: `return null`
 
 ## `src/web/scripts/editor/managers/selection-manager.js`
 

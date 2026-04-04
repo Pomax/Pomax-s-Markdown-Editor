@@ -125,8 +125,8 @@ export class KeyboardHandlerData {
   editor;
   /** @type {ShortcutConfig[]} */
   shortcuts;
-  /** @type {((event: KeyboardEvent) => void)|null} */
-  keydownHandler = null;
+  /** @type {((event: KeyboardEvent) => void) | undefined} */
+  keydownHandler;
 }
 
 export class MenuHandlerData {
@@ -134,8 +134,8 @@ export class MenuHandlerData {
   editor;
   /** @type {Toolbar} */
   toolbar;
-  /** @type {function|null} */
-  cleanupMenuListener = null;
+  /** @type {function | undefined} */
+  cleanupMenuListener;
 }
 
 export class InputHandlerData {
