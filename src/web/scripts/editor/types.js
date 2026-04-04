@@ -86,10 +86,10 @@ export class EditorData {
   isRendering = false;
   /** @type {boolean} */
   editorInteractionPending = false;
-  /** @type {TreeRange|null} */
-  treeRange = null;
-  /** @type {string|null} */
-  lastRenderedNodeId = null;
+  /** @type {TreeRange | undefined} */
+  treeRange;
+  /** @type {string | undefined} */
+  lastRenderedNodeId;
   /** @type {Record<string, EventListener>} */
   boundHandlers = {};
 }
@@ -283,8 +283,8 @@ export class TableOfContentsData {
   nodeToHeadingId = new Map();
   /** @type {((e: Event) => void) | null} */
   scrollHandler = null;
-  /** @type {string|null} */
-  lockedHeadingId = null;
+  /** @type {string | undefined} */
+  lockedHeadingId;
   /** @type {boolean} */
   programmaticScroll = false;
 }
@@ -356,8 +356,8 @@ export class AppData {
   scrollContainer = null;
   /** @type {number} */
   tabCounter = 0;
-  /** @type {ReturnType<typeof setTimeout>|null} */
-  cursorDebounce = null;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  cursorDebounce;
 }
 
 export class WritingRendererData {

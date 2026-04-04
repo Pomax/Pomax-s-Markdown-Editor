@@ -85,7 +85,7 @@ export class RangeOperations extends RangeOperationsData {
         nodeId: startNode.id,
         offset: startOffset,
       };
-      this.editor.treeRange = null;
+      this.editor.treeRange = undefined;
       return { before, hints: { updated: [startNode.id] } };
     }
 
@@ -128,7 +128,7 @@ export class RangeOperations extends RangeOperationsData {
       nodeId: firstNode.id,
       offset: firstOffset,
     };
-    this.editor.treeRange = null;
+    this.editor.treeRange = undefined;
     return { before, hints: { updated: [firstNode.id], removed: removedIds } };
   }
 

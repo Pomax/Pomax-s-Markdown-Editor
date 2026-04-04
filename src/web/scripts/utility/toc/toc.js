@@ -50,7 +50,7 @@ export class TableOfContents extends TableOfContentsData {
         if (this.programmaticScroll) return;
         // User scrolled — clear the locked heading so normal
         // scroll-based highlighting resumes.
-        this.lockedHeadingId = null;
+        this.lockedHeadingId = undefined;
         this.updateActiveHeading();
       };
       scrollContainer.addEventListener(`scroll`, this.scrollHandler, { passive: true });

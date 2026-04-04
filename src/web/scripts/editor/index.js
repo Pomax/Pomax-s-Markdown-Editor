@@ -199,11 +199,11 @@ export class Editor extends EditorData {
   /**
    * Resolves an arbitrary node ID to its block-level parent ID.
    * If the node is already block-level, returns the same ID.
-   * @param {string|null} nodeId
-   * @returns {string|null}
+   * @param {string | undefined} nodeId
+   * @returns {string | undefined}
    */
   resolveBlockId(nodeId) {
-    if (!nodeId || !this.syntaxTree) return null;
+    if (!nodeId || !this.syntaxTree) return;
     const node = this.syntaxTree.findNodeById(nodeId);
     if (!node) return nodeId;
     return node.getBlockParent().id;
@@ -359,7 +359,7 @@ export class Editor extends EditorData {
    */
   fullRenderAndPlaceCursor() {
     this.fullRender();
-    this.lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
+    this.lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId;
     this.isRendering = true;
     this.placeCursor();
     this.isRendering = false;
@@ -907,7 +907,7 @@ export class Editor extends EditorData {
       }
       if (updatedIds.length === 0) return;
 
-      this.treeRange = null;
+      this.treeRange = undefined;
       this.syntaxTree.treeCursor = {
         nodeId: updatedIds[0],
         blockNodeId: updatedIds[0],
@@ -1116,7 +1116,7 @@ export class Editor extends EditorData {
     // Place cursor at the end of the formatted/unformatted text and
     // collapse the selection — the old range is no longer valid.
     if (this.syntaxTree?.treeCursor) this.syntaxTree.treeCursor.offset = newCursorOffset;
-    this.treeRange = null;
+    this.treeRange = undefined;
 
     this.renderNodesAndPlaceCursor({ updated: [nodeId] });
     this.setUnsavedChanges(true);

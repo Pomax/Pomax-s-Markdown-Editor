@@ -51,14 +51,14 @@ export class CursorManager extends CursorManagerData {
 
     // If the selection is collapsed there is no range.
     if (selection.isCollapsed) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 
     // Map the end (focus) position to tree coordinates.
     const endInfo = this.mapDOMPositionToTree(range.endContainer, range.endOffset);
     if (!endInfo) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 

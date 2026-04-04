@@ -78,23 +78,23 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/web/scripts/app.js`
 
-- [ ] L53: `initPageResizeHandles(editorContainer) ?? null`
+- [x] L53: `initPageResizeHandles(editorContainer) ?? null`
 - [x] L92: `this.tabBar.addTab(firstTabId, null, true)`
-- [ ] L112: `this.cursorDebounce = null`
+- [x] L112: `this.cursorDebounce = null`
 - [x] L152: `await this.createNewTab(null, '')`
 - [x] L160: `detail.filePath || null`
-- [ ] L299: `this.toc?.lockedHeadingId ?? null`
-- [ ] L303: `dataset.nodeId ?? null`
-- [ ] L311: `treeCursor ? { ...treeCursor } : null`
-- [ ] L315: `treeRange ? { ...treeRange } : null`
-- [ ] L356: `state.cursor ? { ...state.cursor } : null`
-- [ ] L357: `treeCursor?.nodeId ?? null`
-- [ ] L385: `state?.treeRange ? { ...state.treeRange } : null`
-- [ ] L399: `state?.tocActiveHeadingId ?? null`
+- [x] L299: `this.toc?.lockedHeadingId ?? null`
+- [x] L303: `dataset.nodeId ?? null`
+- [x] L311: `treeCursor ? { ...treeCursor } : null`
+- [x] L315: `treeRange ? { ...treeRange } : null`
+- [x] L356: `state.cursor ? { ...state.cursor } : null`
+- [x] L357: `treeCursor?.nodeId ?? null`
+- [x] L385: `state?.treeRange ? { ...state.treeRange } : null`
+- [x] L399: `state?.tocActiveHeadingId ?? null`
 - [x] L429: `tab.filePath === null`
-- [ ] L440: JSDoc `number[]|null` types (×2)
-- [ ] L471: `treeCursor ? { ...treeCursor } : null`
-- [ ] L489: `let tocNode = null`
+- [x] L440: JSDoc `number[]|null` types (×2)
+- [x] L471: `treeCursor ? { ...treeCursor } : null`
+- [x] L489: `let tocNode = null`
 - [ ] L550: JSDoc `string|null`
 - [ ] L568: JSDoc `string|null` + "or null" text (×2)
 - [x] L697: `this.tabBar.addTab(newId, null, true)`
@@ -104,13 +104,13 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [x] L765: `null` (ternary false branch)
 - [x] L776: `getPathToCursor() ?? null`
 - [x] L777: `state.tocActiveHeadingId ?? null`
-- [ ] L835: `result.value !== null`
-- [ ] L862: `result.value !== null`
-- [ ] L873: `result.value !== null`
-- [ ] L884: `result.value !== null`
-- [ ] L926: `this.cursorDebounce = null`
-- [ ] L934: `this.editor?.currentFilePath ?? null`
-- [ ] L942: `treeCursor?.nodeId ?? null`
+- [x] L835: `result.value !== null`
+- [x] L862: `result.value !== null`
+- [x] L873: `result.value !== null`
+- [x] L884: `result.value !== null`
+- [x] L926: `this.cursorDebounce = null`
+- [x] L934: `this.editor?.currentFilePath ?? null`
+- [x] L942: `treeCursor?.nodeId ?? null`
 - [x] L979: `await this.createNewTab(null, '')`
 
 ## `src/web/scripts/editor/types.js`
@@ -119,8 +119,8 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 - [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
 - [x] L77–78: `string|null` + `currentFilePath = null`
-- [ ] L89–90: `TreeRange|null` + `treeRange = null`
-- [ ] L91–92: `string|null` + `lastRenderedNodeId = null`
+- [x] L89–90: `TreeRange|null` + `treeRange = null`
+- [x] L91–92: `string|null` + `lastRenderedNodeId = null`
 - [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
 - [ ] L102–103: `HTMLPreElement|null` + `pre = null`
 - [ ] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
@@ -142,7 +142,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L265–266: `string|null` + `searchViewMode = null`
 - [ ] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
 - [ ] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
-- [ ] L286–287: `string|null` + `lockedHeadingId = null`
+- [x] L286–287: `string|null` + `lockedHeadingId = null`
 - [ ] L297–298: `string|null` + `activeTabId = null`
 - [ ] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
 - [ ] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
@@ -158,7 +158,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L347–348: `TableOfContents|null` + `toc = null`
 - [ ] L349–350: `TabBar|null` + `tabBar = null`
 - [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`
-- [ ] L359–360: `ReturnType<typeof setTimeout>|null` + `cursorDebounce = null`
+- [x] L359–360: `ReturnType<typeof setTimeout>|null` + `cursorDebounce = null`
 
 ## `src/web/scripts/editor/crc32.js`
 
@@ -177,10 +177,10 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L66–67: JSDoc `|null` return type + "or null" comment
 - [ ] L71: `return null` — no range/tree guard
 - [ ] L76: `return null` — no start/end node guard
-- [ ] L88: `this.editor.treeRange = null` — clear after same-node delete
+- [x] L88: `this.editor.treeRange = null` — clear after same-node delete
 - [ ] L98: `return null` — sibling index guard
 - [ ] L122: `siblings[i].parent = null` — detach removed nodes
-- [ ] L131: `this.editor.treeRange = null` — clear after cross-node delete
+- [x] L131: `this.editor.treeRange = null` — clear after cross-node delete
 
 ## `src/web/scripts/editor/index.js`
 
@@ -190,20 +190,20 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L184: `return null`
 - [ ] L192: JSDoc `string|null` return type
 - [ ] L195: `return null`
-- [ ] L202–203: JSDoc `string|null` param + `string|null` return type
+- [x] L202–203: JSDoc `string|null` param + `string|null` return type
 - [ ] L206: `return null`
 - [ ] L217: JSDoc `SyntaxNode|null` return type
 - [ ] L221: `return null`
 - [ ] L285: `/** @type {Node|null} */` cast
-- [ ] L362: `treeCursor?.nodeId ?? null`
+- [x] L362: `treeCursor?.nodeId ?? null`
 - [ ] L503: `return null`
 - [ ] L505: `return null`
 - [ ] L512: `return null`
 - [x] L572: `this.currentFilePath = null`
 - [ ] L741: `currentNode.parent = null`
 - [ ] L894: `child.parent = null`
-- [ ] L910: `this.treeRange = null`
-- [ ] L1119: `this.treeRange = null`
+- [x] L910: `this.treeRange = null`
+- [x] L1119: `this.treeRange = null`
 
 ## `src/web/scripts/editor/edit-operations/insert.js`
 
@@ -245,11 +245,11 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L113: `? findNodeById(nodeId) : null`
 - [ ] L131: `/** @type {HTMLElement|null} */` cast
 - [ ] L156: `this.mouseDownAnchor = null`
-- [ ] L175: `treeCursor?.nodeId ?? null`
+- [x] L175: `treeCursor?.nodeId ?? null`
 - [ ] L294: `currentNode.parent = null`
 - [ ] L345: `/** @type {HTMLElement|null} */` cast
 - [ ] L373: `/** @type {Node|null} */` cast
-- [ ] L403: `treeCursor?.nodeId ?? null`
+- [x] L403: `treeCursor?.nodeId ?? null`
 - [ ] L420: `this.mouseDownAnchor = null`
 - [ ] L430: `this.mouseDownLanguageTag = null`
 - [ ] L463: ternary `: null`
@@ -291,8 +291,8 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/managers/cursor-manager.js`
 
-- [ ] L54: `this.editor.treeRange = null`
-- [ ] L61: `this.editor.treeRange = null`
+- [x] L54: `this.editor.treeRange = null`
+- [x] L61: `this.editor.treeRange = null`
 - [ ] L84: JSDoc `{cursor}|null` return type
 - [ ] L87–88: JSDoc `string|null` + `let inlineNodeId = null`
 - [ ] L90: `/** @type {Node|null} */` cast
@@ -418,7 +418,7 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/utility/toc/toc.js`
 
-- [ ] L53: `this.lockedHeadingId = null`
+- [x] L53: `this.lockedHeadingId = null`
 - [ ] L510: `this.observer = null`
 - [ ] L517: `this.scrollHandler = null`
 - [ ] L525: JSDoc `TableOfContents|null` param
@@ -453,9 +453,9 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L100: `string | null` for `anchorNodeId`
 - [ ] L102: `number | null` for `savedOffsetFromTop`
 - [x] L145–146: comment "or null" + `string | null` for `filePath`
-- [ ] L150: `TreeCursor | null` for `cursor`
-- [ ] L158: `TreeRange | null` for `treeRange`
-- [ ] L162: `string | null` for `tocActiveHeadingId`
+- [x] L150: `TreeCursor | null` for `cursor`
+- [x] L158: `TreeRange | null` for `treeRange`
+- [x] L162: `string | null` for `tocActiveHeadingId`
 - [x] L210: `string | null` in `notifyOpenFiles` param
 - [x] L293–294: comment "or null" + `string | null` for `filePath`
 

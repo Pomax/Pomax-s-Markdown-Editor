@@ -50,7 +50,7 @@ class App extends AppData {
 
     // Initialize page resize handles (writing mode only).
     // Store the retarget function so tab switches can update the handles.
-    this.retargetResizeHandles = initPageResizeHandles(editorContainer) ?? null;
+    this.retargetResizeHandles = initPageResizeHandles(editorContainer);
 
     // Initialize toolbar
     this.toolbar = new Toolbar(toolbarContainer, this.editor);
@@ -109,7 +109,7 @@ class App extends AppData {
     window.addEventListener(`beforeunload`, () => {
       if (this.cursorDebounce) {
         clearTimeout(this.cursorDebounce);
-        this.cursorDebounce = null;
+        this.cursorDebounce = undefined;
       }
       this.notifyOpenFiles();
     });
@@ -296,11 +296,11 @@ class App extends AppData {
 
     // Capture the currently highlighted ToC heading so it can be
     // restored without recomputing viewport-based highlighting.
-    let tocHeadingId = this.toc?.lockedHeadingId ?? null;
+    let tocHeadingId = this.toc?.lockedHeadingId;
     if (!tocHeadingId && this.toc) {
       const activeLink = this.toc.container.querySelector(`.toc-active`);
       if (activeLink) {
-        tocHeadingId = /** @type {HTMLElement} */ (activeLink).dataset.nodeId ?? null;
+        tocHeadingId = /** @type {HTMLElement} */ (activeLink).dataset.nodeId;
       }
     }
 
@@ -308,11 +308,13 @@ class App extends AppData {
       content: md,
       filePath: this.editor.currentFilePath,
       modified: this.editor.hasUnsavedChanges,
-      cursor: this.editor.syntaxTree?.treeCursor ? { ...this.editor.syntaxTree.treeCursor } : null,
+      cursor: this.editor.syntaxTree?.treeCursor
+        ? { ...this.editor.syntaxTree.treeCursor }
+        : undefined,
       cursorOffset: absOffset,
       contentHash: hash,
       syntaxTree: this.editor.syntaxTree,
-      treeRange: this.editor.treeRange ? { ...this.editor.treeRange } : null,
+      treeRange: this.editor.treeRange ? { ...this.editor.treeRange } : undefined,
       scrollTop: this.scrollContainer ? this.scrollContainer.scrollTop : 0,
       tocActiveHeadingId: tocHeadingId,
       undoStack: [...this.editor.undoManager.undoStack],
@@ -354,7 +356,7 @@ class App extends AppData {
         this.editor.syntaxTree = state.syntaxTree;
         if (this.editor.syntaxTree)
           this.editor.syntaxTree.treeCursor = state.cursor ? { ...state.cursor } : null;
-        this.editor.lastRenderedNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        this.editor.lastRenderedNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
         this.editor.undoManager.undoStack = [...state.undoStack];
         this.editor.undoManager.redoStack = [...state.redoStack];
         this.editor.setUnsavedChanges(state.modified);
@@ -382,7 +384,7 @@ class App extends AppData {
       // tree are identical — nothing changed — so just set the
       // browser selection.  Suppress selectionchange so the event
       // handler doesn't trigger a spurious re-render.
-      this.editor.treeRange = state?.treeRange ? { ...state.treeRange } : null;
+      this.editor.treeRange = state?.treeRange ? { ...state.treeRange } : undefined;
       this.editor.isRendering = true;
       this.editor.container.focus({ preventScroll: true });
       if (this.editor.treeRange) {
@@ -396,7 +398,7 @@ class App extends AppData {
         // Lock the ToC to the heading that was active when we
         // left this tab so refresh() doesn't recompute it from
         // viewport geometry.
-        this.toc.lockedHeadingId = state?.tocActiveHeadingId ?? null;
+        this.toc.lockedHeadingId = state?.tocActiveHeadingId;
         this.toc.reobserve();
         // Keep the programmatic-scroll flag active until the
         // next frame — scroll events from scrollTop / placeCursor
@@ -435,7 +437,7 @@ class App extends AppData {
    * Waits for the document and ToC to be fully loaded before applying.
    * For the active tab, restores live. For background tabs, patches
    * their saved document state.
-   * @param {Array<{filePath: string, active: boolean, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
+   * @param {Array<{filePath: string, active: boolean, cursorPath?: number[], tocHeadingPath?: number[]}>} entries
    */
   restoreSession(entries) {
     const tryRestore = () => {
@@ -466,7 +468,9 @@ class App extends AppData {
         // Restore cursor on the background tab's syntax tree
         if (entry.cursorPath) {
           state.syntaxTree.setCursorPath(entry.cursorPath);
-          state.cursor = state.syntaxTree.treeCursor ? { ...state.syntaxTree.treeCursor } : null;
+          state.cursor = state.syntaxTree.treeCursor
+            ? { ...state.syntaxTree.treeCursor }
+            : undefined;
         }
 
         // Restore ToC heading for the background tab
@@ -484,7 +488,7 @@ class App extends AppData {
 
       // Lock the ToC heading BEFORE any re-render so that
       // MutationObserver-triggered refresh() respects it.
-      let tocNode = null;
+      let tocNode;
       if (activeEntry.tocHeadingPath && this.toc) {
         tocNode = this.editor.syntaxTree.getNodeAtPath(activeEntry.tocHeadingPath);
         if (tocNode) {
@@ -829,7 +833,7 @@ class App extends AppData {
 
     try {
       const result = await window.electronAPI.getSetting(`tocVisible`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         this.toc?.setVisible(!!result.value);
       }
     } catch {
@@ -856,7 +860,7 @@ class App extends AppData {
 
     try {
       const result = await window.electronAPI.getSetting(`ensureLocalPaths`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.ensureLocalPaths = !!result.value;
         }
@@ -867,7 +871,7 @@ class App extends AppData {
 
     try {
       const result = await window.electronAPI.getSetting(`detailsClosed`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.detailsClosed = !!result.value;
         }
@@ -878,7 +882,7 @@ class App extends AppData {
 
     try {
       const result = await window.electronAPI.getSetting(`enableStyleElements`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.enableStyleElements = !!result.value;
         }
@@ -920,7 +924,7 @@ class App extends AppData {
     /** @type {any} */ (window).__flushOpenFiles = () => {
       if (this.cursorDebounce) {
         clearTimeout(this.cursorDebounce);
-        this.cursorDebounce = null;
+        this.cursorDebounce = undefined;
       }
       return this.notifyOpenFiles();
     };
@@ -928,7 +932,7 @@ class App extends AppData {
     // Expose file path and cursor info as globals so integration tests
     // (and other tooling) can inspect editor state.
     Object.defineProperty(window, `__editorFilePath`, {
-      get: () => this.editor?.currentFilePath ?? null,
+      get: () => this.editor?.currentFilePath,
       set: (v) => {
         if (this.editor) this.editor.currentFilePath = v;
       },
@@ -936,7 +940,7 @@ class App extends AppData {
     });
 
     Object.defineProperty(window, `__editorCursorNodeId`, {
-      get: () => this.editor?.syntaxTree?.treeCursor?.nodeId ?? null,
+      get: () => this.editor?.syntaxTree?.treeCursor?.nodeId,
       configurable: true,
     });
 

@@ -172,7 +172,7 @@ export class EventHandler extends EventHandlerData {
     // Compare block parents of the old and new node IDs — moving
     // between inline children inside the same block should not
     // trigger a re-render.
-    const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+    const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
     const newBlockId = this.editor.resolveBlockId(newNodeId);
     const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
 
@@ -400,7 +400,7 @@ export class EventHandler extends EventHandlerData {
       // Compare block parents of the old and new node IDs — moving
       // between inline children inside the same block should not
       // trigger a re-render.
-      const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+      const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
       const newBlockId = this.editor.resolveBlockId(newNodeId);
       const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
 
@@ -473,7 +473,7 @@ export class EventHandler extends EventHandlerData {
       if (savedCursor && this.editor.syntaxTree) {
         this.editor.syntaxTree.treeCursor = savedCursor;
       }
-      this.editor.treeRange = savedRange;
+      this.editor.treeRange = savedRange ?? undefined;
       return;
     }
 
@@ -488,7 +488,7 @@ export class EventHandler extends EventHandlerData {
     if (savedCursor) {
       this.editor.syntaxTree.treeCursor = savedCursor;
     }
-    this.editor.treeRange = savedRange;
+    this.editor.treeRange = savedRange ?? undefined;
 
     // Rebuild the DOM selection from the restored tree state.
     this.editor.isRendering = true;

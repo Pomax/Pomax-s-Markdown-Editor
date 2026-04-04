@@ -147,7 +147,7 @@ interface DocumentState {
     /** Whether there are unsaved changes. */
     modified: boolean;
     /** Cursor position. */
-    cursor: TreeCursor | null;
+    cursor?: TreeCursor;
     /** Absolute character offset in markdown source. */
     cursorOffset: number;
     /** CRC32 hash of the markdown content. */
@@ -155,11 +155,11 @@ interface DocumentState {
     /** The parsed syntax tree. */
     syntaxTree: any;
     /** Active text selection range. */
-    treeRange: TreeRange | null;
+    treeRange?: TreeRange;
     /** Scroll position of the scroll container. */
     scrollTop: number;
     /** The active ToC heading node ID. */
-    tocActiveHeadingId: string | null;
+    tocActiveHeadingId?: string;
     /** Undo history. */
     undoStack: any[];
     /** Redo history. */
