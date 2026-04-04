@@ -321,13 +321,13 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/content-types/table/table-manager.js`
 
-- [ ] L86–87: JSDoc `HTMLElement|null` + `let cell = null`
-- [ ] L88: `/** @type {Node|null} */` cast
-- [ ] L120: `document.createTreeWalker(..., null)` — DOM API, leave as-is
-- [ ] L142–143: JSDoc `HTMLTableCellElement|null` + `let cell = null`
-- [ ] L148: `headerRow?.cells[col] ?? null`
-- [ ] L154: `bodyRow?.cells[col] ?? null`
-- [ ] L159: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L86–87: JSDoc `HTMLElement|null` + `let cell = null`
+- [x] L88: `/** @type {Node|null} */` cast
+- [x] L120: `document.createTreeWalker(..., null)` — DOM API, leave as-is
+- [x] L142–143: JSDoc `HTMLTableCellElement|null` + `let cell = null`
+- [x] L148: `headerRow?.cells[col] ?? null`
+- [x] L154: `bodyRow?.cells[col] ?? null`
+- [x] L159: `document.createTreeWalker(..., null)` — DOM API, leave as-is
 
 ## `src/web/scripts/editor/content-types/image/image-helper.js`
 
@@ -335,24 +335,24 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/editor/formatters/source2-formatter.js`
 
-- [ ] L173: JSDoc `HTMLTextAreaElement|null` return type
-- [ ] L423: JSDoc comment "Returns null"
-- [ ] L426: JSDoc `{start, end}|null` return type
-- [ ] L430: `return null`
-- [ ] L438: `return null`
+- [x] L173: JSDoc `HTMLTextAreaElement|null` return type
+- [x] L423: JSDoc comment "Returns null"
+- [x] L426: JSDoc `{start, end}|null` return type
+- [x] L430: `return null`
+- [x] L438: `return null`
 
 ## `src/web/scripts/editor/renderers/source/index.js`
 
-- [ ] L107: JSDoc `DOMRect|null` return type
-- [ ] L110: `return null`
-- [ ] L115: `return null`
-- [ ] L134: `let savedCaretTop = null`
-- [ ] L179: `absoluteCursorOffset: null`
-- [ ] L181: `anchorNodeId: null`
-- [ ] L182: `savedOffsetFromTop: null`
-- [ ] L204: `absoluteCursorOffset !== null`
-- [ ] L214: `savedCaretTop !== null && absoluteCursorOffset !== null` (×2)
-- [ ] L225: `{ detail: { node: null } }`
+- [x] L107: JSDoc `DOMRect|null` return type
+- [x] L110: `return null`
+- [x] L115: `return null`
+- [x] L134: `let savedCaretTop = null`
+- [x] L179: `absoluteCursorOffset: null`
+- [x] L181: `anchorNodeId: null`
+- [x] L182: `savedOffsetFromTop: null`
+- [x] L204: `absoluteCursorOffset !== null`
+- [x] L214: `savedCaretTop !== null && absoluteCursorOffset !== null` (×2)
+- [x] L225: `{ detail: { node: null } }`
 
 ## `src/web/scripts/editor/renderers/writing/index.js`
 
@@ -361,19 +361,19 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L452–453: JSDoc `HTMLInputElement|null` + `let checkbox = null`
 - [ ] L495: `visualNumber != null` — loose equality, leave as `!= null` or change to `!= undefined`
 - [ ] L730–731: JSDoc `SyntaxNode|null` + `let summaryNode = null`
-- [ ] L1061: `let absoluteCursorOffset = null`
-- [ ] L1073: `let savedCaretTop = null`
-- [ ] L1093–1094: JSDoc `string|null` + `let anchorNodeId = null`
-- [ ] L1095: `let savedOffsetFromTop = null`
+- [x] L1061: `let absoluteCursorOffset = null`
+- [x] L1073: `let savedCaretTop = null`
+- [x] L1093–1094: JSDoc `string|null` + `let anchorNodeId = null`
+- [x] L1095: `let savedOffsetFromTop = null`
 - [ ] L1105: ternary `: null`
-- [ ] L1124: `dataset.nodeId ?? null`
-- [ ] L1162: `savedOffsetFromTop !== null`
-- [ ] L1173: `savedCaretTop !== null`
+- [x] L1124: `dataset.nodeId ?? null`
+- [x] L1162: `savedOffsetFromTop !== null`
+- [x] L1173: `savedCaretTop !== null`
 
 ## `src/web/scripts/editor/syntax-highlighter/patterns.js`
 
-- [ ] L84: JSDoc `string|null` return type
-- [ ] L89: `return m ? m[0] : null`
+- [x] L84: JSDoc `string|null` return type
+- [x] L89: `return m ? m[0] : null`
 
 ## `src/web/scripts/editor/syntax-highlighter/sql.js`
 

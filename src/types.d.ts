@@ -93,13 +93,13 @@ interface TocHeading {
  */
 interface ViewSwitchData {
     /** Absolute character offset of the cursor in the markdown source. */
-    absoluteCursorOffset: number | null;
+    absoluteCursorOffset: number | undefined;
     /** Pixel distance from the caret to the top of the scroll container. */
-    savedCaretTop: number | null;
+    savedCaretTop: number | undefined;
     /** Node ID used as a scroll anchor across the switch. */
-    anchorNodeId: string | null;
+    anchorNodeId: string | undefined;
     /** Pixel offset of the anchor node from the top of the scroll container. */
-    savedOffsetFromTop: number | null;
+    savedOffsetFromTop: number | undefined;
 }
 
 /**

@@ -104,15 +104,15 @@ export class SourceRendererV2 extends SourceRendererV2Data {
    * textarea by querying the equivalent position in the pre mirror.
    * Syncs the mirror first if it is dirty.
    * @param {number} offset - Character offset into the textarea value
-   * @returns {DOMRect|null}
+   * @returns {DOMRect | undefined}
    */
   getCaretRect(offset) {
-    if (!this.pre) return null;
+    if (!this.pre) return undefined;
 
     this.syncMirror();
 
     const textNode = this.pre.firstChild;
-    if (!textNode || !textNode.textContent) return null;
+    if (!textNode || !textNode.textContent) return undefined;
 
     const clamped = Math.max(0, Math.min(offset, textNode.textContent.length));
     const range = document.createRange();
@@ -131,7 +131,7 @@ export class SourceRendererV2 extends SourceRendererV2Data {
 
     // Capture the textarea caret's pixel position so we can restore
     // it after re-rendering in writing mode.
-    let savedCaretTop = null;
+    let savedCaretTop;
     const scrollContainer = editor.container.parentElement;
     if (scrollContainer) {
       const offset = this.textarea?.selectionStart ?? 0;
@@ -176,10 +176,10 @@ export class SourceRendererV2 extends SourceRendererV2Data {
     }
 
     return {
-      absoluteCursorOffset: null,
+      absoluteCursorOffset: undefined,
       savedCaretTop,
-      anchorNodeId: null,
-      savedOffsetFromTop: null,
+      anchorNodeId: undefined,
+      savedOffsetFromTop: undefined,
     };
   }
 
@@ -201,7 +201,7 @@ export class SourceRendererV2 extends SourceRendererV2Data {
     editor.fullRenderAndPlaceCursor();
 
     // Place the textarea caret at the previously computed offset.
-    if (absoluteCursorOffset !== null && absoluteCursorOffset >= 0) {
+    if (absoluteCursorOffset !== undefined && absoluteCursorOffset >= 0) {
       if (this.textarea) {
         this.textarea.selectionStart = absoluteCursorOffset;
         this.textarea.selectionEnd = absoluteCursorOffset;
@@ -211,7 +211,7 @@ export class SourceRendererV2 extends SourceRendererV2Data {
 
     // Scroll-preserve: use getCaretRect to find where the caret landed
     // and adjust scroll so it sits at the saved position.
-    if (scrollContainer && savedCaretTop !== null && absoluteCursorOffset !== null) {
+    if (scrollContainer && savedCaretTop !== undefined && absoluteCursorOffset !== undefined) {
       const caretRect = this.getCaretRect(absoluteCursorOffset);
       if (caretRect) {
         const containerRect = scrollContainer.getBoundingClientRect();
@@ -222,6 +222,8 @@ export class SourceRendererV2 extends SourceRendererV2Data {
 
     // Notify the toolbar to update button states (no syntax tree node
     // to report — the toolbar will enable all buttons).
-    document.dispatchEvent(new CustomEvent(`editor:selectionchange`, { detail: { node: null } }));
+    document.dispatchEvent(
+      new CustomEvent(`editor:selectionchange`, { detail: { node: undefined } }),
+    );
   }
 }

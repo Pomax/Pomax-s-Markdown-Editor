@@ -1058,7 +1058,7 @@ export class WritingRenderer extends WritingRendererData {
 
     // Compute the absolute cursor offset so we can place the textarea
     // caret in the same position when entering source2.
-    let absoluteCursorOffset = null;
+    let absoluteCursorOffset;
     if (editor.syntaxTree?.treeCursor) {
       absoluteCursorOffset = cursorToAbsoluteOffset(
         editor.syntaxTree,
@@ -1070,7 +1070,7 @@ export class WritingRenderer extends WritingRendererData {
 
     // Capture the actual caret pixel position from the browser
     // selection so we can match it after the switch.
-    let savedCaretTop = null;
+    let savedCaretTop;
     const scrollContainer = editor.container.parentElement;
     if (scrollContainer) {
       const sel = window.getSelection();
@@ -1090,9 +1090,9 @@ export class WritingRenderer extends WritingRendererData {
     // Anchor on the cursor's node if one exists, since that is what
     // the user is focused on.  Fall back to the node closest to the
     // viewport centre so content doesn't jump when there is no cursor.
-    /** @type {string|null} */
-    let anchorNodeId = null;
-    let savedOffsetFromTop = null;
+    /** @type {string | undefined} */
+    let anchorNodeId;
+    let savedOffsetFromTop;
 
     if (scrollContainer) {
       const containerRect = scrollContainer.getBoundingClientRect();
@@ -1121,7 +1121,7 @@ export class WritingRenderer extends WritingRendererData {
           const dist = Math.abs(mid - centreY);
           if (dist < bestDistance) {
             bestDistance = dist;
-            anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
+            anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? undefined;
             savedOffsetFromTop = rect.top - containerRect.top;
           }
         }
@@ -1159,7 +1159,7 @@ export class WritingRenderer extends WritingRendererData {
     }
 
     // Restore scroll so the anchor node sits at the same viewport offset.
-    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
+    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== undefined) {
       const el = editor.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
       if (el) {
         const containerRect = scrollContainer.getBoundingClientRect();
@@ -1170,7 +1170,7 @@ export class WritingRenderer extends WritingRendererData {
 
     // Scroll-preserve for source2 → writing: match the writing-mode
     // caret position to where it was in the source2 textarea.
-    if (savedCaretTop !== null && scrollContainer) {
+    if (savedCaretTop !== undefined && scrollContainer) {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
