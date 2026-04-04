@@ -16,8 +16,7 @@ export class SettingsManager {
     /** @type {string} */
     this.dbPath = path.join(app.getPath(`userData`), `settings.db`);
 
-    /** @type {ReturnType<typeof Database>|null} */
-    this.db = null;
+    /** @type {ReturnType<typeof Database>} */
   }
 
   /**
@@ -42,10 +41,10 @@ export class SettingsManager {
   /**
    * Retrieves a setting value by key.
    * @param {string} key - The setting key
-   * @param {*} [defaultValue=null] - Value returned when the key does not exist
+   * @param {*} [defaultValue] - Value returned when the key does not exist
    * @returns {*} The parsed setting value, or defaultValue
    */
-  get(key, defaultValue = null) {
+  get(key, defaultValue) {
     if (!this.db) this.initialize();
 
     const db = /** @type {ReturnType<typeof Database>} */ (this.db);
@@ -118,7 +117,7 @@ export class SettingsManager {
   close() {
     if (this.db) {
       this.db.close();
-      this.db = null;
+      this.db = undefined;
     }
   }
 }

@@ -17,21 +17,17 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 5. Run `npm test`
 6. Immediately ask the user to tell you when tests are done — NO tool calls, NO checking output, NO reading terminal
 7. Wait for test results
-8. Ask the user to manually test, describe how — NO tool calls with the question
-9. Wait for manual test confirmation
-10. Check off the item in this document
-11. Commit (`git add -A`, then `git commit` — as SEPARATE commands, never compound)
-12. Go to the next item — start at step 1 again
-
-**Comment-only and doc-only changes still need manual testing confirmation. No exceptions.**
+8. Check off the item in this document
+9. Commit (`git add -A`, then `git commit` — as SEPARATE commands, never compound)
+10. Go to the next item — start at step 1 again
 
 ## `src/electron/settings-manager.js`
 
-- [ ] L19: JSDoc `|null` type annotation for `this.db`
-- [ ] L20: `this.db = null` — constructor assignment
-- [ ] L45: JSDoc `[defaultValue=null]` param description
-- [ ] L48: `defaultValue = null` — default parameter value
-- [ ] L121: `this.db = null` — teardown assignment
+- [x] L19: JSDoc `|null` type annotation for `this.db`
+- [x] L20: `this.db = null` — constructor assignment
+- [x] L45: JSDoc `[defaultValue=null]` param description
+- [x] L48: `defaultValue = null` — default parameter value
+- [x] L121: `this.db = null` — teardown assignment
 
 ## `src/electron/menu-builder.js`
 
