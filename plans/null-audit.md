@@ -397,20 +397,7 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/electron/preload.cjs`
 
-- [ ] L97: JSDoc `string|null` type
-
-## `src/types.d.ts`
-
-- [ ] L96: `number | null` for `absoluteCursorOffset`
-- [ ] L98: `number | null` for `savedCaretTop`
-- [ ] L100: `string | null` for `anchorNodeId`
-- [ ] L102: `number | null` for `savedOffsetFromTop`
-- [x] L145–146: comment "or null" + `string | null` for `filePath`
-- [x] L150: `TreeCursor | null` for `cursor`
-- [x] L158: `TreeRange | null` for `treeRange`
-- [x] L162: `string | null` for `tocActiveHeadingId`
-- [x] L210: `string | null` in `notifyOpenFiles` param
-- [x] L293–294: comment "or null" + `string | null` for `filePath`
+- [x] L97: JSDoc `string|null` type
 
 ## `scripts/generate-api-docs.js`
 
@@ -664,6 +651,19 @@ Test files also contain `null` usage (assertions, setup values, evaluate callbac
 ### `test/integration/` files
 
 Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
+
+## `src/types.d.ts`
+
+- [ ] L96: `number | null` for `absoluteCursorOffset`
+- [ ] L98: `number | null` for `savedCaretTop`
+- [ ] L100: `string | null` for `anchorNodeId`
+- [ ] L102: `number | null` for `savedOffsetFromTop`
+- [x] L145–146: comment "or null" + `string | null` for `filePath`
+- [x] L150: `TreeCursor | null` for `cursor`
+- [x] L158: `TreeRange | null` for `treeRange`
+- [x] L162: `string | null` for `tocActiveHeadingId`
+- [x] L210: `string | null` in `notifyOpenFiles` param
+- [x] L293–294: comment "or null" + `string | null` for `filePath`
 
 ## `src/web/scripts/editor/types.js`
 
