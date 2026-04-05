@@ -234,6 +234,6 @@ export class MenuHandler extends MenuHandlerData {
     if (!this.wordCountModal) {
       this.wordCountModal = new WordCountModal();
     }
-    this.wordCountModal.open(this.editor.syntaxTree);
+    this.wordCountModal.open(this.editor.syntaxTree ?? undefined);
   }
 }

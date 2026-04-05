@@ -408,14 +408,14 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [x] L561: JSDoc `string|null` return type
 - [x] L571: `return null`
 - [x] L776: `result.value !== null`
-- [ ] L814: `result.value !== null`
-- [ ] L833: `result.value !== null`
-- [ ] L852: `result.value !== null`
+- [x] L814: `result.value !== null`
+- [x] L833: `result.value !== null`
+- [x] L852: `result.value !== null`
 
 ## `src/web/scripts/utility/word-count/word-count-modal.js`
 
-- [ ] L56: JSDoc `SyntaxTree|null` param
-- [ ] L141: JSDoc `SyntaxTree|null` param
+- [x] L56: JSDoc `SyntaxTree|null` param
+- [x] L141: JSDoc `SyntaxTree|null` param
 
 ## `src/web/scripts/utility/toc/toc.js`
 
