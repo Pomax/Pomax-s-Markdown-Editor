@@ -40,7 +40,7 @@ test.beforeEach(async () => {
 async function getTreeCursor(pg) {
   return pg.evaluate(() => {
     const editor = /** @type {any} */ (window).__editor;
-    return editor?.syntaxTree?.treeCursor ?? null;
+    return editor?.syntaxTree?.treeCursor;
   });
 }
 
@@ -51,7 +51,7 @@ async function getTreeCursor(pg) {
 async function getTextareaCaretOffset(pg) {
   return pg.evaluate(() => {
     const textarea = document.querySelector(`#editor.source-view-v2 textarea`);
-    return /** @type {HTMLTextAreaElement|null} */ (textarea)?.selectionStart ?? -1;
+    return /** @type {HTMLTextAreaElement} */ (textarea)?.selectionStart ?? -1;
   });
 }
 
@@ -68,7 +68,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     });
 
     const cursorBefore = await getTreeCursor(page);
-    expect(cursorBefore).not.toBeNull();
+    expect(cursorBefore).toBeDefined();
     expect(cursorBefore.offset).toBe(11);
 
     await setSource2View(page);
@@ -81,7 +81,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     await page.waitForTimeout(200);
 
     const cursorAfter = await getTreeCursor(page);
-    expect(cursorAfter).not.toBeNull();
+    expect(cursorAfter).toBeDefined();
     expect(cursorAfter.offset).toBe(11);
   });
 
@@ -96,7 +96,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     });
 
     const cursorBefore = await getTreeCursor(page);
-    expect(cursorBefore).not.toBeNull();
+    expect(cursorBefore).toBeDefined();
     const nodeIdBefore = cursorBefore.nodeId;
     expect(cursorBefore.offset).toBe(7);
 
@@ -111,7 +111,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     await page.waitForTimeout(200);
 
     const cursorAfter = await getTreeCursor(page);
-    expect(cursorAfter).not.toBeNull();
+    expect(cursorAfter).toBeDefined();
     expect(cursorAfter.nodeId).toBe(nodeIdBefore);
     expect(cursorAfter.offset).toBe(7);
   });
@@ -160,7 +160,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     await page.waitForTimeout(200);
 
     const cursorAfter = await getTreeCursor(page);
-    expect(cursorAfter).not.toBeNull();
+    expect(cursorAfter).toBeDefined();
     expect(cursorAfter.offset).toBe(17);
 
     const text = await page.locator(`#editor [data-node-id]`).first().innerText();
@@ -185,7 +185,7 @@ test.describe(`Source2 cursor position preservation`, () => {
     await page.waitForTimeout(200);
 
     const cursorAfter = await getTreeCursor(page);
-    expect(cursorAfter).not.toBeNull();
+    expect(cursorAfter).toBeDefined();
     expect(cursorAfter.offset).toBe(5);
   });
 });

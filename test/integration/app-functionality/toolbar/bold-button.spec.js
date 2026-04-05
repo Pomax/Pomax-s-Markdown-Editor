@@ -70,7 +70,7 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       // Walk text nodes to find the one containing startIdx.
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -89,7 +89,6 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );
@@ -234,12 +233,12 @@ test.describe(`Cursor position after bold`, () => {
     // bolded word.  Read the DOM selection offset inside the editor.
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
+      if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       // Walk up to the [data-node-id] element to compute the total text
       // offset from the start of the line.
       const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
-      if (!line) return null;
+      if (!line) return;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
       let node = walker.nextNode();
@@ -253,10 +252,9 @@ test.describe(`Cursor position after bold`, () => {
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
       }
-      return null;
     });
 
-    expect(cursorInfo).not.toBeNull();
+    expect(cursorInfo).toBeDefined();
     expect(cursorInfo?.collapsed).toBe(true);
     // "text1 text1" = 11 chars — cursor should be right after the
     // bolded word (rendered text has no ** markers in writing view).
@@ -273,10 +271,10 @@ test.describe(`Cursor position after bold`, () => {
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
+      if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
-      if (!line) return null;
+      if (!line) return;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
       let node = walker.nextNode();
@@ -290,10 +288,9 @@ test.describe(`Cursor position after bold`, () => {
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
       }
-      return null;
     });
 
-    expect(cursorInfo).not.toBeNull();
+    expect(cursorInfo).toBeDefined();
     expect(cursorInfo?.collapsed).toBe(true);
     // "text1" = 5 chars — cursor right after the bolded word.
     expect(cursorInfo?.offset).toBe(5);
@@ -324,7 +321,7 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       // Place the click roughly in the middle of the word.
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -343,7 +340,6 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );

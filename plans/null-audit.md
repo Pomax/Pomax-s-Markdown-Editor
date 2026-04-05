@@ -479,9 +479,106 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [x] L349–350: `TabBar|null` + `tabBar = null`
 - [x] L355–356: `HTMLElement|null` + `scrollContainer = null`
 
-### `test/integration/` files
+### `test/integration/user-interaction/content/details-summary-input.spec.js`
 
-Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
+- [x] L63: `return null` in page.evaluate
+- [x] L66: `return para ? para.textContent : null` in page.evaluate
+
+### `test/integration/user-interaction/interaction/source2-cursor-position.spec.js`
+
+- [x] L43: `?? null` in page.evaluate
+- [x] L54: `/** @type {HTMLTextAreaElement|null} */` cast — **leave as-is** (DOM API)
+
+### `test/integration/user-interaction/interaction/range-handling.spec.js`
+
+- [x] L79–82: `/** @type {Element|null} */` + `let startEl = null` + `/** @type {Element|null} */` + `let endEl = null` in page.evaluate
+
+### `test/integration/user-interaction/interaction/paste.spec.js`
+
+- [x] L126: `return null` in page.evaluate
+
+### `test/integration/user-interaction/interaction/cursor-sync.spec.js`
+
+- [x] L8: comment "non-null (or null after blur)" — update text
+- [x] L42/57/74/92/110/131/144/167/189/207/215/223/241/255/264: `?? null` in page.evaluate (×15)
+- [x] L260: `/** @type {HTMLElement|null} */` cast — **leave as-is** (DOM API)
+
+### `test/integration/user-interaction/content/cursor-typing-delimiters.spec.js`
+
+- [x] L62: `return null` in page.evaluate
+- [x] L73: `return null` in page.evaluate
+- [x] L78: `document.createTreeWalker(..., null)` — **leave as-is** (DOM API)
+
+### `test/integration/user-interaction/content/code-block-language-tag.spec.js`
+
+- [x] L174/211/224: `?? null` in page.evaluate (×3)
+- [x] L245/260: `return null` in page.evaluate (×2)
+
+### `test/integration/app-functionality/app/session-save.spec.js`
+
+- [x] L62/128/130/132/143/265: `return null` in page.evaluate (×6)
+- [x] L145/268: `?? null` in page.evaluate (×2)
+- [x] L219/239: `.get('openFiles', null)` (×2)
+
+### `test/integration/app-functionality/app/search.spec.js`
+
+- [x] L485: `tc ? {...} : null` in page.evaluate
+- [x] L500: `return null` in page.evaluate
+- [x] L502: `?? null` in page.evaluate
+
+### `test/integration/app-functionality/app/reload.spec.js`
+
+- [x] L41–42: `cursorPath: null` + `tocHeadingPath: null`
+
+### `test/integration/app-functionality/app/copy-file-path.spec.js`
+
+- [x] L33: `?? null` in page.evaluate
+
+### `test/integration/app-functionality/document/toc-scroll.spec.js`
+
+- [x] L64: `return null` in page.evaluate
+
+### `test/integration/app-functionality/document/toc-highlight.spec.js`
+
+- [x] L159: `return null` in page.evaluate
+
+### `test/integration/app-functionality/document/style-element-injection.spec.js`
+
+- [x] L74/101/144: `h ? getComputedStyle(h).color : null` in page.evaluate (×3)
+
+### `test/integration/app-functionality/document/details-collapse-toggle.spec.js`
+
+- [x] L60/85: error message text "is null" — **leave as-is** (English text, not JS null)
+
+### `test/integration/app-functionality/toolbar/bold-button.spec.js`
+
+- [x] L73/92/256/293/346: `return null` in page.evaluate helpers (×5)
+- [x] L237/242/276/279: `return null` guard in page.evaluate helpers (×4)
+- [x] L327: `return null` in page.evaluate
+
+### `test/integration/app-functionality/toolbar/italic-button.spec.js`
+
+- [x] L66/84/230/266/316: `return null` in page.evaluate helpers (×5)
+- [x] L213/216/249/252: `return null` guard in page.evaluate helpers (×4)
+- [x] L298: `return null` in page.evaluate
+
+### `test/integration/app-functionality/toolbar/strikethrough-button.spec.js`
+
+- [x] L66/84/230/265/315: `return null` in page.evaluate helpers (×5)
+- [x] L213/216/248/251: `return null` guard in page.evaluate helpers (×4)
+- [x] L297: `return null` in page.evaluate
+
+### `test/integration/app-functionality/toolbar/superscript-button.spec.js`
+
+- [x] L69/87/135/186: `return null` in page.evaluate helpers (×4)
+- [x] L118/121: `return null` guard in page.evaluate helpers (×2)
+- [x] L168: `return null` in page.evaluate
+
+### `test/integration/app-functionality/toolbar/subscript-button.spec.js`
+
+- [x] L69/87/135/186: `return null` in page.evaluate helpers (×4)
+- [x] L118/121: `return null` guard in page.evaluate helpers (×2)
+- [x] L168: `return null` in page.evaluate
 
 ## Exceptions — DO NOT CHANGE
 

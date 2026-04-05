@@ -77,8 +77,8 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
     /** @type {NonNullable<Awaited<ReturnType<import('@playwright/test').Locator['boundingBox']>>>} */ (
       await page.locator(`#editor-container`).boundingBox()
     );
-  expect(beforeRect).not.toBeNull();
-  expect(containerBox).not.toBeNull();
+  expect(beforeRect).toBeDefined();
+  expect(containerBox).toBeDefined();
   // The target should be below the visible area
   expect(beforeRect.y).toBeGreaterThan(containerBox.y + containerBox.height);
 
@@ -108,7 +108,7 @@ test(`placing the cursor on an off-screen node scrolls it into view`, async ({ p
     /** @type {NonNullable<Awaited<ReturnType<import('@playwright/test').Locator['boundingBox']>>>} */ (
       await targetLocator.boundingBox()
     );
-  expect(afterRect).not.toBeNull();
+  expect(afterRect).toBeDefined();
   expect(afterRect.y).toBeGreaterThanOrEqual(containerBox.y - 5);
   expect(afterRect.y + afterRect.height).toBeLessThanOrEqual(
     containerBox.y + containerBox.height + 5,

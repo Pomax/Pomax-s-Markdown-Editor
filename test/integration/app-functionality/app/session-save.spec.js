@@ -59,7 +59,7 @@ test(`flushing open files saves the current cursorPath`, async () => {
 
   const saved = await page.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-    if (!tree?.treeCursor) return null;
+    if (!tree?.treeCursor) return;
     return {
       cursorPath: tree.getPathToCursor(),
       nodeId: tree.treeCursor.nodeId,
@@ -67,9 +67,9 @@ test(`flushing open files saves the current cursorPath`, async () => {
     };
   });
 
-  expect(saved).not.toBeNull();
+  expect(saved).toBeDefined();
   const s = /** @type {NonNullable<typeof saved>} */ (saved);
-  expect(s.cursorPath).not.toBeNull();
+  expect(s.cursorPath).toBeDefined();
   expect(s.cursorPath.length).toBeGreaterThanOrEqual(2);
   // The last element is the character offset within the node
   expect(s.cursorPath[s.cursorPath.length - 1]).toBe(4);
@@ -125,24 +125,24 @@ test(`flushing open files saves the active ToC heading path`, async () => {
   // Read back the saved ToC heading path from the renderer
   const tocHeadingPath = await page.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-    if (!tree) return null;
+    if (!tree) return;
     const tocActive = document.querySelector(`#toc-sidebar .toc-link.toc-active`);
-    if (!tocActive) return null;
+    if (!tocActive) return;
     const nodeId = /** @type {HTMLElement} */ (tocActive).dataset.nodeId;
-    if (!nodeId) return null;
+    if (!nodeId) return;
     return tree.getPathToNode(nodeId);
   });
 
-  expect(tocHeadingPath).not.toBeNull();
+  expect(tocHeadingPath).toBeDefined();
   const thp = /** @type {NonNullable<typeof tocHeadingPath>} */ (tocHeadingPath);
   expect(thp.length).toBeGreaterThanOrEqual(1);
 
   // Verify the path resolves back to the same heading
   const resolvedText = await page.evaluate((p) => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-    if (!tree) return null;
+    if (!tree) return;
     const node = tree.getNodeAtPath(p);
-    return node?.content ?? null;
+    return node?.content;
   }, thp);
 
   expect(resolvedText).toContain(activeHeadingText);
@@ -216,15 +216,15 @@ test(`reopening the app restores cursor position and ToC heading`, async ({}, te
 
   // Read back what was persisted
   const persisted = await app1.electronApp.evaluate(() => {
-    return /** @type {any} */ (global).__settingsManager.get(`openFiles`, null);
+    return /** @type {any} */ (global).__settingsManager.get(`openFiles`, undefined);
   });
 
   await closeApp(app1.electronApp);
 
-  expect(persisted).not.toBeNull();
+  expect(persisted).toBeDefined();
   expect(persisted.length).toBe(1);
-  expect(persisted[0].cursorPath).not.toBeNull();
-  expect(persisted[0].tocHeadingPath).not.toBeNull();
+  expect(persisted[0].cursorPath).toBeDefined();
+  expect(persisted[0].tocHeadingPath).toBeDefined();
 
   const app2 = await launchApp();
   const page2 = app2.page;
@@ -236,7 +236,7 @@ test(`reopening the app restores cursor position and ToC heading`, async ({}, te
   // automatic restore so we drive it explicitly).
   await app2.electronApp.evaluate(({ BrowserWindow }) => {
     const sm = /** @type {any} */ (global).__settingsManager;
-    const openFiles = sm.get(`openFiles`, null);
+    const openFiles = sm.get(`openFiles`, undefined);
     if (!openFiles || openFiles.length === 0) return;
     const win = BrowserWindow.getAllWindows()[0];
     if (!win) return;
@@ -262,15 +262,15 @@ test(`reopening the app restores cursor position and ToC heading`, async ({}, te
   // Verify cursor is on Section 15 at offset 4
   const cursor = await page2.evaluate(() => {
     const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-    if (!tree?.treeCursor) return null;
+    if (!tree?.treeCursor) return;
     const node = tree.children.find((/** @type {any} */ n) => n.id === tree.treeCursor?.nodeId);
     return {
-      content: node?.content ?? null,
+      content: node?.content,
       offset: tree.treeCursor.offset,
     };
   });
 
-  expect(cursor).not.toBeNull();
+  expect(cursor).toBeDefined();
   const c = /** @type {NonNullable<typeof cursor>} */ (cursor);
   expect(c.content).toContain(`Section 15`);
   expect(c.offset).toBe(4);

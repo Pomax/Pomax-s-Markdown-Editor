@@ -61,13 +61,13 @@ test(`clicking a TOC link scrolls the heading to the top of the editor container
   const offset = await page.evaluate(() => {
     const container = document.getElementById(`editor-container`);
     const heading = document.querySelector(`.md-heading2`);
-    if (!container || !heading) return null;
+    if (!container || !heading) return;
     const containerRect = container.getBoundingClientRect();
     const headingRect = heading.getBoundingClientRect();
     return headingRect.top - containerRect.top;
   });
 
-  expect(offset).not.toBeNull();
+  expect(offset).toBeDefined();
   // The heading should be within 100px of the container's top edge
   expect(/** @type {number} */ (offset)).toBeGreaterThanOrEqual(-100);
   expect(/** @type {number} */ (offset)).toBeLessThanOrEqual(100);
