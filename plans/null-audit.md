@@ -401,219 +401,8 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `scripts/generate-api-docs.js`
 
-- [ ] L49: `JSON.stringify(schema, null, 4)` — **leave as-is** (built-in API requires null)
-- [ ] L232: `return null`
-
-## Parsers — `src/parsers/old/`
-
-### `src/parsers/old/dfa-tokenizer.js`
-
-- [ ] L14: JSDoc `DFATokenType|null` return type (×2)
-- [ ] L62: `return null`
-- [ ] L89: `if (type === null)` comparison
-
-### `src/parsers/old/syntax-tree.js`
-
-- [ ] L261: JSDoc `TreeCursor|null` type
-- [ ] L263: `this.treeCursor = null`
-- [x] L271: `node.parent = null`
-- [x] L284: `node.parent = null`
-- [ ] L293: JSDoc `SyntaxNode|null` return type
-- [ ] L305: `return null`
-- [ ] L312: JSDoc `SyntaxNode|null` return type
-- [ ] L324: `return null`
-- [ ] L333: JSDoc `SyntaxNode|null` return type
-- [ ] L341: `return null`
-- [ ] L524: JSDoc comment "or `null`"
-- [ ] L538: JSDoc `|null` return type
-- [ ] L562: `return null`
-- [ ] L594: `return null`
-- [ ] L618: `return null`
-- [ ] L674: `return null`
-- [ ] L808: JSDoc comment "Returns `null`"
-- [ ] L811: JSDoc `number[]|null` return type
-- [ ] L818: `return null`
-- [ ] L843: `return null`
-- [ ] L855: JSDoc comment "`null`"
-- [ ] L858: JSDoc `number[]|null` param
-- [ ] L884: JSDoc comment "Returns `null`"
-- [ ] L887: JSDoc `number[]|null` return type
-- [ ] L912: `return ... ? path : null`
-- [ ] L919: JSDoc comment "Returns `null`"
-- [ ] L921: JSDoc `number[]|null` param
-- [ ] L922: JSDoc `SyntaxNode|null` return type
-- [ ] L925: `return null`
-- [ ] L930: `return null`
-- [ ] L934: `return null`
-- [x] L953: `matched.parent !== null` comparison
-- [x] L954: `matched.parent = null`
-- [x] L961: `nc.parent !== null` comparison
-- [x] L962: `nc.parent = null`
-
-### `src/parsers/old/syntax-node.js`
-
-- [x] L72: JSDoc `SyntaxNode|null` type
-- [x] L74: `this.parent = null`
-- [x] L203: `child.parent = null`
-
-### `src/parsers/old/dfa-parser.js`
-
-- [ ] L155: JSDoc `SyntaxNode|null` return type
-- [ ] L247: JSDoc `SyntaxNode|null` return type
-- [ ] L261: `return null`
-- [ ] L284: JSDoc `SyntaxNode|null` return type
-- [ ] L313: `return null`
-- [ ] L592: JSDoc comment "Returns null"
-- [ ] L594: JSDoc `SyntaxNode|null` return type
-- [ ] L600–643: many `return null` (parse failure early-returns)
-- [ ] L659: JSDoc comment "Returns null"
-- [ ] L661: JSDoc `SyntaxNode|null` return type
-- [ ] L667–732: many `return null` (parse failure early-returns)
-- [ ] L931: JSDoc comment "or null"
-- [ ] L935: JSDoc `{name, count}|null` return type
-- [ ] L939: `return null`
-- [ ] L1069: JSDoc comment "Returns null"
-- [ ] L1071: JSDoc `string|null` return type
-- [ ] L1074: `return null`
-- [ ] L1076: `return null`
-- [ ] L1256: JSDoc `SyntaxNode|null` return type
-- [ ] L1286: `return null`
-
-### `src/parsers/old/inline-tokenizer.js`
-
-- [ ] L62: `m !== null` in regex loop — **leave as-is**
-
-## Parsers — `src/parsers/new/src/`
-
-### `src/parsers/new/src/syntax-tree/syntax-node.js`
-
-- [ ] L58: JSDoc `SyntaxNode|null` type
-- [ ] L60: `this.parent = null`
-- [ ] L76: JSDoc comment "null until rendered"
-- [ ] L77: JSDoc `Element|null` type
-- [ ] L79: `this.domNode = null`
-- [ ] L134: `child.parent = null`
-
-### `src/parsers/new/src/syntax-tree/syntax-tree.js`
-
-- [ ] L25: JSDoc comment "parent = null"
-- [ ] L30: `node.parent = null`
-- [ ] L51: `node.parent = null`
-
-### `src/parsers/new/src/syntax-tree/tree-utils.js`
-
-- [ ] L30: JSDoc `SyntaxNode|null` return type
-- [ ] L38: `return null`
-- [ ] L47: JSDoc `SyntaxNode|null` return type
-- [ ] L53–54: `child.startLine != null && child.endLine != null` — loose equality, catches both
-- [ ] L62: `return null`
-- [ ] L67: JSDoc comment "or null"
-- [ ] L69: JSDoc `SyntaxNode|null` return type
-- [ ] L73: `while (current != null)` — loose equality
-- [ ] L74: JSDoc comment "return null"
-- [ ] L75: `return null`
-- [ ] L80: `return null`
-- [ ] L105: JSDoc `number[]|null` return type
-- [ ] L114: `return null`
-- [ ] L121: JSDoc `SyntaxNode|null` return type
-- [ ] L124: `return null`
-- [ ] L129: `return null`
-
-### `src/parsers/new/src/syntax-tree/tree-selection.js`
-
-- [ ] L117: JSDoc `number[]|null` return type
-- [ ] L139: `return null`
-- [ ] L147: JSDoc comment "or null"
-- [ ] L151: JSDoc `number[]|null` param
-- [ ] L152: JSDoc `TreePosition|null` return type
-- [ ] L155: `return null`
-- [ ] L156: `return null`
-- [ ] L161: `return null`
-- [ ] L168: `return null`
-
-### `src/parsers/new/src/syntax-tree/tree-mutations.js`
-
-- [ ] L142: `selection: null`
-- [ ] L266: JSDoc comment "or `null`"
-- [ ] L272: JSDoc `|null` return type
-- [ ] L296: `return null`
-- [ ] L305: `return null`
-- [ ] L328: `return null`
-- [ ] L381: `return null`
-- [ ] L521: JSDoc `SyntaxNode|null` return type
-- [ ] L524: `return null`
-- [ ] L526: `return null`
-- [ ] L528: `return cell ?? null`
-- [ ] L584: `let headerCell = null`
-- [ ] L610: `selection: null`
-- [ ] L621: `selection: null`
-- [ ] L636: `selection: null`
-- [ ] L653: `selection: null`
-- [ ] L716: JSDoc `SyntaxNode|null` in parseFn param
-- [ ] L718: JSDoc `selection: null` in return type (×2)
-- [ ] L719: JSDoc comment "or null"
-- [ ] L732: `return null`
-- [ ] L740: `return null`
-- [ ] L751: `selection: null`
-- [ ] L759: JSDoc comment "returned null"
-- [ ] L764: `return null`
-- [ ] L771: JSDoc comment "`null`"
-
-### `src/parsers/new/src/parser/dfa-parser.js`
-
-- [ ] L165: JSDoc `SyntaxNode|null` return type
-- [ ] L259: JSDoc `SyntaxNode|null` return type
-- [ ] L273: `return null`
-- [ ] L295: JSDoc `SyntaxNode|null` return type
-- [ ] L324: `return null`
-- [ ] L712: JSDoc comment "Returns null"
-- [ ] L714: JSDoc `SyntaxNode|null` return type
-- [ ] L720–763: many `return null` (parse failure early-returns)
-- [ ] L779: JSDoc comment "Returns null"
-- [ ] L781: JSDoc `SyntaxNode|null` return type
-- [ ] L787–852: many `return null` (parse failure early-returns)
-- [ ] L984: JSDoc comment "or null"
-- [ ] L988: JSDoc `{name, count}|null` return type
-- [ ] L992: `return null`
-- [ ] L1026: JSDoc comment "Returns null"
-- [ ] L1028: JSDoc `string|null` return type
-- [ ] L1031: `return null`
-- [ ] L1033: `return null`
-- [ ] L1189: JSDoc `SyntaxNode|null` return type
-- [ ] L1219: `return null`
-
-### `src/parsers/new/src/parser/dfa-tokenizer.js`
-
-- [ ] L27: JSDoc `DFATokenType|null` return type (×2)
-- [ ] L75: `return null`
-- [ ] L102: `if (type === null)` comparison
-
-### `src/parsers/new/src/parser/inline-tokenizer.js`
-
-- [ ] L62: `m !== null` in regex loop — **leave as-is**
-
-### `src/parsers/new/src/parser/parse-line.js`
-
-- [ ] L21: JSDoc `SyntaxNode|null` return type
-- [ ] L23: JSDoc comment "or null"
-- [ ] L26: `return null`
-- [ ] L40: `return null`
-- [ ] L52: JSDoc comment "returns null"
-
-## Exceptions — DO NOT CHANGE
-
-These occurrences of `null` should be left alone:
-
-1. **SQL keywords**: `NOT NULL` in SQL strings (`settings-manager.js` L37), `'null'`/`'NULL'` in SQL syntax highlighter (`sql.js` L20, L126)
-2. **`JSON.stringify(x, null, n)`**: Built-in API requires `null` as second arg (`generate-api-docs.js` L49)
-3. **`document.createTreeWalker(el, filter, null)`**: DOM API requires `null` for optional filter (`selection-manager.js` L89/L215, `cursor-manager.js` L160/L314/L411, `table-manager.js` L120/L159, `cursor-typing-delimiters.spec.js` L78)
-4. **`regex.exec() !== null`** in while loops: This is the canonical regex iteration pattern (`clipboard-handler.js` L187/L191, `inline-tokenizer.js` L62, `search-bar.js` L436/L454)
-5. **`!= null` loose equality checks** that intentionally catch both null and undefined: These can stay as-is or be changed to `!== undefined` — noted per-item above
-6. **Syntax-highlighter language constants**: These are language keyword/constant strings, not JS null values — `c.js` L83 (`nullptr`), L140 (`NULL`); `java.js` L94 (`null`); `json.js` L79 (`null`); `javascript.js` L90 (`null`); `php.js` L86 (`null`/`NULL`)
-
-## Tests
-
-Test files also contain `null` usage (assertions, setup values, evaluate callbacks). These should be updated to match the new source conventions after each source file is changed.
+- [x] L49: `JSON.stringify(schema, null, 4)` — **leave as-is** (built-in API requires null)
+- [x] L232: `return null`
 
 ### `test/unit/word-count/word-count-modal.test.js`
 
@@ -647,10 +436,6 @@ Test files also contain `null` usage (assertions, setup values, evaluate callbac
 ### `test/integration/test-utils.js`
 
 - [ ] L135: `/** @type {HTMLElement|null} */` cast in `page.evaluate()`
-
-### `test/integration/` files
-
-Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
 
 ## `src/types.d.ts`
 
@@ -712,3 +497,22 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 - [ ] L347–348: `TableOfContents|null` + `toc = null`
 - [ ] L349–350: `TabBar|null` + `tabBar = null`
 - [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`
+
+### `test/integration/` files
+
+Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
+
+## Exceptions — DO NOT CHANGE
+
+These occurrences of `null` should be left alone:
+
+1. **SQL keywords**: `NOT NULL` in SQL strings (`settings-manager.js` L37), `'null'`/`'NULL'` in SQL syntax highlighter (`sql.js` L20, L126)
+2. **`JSON.stringify(x, null, n)`**: Built-in API requires `null` as second arg (`generate-api-docs.js` L49)
+3. **`document.createTreeWalker(el, filter, null)`**: DOM API requires `null` for optional filter (`selection-manager.js` L89/L215, `cursor-manager.js` L160/L314/L411, `table-manager.js` L120/L159, `cursor-typing-delimiters.spec.js` L78)
+4. **`regex.exec() !== null`** in while loops: This is the canonical regex iteration pattern (`clipboard-handler.js` L187/L191, `inline-tokenizer.js` L62, `search-bar.js` L436/L454)
+5. **`!= null` loose equality checks** that intentionally catch both null and undefined: These can stay as-is or be changed to `!== undefined` — noted per-item above
+6. **Syntax-highlighter language constants**: These are language keyword/constant strings, not JS null values — `c.js` L83 (`nullptr`), L140 (`NULL`); `java.js` L94 (`null`); `json.js` L79 (`null`); `javascript.js` L90 (`null`); `php.js` L86 (`null`/`NULL`)
+
+## Tests
+
+Test files also contain `null` usage (assertions, setup values, evaluate callbacks). These should be updated to match the new source conventions after each source file is changed.
