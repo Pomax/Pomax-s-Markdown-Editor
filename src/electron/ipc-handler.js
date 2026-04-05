@@ -144,6 +144,14 @@ export class IPCHandler {
     ipcMain.handle(`file:getRecentFiles`, async () => {
       return { success: true, files: this.fileManager.getRecentFiles() };
     });
+
+    ipcMain.handle(`file:loadPath`, async (_event, filePath) => {
+      const result = await this.fileManager.loadRecent(filePath);
+      if (result.success && this.menuBuilder) {
+        this.menuBuilder.refreshMenu();
+      }
+      return result;
+    });
   }
 
   /**
