@@ -1,8 +1,3 @@
-/**
- * @fileoverview Unit tests for tree-diffing functions:
- * matchChildren, updateMatchedNode.
- */
-
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { SyntaxNode, matchChildren, updateMatchedNode } from '../../index.js';
