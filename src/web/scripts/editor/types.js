@@ -36,8 +36,8 @@
 export class EditorData {
   /** @type {HTMLElement} */
   container;
-  /** @type {SyntaxTree|null} */
-  syntaxTree = null;
+  /** @type {SyntaxTree} */
+  syntaxTree;
   /** @type {WritingRenderer} */
   writingRenderer;
   /** @type {SourceRendererV2} */
@@ -97,10 +97,10 @@ export class EditorData {
 export class SourceRendererV2Data {
   /** @type {Editor} */
   editor;
-  /** @type {HTMLTextAreaElement|null} */
-  textarea = null;
-  /** @type {HTMLPreElement|null} */
-  pre = null;
+  /** @type {HTMLTextAreaElement} */
+  textarea;
+  /** @type {HTMLPreElement} */
+  pre;
   /** @type {boolean} */
   mirrorDirty = false;
   /** @type {string} */
@@ -177,15 +177,15 @@ export class TableManagerData {
 export class LinkHelperData {
   /** @type {Editor} */
   editor;
-  /** @type {LinkModal|null} */
-  linkModal = null;
+  /** @type {LinkModal} */
+  linkModal;
 }
 
 export class ImageHelperData {
   /** @type {Editor} */
   editor;
-  /** @type {ImageModal|null} */
-  imageModal = null;
+  /** @type {ImageModal} */
+  imageModal;
 }
 
 export class TreeFormatterData {
@@ -212,16 +212,16 @@ export class ToolbarData {
   container;
   /** @type {Editor} */
   editor;
-  /** @type {HTMLElement|null} */
-  toolbarElement = null;
+  /** @type {HTMLElement} */
+  toolbarElement;
   /** @type {ToolbarButton[]} */
   buttons = [];
-  /** @type {HTMLButtonElement|null} */
-  viewModeToggle = null;
-  /** @type {LinkModal|null} */
-  linkModal = null;
-  /** @type {TableModal|null} */
-  tableModal = null;
+  /** @type {HTMLButtonElement} */
+  viewModeToggle;
+  /** @type {LinkModal} */
+  linkModal;
+  /** @type {TableModal} */
+  tableModal;
   /** @type {ButtonConfig[]} */
   buttonConfigs;
 }
@@ -242,12 +242,12 @@ export class ToolbarButtonData {
 export class SearchBarData {
   /** @type {Editor} */
   editor;
-  /** @type {HTMLElement|null} */
-  container = null;
-  /** @type {HTMLInputElement|null} */
-  input = null;
-  /** @type {HTMLElement|null} */
-  matchCount = null;
+  /** @type {HTMLElement} */
+  container;
+  /** @type {HTMLInputElement} */
+  input;
+  /** @type {HTMLElement} */
+  matchCount;
   /** @type {boolean} */
   useRegex = false;
   /** @type {boolean} */
@@ -262,8 +262,8 @@ export class SearchBarData {
   offsetMap = [];
   /** @type {string} */
   documentText = ``;
-  /** @type {string|null} */
-  searchViewMode = null;
+  /** @type {string} */
+  searchViewMode;
   /** @type {number|undefined} */
   savedScrollTop = undefined;
   /** @type {(() => void) | undefined} */
@@ -294,12 +294,12 @@ export class TabBarData {
   container;
   /** @type {TabInfo[]} */
   tabs = [];
-  /** @type {string|null} */
-  activeTabId = null;
-  /** @type {((tabId: string) => void)|null} */
-  onTabSelect = null;
-  /** @type {((tabId: string) => void)|null} */
-  onTabClose = null;
+  /** @type {string} */
+  activeTabId;
+  /** @type {(tabId: string) => void} */
+  onTabSelect;
+  /** @type {(tabId: string) => void} */
+  onTabClose;
 }
 
 export class BaseModalData {
@@ -334,26 +334,26 @@ export class PreferencesModalData {
 }
 
 export class AppData {
-  /** @type {Editor|null} */
-  editor = null;
-  /** @type {Toolbar|null} */
-  toolbar = null;
-  /** @type {MenuHandler|null} */
-  menuHandler = null;
-  /** @type {KeyboardHandler|null} */
-  keyboardHandler = null;
-  /** @type {SearchBar|null} */
-  searchBar = null;
-  /** @type {TableOfContents|null} */
-  toc = null;
-  /** @type {TabBar|null} */
-  tabBar = null;
+  /** @type {Editor} */
+  editor;
+  /** @type {Toolbar} */
+  toolbar;
+  /** @type {MenuHandler} */
+  menuHandler;
+  /** @type {KeyboardHandler} */
+  keyboardHandler;
+  /** @type {SearchBar} */
+  searchBar;
+  /** @type {TableOfContents} */
+  toc;
+  /** @type {TabBar} */
+  tabBar;
   /** @type {Map<string, DocumentState>} */
   documentStates = new Map();
   /** @type {Map<string, HTMLElement>} */
   tabContainers = new Map();
-  /** @type {HTMLElement|null} */
-  scrollContainer = null;
+  /** @type {HTMLElement} */
+  scrollContainer;
   /** @type {number} */
   tabCounter = 0;
   /** @type {ReturnType<typeof setTimeout> | undefined} */

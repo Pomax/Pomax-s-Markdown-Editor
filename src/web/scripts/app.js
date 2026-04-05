@@ -42,7 +42,7 @@ class App extends AppData {
 
     // The scroll container is `#editor-container`; each tab will
     // get its own contenteditable div inside it.
-    this.scrollContainer = editorContainer.parentElement;
+    this.scrollContainer = /** @type {HTMLElement} */ (editorContainer.parentElement);
 
     // Initialize editor with the original contenteditable div
     this.editor = new Editor(editorContainer);

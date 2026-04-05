@@ -437,47 +437,47 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
 
-- [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
+- [x] L39–40: `SyntaxTree|null` + `syntaxTree = null`
 - [x] L77–78: `string|null` + `currentFilePath = null`
 - [x] L89–90: `TreeRange|null` + `treeRange = null`
 - [x] L91–92: `string|null` + `lastRenderedNodeId = null`
-- [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
-- [ ] L102–103: `HTMLPreElement|null` + `pre = null`
-- [ ] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
-- [ ] L115–116: `HTMLElement|null` + `mouseDownLanguageTag = null`
-- [ ] L117–118: `CodeLanguageModal|null` + `codeLanguageModal = null`
-- [ ] L128–129: `((event: KeyboardEvent) => void)|null` + `keydownHandler = null`
-- [ ] L137–138: `function|null` + `cleanupMenuListener = null`
-- [ ] L154–155: `SelectionState|null` + `currentSelection = null`
-- [ ] L156–157: `SyntaxNode|null` + `currentNode = null`
-- [ ] L180–181: `LinkModal|null` + `linkModal = null`
-- [ ] L187–188: `ImageModal|null` + `imageModal = null`
-- [ ] L215–216: `HTMLElement|null` + `toolbarElement = null`
-- [ ] L219–220: `HTMLButtonElement|null` + `viewModeToggle = null`
-- [ ] L221–222: `LinkModal|null` + `linkModal = null`
-- [ ] L223–224: `TableModal|null` + `tableModal = null`
-- [ ] L245–246: `HTMLElement|null` + `container = null`
-- [ ] L247–248: `HTMLInputElement|null` + `input = null`
-- [ ] L249–250: `HTMLElement|null` + `matchCount = null`
-- [ ] L265–266: `string|null` + `searchViewMode = null`
-- [ ] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
-- [ ] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
+- [x] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
+- [x] L102–103: `HTMLPreElement|null` + `pre = null`
+- [x] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
+- [x] L115–116: `HTMLElement|null` + `mouseDownLanguageTag = null`
+- [x] L117–118: `CodeLanguageModal|null` + `codeLanguageModal = null`
+- [x] L128–129: `((event: KeyboardEvent) => void)|null` + `keydownHandler = null`
+- [x] L137–138: `function|null` + `cleanupMenuListener = null`
+- [x] L154–155: `SelectionState|null` + `currentSelection = null`
+- [x] L156–157: `SyntaxNode|null` + `currentNode = null`
+- [x] L180–181: `LinkModal|null` + `linkModal = null`
+- [x] L187–188: `ImageModal|null` + `imageModal = null`
+- [x] L215–216: `HTMLElement|null` + `toolbarElement = null`
+- [x] L219–220: `HTMLButtonElement|null` + `viewModeToggle = null`
+- [x] L221–222: `LinkModal|null` + `linkModal = null`
+- [x] L223–224: `TableModal|null` + `tableModal = null`
+- [x] L245–246: `HTMLElement|null` + `container = null`
+- [x] L247–248: `HTMLInputElement|null` + `input = null`
+- [x] L249–250: `HTMLElement|null` + `matchCount = null`
+- [x] L265–266: `string|null` + `searchViewMode = null`
+- [x] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
+- [x] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
 - [x] L286–287: `string|null` + `lockedHeadingId = null`
-- [ ] L297–298: `string|null` + `activeTabId = null`
-- [ ] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
-- [ ] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
-- [ ] L306–307: `HTMLDialogElement|null` + `dialog = null` (LinkModal)
-- [ ] L312–313: `HTMLElement|null` + `previousFocus = null`
-- [ ] L317–318: `HTMLDialogElement|null` + `dialog = null` (TableModal)
-- [ ] L324–325: `HTMLDialogElement|null` + `dialog = null` (ImageModal)
-- [ ] L337–338: `Editor|null` + `editor = null`
-- [ ] L339–340: `Toolbar|null` + `toolbar = null`
-- [ ] L341–342: `MenuHandler|null` + `menuHandler = null`
-- [ ] L343–344: `KeyboardHandler|null` + `keyboardHandler = null`
-- [ ] L345–346: `SearchBar|null` + `searchBar = null`
-- [ ] L347–348: `TableOfContents|null` + `toc = null`
-- [ ] L349–350: `TabBar|null` + `tabBar = null`
-- [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`
+- [x] L297–298: `string|null` + `activeTabId = null`
+- [x] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
+- [x] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
+- [x] L306–307: `HTMLDialogElement|null` + `dialog = null` (LinkModal)
+- [x] L312–313: `HTMLElement|null` + `previousFocus = null`
+- [x] L317–318: `HTMLDialogElement|null` + `dialog = null` (TableModal)
+- [x] L324–325: `HTMLDialogElement|null` + `dialog = null` (ImageModal)
+- [x] L337–338: `Editor|null` + `editor = null`
+- [x] L339–340: `Toolbar|null` + `toolbar = null`
+- [x] L341–342: `MenuHandler|null` + `menuHandler = null`
+- [x] L343–344: `KeyboardHandler|null` + `keyboardHandler = null`
+- [x] L345–346: `SearchBar|null` + `searchBar = null`
+- [x] L347–348: `TableOfContents|null` + `toc = null`
+- [x] L349–350: `TabBar|null` + `tabBar = null`
+- [x] L355–356: `HTMLElement|null` + `scrollContainer = null`
 
 ### `test/integration/` files
 
