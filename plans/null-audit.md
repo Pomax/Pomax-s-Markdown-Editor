@@ -403,11 +403,11 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/utility/preferences/preferences-modal.js`
 
-- [ ] L462–463: JSDoc `Element|null` + `let closest = null`
-- [ ] L559: JSDoc comment "or `null`"
-- [ ] L561: JSDoc `string|null` return type
-- [ ] L571: `return null`
-- [ ] L776: `result.value !== null`
+- [x] L462–463: JSDoc `Element|null` + `let closest = null`
+- [x] L559: JSDoc comment "or `null`"
+- [x] L561: JSDoc `string|null` return type
+- [x] L571: `return null`
+- [x] L776: `result.value !== null`
 - [ ] L814: `result.value !== null`
 - [ ] L833: `result.value !== null`
 - [ ] L852: `result.value !== null`
