@@ -25,3 +25,4 @@ export async function parse(markdown) {
 export { parseLine } from './src/parser/parse-line.js';
 export { SyntaxNode } from './src/syntax-tree/syntax-node.js';
 export { SyntaxTree } from './src/syntax-tree/syntax-tree.js';
+export { matchChildren, updateMatchedNode } from './src/syntax-tree/tree-diffing.js';

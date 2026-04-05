@@ -1,4 +1,5 @@
 import { SyntaxNode } from './syntax-node.js';
+import { matchChildren, updateMatchedNode } from './tree-diffing.js';
 
 import { renderTreeToText, renderTreeToMarkdown, renderTreeToDOM } from '../renderers/index.js';
 
@@ -87,5 +88,33 @@ export class SyntaxTree {
    */
   toString() {
     return renderTreeToText(this);
+  }
+
+  /**
+   * Diffs this tree against `newTree`, preserving node identity (IDs)
+   * for matched nodes.
+   *
+   * @param {SyntaxTree} newTree
+   */
+  updateUsing(newTree) {
+    const matches = matchChildren(this.children, newTree.children);
+    const result = [];
+    let changed = false;
+    for (const nc of newTree.children) {
+      const matched = matches.get(nc);
+      if (matched) {
+        updateMatchedNode(matched, nc);
+        result.push(matched);
+        if (!changed && matched !== this.children[result.length - 1]) {
+          changed = true;
+        }
+      } else {
+        result.push(nc);
+        changed = true;
+      }
+    }
+    if (changed || result.length !== this.children.length) {
+      this.children = result;
+    }
   }
 }
