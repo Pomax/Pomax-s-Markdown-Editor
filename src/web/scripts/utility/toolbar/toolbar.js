@@ -357,7 +357,7 @@ export class Toolbar extends ToolbarData {
    */
   static VIEW_MODE_LABELS = {
     writing: `Writing View`,
-    source2: `Source2 View`,
+    source2: `Source View`,
   };
 
   /**

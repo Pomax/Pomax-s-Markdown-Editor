@@ -211,7 +211,7 @@ export class MenuBuilder {
         click: () => this.sendMenuAction(`view:writing`),
       },
       {
-        label: `Source2 View`,
+        label: `Source View`,
         accelerator: `CmdOrCtrl+2`,
         click: () => this.sendMenuAction(`view:source2`),
       },
