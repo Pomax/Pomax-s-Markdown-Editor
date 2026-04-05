@@ -391,7 +391,7 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 ## `src/web/scripts/utility/toolbar/toolbar.js`
 
 - [x] L323: `this.updateButtonStates(null)`
-- [ ] L624–625: JSDoc `TableData|null` + `let existing = null`
+- [x] L624–625: JSDoc `TableData|null` + `let existing = null`
 - [x] L678: JSDoc `SyntaxNode|null` param
 - [x] L696: `/** @type {SyntaxNode|null} */` cast
 

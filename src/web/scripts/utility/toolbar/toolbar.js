@@ -621,12 +621,8 @@ export class Toolbar extends ToolbarData {
     if (formatter.saveCursorPosition) formatter.saveCursorPosition();
 
     const currentNode = this.editor.getCurrentBlockNode();
-    /** @type {TableData|null} */
-    let existing = null;
-
-    if (currentNode?.type === `table`) {
-      existing = TableModal.parseTableContent(currentNode.content);
-    }
+    const existing =
+      currentNode?.type === `table` ? TableModal.parseTableContent(currentNode.content) : undefined;
 
     const result = await this.tableModal.open(existing);
     if (!result) return;
