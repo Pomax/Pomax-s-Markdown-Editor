@@ -303,26 +303,26 @@ export class TabBarData {
 }
 
 export class BaseModalData {
-  /** @type {HTMLDialogElement|null} */
-  dialog = null;
+  /** @type {HTMLDialogElement | undefined} */
+  dialog;
   /** @type {boolean} */
   built = false;
-  /** @type {function(*): void} */
+  /** @type {function(any=): void} */
   resolve = () => {};
-  /** @type {HTMLElement|null} */
-  previousFocus = null;
+  /** @type {HTMLElement | undefined} */
+  previousFocus;
 }
 
 export class WordCountModalData {
-  /** @type {HTMLDialogElement|null} */
-  dialog = null;
+  /** @type {HTMLDialogElement | undefined} */
+  dialog;
   /** @type {boolean} */
   built = false;
 }
 
 export class PreferencesModalData {
-  /** @type {HTMLDialogElement|null} */
-  dialog = null;
+  /** @type {HTMLDialogElement | undefined} */
+  dialog;
   /** @type {boolean} */
   built = false;
   /** @type {boolean} */

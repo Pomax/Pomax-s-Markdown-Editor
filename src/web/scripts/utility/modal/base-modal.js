@@ -65,7 +65,7 @@ export class BaseModal extends BaseModalData {
    * heading / button text for insert-vs-edit mode.
    *
    * @abstract
-   * @param {*} existing - Modal-specific data (may be null/undefined).
+   * @param {*} existing - Modal-specific data (may be undefined).
    */
   populateFields(existing) {
     throw new Error(`Subclass must implement populateFields()`);
@@ -132,16 +132,16 @@ export class BaseModal extends BaseModalData {
     // form (e.g. to select text in an input) and the mouseup drifts
     // onto the backdrop, the browser fires click with target=dialog;
     // we must not dismiss in that case.
-    /** @type {EventTarget|null} */
-    let mouseDownTarget = null;
+    /** @type {EventTarget | undefined} */
+    let mouseDownTarget;
     dialog.addEventListener(`mousedown`, (e) => {
-      mouseDownTarget = e.target;
+      mouseDownTarget = e.target ?? undefined;
     });
     dialog.addEventListener(`click`, (e) => {
       if (e.target === dialog && mouseDownTarget === dialog) {
         this.cancel();
       }
-      mouseDownTarget = null;
+      mouseDownTarget = undefined;
     });
 
     // Close on Escape key
@@ -161,15 +161,15 @@ export class BaseModal extends BaseModalData {
    * mode; otherwise it is in insert mode.
    *
    * @param {*} [existing] - Modal-specific data for pre-population.
-   * @returns {Promise<*>} Resolves with result data, or `null` if cancelled.
+   * @returns {Promise<*>} Resolves with result data, or `undefined` if cancelled.
    */
   open(existing) {
     this.build();
-    if (!this.dialog || this.dialog.open) return Promise.resolve(null);
+    if (!this.dialog || this.dialog.open) return Promise.resolve();
 
     this.populateFields(existing);
 
-    this.previousFocus = /** @type {HTMLElement|null} */ (document.activeElement);
+    this.previousFocus = /** @type {HTMLElement | undefined} */ (document.activeElement);
     this.dialog.showModal();
 
     const target = this.getFocusTarget(existing);
@@ -188,7 +188,7 @@ export class BaseModal extends BaseModalData {
       this.dialog.close();
     }
     this.restoreFocus();
-    this.resolve(null);
+    this.resolve();
   }
 
   /**
@@ -211,7 +211,7 @@ export class BaseModal extends BaseModalData {
   restoreFocus() {
     if (this.previousFocus && typeof this.previousFocus.focus === `function`) {
       this.previousFocus.focus();
-      this.previousFocus = null;
+      this.previousFocus = undefined;
     }
   }
 
@@ -226,19 +226,19 @@ export class BaseModal extends BaseModalData {
 
   /**
    * Returns the heading `<h2>` element inside the dialog header.
-   * @returns {Element|null}
+   * @returns {Element | undefined}
    */
   getHeading() {
-    return this.dialog?.querySelector(`.${this.prefix}-dialog-header h2`) ?? null;
+    return this.dialog?.querySelector(`.${this.prefix}-dialog-header h2`) ?? undefined;
   }
 
   /**
    * Returns the primary action button (Insert / Update).
-   * @returns {HTMLButtonElement|null}
+   * @returns {HTMLButtonElement | undefined}
    */
   getInsertBtn() {
-    return /** @type {HTMLButtonElement|null} */ (
-      this.dialog?.querySelector(`.${this.prefix}-btn--insert`) ?? null
+    return /** @type {HTMLButtonElement | undefined} */ (
+      this.dialog?.querySelector(`.${this.prefix}-btn--insert`)
     );
   }
 }

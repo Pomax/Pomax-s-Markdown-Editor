@@ -388,18 +388,18 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 
 ## `src/web/scripts/utility/modal/base-modal.js`
 
-- [ ] L68: JSDoc "may be null/undefined"
-- [ ] L135–136: JSDoc `EventTarget|null` + `let mouseDownTarget = null`
-- [ ] L144: `mouseDownTarget = null`
-- [ ] L164: JSDoc "or `null` if cancelled"
-- [ ] L168: `Promise.resolve(null)`
-- [ ] L172: `/** @type {HTMLElement|null} */` cast
-- [ ] L191: `this.resolve(null)` — cancel signal
-- [ ] L214: `this.previousFocus = null`
-- [ ] L229: JSDoc `Element|null` return type
-- [ ] L232: `?? null`
-- [ ] L237: JSDoc `HTMLButtonElement|null` return type
-- [ ] L240–241: `/** @type {HTMLButtonElement|null} */` cast + `?? null`
+- [x] L68: JSDoc "may be null/undefined"
+- [x] L135–136: JSDoc `EventTarget|null` + `let mouseDownTarget = null`
+- [x] L144: `mouseDownTarget = null`
+- [x] L164: JSDoc "or `null` if cancelled"
+- [x] L168: `Promise.resolve(null)`
+- [x] L172: `/** @type {HTMLElement|null} */` cast
+- [x] L191: `this.resolve(null)` — cancel signal
+- [x] L214: `this.previousFocus = null`
+- [x] L229: JSDoc `Element|null` return type
+- [x] L232: `?? null`
+- [x] L237: JSDoc `HTMLButtonElement|null` return type
+- [x] L240–241: `/** @type {HTMLButtonElement|null} */` cast + `?? null`
 
 ## `src/web/scripts/utility/preferences/preferences-modal.js`
 
