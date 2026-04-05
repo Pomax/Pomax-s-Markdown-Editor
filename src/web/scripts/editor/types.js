@@ -266,8 +266,8 @@ export class SearchBarData {
   searchViewMode = null;
   /** @type {number|undefined} */
   savedScrollTop = undefined;
-  /** @type {(() => void)|null} */
-  renderCompleteHandler = null;
+  /** @type {(() => void) | undefined} */
+  renderCompleteHandler;
 }
 
 export class TableOfContentsData {

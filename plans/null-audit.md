@@ -380,13 +380,13 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ## `src/web/scripts/utility/search/search-bar.js`
 
-- [ ] L196: `this.renderCompleteHandler = null`
-- [ ] L262: `/** @type {HTMLTextAreaElement|null} */` cast
-- [ ] L436: `m !== null` in regex loop — **leave as-is** (regex exec returns null)
-- [ ] L454: `m !== null` in regex loop — **leave as-is**
-- [ ] L540: `/** @type {HTMLTextAreaElement|null} */` cast
-- [ ] L615: `/** @type {Text|null} */` cast
-- [ ] L618: `/** @type {Text|null} */` cast in while loop
+- [x] L196: `this.renderCompleteHandler = null`
+- [x] L262: `/** @type {HTMLTextAreaElement|null} */` cast
+- [x] L436: `m !== null` in regex loop — **leave as-is** (regex exec returns null)
+- [x] L454: `m !== null` in regex loop — **leave as-is**
+- [x] L540: `/** @type {HTMLTextAreaElement|null} */` cast
+- [x] L615: `/** @type {Text|null} */` cast
+- [x] L618: `/** @type {Text|null} */` cast in while loop
 
 ## `src/web/scripts/utility/toolbar/toolbar.js`
 

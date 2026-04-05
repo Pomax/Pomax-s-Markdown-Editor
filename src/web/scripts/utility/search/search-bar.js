@@ -193,7 +193,7 @@ export class SearchBar extends SearchBarData {
   destroy() {
     if (this.renderCompleteHandler) {
       document.removeEventListener(`editor:renderComplete`, this.renderCompleteHandler);
-      this.renderCompleteHandler = null;
+      this.renderCompleteHandler = undefined;
     }
     this.container?.remove();
   }
@@ -259,8 +259,8 @@ export class SearchBar extends SearchBarData {
     let cursorDocOffset = 0;
 
     if (this.editor.viewMode === `source2`) {
-      /** @type {HTMLTextAreaElement|null} */
-      const textarea = this.editor.container?.querySelector(`textarea`);
+      /** @type {HTMLTextAreaElement | undefined} */
+      const textarea = this.editor.container?.querySelector(`textarea`) ?? undefined;
       cursorDocOffset = textarea?.selectionStart ?? 0;
     } else {
       const cursor = this.editor.syntaxTree?.treeCursor;
@@ -433,7 +433,7 @@ export class SearchBar extends SearchBarData {
       for (const entry of this.offsetMap) {
         let m;
         // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-        while ((m = re.exec(entry.text)) !== null) {
+        while ((m = re.exec(entry.text))) {
           this.matches.push({
             docStart: entry.docStart + m.index,
             docEnd: entry.docStart + m.index + m[0].length,
@@ -451,7 +451,7 @@ export class SearchBar extends SearchBarData {
 
       let m;
       // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-      while ((m = re.exec(this.documentText)) !== null) {
+      while ((m = re.exec(this.documentText))) {
         // Guard against zero-length matches causing an infinite loop.
         if (m[0].length === 0) {
           re.lastIndex++;
@@ -537,7 +537,7 @@ export class SearchBar extends SearchBarData {
    */
   applySource2Highlights() {
     const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
-    const textarea = /** @type {HTMLTextAreaElement|null} */ (
+    const textarea = /** @type {HTMLTextAreaElement} */ (
       this.editor.container.querySelector(`.source-v2-wrapper textarea`)
     );
     if (!pre || !textarea) return;
@@ -612,10 +612,10 @@ export class SearchBar extends SearchBarData {
     /** @type {{ node: Text, start: number, end: number }[]} */
     const textRuns = [];
     let offset = 0;
-    /** @type {Text|null} */
+    /** @type {Text} */
     let textNode;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard TreeWalker loop
-    while ((textNode = /** @type {Text|null} */ (walker.nextNode()))) {
+    while ((textNode = /** @type {Text} */ (walker.nextNode()))) {
       const len = textNode.textContent?.length ?? 0;
       // In writing mode, skip empty landing-pad text nodes.
       if (isFocused && len === 0) continue;
