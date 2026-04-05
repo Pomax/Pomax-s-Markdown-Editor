@@ -1,6 +1,6 @@
 # Release Log
 
-## v1.8.0
+## v2.0.0
 
 ### New Features
 
