@@ -118,7 +118,7 @@ Menu actions are sent to the renderer via the `menu:action` IPC channel. Cut, Co
 ### IPCHandler
 
 Central hub for IPC communication. Registers handlers for:
-- File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
+- File operations (`file:new`, `file:load`, `file:loadPath`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
 - Document operations (`document:undo`, `document:redo`)
 - View operations (`view:source2`, `view:writing`, `view:openFilesChanged`)
 - Element operations (`element:changeType`, `element:format`)
@@ -188,7 +188,7 @@ accesses state via `this.editor`.
 | `EditOperations` | `edit-operations/index.js` | Tree-level edits: insert, backspace, delete, enter |
 | `RangeOperations` | `range-operations.js` | Selection range deletion and Ctrl+A |
 | `ClipboardHandler` | `handlers/clipboard-handler.js` | Cut and copy operations |
-| `EventHandler` | `handlers/event-handler.js` | Click, focus, blur, selectionchange, drag/drop |
+| `EventHandler` | `handlers/event-handler.js` | Click, focus, blur, selectionchange, drag/drop (images and markdown files) |
 | `ImageHelper` | `content-types/image/image-helper.js` | Image modal, insert/update, path rewriting |
 | `LinkHelper` | `content-types/link/link-helper.js` | Link edit modal |
 

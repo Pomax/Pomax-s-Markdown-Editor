@@ -190,6 +190,7 @@ interface ElectronAPI {
     saveFile(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     saveFileAs(content: string): Promise<{ success: boolean; filePath?: string; message?: string }>;
     loadFile(): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
+    loadFilePath(filePath: string): Promise<{ success: boolean; content?: string; filePath?: string; message?: string }>;
     newFile(): Promise<{ success: boolean }>;
     confirmDialog(options: { type?: string; title?: string; message: string; detail?: string; buttons?: string[]; defaultId?: number; cancelId?: number }): Promise<{ response: number }>;
     reload(): Promise<{ success: boolean }>;

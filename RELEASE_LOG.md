@@ -1,5 +1,11 @@
 # Release Log
 
+## v2.1.0
+
+### New Features
+
+- **Drag-and-drop markdown file loading**: Dragging `.md` or `.markdown` files from the OS onto the editor now opens them as documents. Multiple markdown files can be dropped at once — each opens in its own tab. If a drop contains a mix of markdown and other files, only the markdown files are loaded; image-only drops still insert images as before.
+
 ## v2.0.0
 
 ### New Features

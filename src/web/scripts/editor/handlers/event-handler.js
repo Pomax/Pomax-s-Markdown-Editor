@@ -221,12 +221,13 @@ export class EventHandler extends EventHandlerData {
   ]);
 
   /**
-   * Handles drop events — inserts dropped image files into the document.
+   * Handles drop events — loads dropped markdown files or inserts
+   * dropped images.
    *
-   * When an image file is dropped the editor:
-   * 1. Moves the cursor to an empty paragraph (creating one if needed).
-   * 2. Inserts an image node referencing the file's original path.
-   * 3. Ensures an empty paragraph follows the image for continued editing.
+   * If the drop contains any `.md` or `.markdown` files, every
+   * markdown file in the drop is opened as a document (each in its
+   * own tab) and all other files are ignored. Otherwise, image files
+   * are inserted into the current document.
    *
    * @param {DragEvent} event
    */
@@ -236,6 +237,23 @@ export class EventHandler extends EventHandlerData {
     if (!event.dataTransfer?.files?.length || !this.editor.syntaxTree) return;
 
     const files = [...event.dataTransfer.files];
+    const markdownFiles = files.filter((f) => {
+      const ext = f.name.includes(`.`) ? `.${f.name.split(`.`).pop()?.toLowerCase()}` : ``;
+      return ext === `.md` || ext === `.markdown`;
+    });
+
+    if (markdownFiles.length) {
+      event.preventDefault();
+      for (const file of markdownFiles) {
+        const filePath = window.electronAPI?.getPathForFile(file) ?? file.name;
+        const result = await window.electronAPI?.loadFilePath(filePath);
+        if (result?.success) {
+          document.dispatchEvent(new CustomEvent(`file:loaded`, { detail: result }));
+        }
+      }
+      return;
+    }
+
     const imageFiles = files.filter((f) => {
       const ext = f.name.includes(`.`) ? `.${f.name.split(`.`).pop()?.toLowerCase()}` : ``;
       return EventHandler.IMAGE_EXTENSIONS.has(ext);

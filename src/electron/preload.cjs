@@ -37,6 +37,13 @@ const electronAPI = {
     loadFile: () => ipcRenderer.invoke('file:load'),
 
     /**
+     * Loads a markdown file by its filesystem path (e.g. from drag-and-drop).
+     * @param {string} filePath - Absolute path to the file to load
+     * @returns {Promise<{success: boolean, content?: string, filePath?: string, message?: string}>}
+     */
+    loadFilePath: (filePath) => ipcRenderer.invoke('file:loadPath', filePath),
+
+    /**
      * Saves the current document to its file path.
      * @param {string} content - The markdown content to save
      * @returns {Promise<{success: boolean, filePath?: string, message?: string}>}
