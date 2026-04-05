@@ -4,7 +4,7 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 **Exception:** SQL keywords like `NOT NULL` are left as-is — that's SQL, not JS.
 
-**Principle:** `null` assignments become `undefined` (or are deleted if redundant). `null` comparisons become `undefined` comparisons. `?? null` becomes `?? undefined`. JSDoc `|null` becomes `|undefined`.
+**Principle:** `null` assignments become `undefined` (or are deleted if redundant). `null` comparisons become `undefined` comparisons. `?? null` becomes `?? undefined`. JSDoc `|null` becomes `|undefined` BUT ONLY WHEN JS DOES NOT ALREADY DO THE RIGHT THING BY DEFAULT WHEN SWITCHING TO UNDEFINED.
 
 **Cascade rule:** Removing `null` from one site can trigger a chain of required updates. For example, if `findNodeById()` changes from returning `null` to returning `undefined`, then every caller that does `=== null` on its result must also change, the JSDoc `@returns {SyntaxNode|null}` must become `@returns {SyntaxNode|undefined}`, the corresponding `.d.ts` type must update, and any test that asserts `strictEqual(result, null)` must assert `strictEqual(result, undefined)`. Each checklist item therefore covers the **full cascade** — the originating site plus every downstream consumer — as a single atomic change. Do not check off an item until every part of its cascade has been updated and tested.
 
@@ -112,54 +112,6 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [x] L934: `this.editor?.currentFilePath ?? null`
 - [x] L942: `treeCursor?.nodeId ?? null`
 - [x] L979: `await this.createNewTab(null, '')`
-
-## `src/web/scripts/editor/types.js`
-
-> **⚠️ DO LAST** — This file declares class field types used everywhere. Changing it triggers cascades in almost every consumer. Process every other file first, then do types.js as the final pass.
-
-This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
-
-- [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
-- [x] L77–78: `string|null` + `currentFilePath = null`
-- [x] L89–90: `TreeRange|null` + `treeRange = null`
-- [x] L91–92: `string|null` + `lastRenderedNodeId = null`
-- [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
-- [ ] L102–103: `HTMLPreElement|null` + `pre = null`
-- [ ] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
-- [ ] L115–116: `HTMLElement|null` + `mouseDownLanguageTag = null`
-- [ ] L117–118: `CodeLanguageModal|null` + `codeLanguageModal = null`
-- [ ] L128–129: `((event: KeyboardEvent) => void)|null` + `keydownHandler = null`
-- [ ] L137–138: `function|null` + `cleanupMenuListener = null`
-- [ ] L154–155: `SelectionState|null` + `currentSelection = null`
-- [ ] L156–157: `SyntaxNode|null` + `currentNode = null`
-- [ ] L180–181: `LinkModal|null` + `linkModal = null`
-- [ ] L187–188: `ImageModal|null` + `imageModal = null`
-- [ ] L215–216: `HTMLElement|null` + `toolbarElement = null`
-- [ ] L219–220: `HTMLButtonElement|null` + `viewModeToggle = null`
-- [ ] L221–222: `LinkModal|null` + `linkModal = null`
-- [ ] L223–224: `TableModal|null` + `tableModal = null`
-- [ ] L245–246: `HTMLElement|null` + `container = null`
-- [ ] L247–248: `HTMLInputElement|null` + `input = null`
-- [ ] L249–250: `HTMLElement|null` + `matchCount = null`
-- [ ] L265–266: `string|null` + `searchViewMode = null`
-- [ ] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
-- [ ] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
-- [x] L286–287: `string|null` + `lockedHeadingId = null`
-- [ ] L297–298: `string|null` + `activeTabId = null`
-- [ ] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
-- [ ] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
-- [ ] L306–307: `HTMLDialogElement|null` + `dialog = null` (LinkModal)
-- [ ] L312–313: `HTMLElement|null` + `previousFocus = null`
-- [ ] L317–318: `HTMLDialogElement|null` + `dialog = null` (TableModal)
-- [ ] L324–325: `HTMLDialogElement|null` + `dialog = null` (ImageModal)
-- [ ] L337–338: `Editor|null` + `editor = null`
-- [ ] L339–340: `Toolbar|null` + `toolbar = null`
-- [ ] L341–342: `MenuHandler|null` + `menuHandler = null`
-- [ ] L343–344: `KeyboardHandler|null` + `keyboardHandler = null`
-- [ ] L345–346: `SearchBar|null` + `searchBar = null`
-- [ ] L347–348: `TableOfContents|null` + `toc = null`
-- [ ] L349–350: `TabBar|null` + `tabBar = null`
-- [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`
 - [x] L359–360: `ReturnType<typeof setTimeout>|null` + `cursorDebounce = null`
 
 ## `src/web/scripts/editor/crc32.js`
@@ -420,11 +372,11 @@ This file is almost entirely JSDoc `|null` type annotations paired with `= null`
 ## `src/web/scripts/utility/toc/toc.js`
 
 - [x] L53: `this.lockedHeadingId = null`
-- [ ] L510: `this.observer = null`
-- [ ] L517: `this.scrollHandler = null`
-- [ ] L525: JSDoc `TableOfContents|null` param
-- [ ] L536: JSDoc `TableOfContents|null` param
-- [ ] L547: JSDoc `TableOfContents|null` param
+- [x] L510: `this.observer = null`
+- [x] L517: `this.scrollHandler = null`
+- [x] L525: JSDoc `TableOfContents|null` param
+- [x] L536: JSDoc `TableOfContents|null` param
+- [x] L547: JSDoc `TableOfContents|null` param
 
 ## `src/web/scripts/utility/search/search-bar.js`
 
@@ -712,3 +664,51 @@ Test files also contain `null` usage (assertions, setup values, evaluate callbac
 ### `test/integration/` files
 
 Many integration tests use `null` in `page.evaluate()` callbacks and assertions — these should all be updated to use `undefined` where the source code now returns/assigns `undefined` instead of `null`.
+
+## `src/web/scripts/editor/types.js`
+
+> **⚠️ DO LAST** — This file declares class field types used everywhere. Changing it triggers cascades in almost every consumer. Process every other file first, then do types.js as the final pass.
+
+This file is almost entirely JSDoc `|null` type annotations paired with `= null` class field initializers. Every field follows the same pattern: change `|null` → `|undefined` in the JSDoc and delete the `= null` initializer (uninitialized fields are `undefined` by default).
+
+- [ ] L39–40: `SyntaxTree|null` + `syntaxTree = null`
+- [x] L77–78: `string|null` + `currentFilePath = null`
+- [x] L89–90: `TreeRange|null` + `treeRange = null`
+- [x] L91–92: `string|null` + `lastRenderedNodeId = null`
+- [ ] L100–101: `HTMLTextAreaElement|null` + `textarea = null`
+- [ ] L102–103: `HTMLPreElement|null` + `pre = null`
+- [ ] L113–114: `HTMLElement|null` + `mouseDownAnchor = null`
+- [ ] L115–116: `HTMLElement|null` + `mouseDownLanguageTag = null`
+- [ ] L117–118: `CodeLanguageModal|null` + `codeLanguageModal = null`
+- [ ] L128–129: `((event: KeyboardEvent) => void)|null` + `keydownHandler = null`
+- [ ] L137–138: `function|null` + `cleanupMenuListener = null`
+- [ ] L154–155: `SelectionState|null` + `currentSelection = null`
+- [ ] L156–157: `SyntaxNode|null` + `currentNode = null`
+- [ ] L180–181: `LinkModal|null` + `linkModal = null`
+- [ ] L187–188: `ImageModal|null` + `imageModal = null`
+- [ ] L215–216: `HTMLElement|null` + `toolbarElement = null`
+- [ ] L219–220: `HTMLButtonElement|null` + `viewModeToggle = null`
+- [ ] L221–222: `LinkModal|null` + `linkModal = null`
+- [ ] L223–224: `TableModal|null` + `tableModal = null`
+- [ ] L245–246: `HTMLElement|null` + `container = null`
+- [ ] L247–248: `HTMLInputElement|null` + `input = null`
+- [ ] L249–250: `HTMLElement|null` + `matchCount = null`
+- [ ] L265–266: `string|null` + `searchViewMode = null`
+- [ ] L269–270: `(() => void)|null` + `renderCompleteHandler = null`
+- [ ] L284–285: `((e: Event) => void)|null` + `scrollHandler = null`
+- [x] L286–287: `string|null` + `lockedHeadingId = null`
+- [ ] L297–298: `string|null` + `activeTabId = null`
+- [ ] L299–300: `((tabId: string) => void)|null` + `onTabSelect = null`
+- [ ] L301–302: `((tabId: string) => void)|null` + `onTabClose = null`
+- [ ] L306–307: `HTMLDialogElement|null` + `dialog = null` (LinkModal)
+- [ ] L312–313: `HTMLElement|null` + `previousFocus = null`
+- [ ] L317–318: `HTMLDialogElement|null` + `dialog = null` (TableModal)
+- [ ] L324–325: `HTMLDialogElement|null` + `dialog = null` (ImageModal)
+- [ ] L337–338: `Editor|null` + `editor = null`
+- [ ] L339–340: `Toolbar|null` + `toolbar = null`
+- [ ] L341–342: `MenuHandler|null` + `menuHandler = null`
+- [ ] L343–344: `KeyboardHandler|null` + `keyboardHandler = null`
+- [ ] L345–346: `SearchBar|null` + `searchBar = null`
+- [ ] L347–348: `TableOfContents|null` + `toc = null`
+- [ ] L349–350: `TabBar|null` + `tabBar = null`
+- [ ] L355–356: `HTMLElement|null` + `scrollContainer = null`

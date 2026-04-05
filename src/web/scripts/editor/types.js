@@ -281,8 +281,8 @@ export class TableOfContentsData {
   position = `left`;
   /** @type {Map<string, string>} */
   nodeToHeadingId = new Map();
-  /** @type {((e: Event) => void) | null} */
-  scrollHandler = null;
+  /** @type {((e: Event) => void) | undefined} */
+  scrollHandler;
   /** @type {string | undefined} */
   lockedHeadingId;
   /** @type {boolean} */

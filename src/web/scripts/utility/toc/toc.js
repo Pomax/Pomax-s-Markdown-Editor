@@ -507,14 +507,14 @@ export class TableOfContents extends TableOfContentsData {
   destroy() {
     if (this.observer) {
       this.observer.disconnect();
-      this.observer = null;
+      this.observer = undefined;
     }
     if (this.scrollHandler) {
       const scrollContainer = this.editor.container.parentElement;
       if (scrollContainer) {
         scrollContainer.removeEventListener(`scroll`, this.scrollHandler);
       }
-      this.scrollHandler = null;
+      this.scrollHandler = undefined;
     }
   }
 }
@@ -522,7 +522,7 @@ export class TableOfContents extends TableOfContentsData {
 /**
  * Applies the TOC visibility setting.
  * @param {boolean} visible
- * @param {TableOfContents|null} toc
+ * @param {TableOfContents} [toc]
  */
 export function applyTocVisible(visible, toc) {
   if (toc) {
@@ -533,7 +533,7 @@ export function applyTocVisible(visible, toc) {
 /**
  * Applies the TOC position setting.
  * @param {TocPosition} position
- * @param {TableOfContents|null} toc
+ * @param {TableOfContents} [toc]
  */
 export function applyTocPosition(position, toc) {
   if (toc) {
@@ -544,7 +544,7 @@ export function applyTocPosition(position, toc) {
 /**
  * Applies the TOC width setting.
  * @param {number} width - Width in pixels
- * @param {TableOfContents|null} toc
+ * @param {TableOfContents} [toc]
  */
 export function applyTocWidth(width, toc) {
   if (toc) {
