@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { BrowserWindow, Menu, dialog } from 'electron';
+import { BrowserWindow, Menu, clipboard, dialog } from 'electron';
 import { settings } from './settings-manager.js';
 
 /**
@@ -24,7 +24,7 @@ export class MenuBuilder {
 
     /**
      * List of currently open files, sent from the renderer.
-     * @type {Array<{id: string, filePath: string|null, label: string, active: boolean}>}
+     * @type {Array<{id: string, filePath: string, label: string, active: boolean}>}
      */
     this.openFiles = [];
 
@@ -89,6 +89,15 @@ export class MenuBuilder {
         {
           label: `Word Count`,
           click: () => this.sendMenuAction(`file:wordCount`),
+        },
+        {
+          label: `Copy File Path`,
+          enabled: !!this.fileManager.currentFilePath,
+          click: () => {
+            if (this.fileManager.currentFilePath) {
+              clipboard.writeText(this.fileManager.currentFilePath);
+            }
+          },
         },
         { type: `separator` },
         {
@@ -197,14 +206,14 @@ export class MenuBuilder {
     /** @type {Electron.MenuItemConstructorOptions[]} */
     const submenu = [
       {
-        label: `Source View`,
+        label: `Writing View`,
         accelerator: `CmdOrCtrl+1`,
-        click: () => this.sendMenuAction(`view:source`),
+        click: () => this.sendMenuAction(`view:writing`),
       },
       {
-        label: `Writing View`,
+        label: `Source2 View`,
         accelerator: `CmdOrCtrl+2`,
-        click: () => this.sendMenuAction(`view:writing`),
+        click: () => this.sendMenuAction(`view:source2`),
       },
     ];
 
@@ -353,7 +362,7 @@ export class MenuBuilder {
   async restoreOpenFiles() {
     if (!this.window) return;
 
-    const openFiles = settings.get(`openFiles`, null);
+    const openFiles = settings.get(`openFiles`);
     if (!Array.isArray(openFiles) || openFiles.length === 0) return;
 
     const valid = openFiles.filter(
@@ -362,7 +371,7 @@ export class MenuBuilder {
     if (valid.length === 0) return;
 
     // Read all files from disk
-    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[]|null, tocHeadingPath: number[]|null}>} */
+    /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath: number[], tocHeadingPath: number[]}>} */
     const loaded = [];
     for (const entry of valid) {
       const result = await this.fileManager.loadRecent(entry.filePath);
@@ -374,8 +383,8 @@ export class MenuBuilder {
           cursorOffset: entry.cursorOffset ?? 0,
           contentHash: entry.contentHash ?? 0,
           scrollTop: entry.scrollTop ?? 0,
-          cursorPath: entry.cursorPath ?? null,
-          tocHeadingPath: entry.tocHeadingPath ?? null,
+          cursorPath: entry.cursorPath,
+          tocHeadingPath: entry.tocHeadingPath,
         });
       }
     }

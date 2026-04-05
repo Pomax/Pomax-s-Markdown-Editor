@@ -3,18 +3,20 @@
  * Hides markdown syntax unless the cursor is on a specific element.
  */
 
-import { buildInlineTree, tokenizeInline } from '../../../../parsers/old/inline-tokenizer.js';
-import { highlight } from '../syntax-highlighter/index.js';
+import { buildInlineTree, tokenizeInline } from '../../../../../parsers/old/inline-tokenizer.js';
+import { highlight } from '../../syntax-highlighter/index.js';
+import { cursorToAbsoluteOffset } from '../../managers/cursor-persistence.js';
+import { WritingRendererData } from '../../types.js';
 
 /**
  * Renders the syntax tree in writing mode.
  */
-export class WritingRenderer {
+export class WritingRenderer extends WritingRendererData {
   /**
    * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 
@@ -57,7 +59,6 @@ export class WritingRenderer {
     // Clear and rebuild content
     container.innerHTML = ``;
     container.classList.add(`writing-view`);
-    container.classList.remove(`source-view`);
 
     const fragment = document.createDocumentFragment();
 
@@ -217,7 +218,7 @@ export class WritingRenderer {
   ensurePhantomParagraph(container, tree) {
     const existing = container.querySelector(`[data-is-phantom]`);
     const children = tree.children;
-    const last = children.length > 0 ? children[children.length - 1] : null;
+    const last = children.length > 0 ? children[children.length - 1] : undefined;
     const needsPhantom = last?.type === `code-block`;
 
     if (needsPhantom && !existing) {
@@ -260,7 +261,7 @@ export class WritingRenderer {
    * @param {SyntaxNode} node - The node to render
    * @param {boolean} isFocused - Whether this node has focus
    * @param {number} [visualNumber] - 1-based position for ordered list items
-   * @returns {HTMLElement|null}
+   * @returns {HTMLElement | undefined}
    */
   renderNode(node, isFocused, visualNumber) {
     const element = document.createElement(`div`);
@@ -448,8 +449,8 @@ export class WritingRenderer {
     const isChecklist = typeof attrs.checked === `boolean`;
     const number = attrs.number || 1;
 
-    /** @type {HTMLInputElement|null} */
-    let checkbox = null;
+    /** @type {HTMLInputElement | undefined} */
+    let checkbox;
 
     if (isChecklist) {
       // Checklist: no bullet/number, show a checkbox
@@ -491,7 +492,7 @@ export class WritingRenderer {
       element.style.listStyleType = isOrdered ? `decimal` : `disc`;
       element.style.display = `list-item`;
       element.style.marginLeft = `${(indent + 1) * 1.5}em`;
-      if (isOrdered && visualNumber != null) {
+      if (isOrdered && visualNumber !== undefined) {
         element.style.counterSet = `list-item ${visualNumber}`;
       }
     }
@@ -726,8 +727,8 @@ export class WritingRenderer {
     const currentNodeId = this.editor.getBlockNodeId();
 
     // Split children into summary child and body children
-    /** @type {SyntaxNode|null} */
-    let summaryNode = null;
+    /** @type {SyntaxNode | undefined} */
+    let summaryNode;
     /** @type {SyntaxNode[]} */
     const bodyChildren = [];
 
@@ -1029,15 +1030,154 @@ export class WritingRenderer {
           break;
         }
         default: {
-          // HTML inline tags (sub, sup, mark, u, etc.)
+          // HTML inline tags (sub, sup, mark, span, br, etc.)
           if (seg.tag) {
             const el = document.createElement(seg.tag);
+            if (seg.attrs) {
+              for (const [key, value] of Object.entries(seg.attrs)) {
+                el.setAttribute(key, value);
+              }
+            }
             this.appendSegments(seg.children ?? [], el);
             container.appendChild(el);
             container.appendChild(document.createTextNode(``));
           }
           break;
         }
+      }
+    }
+  }
+
+  /**
+   * Compute the absolute cursor offset and capture the caret's pixel
+   * position for scroll-preservation when leaving writing view.
+   * @returns {Promise<ViewSwitchData>}
+   */
+  async leaveView() {
+    const editor = this.editor;
+
+    // Compute the absolute cursor offset so we can place the textarea
+    // caret in the same position when entering source2.
+    let absoluteCursorOffset;
+    if (editor.syntaxTree?.treeCursor) {
+      absoluteCursorOffset = cursorToAbsoluteOffset(
+        editor.syntaxTree,
+        editor.syntaxTree.treeCursor,
+        editor.buildMarkdownLine.bind(editor),
+        editor.getPrefixLength.bind(editor),
+      );
+    }
+
+    // Capture the actual caret pixel position from the browser
+    // selection so we can match it after the switch.
+    let savedCaretTop;
+    const scrollContainer = editor.container.parentElement;
+    if (scrollContainer) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        // Firefox returns a zero-height rect for collapsed selections
+        // after inline elements (e.g. <em>), producing a bogus top
+        // value that would scroll the content off-screen.
+        if (rect.height > 0) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          savedCaretTop = rect.top - containerRect.top;
+        }
+      }
+    }
+
+    // Anchor on the cursor's node if one exists, since that is what
+    // the user is focused on.  Fall back to the node closest to the
+    // viewport centre so content doesn't jump when there is no cursor.
+    /** @type {string | undefined} */
+    let anchorNodeId;
+    let savedOffsetFromTop;
+
+    if (scrollContainer) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+
+      // Prefer the cursor's node as anchor.
+      if (editor.syntaxTree?.treeCursor) {
+        const blockId = editor.getBlockNodeId();
+        const cursorEl = blockId
+          ? editor.container.querySelector(`[data-node-id="${blockId}"]`)
+          : undefined;
+        if (cursorEl && blockId) {
+          anchorNodeId = blockId;
+          savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
+        }
+      }
+
+      // Fallback: node closest to the viewport centre.
+      if (!anchorNodeId) {
+        const centreY = containerRect.top + containerRect.height / 2;
+        const nodeEls = editor.container.querySelectorAll(`[data-node-id]`);
+        let bestDistance = Number.POSITIVE_INFINITY;
+
+        for (const el of nodeEls) {
+          const rect = el.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2;
+          const dist = Math.abs(mid - centreY);
+          if (dist < bestDistance) {
+            bestDistance = dist;
+            anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? undefined;
+            savedOffsetFromTop = rect.top - containerRect.top;
+          }
+        }
+      }
+    }
+
+    return {
+      absoluteCursorOffset,
+      savedCaretTop,
+      anchorNodeId,
+      savedOffsetFromTop,
+    };
+  }
+
+  /**
+   * Activate writing view: restore contenteditable, render, restore
+   * selection, and scroll-preserve.
+   * @param {ViewSwitchData} data
+   */
+  enterView(data) {
+    const editor = this.editor;
+    const { savedCaretTop, anchorNodeId, savedOffsetFromTop } = data;
+    const scrollContainer = editor.container.parentElement;
+
+    editor.container.setAttribute(`contenteditable`, `true`);
+
+    editor.viewMode = `writing`;
+    editor.container.dataset.viewMode = `writing`;
+    editor.fullRenderAndPlaceCursor();
+
+    // If the tree owns a non-collapsed selection, rebuild it in the
+    // new DOM so the user's selection survives the view-mode switch.
+    if (editor.treeRange) {
+      editor.placeSelection();
+    }
+
+    // Restore scroll so the anchor node sits at the same viewport offset.
+    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== undefined) {
+      const el = editor.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
+      if (el) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
+        scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
+      }
+    }
+
+    // Scroll-preserve for source2 → writing: match the writing-mode
+    // caret position to where it was in the source2 textarea.
+    if (savedCaretTop !== undefined && scrollContainer) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const currentOffsetFromTop = rect.top - containerRect.top;
+        scrollContainer.scrollTop += currentOffsetFromTop - savedCaretTop;
       }
     }
   }

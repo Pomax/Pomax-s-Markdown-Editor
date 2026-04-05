@@ -31,13 +31,13 @@ export class IPCHandler {
   /**
    * Persists the open-files list to the settings database so the
    * state survives ungraceful exits.
-   * @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}[]} files
+   * @param {{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[], tocHeadingPath?: number[]}[]} files
    */
   persistOpenFiles(files) {
     const entries = files
-      .filter(/** @param {{filePath: string|null}} f */ (f) => f.filePath)
+      .filter(/** @param {{filePath: string}} f */ (f) => f.filePath)
       .map(
-        /** @param {{filePath: string|null, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}} f */ (
+        /** @param {{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[], tocHeadingPath?: number[]}} f */ (
           f,
         ) => ({
           filePath: f.filePath,
@@ -45,8 +45,8 @@ export class IPCHandler {
           cursorOffset: f.cursorOffset ?? 0,
           contentHash: f.contentHash ?? 0,
           scrollTop: f.scrollTop ?? 0,
-          cursorPath: f.cursorPath ?? null,
-          tocHeadingPath: f.tocHeadingPath ?? null,
+          cursorPath: f.cursorPath,
+          tocHeadingPath: f.tocHeadingPath,
         }),
       );
 
@@ -64,7 +64,7 @@ export class IPCHandler {
    * @param {MenuBuilder} [menuBuilder] - The menu builder (for reload support)
    */
   registerHandlers(menuBuilder) {
-    this.menuBuilder = menuBuilder ?? null;
+    this.menuBuilder = menuBuilder;
     this.registerFileHandlers();
     this.registerDocumentHandlers();
     this.registerViewHandlers();
@@ -171,18 +171,18 @@ export class IPCHandler {
    * Registers view-related IPC handlers.
    */
   registerViewHandlers() {
-    ipcMain.handle(`view:source`, async (event) => {
-      const window = BrowserWindow.fromWebContents(event.sender);
-      if (window) {
-        window.webContents.send(`menu:action`, `view:source`);
-      }
-      return { success: true };
-    });
-
     ipcMain.handle(`view:writing`, async (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
       if (window) {
         window.webContents.send(`menu:action`, `view:writing`);
+      }
+      return { success: true };
+    });
+
+    ipcMain.handle(`view:source2`, async (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        window.webContents.send(`menu:action`, `view:source2`);
       }
       return { success: true };
     });
@@ -196,7 +196,7 @@ export class IPCHandler {
       const fileList = files ?? [];
       const activeFile = fileList.find(/** @param {{active: boolean}} f */ (f) => f.active);
       if (activeFile) {
-        this.fileManager.currentFilePath = activeFile.filePath ?? null;
+        this.fileManager.currentFilePath = activeFile.filePath;
       }
       // Eagerly persist the open-files list so the state survives
       // ungraceful exits (SIGINT, SIGKILL, crashes).

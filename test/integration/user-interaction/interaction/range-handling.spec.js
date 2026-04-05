@@ -76,14 +76,16 @@ async function setCrossNodeSelection(page, startText, startOff, endText, endOff)
       const eOff = /** @type {number} */ (args[3]);
       const editor = /** @type {HTMLElement} */ (document.getElementById(`editor`));
       const lines = editor.querySelectorAll(`[data-node-id]`);
-      /** @type {Element|null} */
-      let startEl = null;
-      /** @type {Element|null} */
-      let endEl = null;
+      /** @type {Element} */
+      let startEl;
+      /** @type {Element} */
+      let endEl;
       for (const line of lines) {
+        // @ts-ignore — assigned inside this loop
         if (!startEl && line.textContent?.includes(sText)) startEl = line;
         if (line.textContent?.includes(eText)) endEl = line;
       }
+      // @ts-ignore — assigned inside the loop above
       if (!startEl || !endEl) {
         throw new Error(`Could not find nodes for "${sText}" / "${eText}"`);
       }
@@ -294,9 +296,9 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then type replaces the entire node content`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
+    await editor.waitFor();
     await clickInEditor(page, editor);
 
     await typeText(page, `hello world`);
@@ -309,9 +311,9 @@ test.describe(`Ctrl+A context-restricted select-all`, () => {
 
   test(`Ctrl+A then delete empties the node`, async ({ page }) => {
     await page.goto(baseURL);
-    await page.waitForSelector(`#editor [data-node-id]`);
 
     const editor = page.locator(`#editor`);
+    await editor.waitFor();
     await clickInEditor(page, editor);
 
     await typeText(page, `hello world`);

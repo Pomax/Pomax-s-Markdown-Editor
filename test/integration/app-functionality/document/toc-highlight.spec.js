@@ -156,7 +156,7 @@ test(`active ToC link is scrolled to the vertical center of the sidebar`, async 
   const positions = await page.evaluate(() => {
     const toc = document.getElementById(`toc-sidebar`);
     const active = toc?.querySelector(`.toc-link.toc-active`);
-    if (!toc || !active) return null;
+    if (!toc || !active) return;
     const tocRect = toc.getBoundingClientRect();
     const linkRect = active.getBoundingClientRect();
     const linkCenter = linkRect.top + linkRect.height / 2;
@@ -164,7 +164,7 @@ test(`active ToC link is scrolled to the vertical center of the sidebar`, async 
     return { linkCenter, tocCenter, tocHeight: tocRect.height };
   });
 
-  expect(positions).not.toBeNull();
+  expect(positions).toBeDefined();
   const p = /** @type {NonNullable<typeof positions>} */ (positions);
   // The active link's center should be within 40% of the ToC's center.
   // (Some leeway because the last item can't scroll past the bottom.)

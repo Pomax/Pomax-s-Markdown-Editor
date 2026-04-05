@@ -2,24 +2,20 @@
 
 import { PreferencesModal } from '../../utility/preferences/preferences-modal.js';
 import { WordCountModal } from '../../utility/word-count/word-count-modal.js';
+import { MenuHandlerData } from '../types.js';
 
 /**
  * Handles menu actions from the main process.
  */
-export class MenuHandler {
+export class MenuHandler extends MenuHandlerData {
   /**
    * @param {Editor} editor - The editor instance
    * @param {Toolbar} toolbar - The toolbar instance
    */
   constructor(editor, toolbar) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {Toolbar} */
     this.toolbar = toolbar;
-
-    /** @type {function|null} */
-    this.cleanupMenuListener = null;
   }
 
   /**
@@ -41,7 +37,7 @@ export class MenuHandler {
   destroy() {
     if (this.cleanupMenuListener) {
       this.cleanupMenuListener();
-      this.cleanupMenuListener = null;
+      this.cleanupMenuListener = undefined;
     }
   }
 
@@ -76,11 +72,11 @@ export class MenuHandler {
       case `edit:redo`:
         await this.handleRedo();
         break;
-      case `view:source`:
-        await this.handleViewSource();
-        break;
       case `view:writing`:
         await this.handleViewWriting();
+        break;
+      case `view:source2`:
+        await this.handleViewSource2();
         break;
       case `edit:preferences`:
         this.handlePreferences();
@@ -139,7 +135,7 @@ export class MenuHandler {
     const result = await window.electronAPI.saveFile(content);
 
     if (result.success) {
-      this.editor.currentFilePath = result.filePath || null;
+      this.editor.currentFilePath = result.filePath;
       this.editor.setUnsavedChanges(false);
     }
   }
@@ -154,7 +150,7 @@ export class MenuHandler {
     const result = await window.electronAPI.saveFileAs(content);
 
     if (result.success) {
-      this.editor.currentFilePath = result.filePath || null;
+      this.editor.currentFilePath = result.filePath;
       this.editor.setUnsavedChanges(false);
     }
   }
@@ -174,19 +170,19 @@ export class MenuHandler {
   }
 
   /**
-   * Handles switching to Source view.
-   */
-  async handleViewSource() {
-    await this.editor.setViewMode(`source`);
-    this.toolbar.setViewMode(`source`);
-  }
-
-  /**
    * Handles switching to Writing view.
    */
   async handleViewWriting() {
     await this.editor.setViewMode(`writing`);
     this.toolbar.setViewMode(`writing`);
+  }
+
+  /**
+   * Handles switching to Source2 view.
+   */
+  async handleViewSource2() {
+    await this.editor.setViewMode(`source2`);
+    this.toolbar.setViewMode(`source2`);
   }
 
   /**
@@ -238,6 +234,6 @@ export class MenuHandler {
     if (!this.wordCountModal) {
       this.wordCountModal = new WordCountModal();
     }
-    this.wordCountModal.open(this.editor.syntaxTree);
+    this.wordCountModal.open(this.editor.syntaxTree ?? undefined);
   }
 }

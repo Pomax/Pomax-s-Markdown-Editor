@@ -8,16 +8,18 @@
 
 /// <reference path="../../../../types.d.ts" />
 
+import { InputHandlerData } from '../types.js';
+
 /**
  * Dispatches keyboard and beforeinput events to the appropriate editor
  * operations.
  */
-export class InputHandler {
+export class InputHandler extends InputHandlerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 
@@ -28,6 +30,8 @@ export class InputHandler {
    * @param {InputEvent} event
    */
   async handleBeforeInput(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     if (this.editor.isRendering) {
       event.preventDefault();
       return;
@@ -80,6 +84,8 @@ export class InputHandler {
    * @param {KeyboardEvent} event
    */
   async handleKeyDown(event) {
+    if (this.editor.viewMode === `source2`) return;
+
     // Signal that the next selectionchange was caused by an
     // in-editor interaction, so treeRange may be cleared.
     this.editor.editorInteractionPending = true;
@@ -164,10 +170,7 @@ export class InputHandler {
     if (event.key === `Tab` && this.editor.viewMode === `writing`) {
       this.editor.syncCursorFromDOM();
       const node = this.editor.getCurrentBlockNode();
-      if (
-        node?.type === `table` &&
-        this.editor.syntaxTree?.treeCursor?.cellRow !== undefined
-      ) {
+      if (node?.type === `table` && this.editor.syntaxTree?.treeCursor?.cellRow !== undefined) {
         event.preventDefault();
         this.editor.tableManager.handleTableTab(event.shiftKey);
         return;

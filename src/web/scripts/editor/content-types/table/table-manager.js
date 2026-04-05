@@ -7,16 +7,17 @@
 /// <reference path="../../../../../types.d.ts" />
 
 import { TableModal } from './table-modal.js';
+import { TableManagerData } from '../../types.js';
 
 /**
  * Manages table-specific editing operations.
  */
-export class TableManager {
+export class TableManager extends TableManagerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 
@@ -82,9 +83,9 @@ export class TableManager {
    */
   computeTableCellPosition(nodeElement, cursorNode, cursorOffset) {
     // Walk up to find the <th> or <td>
-    /** @type {HTMLElement|null} */
-    let cell = null;
-    /** @type {Node|null} */
+    /** @type {HTMLElement | undefined} */
+    let cell;
+    /** @type {Node | undefined} */
     let el = cursorNode;
     while (el && el !== nodeElement) {
       if (el.nodeType === Node.ELEMENT_NODE) {
@@ -94,7 +95,7 @@ export class TableManager {
           break;
         }
       }
-      el = el.parentNode;
+      el = el.parentNode ?? undefined;
     }
 
     if (!cell) {
@@ -138,19 +139,19 @@ export class TableManager {
    * @param {number} offset - Character offset within the cell text
    */
   placeTableCellCursor(nodeElement, row, col, offset) {
-    /** @type {HTMLTableCellElement|null} */
-    let cell = null;
+    /** @type {HTMLTableCellElement | undefined} */
+    let cell;
     if (row === 0) {
       const thead = nodeElement.querySelector(`thead`);
       if (thead) {
         const headerRow = thead.querySelector(`tr`);
-        cell = headerRow?.cells[col] ?? null;
+        cell = headerRow?.cells[col] ?? undefined;
       }
     } else {
       const tbody = nodeElement.querySelector(`tbody`);
       if (tbody) {
         const bodyRow = tbody.rows[row - 1];
-        cell = bodyRow?.cells[col] ?? null;
+        cell = bodyRow?.cells[col] ?? undefined;
       }
     }
     if (!cell) return;

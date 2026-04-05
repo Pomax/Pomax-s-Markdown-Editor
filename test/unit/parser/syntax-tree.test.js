@@ -73,7 +73,7 @@ describe(`SyntaxNode`, () => {
       const child = new SyntaxNode(`list-item`, `Item 1`);
       parent.appendChild(child);
       parent.removeChild(child);
-      assert.strictEqual(child.parent, null);
+      assert.strictEqual(child.parent, undefined);
     });
   });
 

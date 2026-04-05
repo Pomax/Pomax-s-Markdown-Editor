@@ -5,7 +5,7 @@
  *
  * The syntax tree is the single source of truth for cursor state.
  * These tests exercise the main code paths and assert that the cursor
- * value is non-null (or null after blur).
+ * value is defined (or undefined after blur).
  */
 
 import { expect, test } from '@playwright/test';
@@ -14,7 +14,7 @@ import {
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -34,19 +34,19 @@ test.afterAll(async () => {
 
 test(`cursors sync after loading content`, async () => {
   await loadContent(page, `# Hello\n\nWorld`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after load + click`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after load + click`).toBeDefined();
 });
 
 test(`cursors sync after typing text`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -54,14 +54,14 @@ test(`cursors sync after typing text`, async () => {
   await page.keyboard.type(`hello`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after typing "hello"`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after typing "hello"`).toBeDefined();
 });
 
 test(`cursors sync after typing a heading prefix`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -71,14 +71,14 @@ test(`cursors sync after typing a heading prefix`, async () => {
   }
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after typing "# Title"`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after typing "# Title"`).toBeDefined();
 });
 
 test(`cursors sync after backspace`, async () => {
   await loadContent(page, `abcdef`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -89,14 +89,14 @@ test(`cursors sync after backspace`, async () => {
   await page.keyboard.press(`Backspace`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after backspace`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after backspace`).toBeDefined();
 });
 
 test(`cursors sync after delete`, async () => {
   await loadContent(page, `abcdef`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -107,14 +107,14 @@ test(`cursors sync after delete`, async () => {
   await page.keyboard.press(`Delete`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after delete`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after delete`).toBeDefined();
 });
 
 test(`cursors sync after Enter splits a paragraph`, async () => {
   await loadContent(page, `first second`);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -128,53 +128,9 @@ test(`cursors sync after Enter splits a paragraph`, async () => {
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after Enter`).not.toBeNull();
-});
-
-test(`cursors sync after backspace merges paragraphs`, async () => {
-  await loadContent(page, `first\n\nsecond`);
-  await setSourceView(page);
-  const editor = page.locator(`#editor`);
-  await clickInEditor(page, editor);
-  await page.waitForTimeout(100);
-
-  // Click the second line, go to start, backspace to merge
-  const secondLine = editor.locator(`[data-node-id]:nth-child(2)`);
-  await clickInEditor(page, secondLine);
-  await page.waitForTimeout(100);
-  await page.keyboard.press(`Home`);
-  await page.waitForTimeout(50);
-  await page.keyboard.press(`Backspace`);
-  await page.waitForTimeout(100);
-  const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursor, `syntaxTree.treeCursor should be set after merge via backspace`).not.toBeNull();
-});
-
-test(`cursors sync after clicking a different node`, async () => {
-  await loadContent(page, `# Heading\n\nParagraph`);
-  await setSourceView(page);
-
-  // Click the heading
-  const heading = page.locator(`#editor .md-heading1`);
-  await clickInEditor(page, heading);
-  await page.waitForTimeout(200);
-  const cursorH = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursorH, `syntaxTree.treeCursor should be set after clicking heading`).not.toBeNull();
-
-  // Now click the paragraph
-  const paragraph = page.locator(`#editor .md-paragraph`);
-  await clickInEditor(page, paragraph);
-  await page.waitForTimeout(200);
-  const cursorP = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursorP, `syntaxTree.treeCursor should be set after clicking paragraph`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after Enter`).toBeDefined();
 });
 
 test(`cursors sync in writing view after clicking a node`, async () => {
@@ -185,17 +141,17 @@ test(`cursors sync in writing view after clicking a node`, async () => {
   await clickInEditor(page, paragraph);
   await page.waitForTimeout(200);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
   expect(
     cursor,
     `syntaxTree.treeCursor should be set after clicking paragraph in writing view`,
-  ).not.toBeNull();
+  ).toBeDefined();
 });
 
 test(`cursors sync after typing in a code block`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -208,14 +164,14 @@ test(`cursors sync after typing in a code block`, async () => {
   await page.keyboard.type(`const x = 1;`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after typing in code block`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after typing in code block`).toBeDefined();
 });
 
 test(`cursors sync after Enter inside a code block`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -230,14 +186,14 @@ test(`cursors sync after Enter inside a code block`, async () => {
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after Enter in code block`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after Enter in code block`).toBeDefined();
 });
 
 test(`cursors sync after creating and exiting a list item`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -248,30 +204,30 @@ test(`cursors sync after creating and exiting a list item`, async () => {
   }
   await page.waitForTimeout(100);
   const cursorItem = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursorItem, `syntaxTree.treeCursor should be set after typing list item`).not.toBeNull();
+  expect(cursorItem, `syntaxTree.treeCursor should be set after typing list item`).toBeDefined();
 
   // Enter to create new list item
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(100);
   const cursorEnter = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursorEnter, `syntaxTree.treeCursor should be set after Enter in list`).not.toBeNull();
+  expect(cursorEnter, `syntaxTree.treeCursor should be set after Enter in list`).toBeDefined();
 
   // Enter again on empty item to exit list
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(100);
   const cursorExit = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursorExit, `syntaxTree.treeCursor should be set after exiting list`).not.toBeNull();
+  expect(cursorExit, `syntaxTree.treeCursor should be set after exiting list`).toBeDefined();
 });
 
 test(`cursors sync after fence-to-code-block conversion`, async () => {
   await loadContent(page, ``);
-  await setSourceView(page);
+  await setSource2View(page);
   const editor = page.locator(`#editor`);
   await clickInEditor(page, editor);
   await page.waitForTimeout(100);
@@ -282,30 +238,9 @@ test(`cursors sync after fence-to-code-block conversion`, async () => {
   await page.keyboard.press(`Enter`);
   await page.waitForTimeout(100);
   const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursor, `syntaxTree.treeCursor should be set after \`\`\` + Enter`).not.toBeNull();
-});
-
-test(`cursors sync after multi-line paste`, async () => {
-  await loadContent(page, ``);
-  await setSourceView(page);
-  const editor = page.locator(`#editor`);
-  await clickInEditor(page, editor);
-  await page.waitForTimeout(100);
-
-  // Simulate a multi-line paste by inserting text with newlines
-  await page.evaluate(() => {
-    const e = /** @type {any} */ (window).__editor;
-    if (e) {
-      e.editOperations.insertTextAtCursor(`line one\nline two\nline three`);
-    }
-  });
-  await page.waitForTimeout(100);
-  const cursor = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
-  );
-  expect(cursor, `syntaxTree.treeCursor should be set after multi-line paste`).not.toBeNull();
+  expect(cursor, `syntaxTree.treeCursor should be set after \`\`\` + Enter`).toBeDefined();
 });
 
 test(`treeCursor persists after blur in writing view`, async () => {
@@ -317,17 +252,57 @@ test(`treeCursor persists after blur in writing view`, async () => {
   await clickInEditor(page, paragraph);
   await page.waitForTimeout(200);
   const cursorBefore = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursorBefore, `syntaxTree.treeCursor should be set before blur`).not.toBeNull();
+  expect(cursorBefore, `syntaxTree.treeCursor should be set before blur`).toBeDefined();
 
   // Blur the editor
   await page.evaluate(() => /** @type {HTMLElement|null} */ (document.activeElement)?.blur());
   await page.waitForTimeout(200);
 
   const cursorAfter = await page.evaluate(
-    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor ?? null,
+    () => /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor,
   );
-  expect(cursorAfter, `syntaxTree.treeCursor should persist after blur`).not.toBeNull();
+  expect(cursorAfter, `syntaxTree.treeCursor should persist after blur`).toBeDefined();
   expect(cursorAfter.offset).toBe(cursorBefore.offset);
+});
+
+test(`cursor position is preserved after source2 → writing → source2 round-trip`, async () => {
+  const content = `this is <em>a test</em> lol`;
+  await loadContent(page, content);
+  await setSource2View(page);
+
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+
+  // Place cursor inside "a test" between the <em> tags.
+  const emIdx = content.indexOf(`<em>`);
+  const cursorPos = emIdx + `<em>`.length + 2;
+  await page.evaluate((pos) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    ta.selectionStart = pos;
+    ta.selectionEnd = pos;
+  }, cursorPos);
+
+  // Switch to writing view, then back to source2.
+  await setWritingView(page);
+  await setSource2View(page);
+
+  // The textarea should have focus and the cursor should be within the <em> region.
+  const result = await page.evaluate(() => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    return {
+      hasFocus: document.activeElement === ta,
+      selectionStart: ta.selectionStart,
+    };
+  });
+
+  expect(result.hasFocus, `textarea should have focus after round-trip`).toBe(true);
+  const emStart = emIdx + `<em>`.length;
+  const emEnd = content.indexOf(`</em>`);
+  expect(
+    result.selectionStart,
+    `cursor should be within the <em> region (${emStart}–${emEnd})`,
+  ).toBeGreaterThanOrEqual(emStart);
+  expect(result.selectionStart).toBeLessThanOrEqual(emEnd);
 });

@@ -13,148 +13,65 @@
 
 /// <reference path="../../../types.d.ts" />
 
+import { EditorData } from './types.js';
 import { parser } from '../../../parsers/old/dfa-parser.js';
 import { SyntaxNode } from '../../../parsers/old/syntax-node.js';
 import { SyntaxTree } from '../../../parsers/old/syntax-tree.js';
-
 import { ClipboardHandler } from './handlers/clipboard-handler.js';
 import { InputHandler } from './handlers/input-handler.js';
 import { EventHandler } from './handlers/event-handler.js';
-
 import { CursorManager } from './managers/cursor-manager.js';
 import { SelectionManager } from './managers/selection-manager.js';
 import { UndoManager } from './managers/undo-manager.js';
-
 import { EditOperations } from './edit-operations/index.js';
 import { RangeOperations } from './range-operations.js';
-
 import { TableManager } from './content-types/table/table-manager.js';
 import { ImageHelper } from './content-types/image/image-helper.js';
 import { LinkHelper } from './content-types/link/link-helper.js';
+import { SourceRendererV2 } from './renderers/source/index.js';
+import { WritingRenderer } from './renderers/writing/index.js';
+import { TreeFormatter } from './formatters/tree-formatter.js';
+import { Source2Formatter } from './formatters/source2-formatter.js';
 
-import { SourceRenderer } from './renderers/source-renderer.js';
-import { WritingRenderer } from './renderers/writing-renderer.js';
+const VIEW_MODES = [`writing`, `source2`];
 
 /**
  * Main editor class that manages the markdown editing experience.
  */
-export class Editor {
+export class Editor extends EditorData {
   /**
    * @param {HTMLElement} container - The editor container element
    */
   constructor(container) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {SyntaxTree|null} */
-    this.syntaxTree = null;
-
-    /** @type {SourceRenderer} */
-    this.sourceRenderer = new SourceRenderer(this);
-
-    /** @type {WritingRenderer} */
-    this.writingRenderer = new WritingRenderer(this);
-
-    /** @type {UndoManager} */
-    this.undoManager = new UndoManager();
-
-    /** @type {SelectionManager} */
-    this.selectionManager = new SelectionManager(this);
-
-    /** @type {CursorManager} */
-    this.cursorManager = new CursorManager(this);
-
-    /** @type {TableManager} */
-    this.tableManager = new TableManager(this);
-
-    /** @type {InputHandler} */
-    this.inputHandler = new InputHandler(this);
-
-    /** @type {EditOperations} */
-    this.editOperations = new EditOperations(this);
-
-    /** @type {RangeOperations} */
-    this.rangeOperations = new RangeOperations(this);
-
-    /** @type {ClipboardHandler} */
-    this.clipboardHandler = new ClipboardHandler(this);
-
-    /** @type {EventHandler} */
-    this.eventHandler = new EventHandler(this);
-
-    /** @type {ImageHelper} */
-    this.imageHelper = new ImageHelper(this);
-
-    /** @type {LinkHelper} */
-    this.linkHelper = new LinkHelper(this);
-
-    /** @type {ViewMode} */
-    this.viewMode = `writing`;
     this.container.dataset.viewMode = `writing`;
-
-    /** @type {boolean} */
-    this.hasUnsavedChanges = false;
-
-    /** @type {string|null} */
-    this.currentFilePath = null;
-
-    /** @type {boolean} Whether to auto-rewrite downstream image paths to relative form. */
-    this.ensureLocalPaths = true;
-
-    /** @type {boolean} Whether &lt;details&gt; blocks default to collapsed in writing view. */
-    this.detailsClosed = false;
-
-    /** @type {boolean} Whether &lt;style&gt; elements are injected into the DOM as real CSS. */
-    this.enableStyleElements = false;
-
-    /**
-     * Whether we are currently rendering (used to suppress input events).
-     * @type {boolean}
-     */
-    this.isRendering = false;
-
-    /**
-     * Set by mousedown / keydown on the editor container to signal that
-     * the next selectionchange was caused by an in-editor interaction.
-     * handleSelectionChange reads (and clears) this flag to decide
-     * whether a collapsed selection should clear treeRange.
-     * @type {boolean}
-     */
-    this.editorInteractionPending = false;
-
-    /**
-     * Non-collapsed selection range mapped to tree coordinates.
-     * null when the selection is collapsed (i.e. just a cursor).
-     * @type {TreeRange|null}
-     */
-    this.treeRange = null;
-
-    /**
-     * The node ID that was last rendered as "active" in writing mode.
-     * Used by handleSelectionChange / handleClick to detect node
-     * transitions reliably — reading from treeCursor is unreliable
-     * because syncCursorFromDOM mutates it before the re-render
-     * decision is made.
-     * @type {string|null}
-     */
-    this.lastRenderedNodeId = null;
-
-    /**
-     * Bound event handlers, keyed by event name.
-     * Stored so they can be detached/reattached when swapping containers.
-     * @type {Record<string, EventListener>}
-     */
-    this.boundHandlers = {};
+    this.writingRenderer = new WritingRenderer(this);
+    this.sourceRendererV2 = new SourceRendererV2(this);
+    this.renderer = /** @type {WritingRenderer|SourceRendererV2} */ (this.writingRenderer);
+    this.treeFormatter = new TreeFormatter(this);
+    this.source2Formatter = new Source2Formatter(this.sourceRendererV2);
+    this.undoManager = new UndoManager();
+    this.selectionManager = new SelectionManager(this);
+    this.cursorManager = new CursorManager(this);
+    this.tableManager = new TableManager(this);
+    this.inputHandler = new InputHandler(this);
+    this.editOperations = new EditOperations(this);
+    this.rangeOperations = new RangeOperations(this);
+    this.clipboardHandler = new ClipboardHandler(this);
+    this.eventHandler = new EventHandler(this);
+    this.imageHelper = new ImageHelper(this);
+    this.linkHelper = new LinkHelper(this);
   }
 
   /**
    * Re-parses a single markdown line to detect type changes during
    * editing.
    * @param {string} text
-   * @returns {Promise<SyntaxNode|null>}
+   * @returns {Promise<SyntaxNode | undefined>}
    */
   async reparseLine(text) {
-    return (await parser.parse(text)).children[0] ?? null;
+    return (await parser.parse(text)).children[0] ?? undefined;
   }
 
   /**
@@ -165,66 +82,6 @@ export class Editor {
    */
   async parseMultiLine(combined) {
     return [...(await parser.parse(combined)).children];
-  }
-
-  /**
-   * Finalizes source-edit mode for a code-block node.  The raw text
-   * stored in `sourceEditText` is reparsed through the DFA parser.
-   *
-   * - If the result is still a single code-block, the node's `content`
-   *   and `attributes` are updated in place.
-   * - If the text no longer parses as a code-block (e.g. the user
-   *   deleted the fences), the node is replaced with whatever the
-   *   parser produces (possibly multiple nodes).
-   *
-   * @param {SyntaxNode} node - The code-block node to finalize.
-   * @returns {Promise<{ updated: string[], added?: string[], removed?: string[] } | null>}
-   *   Render hints, or null if the node was not in source-edit mode.
-   */
-  async finalizeCodeBlockSourceEdit(node) {
-    const text = node.exitSourceEditMode();
-    if (text === null) return null;
-
-    const parsed = await this.parseMultiLine(text);
-
-    if (parsed.length === 1 && parsed[0].type === `code-block`) {
-      // Still a valid code block — update attributes in place.
-      node.content = parsed[0].content;
-      node.attributes = parsed[0].attributes;
-      return { updated: [node.id] };
-    }
-
-    // The text is no longer a single code block.  Replace this node
-    // with whatever the parser produced.
-    const siblings = this.getSiblings(node);
-    const idx = siblings.indexOf(node);
-    if (idx === -1) {
-      // Shouldn't happen, but fall back gracefully.
-      node.content = text;
-      node.type = `paragraph`;
-      node.attributes = {};
-      return { updated: [node.id] };
-    }
-
-    // First parsed node replaces the current node in-place.
-    const first = parsed[0];
-    node.type = first.type;
-    node.content = first.content;
-    node.attributes = first.attributes;
-    node.sourceEditText = null;
-
-    const addedIds = [];
-    for (let j = 1; j < parsed.length; j++) {
-      const newNode = parsed[j];
-      if (node.parent) newNode.parent = node.parent;
-      siblings.splice(idx + j, 0, newNode);
-      addedIds.push(newNode.id);
-    }
-
-    /** @type {{ updated: string[], added?: string[] }} */
-    const hints = { updated: [node.id] };
-    if (addedIds.length > 0) hints.added = addedIds;
-    return hints;
   }
 
   /**
@@ -321,32 +178,32 @@ export class Editor {
    * Returns the SyntaxNode that the tree cursor currently points at.
    * When the cursor is inside inline formatting, this returns the
    * inline child node.
-   * @returns {SyntaxNode|null}
+   * @returns {SyntaxNode | undefined}
    */
   getCurrentNode() {
-    if (!this.syntaxTree?.treeCursor) return null;
-    return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId);
+    if (!this.syntaxTree?.treeCursor) return undefined;
+    return this.syntaxTree.findNodeById(this.syntaxTree.treeCursor.nodeId) ?? undefined;
   }
 
   /**
    * Returns the block-level node ID from the tree cursor.
    * Uses `blockNodeId` when set (cursor is inside inline formatting),
    * otherwise falls back to `nodeId`.
-   * @returns {string|null}
+   * @returns {string | undefined}
    */
   getBlockNodeId() {
-    if (!this.syntaxTree?.treeCursor) return null;
+    if (!this.syntaxTree?.treeCursor) return undefined;
     return this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
   }
 
   /**
    * Resolves an arbitrary node ID to its block-level parent ID.
    * If the node is already block-level, returns the same ID.
-   * @param {string|null} nodeId
-   * @returns {string|null}
+   * @param {string | undefined} nodeId
+   * @returns {string | undefined}
    */
   resolveBlockId(nodeId) {
-    if (!nodeId || !this.syntaxTree) return null;
+    if (!nodeId || !this.syntaxTree) return;
     const node = this.syntaxTree.findNodeById(nodeId);
     if (!node) return nodeId;
     return node.getBlockParent().id;
@@ -357,12 +214,12 @@ export class Editor {
    * When the cursor is inside inline formatting, this resolves through
    * `blockNodeId` to return the paragraph/heading/list-item that owns
    * the raw content string.
-   * @returns {SyntaxNode|null}
+   * @returns {SyntaxNode | undefined}
    */
   getCurrentBlockNode() {
     const blockId = this.getBlockNodeId();
-    if (!blockId || !this.syntaxTree) return null;
-    return this.syntaxTree.findNodeById(blockId);
+    if (!blockId || !this.syntaxTree) return undefined;
+    return this.syntaxTree.findNodeById(blockId) ?? undefined;
   }
 
   /**
@@ -425,14 +282,14 @@ export class Editor {
     if (!selection || selection.rangeCount === 0) return false;
 
     // Is the selection anchor inside the phantom?
-    let node = /** @type {Node|null} */ (selection.anchorNode);
+    let node = /** @type {Node | undefined} */ (selection.anchorNode);
     let inside = false;
     while (node) {
       if (node === phantom) {
         inside = true;
         break;
       }
-      node = node.parentNode;
+      node = node.parentNode ?? undefined;
     }
     if (!inside) return false;
 
@@ -441,10 +298,7 @@ export class Editor {
     this.syntaxTree?.appendChild(para);
 
     // Replace the phantom DOM element with a properly rendered node.
-    const element =
-      this.viewMode === `source`
-        ? this.sourceRenderer.renderNode(para)
-        : this.writingRenderer.renderNode(para, true);
+    const element = this.writingRenderer.renderNode(para, true);
     if (element) {
       phantom.replaceWith(element);
     }
@@ -468,7 +322,7 @@ export class Editor {
 
     this.isRendering = true;
     try {
-      const renderer = this.viewMode === `source` ? this.sourceRenderer : this.writingRenderer;
+      const renderer = this.viewMode === `source2` ? this.sourceRendererV2 : this.writingRenderer;
       renderer.fullRender(this.syntaxTree, this.container);
     } finally {
       this.isRendering = false;
@@ -485,8 +339,12 @@ export class Editor {
   renderNodes(hints) {
     if (!this.syntaxTree) return;
 
-    const renderer = this.viewMode === `writing` ? this.writingRenderer : this.sourceRenderer;
+    if (this.viewMode === `source2`) {
+      this.fullRender();
+      return;
+    }
 
+    const renderer = this.writingRenderer;
     this.isRendering = true;
     try {
       renderer.renderNodes(this.container, hints);
@@ -501,7 +359,7 @@ export class Editor {
    */
   fullRenderAndPlaceCursor() {
     this.fullRender();
-    this.lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId ?? null;
+    this.lastRenderedNodeId = this.syntaxTree?.treeCursor?.nodeId;
     this.isRendering = true;
     this.placeCursor();
     this.isRendering = false;
@@ -596,6 +454,12 @@ export class Editor {
       }
       case `image`:
         return 0;
+      case `code-block`: {
+        const ticks = `\``.repeat(attributes?.fenceCount || 3);
+        const lang = attributes?.language || ``;
+        // Opening fence line: ```lang\n
+        return ticks.length + lang.length + 1;
+      }
       default:
         return 0;
     }
@@ -636,16 +500,16 @@ export class Editor {
    * top-level node is a container html-block.
    */
   ensureTrailingParagraph() {
-    if (!this.syntaxTree) return null;
+    if (!this.syntaxTree) return undefined;
     const children = this.syntaxTree.children;
-    if (children.length === 0) return null;
+    if (children.length === 0) return undefined;
     const last = children[children.length - 1];
     if (last.type === `html-block` && last.children.length > 0) {
       const para = new SyntaxNode(`paragraph`, ``);
       this.syntaxTree.appendChild(para);
       return para;
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -705,9 +569,18 @@ export class Editor {
     this.syntaxTree.appendChild(node);
     this.syntaxTree.treeCursor = { nodeId: node.id, offset: 0 };
     this.undoManager.clear();
-    this.currentFilePath = null;
+    this.currentFilePath = undefined;
     this.setUnsavedChanges(false);
     this.fullRenderAndPlaceCursor();
+  }
+
+  /**
+   * Returns the renderer for a given view mode.
+   * @param {ViewMode} mode
+   * @returns {SourceRendererV2|WritingRenderer}
+   */
+  getRendererForMode(mode) {
+    return mode === `source2` ? this.sourceRendererV2 : this.writingRenderer;
   }
 
   /**
@@ -715,7 +588,7 @@ export class Editor {
    * @param {ViewMode} mode
    */
   async setViewMode(mode) {
-    if (mode !== `source` && mode !== `writing`) {
+    if (!VIEW_MODES.includes(mode)) {
       console.warn(`Invalid view mode: ${mode}`);
       return;
     }
@@ -723,114 +596,37 @@ export class Editor {
     // Nothing to do if already in the requested mode.
     if (mode === this.viewMode) return;
 
-    // Finalize any code-block that is still in source-edit mode
-    // before switching views, so the tree is clean for the new renderer.
-    if (this.syntaxTree) {
-      const cursorNodeId = this.syntaxTree.treeCursor?.nodeId ?? null;
-      for (const child of this.syntaxTree.children) {
-        if (child.type === `code-block` && child.sourceEditText !== null) {
-          // Source → writing: convert the offset from
-          // sourceEditText-relative to content-relative by
-          // subtracting the opening-fence preamble length.
-          if (cursorNodeId === child.id && this.syntaxTree.treeCursor) {
-            const attrs = /** @type {NodeAttributes} */ (child.attributes);
-            const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
-            this.syntaxTree.treeCursor = {
-              nodeId: child.id,
-              offset: this.syntaxTree.treeCursor.offset - preamble,
-            };
-          }
-          await this.finalizeCodeBlockSourceEdit(child);
-        }
-      }
-    }
+    // Perform all steps related to leaving the current view.
+    const switchData = await this.renderer.leaveView();
 
-    // Writing → source: if the cursor is on a code-block, convert
-    // the content-relative offset to sourceEditText-relative by
-    // adding the opening-fence preamble length.
-    if (mode === `source` && this.syntaxTree?.treeCursor) {
-      const cursorBlockId =
-        this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
-      const node = this.syntaxTree.findNodeById(cursorBlockId);
-      if (node?.type === `code-block`) {
-        const attrs = /** @type {NodeAttributes} */ (node.attributes);
-        const preamble = (attrs.fenceCount || 3) + (attrs.language || ``).length + 1;
-        this.syntaxTree.treeCursor = {
-          nodeId: node.id,
-          offset: this.syntaxTree.treeCursor.offset + preamble,
-        };
-      }
-    }
+    // At this point, the old view is "dead"; perform any tasks
+    // that should happen after "switching away from" the current
+    // view, but before "switching to" the requested view.
+    this.transitionView(mode, switchData);
 
-    // Anchor on the cursor's node if one exists, since that is what
-    // the user is focused on.  Fall back to the node closest to the
-    // viewport centre so content doesn't jump when there is no cursor.
-    const scrollContainer = this.container.parentElement;
-    /** @type {string|null} */
-    let anchorNodeId = null;
-    let savedOffsetFromTop = null;
-
-    if (scrollContainer) {
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      // Prefer the cursor's node as anchor.
-      if (this.syntaxTree?.treeCursor) {
-        const blockId = this.getBlockNodeId();
-        const cursorEl = blockId
-          ? this.container.querySelector(`[data-node-id="${blockId}"]`)
-          : null;
-        if (cursorEl && blockId) {
-          anchorNodeId = blockId;
-          savedOffsetFromTop = cursorEl.getBoundingClientRect().top - containerRect.top;
-        }
-      }
-
-      // Fallback: node closest to the viewport centre.
-      if (!anchorNodeId) {
-        const centreY = containerRect.top + containerRect.height / 2;
-        const nodeEls = this.container.querySelectorAll(`[data-node-id]`);
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const el of nodeEls) {
-          const rect = el.getBoundingClientRect();
-          const mid = rect.top + rect.height / 2;
-          const dist = Math.abs(mid - centreY);
-          if (dist < bestDistance) {
-            bestDistance = dist;
-            anchorNodeId = /** @type {HTMLElement} */ (el).dataset.nodeId ?? null;
-            savedOffsetFromTop = rect.top - containerRect.top;
-          }
-        }
-      }
-    }
-
-    this.viewMode = mode;
-    this.container.dataset.viewMode = mode;
-    this.fullRenderAndPlaceCursor();
-
-    // If the tree owns a non-collapsed selection, rebuild it in the
-    // new DOM so the user's selection survives the view-mode switch.
-    if (this.treeRange) {
-      this.placeSelection();
-    }
-
-    // Restore scroll so the anchor node sits at the same viewport offset.
-    if (anchorNodeId && scrollContainer && savedOffsetFromTop !== null) {
-      const el = this.container.querySelector(`[data-node-id="${anchorNodeId}"]`);
-      if (el) {
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const currentOffsetFromTop = el.getBoundingClientRect().top - containerRect.top;
-        scrollContainer.scrollTop += currentOffsetFromTop - savedOffsetFromTop;
-      }
-    }
+    // At this point we have everything ready to switch over.
+    this.renderer = this.getRendererForMode(mode);
+    this.renderer.enterView(switchData);
   }
 
   /**
-   * Gets the current view mode.
-   * @returns {ViewMode}
+   * Hook for transition-specific work between leaving one view and
+   * entering another.  Currently a no-op; exists so that future
+   * cross-view transitions can be handled without touching renderers.
+   * @param {ViewMode} _mode - the target view mode
+   * @param {ViewSwitchData} _switchData
    */
-  getViewMode() {
-    return this.viewMode;
+  transitionView(_mode, _switchData) {
+    // Nothing to do for the current set of view modes.
+  }
+
+  /**
+   * Returns the formatter appropriate for the current view mode.
+   * @returns {Formatter}
+   */
+  getFormatter() {
+    if (this.viewMode === `source2`) return this.source2Formatter;
+    return this.treeFormatter;
   }
 
   /** Undoes the last action. */
@@ -942,7 +738,7 @@ export class Editor {
         if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, tableNode);
           tableNode.parent = currentNode.parent;
-          currentNode.parent = null;
+          currentNode.parent = undefined;
           renderHints = { added: [tableNode.id], removed: [currentNode.id] };
         } else {
           siblings.splice(idx + 1, 0, tableNode);
@@ -1095,7 +891,7 @@ export class Editor {
           // Splice the children into the tree at the html-block's position
           treeChildren.splice(idx, 1, ...lifted);
           for (const child of lifted) {
-            child.parent = null;
+            child.parent = undefined;
           }
         }
       }
@@ -1111,7 +907,7 @@ export class Editor {
       }
       if (updatedIds.length === 0) return;
 
-      this.treeRange = null;
+      this.treeRange = undefined;
       this.syntaxTree.treeCursor = {
         nodeId: updatedIds[0],
         blockNodeId: updatedIds[0],
@@ -1320,7 +1116,7 @@ export class Editor {
     // Place cursor at the end of the formatted/unformatted text and
     // collapse the selection — the old range is no longer valid.
     if (this.syntaxTree?.treeCursor) this.syntaxTree.treeCursor.offset = newCursorOffset;
-    this.treeRange = null;
+    this.treeRange = undefined;
 
     this.renderNodesAndPlaceCursor({ updated: [nodeId] });
     this.setUnsavedChanges(true);

@@ -38,8 +38,8 @@ test(`reload restores a saved file from disk`, async () => {
         cursorOffset: 0,
         contentHash: 0,
         scrollTop: 0,
-        cursorPath: null,
-        tocHeadingPath: null,
+        cursorPath: undefined,
+        tocHeadingPath: undefined,
       },
     ]);
   }, readmePath);

@@ -66,19 +66,8 @@ markdown-editor/
 │       │   └── tab-bar.css
 │       └── scripts/
 │           ├── app.js           # Renderer entry point
-│           ├── editor/          # Core editor, undo, selection, renderers
-│           ├── parser/          # Markdown parser + syntax tree
-│           ├── toolbar/         # Formatting toolbar + icons
-│           ├── handlers/        # Keyboard + menu event handlers
-│           ├── image/           # Image insert/edit modal
-│           ├── link/            # Link insert/edit modal
-│           ├── modal/           # Base modal class
-│           ├── table/           # Table insert/edit modal
-│           ├── tab-bar/         # Multi-file tab bar
-│           ├── toc/             # Table of Contents sidebar
-│           ├── search/          # Search panel
-│           ├── preferences/     # Preferences modal
-│           └── word-count/      # Word count modal
+│           ├── editor/          # Core editor, undo, selection, renderers, formatters
+│           └── utility/         # UI components (toolbar, modals, toc, search, etc.)
 │
 ├── test/
 │   ├── unit/              # Node.js native unit tests
@@ -117,7 +106,7 @@ markdown-editor/
 | `src/electron/settings-manager.js` | Settings persistence via SQLite |
 | `src/electron/api-registry.js` | External scripting API |
 | `src/web/scripts/app.js` | Renderer entry point, wires everything together |
-| `src/web/scripts/editor/editor.js` | Core editor class (coordinator) |
+| `src/web/scripts/editor/index.js` | Core editor class (coordinator) |
 | `src/parsers/old/dfa-tokenizer.js` | DFA-based markdown tokenizer |
 | `src/parsers/old/dfa-parser.js` | Markdown → syntax tree |
 | `src/parsers/old/syntax-tree.js` | SyntaxTree / SyntaxNode data structures |

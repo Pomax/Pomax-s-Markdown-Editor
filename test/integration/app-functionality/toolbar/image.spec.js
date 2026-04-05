@@ -5,13 +5,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import {
-  clickInEditor,
-  closeApp,
-  launchApp,
-  setSourceView,
-  setWritingView,
-} from '../../test-utils.js';
+import { MOD_LABEL, clickInEditor, closeApp, launchApp, setWritingView } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -30,7 +24,7 @@ test.afterAll(async () => {
 test(`image button is visible in the toolbar`, async () => {
   const imageButton = page.locator(`[data-button-id="image"]`);
   await expect(imageButton).toBeVisible();
-  await expect(imageButton).toHaveAttribute(`title`, `Image`);
+  await expect(imageButton).toHaveAttribute(`data-tooltip`, `Image (${MOD_LABEL}+Shift+I)`);
 });
 
 test(`clicking image button opens the image modal`, async () => {
@@ -81,21 +75,6 @@ test(`inserting an image via the modal creates an image node`, async () => {
   // Verify the markdown content includes the image syntax
   const content = await page.evaluate(() => window.editorAPI?.getContent());
   expect(content).toContain(`![Test Image](test-image.png)`);
-});
-
-test(`image node displays raw syntax in source mode`, async () => {
-  // Set up: load content with an image, then switch to source view.
-  await page.evaluate((content) => {
-    window.editorAPI?.setContent(content);
-  }, `![Test Image](test-image.png)`);
-  await page.waitForSelector(`#editor [data-node-id]`);
-  await setSourceView(page);
-
-  const imageNode = page.locator(`.md-image .md-content`);
-  await expect(imageNode).toBeVisible();
-
-  const text = await imageNode.textContent();
-  expect(text).toContain(`![Test Image](test-image.png)`);
 });
 
 test(`clicking image button on existing image opens edit modal with pre-filled data`, async () => {

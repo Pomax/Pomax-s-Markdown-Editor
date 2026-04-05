@@ -19,7 +19,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -267,84 +267,102 @@ test(`strikethrough button is active when cursor is inside <s> tag`, async () =>
 
 test(`clicking bold button inside <strong> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 6: "This is <strong>strong text</strong> here."
-  await clickInlineElement(page, 6, `strong`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<strong>`);
   await page.locator(`[data-button-id="bold"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(6).innerText();
-  expect(line).toBe(`This is strong text here.`);
+  await expect(textarea).toHaveValue(/This is strong text here\./);
 });
 
 test(`clicking bold button inside <b> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 7: "This is <b>bold tag</b> here."
-  await clickInlineElement(page, 7, `b`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<b>`);
   await page.locator(`[data-button-id="bold"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(7).innerText();
-  expect(line).toBe(`This is bold tag here.`);
+  await expect(textarea).toHaveValue(/This is bold tag here\./);
 });
 
 test(`clicking italic button inside <em> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 8: "This is <em>emphasis text</em> here."
-  await clickInlineElement(page, 8, `em`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<em>`);
   await page.locator(`[data-button-id="italic"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(8).innerText();
-  expect(line).toBe(`This is emphasis text here.`);
+  await expect(textarea).toHaveValue(/This is emphasis text here\./);
 });
 
 test(`clicking italic button inside <i> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 9: "This is <i>italic tag</i> here."
-  await clickInlineElement(page, 9, `i`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<i>`);
   await page.locator(`[data-button-id="italic"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(9).innerText();
-  expect(line).toBe(`This is italic tag here.`);
+  await expect(textarea).toHaveValue(/This is italic tag here\./);
 });
 
 test(`clicking strikethrough button inside <del> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 10: "This is <del>deleted text</del> here."
-  await clickInlineElement(page, 10, `del`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<del>`);
   await page.locator(`[data-button-id="strikethrough"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(10).innerText();
-  expect(line).toBe(`This is deleted text here.`);
+  await expect(textarea).toHaveValue(/This is deleted text here\./);
 });
 
 test(`clicking strikethrough button inside <s> tag strips the tag`, async () => {
   await loadContent(page, fixtureContent);
-  await setWritingView(page);
+  await setSource2View(page);
 
-  // Line 11: "This is <s>struck tag</s> here."
-  await clickInlineElement(page, 11, `s`);
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.click();
+  await page.evaluate((tag) => {
+    const ta = /** @type {HTMLTextAreaElement} */ (document.querySelector(`#editor textarea`));
+    const idx = ta.value.indexOf(tag);
+    ta.selectionStart = idx + tag.length + 1;
+    ta.selectionEnd = idx + tag.length + 1;
+  }, `<s>`);
   await page.locator(`[data-button-id="strikethrough"]`).click();
-  await page.waitForTimeout(200);
 
-  await setSourceView(page);
-  const line = await page.locator(`#editor > [data-node-id]`).nth(11).innerText();
-  expect(line).toBe(`This is struck tag here.`);
+  await expect(textarea).toHaveValue(/This is struck tag here\./);
 });

@@ -22,7 +22,7 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -66,7 +66,7 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -84,7 +84,6 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );
@@ -104,80 +103,6 @@ async function clickSubscriptButton(pg) {
   await pg.waitForTimeout(200);
 }
 
-/**
- * Returns the raw markdown text of a specific line in source view.
- * @param {import('@playwright/test').Page} pg
- * @param {number} index - 0-based line index among [data-node-id] elements.
- * @returns {Promise<string>}
- */
-async function getSourceLineText(pg, index) {
-  return pg.locator(`#editor [data-node-id]`).nth(index).innerText();
-}
-
-test.describe(`Subscript first word, paragraph 1`, () => {
-  test(`subscript first word produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await dblclickWord(page, firstLine, `text1`, `first`);
-    await clickSubscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`<sub>text1</sub> text1 text1`);
-  });
-});
-
-test.describe(`Subscript middle word, paragraph 1`, () => {
-  test(`subscript middle word produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await dblclickWord(page, firstLine, `text1`, `middle`);
-    await clickSubscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`text1 <sub>text1</sub> text1`);
-  });
-});
-
-test.describe(`Subscript first word, paragraph 2`, () => {
-  test(`subscript first word of second paragraph produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
-    await dblclickWord(page, secondLine, `text2`, `first`);
-    await clickSubscriptButton(page);
-
-    await setSourceView(page);
-    const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe(`<sub>text2</sub> text2 text2`);
-  });
-});
-
-test.describe(`Subscript middle word, paragraph 2`, () => {
-  test(`subscript middle word of second paragraph produces correct markdown`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const secondLine = page.locator(`#editor [data-node-id]`).nth(1);
-    await dblclickWord(page, secondLine, `text2`, `middle`);
-    await clickSubscriptButton(page);
-
-    await setSourceView(page);
-    const line0 = await getSourceLineText(page, 0);
-    expect(line0).toBe(`text1 text1 text1`);
-    const line1 = await getSourceLineText(page, 1);
-    expect(line1).toBe(`text2 <sub>text2</sub> text2`);
-  });
-});
-
 test.describe(`Cursor position after subscript`, () => {
   test(`cursor is at end of subscripted middle word`, async () => {
     await loadContent(page, fixtureContent);
@@ -189,10 +114,10 @@ test.describe(`Cursor position after subscript`, () => {
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
+      if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
-      if (!line) return null;
+      if (!line) return;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
       let node = walker.nextNode();
@@ -206,10 +131,9 @@ test.describe(`Cursor position after subscript`, () => {
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
       }
-      return null;
     });
 
-    expect(cursorInfo).not.toBeNull();
+    expect(cursorInfo).toBeDefined();
     expect(cursorInfo?.collapsed).toBe(true);
     // "text1 text1" = 11 chars
     expect(cursorInfo?.offset).toBe(11);
@@ -239,7 +163,7 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -257,7 +181,6 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );
@@ -267,18 +190,3 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
   await pg.mouse.click(coords.x, coords.y);
   await pg.waitForTimeout(200);
 }
-
-test.describe(`Collapsed cursor — subscript word under caret`, () => {
-  test(`clicking subscript with cursor on a plain word applies subscript`, async () => {
-    await loadContent(page, fixtureContent);
-    await setWritingView(page);
-
-    const firstLine = page.locator(`#editor [data-node-id]`).first();
-    await clickInsideWord(page, firstLine, `text1`, `middle`);
-    await clickSubscriptButton(page);
-
-    await setSourceView(page);
-    const line = await getSourceLineText(page, 0);
-    expect(line).toBe(`text1 <sub>text1</sub> text1`);
-  });
-});

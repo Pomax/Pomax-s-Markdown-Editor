@@ -203,12 +203,12 @@
 }
 
 /* Tooltip (optional enhancement) */
-.toolbar-button[title] {
+.toolbar-button[data-tooltip] {
     position: relative;
 }
 
-.toolbar-button[title]::after {
-    content: attr(title);
+.toolbar-button[data-tooltip]::after {
+    content: attr(data-tooltip);
     position: absolute;
     top: 100%;
     left: 50%;
@@ -228,7 +228,7 @@
     z-index: 1000;
 }
 
-.toolbar-button[title]:hover::after {
+.toolbar-button[data-tooltip]:hover::after {
     opacity: 1;
     visibility: visible;
 }

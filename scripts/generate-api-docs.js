@@ -229,7 +229,7 @@ function getExampleValue(type) {
     case `array`:
       return [];
     default:
-      return null;
+      return;
   }
 }
 

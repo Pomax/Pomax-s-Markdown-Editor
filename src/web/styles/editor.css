@@ -53,10 +53,6 @@
     }
 }
 
-/* Syntax markers (visible in source view, styled in writing view) */
-.md-syntax {
-}
-
 /* Paragraph */
 .md-paragraph {
     margin: calc(var(--spacing-md) / 2) 0;

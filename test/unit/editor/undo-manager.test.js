@@ -55,14 +55,14 @@ describe(`UndoManager`, () => {
       });
 
       const change = undoManager.undo();
-      assert.ok(change !== null);
+      assert.ok(change !== undefined);
       assert.strictEqual(change.before, `A`);
       assert.strictEqual(change.after, `B`);
     });
 
-    it(`should return null when stack is empty`, () => {
+    it(`should return undefined when stack is empty`, () => {
       const change = undoManager.undo();
-      assert.strictEqual(change, null);
+      assert.strictEqual(change, undefined);
     });
 
     it(`should move change to redo stack`, () => {
@@ -84,14 +84,14 @@ describe(`UndoManager`, () => {
       undoManager.undo();
 
       const change = undoManager.redo();
-      assert.ok(change !== null);
+      assert.ok(change !== undefined);
       assert.strictEqual(change.before, `A`);
       assert.strictEqual(change.after, `B`);
     });
 
-    it(`should return null when stack is empty`, () => {
+    it(`should return undefined when stack is empty`, () => {
       const change = undoManager.redo();
-      assert.strictEqual(change, null);
+      assert.strictEqual(change, undefined);
     });
 
     it(`should move change back to undo stack`, () => {

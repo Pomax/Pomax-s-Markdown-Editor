@@ -148,11 +148,101 @@ describe(`tokenizeInline`, () => {
     assert.equal(opens[1].tag, `em`);
   });
 
-  it(`ignores unknown HTML tags`, () => {
+  it(`tokenizes arbitrary HTML tags without a whitelist`, () => {
     const tokens = tokenizeInline(`a <span>b</span> c`);
-    // <span> is not in INLINE_HTML_TAGS, so it should be plain text
+    assert.equal(tokens.length, 5);
+    assert.equal(tokens[0].type, `text`);
+    assert.equal(tokens[0].raw, `a `);
+    assert.equal(tokens[1].type, `html-open`);
+    assert.equal(tokens[1].tag, `span`);
+    assert.equal(tokens[2].type, `text`);
+    assert.equal(tokens[2].raw, `b`);
+    assert.equal(tokens[3].type, `html-close`);
+    assert.equal(tokens[3].tag, `span`);
+    assert.equal(tokens[4].type, `text`);
+    assert.equal(tokens[4].raw, ` c`);
+  });
+
+  it(`tokenizes HTML tags with attributes`, () => {
+    const tokens = tokenizeInline(`<span style="color:red">text</span>`);
+    assert.equal(tokens[0].type, `html-open`);
+    assert.equal(tokens[0].tag, `span`);
+    assert.deepStrictEqual(tokens[0].attrs, { style: `color:red` });
+    assert.equal(tokens[1].type, `text`);
+    assert.equal(tokens[2].type, `html-close`);
+    assert.equal(tokens[2].tag, `span`);
+  });
+
+  it(`tokenizes void HTML elements as html-void`, () => {
+    const tokens = tokenizeInline(`line1<br>line2`);
+    assert.equal(tokens.length, 3);
+    assert.equal(tokens[0].type, `text`);
+    assert.equal(tokens[0].raw, `line1`);
+    assert.equal(tokens[1].type, `html-void`);
+    assert.equal(tokens[1].tag, `br`);
+    assert.equal(tokens[2].type, `text`);
+    assert.equal(tokens[2].raw, `line2`);
+  });
+
+  it(`tokenizes self-closing HTML elements as html-void`, () => {
+    const tokens = tokenizeInline(`text<br/>more`);
+    assert.equal(tokens[1].type, `html-void`);
+    assert.equal(tokens[1].tag, `br`);
+  });
+
+  it(`tokenizes void elements with attributes`, () => {
+    const tokens = tokenizeInline(`<img src="x.png" alt="pic">`);
+    assert.equal(tokens.length, 1);
+    assert.equal(tokens[0].type, `html-void`);
+    assert.equal(tokens[0].tag, `img`);
+    assert.deepStrictEqual(tokens[0].attrs, { src: `x.png`, alt: `pic` });
+  });
+
+  it(`handles > inside quoted attributes without ending the tag`, () => {
+    const tokens = tokenizeInline(`<span title="a > b">text</span>`);
+    assert.equal(tokens[0].type, `html-open`);
+    assert.equal(tokens[0].tag, `span`);
+    assert.deepStrictEqual(tokens[0].attrs, { title: `a > b` });
+  });
+
+  it(`tokenizes custom HTML elements`, () => {
+    const tokens = tokenizeInline(`<my-widget>content</my-widget>`);
+    assert.equal(tokens[0].type, `html-open`);
+    assert.equal(tokens[0].tag, `my-widget`);
+    assert.equal(tokens[2].type, `html-close`);
+    assert.equal(tokens[2].tag, `my-widget`);
+  });
+
+  it(`tokenizes named HTML entities`, () => {
+    const tokens = tokenizeInline(`a&nbsp;b`);
+    assert.equal(tokens.length, 3);
+    assert.equal(tokens[0].type, `text`);
+    assert.equal(tokens[0].raw, `a`);
+    assert.equal(tokens[1].type, `html-entity`);
+    assert.equal(tokens[1].raw, `&nbsp;`);
+    assert.equal(tokens[2].type, `text`);
+    assert.equal(tokens[2].raw, `b`);
+  });
+
+  it(`tokenizes decimal numeric HTML entities`, () => {
+    const tokens = tokenizeInline(`&#160;`);
+    assert.equal(tokens.length, 1);
+    assert.equal(tokens[0].type, `html-entity`);
+    assert.equal(tokens[0].raw, `&#160;`);
+  });
+
+  it(`tokenizes hexadecimal numeric HTML entities`, () => {
+    const tokens = tokenizeInline(`&#x00A0;`);
+    assert.equal(tokens.length, 1);
+    assert.equal(tokens[0].type, `html-entity`);
+    assert.equal(tokens[0].raw, `&#x00A0;`);
+  });
+
+  it(`does not treat bare & as an entity`, () => {
+    const tokens = tokenizeInline(`a & b`);
     assert.equal(tokens.length, 1);
     assert.equal(tokens[0].type, `text`);
+    assert.equal(tokens[0].raw, `a & b`);
   });
 });
 
@@ -263,6 +353,73 @@ describe(`buildInlineTree`, () => {
     assert.ok(codeNode);
     assert.equal(codeNode.content, `<sub>`);
   });
+
+  it(`builds a tree with arbitrary HTML tags and attributes`, () => {
+    const tokens = tokenizeInline(`<span style="color:red">colored</span>`);
+    const tree = buildInlineTree(tokens);
+    assert.equal(tree.length, 1);
+    assert.equal(tree[0].type, `span`);
+    assert.equal(tree[0].tag, `span`);
+    assert.deepStrictEqual(tree[0].attrs, { style: `color:red` });
+    assert.equal(tree[0].children.length, 1);
+    assert.equal(tree[0].children[0].text, `colored`);
+  });
+
+  it(`builds a void element segment with no children`, () => {
+    const tokens = tokenizeInline(`line1<br>line2`);
+    const tree = buildInlineTree(tokens);
+    assert.equal(tree.length, 3);
+    assert.equal(tree[0].type, `text`);
+    assert.equal(tree[0].text, `line1`);
+    assert.equal(tree[1].type, `br`);
+    assert.equal(tree[1].tag, `br`);
+    assert.equal(tree[1].children, undefined);
+    assert.equal(tree[2].type, `text`);
+    assert.equal(tree[2].text, `line2`);
+  });
+
+  it(`builds a void element with attributes`, () => {
+    const tokens = tokenizeInline(`<img src="x.png" alt="pic">`);
+    const tree = buildInlineTree(tokens);
+    assert.equal(tree.length, 1);
+    assert.equal(tree[0].type, `img`);
+    assert.equal(tree[0].tag, `img`);
+    assert.deepStrictEqual(tree[0].attrs, { src: `x.png`, alt: `pic` });
+  });
+
+  it(`decodes HTML entities into text segments`, () => {
+    const tokens = tokenizeInline(`a&nbsp;b`);
+    const tree = buildInlineTree(tokens);
+    assert.equal(tree.length, 3);
+    assert.equal(tree[0].type, `text`);
+    assert.equal(tree[0].text, `a`);
+    assert.equal(tree[1].type, `text`);
+    assert.equal(tree[1].text, `\u00A0`);
+    assert.equal(tree[2].type, `text`);
+    assert.equal(tree[2].text, `b`);
+  });
+
+  it(`decodes &#160; numeric entity into text`, () => {
+    const tokens = tokenizeInline(`&#160;`);
+    const tree = buildInlineTree(tokens);
+    assert.equal(tree.length, 1);
+    assert.equal(tree[0].type, `text`);
+    assert.equal(tree[0].text, `\u00A0`);
+  });
+
+  it(`handles the issue example: &nbsp; and <br> and <span> in table cell content`, () => {
+    const input = `&nbsp;&nbsp;weight<br><span style="border-top:1px solid black;">wing area</span>`;
+    const tree = buildInlineTree(tokenizeInline(input));
+    // Should produce: text(\u00A0), text(\u00A0), text(weight), br void, span with children
+    const types = tree.map((s) => s.type);
+    assert.ok(types.includes(`text`));
+    assert.ok(types.includes(`br`));
+    assert.ok(types.includes(`span`));
+    const span = tree.find((s) => s.tag === `span`);
+    assert.ok(span);
+    assert.deepStrictEqual(span.attrs, { style: `border-top:1px solid black;` });
+    assert.equal(span.children[0].text, `wing area`);
+  });
 });
 
 describe(`findMatchedTokenIndices`, () => {
@@ -341,5 +498,21 @@ describe(`findMatchedTokenIndices`, () => {
     // tokens: [text, image, text]
     assert.ok(matched.has(1)); // image
     assert.equal(matched.size, 1);
+  });
+
+  it(`marks void HTML tokens as matched`, () => {
+    const tokens = tokenizeInline(`line1<br>line2`);
+    const matched = findMatchedTokenIndices(tokens);
+    // tokens: [text, html-void, text]
+    assert.ok(matched.has(1)); // html-void
+    assert.equal(matched.size, 1);
+  });
+
+  it(`marks matched arbitrary HTML open/close as matched`, () => {
+    const tokens = tokenizeInline(`<span style="x">text</span>`);
+    const matched = findMatchedTokenIndices(tokens);
+    assert.ok(matched.has(0)); // html-open
+    assert.ok(matched.has(2)); // html-close
+    assert.equal(matched.size, 2);
   });
 });

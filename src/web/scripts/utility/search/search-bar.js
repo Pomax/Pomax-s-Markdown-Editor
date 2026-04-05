@@ -3,61 +3,20 @@
  *
  * Supports plain text and regex matching, case-sensitive and
  * case-insensitive modes.  Searches against `syntaxTree.toMarkdown()`
- * in source view and `syntaxTree.toBareText()` in writing view, then
+ * in source2 view and `syntaxTree.toBareText()` in writing view, then
  * maps match offsets back to individual syntax-tree nodes for DOM
  * highlighting.
  */
 
-export class SearchBar {
+import { SearchBarData } from '../../editor/types.js';
+
+export class SearchBar extends SearchBarData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {HTMLElement|null} */
-    this.container = null;
-
-    /** @type {HTMLInputElement|null} */
-    this.input = null;
-
-    /** @type {HTMLElement|null} */
-    this.matchCount = null;
-
-    /** @type {boolean} */
-    this.useRegex = false;
-
-    /** @type {boolean} */
-    this.caseSensitive = false;
-
-    /** @type {boolean} */
-    this.visible = false;
-
-    /** @type {SearchMatch[]} */
-    this.matches = [];
-
-    /** @type {number} */
-    this.currentIndex = -1;
-
-    /** @type {OffsetMapEntry[]} */
-    this.offsetMap = [];
-
-    /** @type {string} */
-    this.documentText = ``;
-
-    /**
-     * The view mode the current offset map was built for.
-     * Used to detect view-mode switches so we can rebuild.
-     * @type {string|null}
-     */
-    this.searchViewMode = null;
-
-    /**
-     * Bound handler for render-complete events so we can remove it.
-     * @type {(() => void)|null}
-     */
-    this.renderCompleteHandler = null;
   }
 
   /**
@@ -179,6 +138,9 @@ export class SearchBar {
     this.container.style.left = ``;
     this.input.focus();
     this.input.select();
+    // Save the current scroll position so we can restore it if
+    // the search ends up with zero results.
+    this.savedScrollTop = document.getElementById(`editor-container`)?.scrollTop;
     // Re-run the search in case the view mode changed since
     // the bar was last open.
     this.onSearchChanged();
@@ -195,8 +157,13 @@ export class SearchBar {
     this.matches = [];
     this.currentIndex = -1;
     this.updateMatchCount();
-    // Return focus to the editor
-    this.editor.container.focus();
+    // Return focus to the editor, preserving cursor position.
+    if (this.editor.viewMode === `source2`) {
+      const textarea = this.editor.container.querySelector(`textarea`);
+      textarea?.focus();
+    } else {
+      this.editor.placeCursor();
+    }
   }
 
   /** @returns {boolean} Whether the search bar is currently visible. */
@@ -226,7 +193,7 @@ export class SearchBar {
   destroy() {
     if (this.renderCompleteHandler) {
       document.removeEventListener(`editor:renderComplete`, this.renderCompleteHandler);
-      this.renderCompleteHandler = null;
+      this.renderCompleteHandler = undefined;
     }
     this.container?.remove();
   }
@@ -273,6 +240,8 @@ export class SearchBar {
     this.applyHighlights();
     if (this.matches.length > 0) {
       this.scrollToCurrentMatch();
+    } else if (this.savedScrollTop) {
+      document.getElementById(`editor-container`)?.scrollTo(0, this.savedScrollTop);
     }
   }
 
@@ -287,16 +256,23 @@ export class SearchBar {
   findClosestMatchIndex() {
     if (this.matches.length === 0) return -1;
 
-    const cursor = this.editor.syntaxTree?.treeCursor;
-    if (!cursor) return 0;
-
-    // Convert the cursor's (nodeId, offset) to a document-level
-    // offset using the offset map we already built.
     let cursorDocOffset = 0;
-    for (const entry of this.offsetMap) {
-      if (entry.nodeId === cursor.nodeId) {
-        cursorDocOffset = entry.docStart + cursor.offset;
-        break;
+
+    if (this.editor.viewMode === `source2`) {
+      /** @type {HTMLTextAreaElement | undefined} */
+      const textarea = this.editor.container?.querySelector(`textarea`) ?? undefined;
+      cursorDocOffset = textarea?.selectionStart ?? 0;
+    } else {
+      const cursor = this.editor.syntaxTree?.treeCursor;
+      if (!cursor) return 0;
+
+      // Convert the cursor's (nodeId, offset) to a document-level
+      // offset using the offset map we already built.
+      for (const entry of this.offsetMap) {
+        if (entry.nodeId === cursor.nodeId) {
+          cursorDocOffset = entry.docStart + cursor.offset;
+          break;
+        }
       }
     }
 
@@ -338,7 +314,7 @@ export class SearchBar {
       return;
     }
 
-    const isSource = this.editor.viewMode === `source`;
+    const isSource = this.editor.viewMode === `source2`;
     this.searchViewMode = this.editor.viewMode;
     /** @type {OffsetMapEntry[]} */
     const map = [];
@@ -353,11 +329,11 @@ export class SearchBar {
       let first = isFirst;
       for (const node of nodes) {
         // html-block containers are virtual — their text is produced
-        // by their children.  In source mode the opening/closing tag
+        // by their children.  In source2 mode the opening/closing tag
         // lines are part of toMarkdown(), so we handle them as a unit.
         if (node.type === `html-block` && node.children.length > 0) {
           if (isSource) {
-            // Source mode: the whole block is one markdown chunk.
+            // Source2 mode: the whole block is one markdown chunk.
             const text = node.toMarkdown();
             if (!first) {
               pos += 2; // \n\n separator
@@ -457,7 +433,7 @@ export class SearchBar {
       for (const entry of this.offsetMap) {
         let m;
         // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-        while ((m = re.exec(entry.text)) !== null) {
+        while ((m = re.exec(entry.text))) {
           this.matches.push({
             docStart: entry.docStart + m.index,
             docEnd: entry.docStart + m.index + m[0].length,
@@ -475,7 +451,7 @@ export class SearchBar {
 
       let m;
       // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-      while ((m = re.exec(this.documentText)) !== null) {
+      while ((m = re.exec(this.documentText))) {
         // Guard against zero-length matches causing an infinite loop.
         if (m[0].length === 0) {
           re.lastIndex++;
@@ -517,17 +493,16 @@ export class SearchBar {
   }
 
   /**
-   * Clears all `<mark>` highlight elements from the editor DOM.
+   * Clears all `<mark>` highlight elements from every search
+   * context in the editor, regardless of current view mode.
    */
   clearHighlights() {
     const marks = this.editor.container.querySelectorAll(`mark.search-highlight`);
     for (const mark of marks) {
       const parent = mark.parentNode;
       if (!parent) continue;
-      // Replace the <mark> with its text content.
       const text = document.createTextNode(mark.textContent ?? ``);
       parent.replaceChild(text, mark);
-      // Merge adjacent text nodes.
       parent.normalize();
     }
   }
@@ -540,6 +515,11 @@ export class SearchBar {
     this.clearHighlights();
     if (!this.visible || this.matches.length === 0) return;
 
+    if (this.editor.viewMode === `source2`) {
+      this.applySource2Highlights();
+      return;
+    }
+
     for (let i = 0; i < this.matches.length; i++) {
       const segments = this.matchToSegments(this.matches[i]);
       const isActive = i === this.currentIndex;
@@ -551,20 +531,58 @@ export class SearchBar {
   }
 
   /**
+   * Renders `<mark>` highlight elements into the source2 `<pre>`
+   * mirror overlay.  The matches use document-level character
+   * offsets which map directly into the textarea/pre text.
+   */
+  applySource2Highlights() {
+    const pre = this.editor.container.querySelector(`.source-v2-wrapper pre`);
+    const textarea = /** @type {HTMLTextAreaElement} */ (
+      this.editor.container.querySelector(`.source-v2-wrapper textarea`)
+    );
+    if (!pre || !textarea) return;
+
+    const text = textarea.value;
+    const frag = document.createDocumentFragment();
+    let cursor = 0;
+
+    // Sort matches by docStart so we can walk left-to-right.
+    const sorted = this.matches
+      .map((m, i) => ({ ...m, index: i }))
+      .sort((a, b) => a.docStart - b.docStart);
+
+    for (const m of sorted) {
+      const start = m.docStart;
+      const end = m.docEnd;
+      if (start < cursor) continue;
+
+      if (start > cursor) {
+        frag.appendChild(document.createTextNode(text.substring(cursor, start)));
+      }
+
+      const mark = document.createElement(`mark`);
+      const isActive = m.index === this.currentIndex;
+      mark.className = isActive ? `search-highlight search-highlight--active` : `search-highlight`;
+      mark.textContent = text.substring(start, end);
+      frag.appendChild(mark);
+      cursor = end;
+    }
+
+    if (cursor < text.length) {
+      frag.appendChild(document.createTextNode(text.substring(cursor)));
+    }
+    frag.appendChild(document.createTextNode(`\n`));
+
+    pre.textContent = ``;
+    pre.appendChild(frag);
+  }
+
+  /**
    * Highlights a single per-node segment by wrapping the matching
    * text range in a `<mark>` element.
    *
    * We walk the text nodes inside the `[data-node-id]` element,
    * accumulate offsets, and split/wrap the target range.
-   *
-   * In **source mode** the searchable text is the full markdown line
-   * including the prefix (e.g. `## Heading`).  However the DOM
-   * separates the prefix into `span.md-syntax` and the content into
-   * `span.md-content` (or a bare text node for paragraphs).  We walk
-   * *all* text nodes inside the `[data-node-id]` element in document
-   * order, which naturally visits prefix text first and content text
-   * second — the accumulated offset therefore aligns with the
-   * `toMarkdown()` output.
    *
    * In **writing mode** the searchable text comes from `toBareText()`
    * which strips formatting delimiters.  The DOM contains text nodes
@@ -573,7 +591,7 @@ export class SearchBar {
    * nodes, skipping empty ones, so the accumulated visible text
    * aligns with the `toBareText()` output.
    *
-   * **Code blocks** are a special case: in source mode the
+   * **Code blocks** are a special case: in source2 mode the
    * `toMarkdown()` output includes the fence lines
    * (` ```lang ` / ` ``` `) and the code content, separated by `\n`.
    * The DOM renders these as separate child `<div>` elements
@@ -587,16 +605,17 @@ export class SearchBar {
     if (!el) return;
 
     const isFocused = this.editor.viewMode === `writing`;
+    const walkRoot = el.querySelector(`.md-content`) ?? el;
 
     // Collect text nodes in document order via TreeWalker.
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT);
     /** @type {{ node: Text, start: number, end: number }[]} */
     const textRuns = [];
     let offset = 0;
-    /** @type {Text|null} */
+    /** @type {Text} */
     let textNode;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard TreeWalker loop
-    while ((textNode = /** @type {Text|null} */ (walker.nextNode()))) {
+    while ((textNode = /** @type {Text} */ (walker.nextNode()))) {
       const len = textNode.textContent?.length ?? 0;
       // In writing mode, skip empty landing-pad text nodes.
       if (isFocused && len === 0) continue;

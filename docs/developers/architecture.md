@@ -43,6 +43,9 @@ The application follows Electron's multi-process architecture:
 │    │  ┌─────────────────┐ ┌────────────────┐            │    │
 │    │  │ WritingRenderer │ │ SourceRenderer │            │    │
 │    │  └─────────────────┘ └────────────────┘            │    │
+│    │  ┌───────────────────┐ ┌──────────────────┐        │    │
+│    │  │SourceRendererV2   │ │ Source2Formatter │        │    │
+│    │  └───────────────────┘ └──────────────────┘        │    │
 │    │  ┌──────────────────┐ ┌─────────────┐              │    │
 │    │  │ SelectionManager │ │ UndoManager │              │    │
 │    │  └──────────────────┘ └─────────────┘              │    │
@@ -71,7 +74,8 @@ The application follows Electron's multi-process architecture:
 │                                                              │
 │          ┌─────────────────┐  ┌───────────────────┐          │
 │          │ KeyboardHandler │  │ TableOfContents   │          │
-│          └─────────────────┘  └───────────────────┘          │
+│          │ (source2 textarea) └───────────────────┘          │
+│          └─────────────────┘                                 │
 │                                                              │
 │              ┌────────┐  ┌───────────┐                       │
 │              │ TabBar │  │ SearchBar │                       │
@@ -103,7 +107,7 @@ Handles all file system operations:
 ### MenuBuilder
 
 Constructs the application menu:
-- **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Exit
+- **File**: New, Load, Open Recent, Save, Save As, Close, Word Count, Copy File Path, Exit
 - **Edit**: Undo, Redo, Cut, Copy, Paste, Select All, Images → Gather, Preferences
 - **View**: Source View (`Ctrl+1`), Writing View (`Ctrl+2`), open file list with checkmarks
 - **Help**: Reload, Debug, About
@@ -116,7 +120,7 @@ Menu actions are sent to the renderer via the `menu:action` IPC channel. Cut, Co
 Central hub for IPC communication. Registers handlers for:
 - File operations (`file:new`, `file:load`, `file:save`, `file:saveAs`, `file:confirmClose`, etc.)
 - Document operations (`document:undo`, `document:redo`)
-- View operations (`view:source`, `view:writing`, `view:openFilesChanged`)
+- View operations (`view:source2`, `view:writing`, `view:openFilesChanged`)
 - Element operations (`element:changeType`, `element:format`)
 - Settings operations (`settings:get`, `settings:set`, `settings:getAll`)
 - Image operations (`image:browse`, `image:rename`)
@@ -194,9 +198,12 @@ accesses state via `this.editor`.
 |--------|------|---------|
 | `offset-mapping` | `offset-mapping.js` | Pure functions for raw ↔ rendered offset mapping (used by `CursorManager`) |
 | `crc32` | `crc32.js` | CRC32 digest for content-change detection |
-| `cursor-persistence` | `managers/cursor-persistence.js` | Cursor position ↔ absolute source offset conversion |
+| `cursor-persistence` | `managers/cursor-persistence.js` | Cursor position ↔ absolute source offset conversion (`cursorToAbsoluteOffset`, `absoluteOffsetToCursor`) |
 | `page-resize` | `page-resize.js` | Page resize handles for the editor (both source and writing modes) |
 | `syntax-highlighter` | `syntax-highlighter/index.js` | Per-language syntax highlighting for source view |
+| `source2-formatter` | `formatters/source2-formatter.js` | Textarea-based formatting for source2 mode (inline formats, block types, lists, images, tables) |
+| `tree-formatter` | `formatters/tree-formatter.js` | Tree-based formatting delegation wrapper for writing mode |
+| `keyboard-handler` | `handlers/keyboard-handler.js` | Keyboard shortcut handler for source2 textarea (21 shortcuts) |
 
 The Editor itself keeps:
 - Document state (`syntaxTree`, `treeRange`, `viewMode`) — cursor state lives on `syntaxTree.treeCursor`
@@ -253,8 +260,7 @@ Data structure for parsed documents:
 - `toMarkdown()`: serializes back to markdown text
 - `toBareText()`: returns visible/rendered text with markdown syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc. removed). Used by search in writing view.
 - `clone()`: deep cloning for undo/redo snapshots
-- Node lookup by ID or position
-- `getPathToCursor()` / `setCursorPath(path)`: serialize and restore cursor position as an index path (array of child indices + character offset). Used for session persistence — node IDs are ephemeral but tree structure is deterministic for the same document.
+- Node lookup by ID or position- `updateUsing(newTree)`: structural tree diffing — matches children between old and new trees using `matchChildren()` (exact match first, then fuzzy via `contentSimilarity()`), applies changes via `updateMatchedNode()` (preserving node identity/IDs for unchanged or edited nodes), and inserts new nodes. Used when switching from source2 back to writing view to preserve node IDs across the round-trip.- `getPathToCursor()` / `setCursorPath(path)`: serialize and restore cursor position as an index path (array of child indices + character offset). Used for session persistence — node IDs are ephemeral but tree structure is deterministic for the same document.
 - `getPathToNode(nodeId)` / `getNodeAtPath(path)`: convert between node IDs and index paths. Used to persist the active ToC heading across sessions.
 
 #### Inline children model
@@ -271,7 +277,7 @@ In writing mode, inline formatting elements in the DOM carry `data-node-id` matc
 
 ### Renderers
 
-#### SourceRenderer
+#### SourceRenderer (legacy)
 Displays markdown with syntax highlighting:
 - Shows literal markdown syntax
 - Color-codes different element types (headings, code, emphasis, etc.)
@@ -280,6 +286,19 @@ Displays markdown with syntax highlighting:
 - Handles bare-text html-block children (e.g. `<summary>text</summary>`) by re-rendering the parent html-block
 - Maintains editability
 - **Code-block source edit mode**: when a code block receives focus, the renderer calls `node.enterSourceEditMode()` to store the full markdown (fences + language + content) in `sourceEditText` and renders it as a single editable `<div>`. On defocus, `editor.finalizeCodeBlockSourceEdit(node)` re-parses the text and exits source edit mode. This allows editing fences and the language tag directly in source view.
+- **Status**: This renderer is being replaced by SourceRendererV2 and is no longer in the view mode cycle.
+
+#### SourceRendererV2
+Textarea-based source editing surface (the active source view):
+- Renders the full document as plain markdown text inside a `<textarea>` element — no per-node DOM elements, no node ID correspondences
+- A `<pre>` mirror element overlaps the textarea with identical styling for pixel-accurate coordinate lookups via the Range API (used by `getCaretRect()` for scroll-preserving view switches)
+- Mirror sync is lazy: a `mirrorDirty` flag is set on `input` events; the actual `pre.textContent` update is deferred to `getCaretRect()`
+- `fullRender(syntaxTree, container)` serializes the tree via `toMarkdown()`, sets the textarea value, and records the original markdown for change detection
+- `hasChanges()` compares current textarea content against the original markdown loaded in `fullRender()`, used to skip reparsing when the user made no edits
+- `getContent()` returns the current textarea value
+- `getCaretRect(offset)` returns the bounding rect of the caret at a given character offset, used for scroll-preserving view switches
+- Toolbar formatting is handled by `Source2Formatter` (accessed via `editor.getFormatter()`), not by the renderer
+- Keyboard shortcuts are handled by `KeyboardHandler`, which listens on the textarea's `keydown` event
 
 #### WritingRenderer
 WYSIWYG-style display:
@@ -497,11 +516,22 @@ CSS custom properties updated → immediate visual change
 
 ## View Modes
 
-### Source View
+### Source View (source2)
+
+- Full-document textarea containing the raw markdown
+- No per-node DOM elements — the textarea is the entire editing surface
+- Toolbar formatting and keyboard shortcuts work via `Source2Formatter` and `KeyboardHandler`
+- On switch back to writing, the textarea content is parsed into a new tree and merged into the existing tree via `updateUsing()`, preserving node IDs for unchanged nodes
+- A `hasChanges()` guard skips reparsing entirely when the user made no edits
+- Cursor position is preserved across view switches using `cursorToAbsoluteOffset` / `absoluteOffsetToCursor`
+- Scroll position is preserved using `getCaretRect()` coordinate lookups
+
+### Source View (legacy)
 
 - Displays raw markdown with syntax highlighting
 - All markdown syntax is visible
 - Syntax characters are styled with distinct colors
+- No longer in the view mode cycle — being replaced by source2
 - Best for users who know markdown
 
 ### Writing View

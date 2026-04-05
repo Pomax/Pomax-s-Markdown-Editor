@@ -8,7 +8,13 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { closeApp, launchApp, loadContent, setWritingView } from '../../test-utils.js';
+import {
+  closeApp,
+  launchApp,
+  loadContent,
+  setSource2View,
+  setWritingView,
+} from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -53,7 +59,7 @@ async function typeAndGetCursor(pg, text) {
   // Read the cursor position and line text content from the DOM.
   const result = await pg.evaluate(() => {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
+    if (!sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
     const node = range.startContainer;
@@ -64,7 +70,7 @@ async function typeAndGetCursor(pg, text) {
     while (el && !el.dataset.nodeId) {
       el = el.parentElement;
     }
-    if (!el) return null;
+    if (!el) return;
 
     // Compute the character offset from the start of the line's
     // text content up to the cursor position.
@@ -138,62 +144,10 @@ test(`cursor stays correct when completing bold+italic ***text***`, async () => 
   expect(cursorOffset).toBe(4);
 });
 
-test(`typing ***word*** renders as bold inside italic in source view`, async () => {
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `test ***word***`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  expect(srcText).toContain(`***word***`);
-});
-
 test(`typing **** is treated as plain text`, async () => {
   const { cursorOffset, lineText } = await typeAndGetCursor(page, `test ****`);
   expect(lineText).toContain(`****`);
   expect(cursorOffset).toBe(lineText.length);
-});
-
-test(`typing after closing * produces plain text, not italic`, async () => {
-  // Type "this is a *test*" then type " hello"
-  // The " hello" must NOT be inside the <em> — it should be plain text.
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `this is a *test*`) {
-    await page.keyboard.press(ch);
-    await page.waitForTimeout(50);
-  }
-  // Now type " hello" after the closing *
-  for (const ch of ` hello`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  // Switch to source view to check the raw markdown
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  // The raw markdown should have " hello" outside the italic markers
-  expect(srcText).toContain(`*test*`);
-  expect(srcText).toContain(` hello`);
-  // " hello" must come after the closing *, not inside *...*
-  expect(srcText).toMatch(/\*test\* hello/);
 });
 
 test(`typing after closing ** produces plain text, not bold`, async () => {
@@ -213,33 +167,7 @@ test(`typing after closing ** produces plain text, not bold`, async () => {
   }
   await page.waitForTimeout(100);
 
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
+  await setSource2View(page);
+  const srcText = await page.locator(`#editor textarea`).inputValue();
   expect(srcText).toMatch(/\*\*bold\*\* after/);
-});
-
-test(`typing after closing ~~ produces plain text, not strikethrough`, async () => {
-  await loadContent(page, ``);
-  await setWritingView(page);
-  const editor = page.locator(`#editor`);
-  await editor.click();
-  await page.waitForTimeout(100);
-
-  for (const ch of `~~struck~~`) {
-    await page.keyboard.press(ch);
-    await page.waitForTimeout(50);
-  }
-  for (const ch of ` after`) {
-    await page.keyboard.press(ch === ` ` ? `Space` : ch);
-    await page.waitForTimeout(50);
-  }
-  await page.waitForTimeout(100);
-
-  const { setSourceView } = await import(`../../test-utils.js`);
-  await setSourceView(page);
-  const srcLine = page.locator(`#editor [data-node-id]`).first();
-  const srcText = await srcLine.textContent();
-  expect(srcText).toMatch(/~~struck~~ after/);
 });

@@ -6,16 +6,17 @@
 /// <reference path="../../../../types.d.ts" />
 
 import { rawOffsetToRenderedOffset, renderedOffsetToRawOffset } from '../offset-mapping.js';
+import { CursorManagerData } from '../types.js';
 
 /**
  * Manages cursor synchronization between the DOM and the syntax tree.
  */
-export class CursorManager {
+export class CursorManager extends CursorManagerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 
@@ -50,14 +51,14 @@ export class CursorManager {
 
     // If the selection is collapsed there is no range.
     if (selection.isCollapsed) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 
     // Map the end (focus) position to tree coordinates.
     const endInfo = this.mapDOMPositionToTree(range.endContainer, range.endOffset);
     if (!endInfo) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 
@@ -80,13 +81,13 @@ export class CursorManager {
    *
    * @param {Node} domNode - The DOM node the position is in
    * @param {number} domOffset - The offset within `domNode`
-   * @returns {{ cursor: TreeCursor } | null}
+   * @returns {{ cursor: TreeCursor } | undefined}
    */
   mapDOMPositionToTree(domNode, domOffset) {
-    /** @type {string|null} */
-    let inlineNodeId = null;
+    /** @type {string | undefined} */
+    let inlineNodeId;
 
-    /** @type {Node|null} */
+    /** @type {Node | undefined} */
     let el = domNode;
     while (el && el !== this.editor.container) {
       if (el.nodeType === Node.ELEMENT_NODE) {
@@ -99,7 +100,7 @@ export class CursorManager {
           // record its id and keep walking to find the block parent.
           if (node?.isInlineNode()) {
             if (!inlineNodeId) inlineNodeId = nodeId;
-            el = el.parentNode;
+            el = el.parentNode ?? undefined;
             continue;
           }
 
@@ -121,13 +122,7 @@ export class CursorManager {
             };
           }
 
-          const rawOffset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
-
-          // A negative value signals the cursor is inside the
-          // `.md-syntax` prefix span (source view only).  Decode
-          // the actual prefix offset and store it on the cursor.
-          const inPrefix = rawOffset < 0;
-          const offset = inPrefix ? 0 : rawOffset;
+          const offset = this.computeOffsetInContent(htmlEl, domNode, domOffset);
 
           /** @type {TreeCursor} */
           const cursor = {
@@ -135,32 +130,17 @@ export class CursorManager {
             blockNodeId: nodeId,
             offset,
           };
-          if (inPrefix) {
-            cursor.prefixOffset = -(rawOffset + 1);
-          }
-          // If this element represents an html-block tag line in
-          // source view, record which part so edit methods can
-          // route changes to the correct attribute.
-          const tagPart = htmlEl.dataset?.tagPart;
-          if (tagPart === `opening` || tagPart === `closing`) {
-            cursor.tagPart = tagPart;
-          }
           return { cursor };
         }
       }
-      el = el.parentNode;
+      el = el.parentNode ?? undefined;
     }
-    return null;
+    return undefined;
   }
 
   /**
    * Computes the character offset inside the *content* portion of a node
-   * element (i.e. inside `.md-content`, skipping any `.md-syntax` marker).
-   *
-   * In source view, when the cursor is inside the `.md-syntax` prefix
-   * span, returns a negative value whose absolute value is the character
-   * offset within that prefix.  The caller uses the sign to distinguish
-   * prefix positions from content positions.
+   * element (i.e. inside `.md-content`).
    *
    * @param {HTMLElement} nodeElement  - The element with `data-node-id`
    * @param {Node}        cursorNode  - The DOM node the browser cursor is in
@@ -168,32 +148,6 @@ export class CursorManager {
    * @returns {number}
    */
   computeOffsetInContent(nodeElement, cursorNode, cursorOffset) {
-    // If cursor is inside a syntax marker span, compute the prefix offset.
-    /** @type {Element|null} */
-    let syntaxSpan = null;
-    /** @type {Node|null} */
-    let parent = cursorNode.parentNode;
-    while (parent && parent !== nodeElement) {
-      if (parent.nodeType === Node.ELEMENT_NODE) {
-        const parentEl = /** @type {Element} */ (parent);
-        if (parentEl.classList?.contains(`md-syntax`)) {
-          syntaxSpan = parentEl;
-          break;
-        }
-      }
-      parent = parent.parentNode;
-    }
-
-    if (syntaxSpan) {
-      // In source view, compute the actual position within the prefix.
-      if (this.editor.viewMode === `source`) {
-        const prefixOff = this.computePrefixOffset(syntaxSpan, cursorNode, cursorOffset);
-        // Return as negative to signal "inside prefix" to the caller.
-        return -(prefixOff + 1);
-      }
-      return 0;
-    }
-
     // Determine which sub-element holds the editable content
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
@@ -246,31 +200,7 @@ export class CursorManager {
   }
 
   /**
-   * Computes the character offset within a `.md-syntax` prefix span by
-   * walking its text nodes until the cursor node is found.
-   *
-   * @param {Element} syntaxSpan - The `.md-syntax` element
-   * @param {Node}    cursorNode - The DOM node the browser cursor is in
-   * @param {number}  cursorOffset - The offset inside `cursorNode`
-   * @returns {number}
-   */
-  computePrefixOffset(syntaxSpan, cursorNode, cursorOffset) {
-    const walker = document.createTreeWalker(syntaxSpan, NodeFilter.SHOW_TEXT, null);
-    let accumulated = 0;
-    let textNode = walker.nextNode();
-    while (textNode) {
-      if (textNode === cursorNode) {
-        return accumulated + cursorOffset;
-      }
-      accumulated += textNode.textContent?.length ?? 0;
-      textNode = walker.nextNode();
-    }
-    return accumulated;
-  }
-
-  /**
    * Converts a rendered (DOM) offset back to a raw (markdown) offset.
-   * In source mode the offset is returned as-is.
    *
    * When {@link afterFormatting} is true the cursor sits outside all
    * inline formatting wrappers in the DOM, so at an exact boundary
@@ -347,19 +277,9 @@ export class CursorManager {
     const blockId =
       this.editor.syntaxTree.treeCursor.blockNodeId ?? this.editor.syntaxTree.treeCursor.nodeId;
 
-    // When the cursor targets a tag line (source view), there may be
-    // multiple elements with the same data-node-id (opening & closing).
-    // Select the one matching the tagPart.
-    /** @type {Element|null} */
-    let nodeElement = null;
-    if (this.editor.syntaxTree.treeCursor.tagPart) {
-      nodeElement = this.editor.container.querySelector(
-        `[data-node-id="${blockId}"][data-tag-part="${this.editor.syntaxTree.treeCursor.tagPart}"]`,
-      );
-    }
-    if (!nodeElement) {
-      nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
-    }
+    /** @type {Element | undefined} */
+    const nodeElement =
+      this.editor.container.querySelector(`[data-node-id="${blockId}"]`) ?? undefined;
     if (!nodeElement) return;
 
     // Table cell cursor placement
@@ -375,34 +295,6 @@ export class CursorManager {
         this.editor.syntaxTree.treeCursor.offset,
       );
       return;
-    }
-
-    // When the cursor is inside the `.md-syntax` prefix span (source
-    // view only), place it there rather than in `.md-content`.
-    if (this.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
-      const syntaxEl = nodeElement.querySelector(`.md-syntax`);
-      if (syntaxEl) {
-        const prefixWalker = document.createTreeWalker(syntaxEl, NodeFilter.SHOW_TEXT, null);
-        let prefixRemaining = this.editor.syntaxTree.treeCursor.prefixOffset;
-        let prefixTextNode = prefixWalker.nextNode();
-        while (prefixTextNode) {
-          const len = prefixTextNode.textContent?.length ?? 0;
-          if (prefixRemaining <= len) {
-            const sel = window.getSelection();
-            if (sel) {
-              const range = document.createRange();
-              range.setStart(prefixTextNode, prefixRemaining);
-              range.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-            return;
-          }
-          prefixRemaining -= len;
-          prefixTextNode = prefixWalker.nextNode();
-        }
-      }
-      // Fallback: place at start of content if prefix span not found.
     }
 
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
@@ -500,11 +392,11 @@ export class CursorManager {
    *
    * @param {string} nodeId
    * @param {number} offset
-   * @returns {{ node: Node, offset: number } | null}
+   * @returns {{ node: Node, offset: number } | undefined}
    */
   resolveOffsetInDOM(nodeId, offset) {
     const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
-    if (!nodeElement) return null;
+    if (!nodeElement) return undefined;
 
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
@@ -535,7 +427,7 @@ export class CursorManager {
     if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
       return { node: lastChild, offset: lastChild.textContent?.length ?? 0 };
     }
-    return null;
+    return undefined;
   }
 
   /** @type {Set<string>} */

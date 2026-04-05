@@ -11,8 +11,8 @@ export async function insertTextAtCursor(ops, text) {
 
   // If there is a non-collapsed selection, delete it first so the
   // typed text replaces the selection.
-  /** @type {string|null} */
-  let rangeDeleteBefore = null;
+  /** @type {string | undefined} */
+  let rangeDeleteBefore;
   /** @type {string[]} */
   let rangeRemovedIds = [];
   if (ops.editor.treeRange) {
@@ -33,26 +33,7 @@ export async function insertTextAtCursor(ops, text) {
   const node = ops.editor.getCurrentBlockNode();
   if (!node || !ops.editor.syntaxTree || !ops.editor.syntaxTree.treeCursor) return;
 
-  // When the cursor is on an html-block tag line (source view), edit
-  // the openingTag / closingTag attribute directly.
-  if (node.type === `html-block` && ops.editor.syntaxTree.treeCursor.tagPart) {
-    const before = rangeDeleteBefore ?? ops.editor.syntaxTree.toMarkdown();
-    const attr =
-      ops.editor.syntaxTree.treeCursor.tagPart === `opening` ? `openingTag` : `closingTag`;
-    const old = node.attributes[attr] || ``;
-    const left = old.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-    const right = old.substring(ops.editor.syntaxTree.treeCursor.offset);
-    node.attributes[attr] = left + text + right;
-    ops.editor.syntaxTree.treeCursor = {
-      nodeId: node.id,
-      offset: left.length + text.length,
-      tagPart: ops.editor.syntaxTree.treeCursor.tagPart,
-    };
-    ops.editor.recordAndRender(before, { updated: [node.id] });
-    return;
-  }
-
-  // html-block containers without tagPart are structural (writing view).
+  // html-block containers are structural (writing view).
   if (node.type === `html-block` && node.children.length > 0) return;
 
   const before = rangeDeleteBefore ?? ops.editor.syntaxTree.toMarkdown();
@@ -77,45 +58,6 @@ export async function insertTextAtCursor(ops, text) {
     return;
   }
 
-  // Source-view prefix editing: the cursor is inside the `.md-syntax`
-  // span (e.g. `- [ ] `, `## `).  Reconstruct the full markdown line,
-  // splice the text at the absolute position, and reparse.
-  if (ops.editor.syntaxTree.treeCursor.prefixOffset !== undefined) {
-    const fullLine = ops.editor.buildMarkdownLine(node.type, node.content, node.attributes);
-    const absPos = ops.editor.syntaxTree.treeCursor.prefixOffset;
-    const newLine = fullLine.substring(0, absPos) + text + fullLine.substring(absPos);
-
-    const wasBareText = !!node.attributes.bareText;
-    const parsed = await ops.editor.reparseLine(newLine);
-    if (parsed) {
-      node.type = parsed.type;
-      node.content = parsed.content;
-      node.attributes = parsed.attributes;
-    } else {
-      node.content = newLine;
-    }
-    if (wasBareText) {
-      node.attributes.bareText = true;
-    }
-
-    const newAbsPos = absPos + text.length;
-    const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-    if (newAbsPos < newPrefixLen) {
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: 0,
-        prefixOffset: newAbsPos,
-      };
-    } else {
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: newAbsPos - newPrefixLen,
-      };
-    }
-    ops.editor.recordAndRender(before, { updated: [node.id] });
-    return;
-  }
-
   const oldType = node.type;
   const oldPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
 
@@ -127,23 +69,11 @@ export async function insertTextAtCursor(ops, text) {
   // Code-block content is raw code, not markdown — skip re-parsing
   // to avoid misidentifying code lines as headings, lists, etc.
   if (node.type === `code-block`) {
-    // In source view, edits target the full markdown text
-    // (fences + language + content) stored in sourceEditText.
-    if (ops.editor.viewMode === `source` && node.sourceEditText !== null) {
-      const srcLeft = node.sourceEditText.substring(0, ops.editor.syntaxTree.treeCursor.offset);
-      const srcRight = node.sourceEditText.substring(ops.editor.syntaxTree.treeCursor.offset);
-      node.sourceEditText = srcLeft + text + srcRight;
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: srcLeft.length + text.length,
-      };
-    } else {
-      node.content = newContent;
-      ops.editor.syntaxTree.treeCursor = {
-        nodeId: node.id,
-        offset: left.length + text.length,
-      };
-    }
+    node.content = newContent;
+    ops.editor.syntaxTree.treeCursor = {
+      nodeId: node.id,
+      offset: left.length + text.length,
+    };
     ops.editor.recordAndRender(before, { updated: [node.id] });
     return;
   }
@@ -246,14 +176,11 @@ export async function insertTextAtCursor(ops, text) {
   // markdown line advances by the inserted text length.
   const absPos = oldPrefixLen + left.length + text.length;
   const newPrefixLen = ops.editor.getPrefixLength(node.type, node.attributes);
-  if (ops.editor.viewMode === `source` && absPos < newPrefixLen) {
-    ops.editor.syntaxTree.treeCursor = { nodeId: node.id, offset: 0, prefixOffset: absPos };
-  } else {
-    ops.editor.syntaxTree.treeCursor = {
-      nodeId: node.id,
-      offset: Math.max(0, absPos - newPrefixLen),
-    };
-  }
+  ops.editor.syntaxTree.treeCursor = {
+    nodeId: node.id,
+    offset: Math.max(0, absPos - newPrefixLen),
+  };
+
   /** @type {{ updated: string[], removed?: string[] }} */
   const hints = { updated: [node.id] };
   if (rangeRemovedIds.length > 0) hints.removed = rangeRemovedIds;

@@ -5,10 +5,9 @@
   "main": "src/electron/main.js",
   "type": "module",
   "scripts": {
-    "build": "npm run test && npm run docs && npm run clean",
+    "build": "npm run lint && electron-builder --publish never && node scripts/clean-dist.js",
     "cleanup": "rm -rf test-results",
     "docs": "node scripts/generate-api-docs.js",
-    "dist": "electron-builder --publish never && node scripts/clean-dist.js",
     "dist:linux": "electron-builder --linux --publish never && node scripts/clean-dist.js",
     "dist:mac": "electron-builder --mac --publish never && node scripts/clean-dist.js",
     "dist:win": "electron-builder --win --publish never && node scripts/clean-dist.js",

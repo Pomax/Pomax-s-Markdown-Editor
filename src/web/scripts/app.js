@@ -15,59 +15,15 @@ import { SearchBar } from './utility/search/search-bar.js';
 import { TabBar, getDisambiguatedLabels } from './utility/tab-bar/tab-bar.js';
 import { TableOfContents } from './utility/toc/toc.js';
 import { Toolbar } from './utility/toolbar/toolbar.js';
+import { AppData } from './editor/types.js';
 
 /**
  * Main application class.
  * Coordinates all editor components.
  */
-class App {
+class App extends AppData {
   constructor() {
-    /** @type {Editor|null} */
-    this.editor = null;
-
-    /** @type {Toolbar|null} */
-    this.toolbar = null;
-
-    /** @type {MenuHandler|null} */
-    this.menuHandler = null;
-
-    /** @type {KeyboardHandler|null} */
-    this.keyboardHandler = null;
-
-    /** @type {SearchBar|null} */
-    this.searchBar = null;
-
-    /** @type {TableOfContents|null} */
-    this.toc = null;
-
-    /** @type {TabBar|null} */
-    this.tabBar = null;
-
-    /**
-     * Per-tab document state storage.
-     * @type {Map<string, DocumentState>}
-     */
-    this.documentStates = new Map();
-
-    /**
-     * Per-tab contenteditable container elements.
-     * Each tab gets its own div; only the active one is visible.
-     * @type {Map<string, HTMLElement>}
-     */
-    this.tabContainers = new Map();
-
-    /**
-     * The scroll container (parent of contenteditable divs).
-     * scrollTop is saved/restored per-tab since it's shared.
-     * @type {HTMLElement|null}
-     */
-    this.scrollContainer = null;
-
-    /** @type {number} Counter for generating unique tab IDs */
-    this.tabCounter = 0;
-
-    /** @type {ReturnType<typeof setTimeout>|null} */
-    this.cursorDebounce = null;
+    super();
   }
 
   /**
@@ -86,7 +42,7 @@ class App {
 
     // The scroll container is `#editor-container`; each tab will
     // get its own contenteditable div inside it.
-    this.scrollContainer = editorContainer.parentElement;
+    this.scrollContainer = /** @type {HTMLElement} */ (editorContainer.parentElement);
 
     // Initialize editor with the original contenteditable div
     this.editor = new Editor(editorContainer);
@@ -94,7 +50,7 @@ class App {
 
     // Initialize page resize handles (writing mode only).
     // Store the retarget function so tab switches can update the handles.
-    this.retargetResizeHandles = initPageResizeHandles(editorContainer) ?? null;
+    this.retargetResizeHandles = initPageResizeHandles(editorContainer);
 
     // Initialize toolbar
     this.toolbar = new Toolbar(toolbarContainer, this.editor);
@@ -133,7 +89,7 @@ class App {
 
       // Register the initial #editor element as the first tab's container
       const firstTabId = this.nextTabId();
-      this.tabBar.addTab(firstTabId, null, true);
+      this.tabBar.addTab(firstTabId, undefined, true);
       this.tabContainers.set(firstTabId, editorContainer);
 
       this.tabBar.onTabSelect = (tabId) => this.switchToTab(tabId);
@@ -153,7 +109,7 @@ class App {
     window.addEventListener(`beforeunload`, () => {
       if (this.cursorDebounce) {
         clearTimeout(this.cursorDebounce);
-        this.cursorDebounce = null;
+        this.cursorDebounce = undefined;
       }
       this.notifyOpenFiles();
     });
@@ -193,7 +149,7 @@ class App {
 
     // Handle File → New: create a new tab with an empty document
     document.addEventListener(`file:new`, async () => {
-      await this.createNewTab(null, ``);
+      await this.createNewTab(undefined, ``);
     });
 
     // Handle File → Load / Open Recent: open in a new tab (or switch
@@ -201,7 +157,7 @@ class App {
     document.addEventListener(`file:loaded`, async (e) => {
       const detail = /** @type {CustomEvent} */ (e).detail;
       if (!detail) return;
-      const filePath = detail.filePath || null;
+      const filePath = detail.filePath || undefined;
       // If this file is already open in another tab, switch to it
       if (filePath && this.tabBar) {
         const existing = this.tabBar.tabs.find((t) => t.filePath === filePath);
@@ -340,11 +296,11 @@ class App {
 
     // Capture the currently highlighted ToC heading so it can be
     // restored without recomputing viewport-based highlighting.
-    let tocHeadingId = this.toc?.lockedHeadingId ?? null;
+    let tocHeadingId = this.toc?.lockedHeadingId;
     if (!tocHeadingId && this.toc) {
       const activeLink = this.toc.container.querySelector(`.toc-active`);
       if (activeLink) {
-        tocHeadingId = /** @type {HTMLElement} */ (activeLink).dataset.nodeId ?? null;
+        tocHeadingId = /** @type {HTMLElement} */ (activeLink).dataset.nodeId;
       }
     }
 
@@ -352,11 +308,13 @@ class App {
       content: md,
       filePath: this.editor.currentFilePath,
       modified: this.editor.hasUnsavedChanges,
-      cursor: this.editor.syntaxTree?.treeCursor ? { ...this.editor.syntaxTree.treeCursor } : null,
+      cursor: this.editor.syntaxTree?.treeCursor
+        ? { ...this.editor.syntaxTree.treeCursor }
+        : undefined,
       cursorOffset: absOffset,
       contentHash: hash,
       syntaxTree: this.editor.syntaxTree,
-      treeRange: this.editor.treeRange ? { ...this.editor.treeRange } : null,
+      treeRange: this.editor.treeRange ? { ...this.editor.treeRange } : undefined,
       scrollTop: this.scrollContainer ? this.scrollContainer.scrollTop : 0,
       tocActiveHeadingId: tocHeadingId,
       undoStack: [...this.editor.undoManager.undoStack],
@@ -398,7 +356,7 @@ class App {
         this.editor.syntaxTree = state.syntaxTree;
         if (this.editor.syntaxTree)
           this.editor.syntaxTree.treeCursor = state.cursor ? { ...state.cursor } : null;
-        this.editor.lastRenderedNodeId = this.editor.syntaxTree?.treeCursor?.nodeId ?? null;
+        this.editor.lastRenderedNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
         this.editor.undoManager.undoStack = [...state.undoStack];
         this.editor.undoManager.redoStack = [...state.redoStack];
         this.editor.setUnsavedChanges(state.modified);
@@ -426,7 +384,7 @@ class App {
       // tree are identical — nothing changed — so just set the
       // browser selection.  Suppress selectionchange so the event
       // handler doesn't trigger a spurious re-render.
-      this.editor.treeRange = state?.treeRange ? { ...state.treeRange } : null;
+      this.editor.treeRange = state?.treeRange ? { ...state.treeRange } : undefined;
       this.editor.isRendering = true;
       this.editor.container.focus({ preventScroll: true });
       if (this.editor.treeRange) {
@@ -440,7 +398,7 @@ class App {
         // Lock the ToC to the heading that was active when we
         // left this tab so refresh() doesn't recompute it from
         // viewport geometry.
-        this.toc.lockedHeadingId = state?.tocActiveHeadingId ?? null;
+        this.toc.lockedHeadingId = state?.tocActiveHeadingId;
         this.toc.reobserve();
         // Keep the programmatic-scroll flag active until the
         // next frame — scroll events from scrollTop / placeCursor
@@ -470,9 +428,7 @@ class App {
     if (!tab) return false;
 
     return (
-      tab.filePath === null &&
-      !this.editor.hasUnsavedChanges &&
-      this.editor.getMarkdown().trim() === ``
+      !tab.filePath && !this.editor.hasUnsavedChanges && this.editor.getMarkdown().trim() === ``
     );
   }
 
@@ -481,7 +437,7 @@ class App {
    * Waits for the document and ToC to be fully loaded before applying.
    * For the active tab, restores live. For background tabs, patches
    * their saved document state.
-   * @param {Array<{filePath: string, active: boolean, cursorPath?: number[]|null, tocHeadingPath?: number[]|null}>} entries
+   * @param {Array<{filePath: string, active: boolean, cursorPath?: number[], tocHeadingPath?: number[]}>} entries
    */
   restoreSession(entries) {
     const tryRestore = () => {
@@ -512,7 +468,9 @@ class App {
         // Restore cursor on the background tab's syntax tree
         if (entry.cursorPath) {
           state.syntaxTree.setCursorPath(entry.cursorPath);
-          state.cursor = state.syntaxTree.treeCursor ? { ...state.syntaxTree.treeCursor } : null;
+          state.cursor = state.syntaxTree.treeCursor
+            ? { ...state.syntaxTree.treeCursor }
+            : undefined;
         }
 
         // Restore ToC heading for the background tab
@@ -530,7 +488,7 @@ class App {
 
       // Lock the ToC heading BEFORE any re-render so that
       // MutationObserver-triggered refresh() respects it.
-      let tocNode = null;
+      let tocNode;
       if (activeEntry.tocHeadingPath && this.toc) {
         tocNode = this.editor.syntaxTree.getNodeAtPath(activeEntry.tocHeadingPath);
         if (tocNode) {
@@ -591,7 +549,7 @@ class App {
   /**
    * Loads a file into the current (active) tab, replacing its content
    * without creating a new tab.
-   * @param {string|null} filePath
+   * @param {string} filePath
    * @param {string} content
    */
   async loadIntoCurrentTab(filePath, content) {
@@ -609,8 +567,8 @@ class App {
 
   /**
    * Creates a new tab and loads content into it.
-   * @param {string|null} filePath - File path, or null for untitled
-   * @param {string} content - Markdown content to load
+   * @param {string | undefined} filePath
+   * @param {string} content
    */
   async createNewTab(filePath, content) {
     if (!this.editor || !this.tabBar || !this.scrollContainer) return;
@@ -738,7 +696,7 @@ class App {
     if (this.tabBar.tabs.length === 0) {
       // Last tab was closed — create a fresh untitled tab
       const newId = this.nextTabId();
-      this.tabBar.addTab(newId, null, true);
+      this.tabBar.addTab(newId, undefined, true);
 
       // Create a new container for the fresh tab
       const newContainer = document.createElement(`div`);
@@ -786,8 +744,8 @@ class App {
         cursorOffset: 0,
         contentHash: 0,
         scrollTop: 0,
-        cursorPath: /** @type {number[]|null} */ (null),
-        tocHeadingPath: /** @type {number[]|null} */ (null),
+        cursorPath: /** @type {number[] | undefined} */ (undefined),
+        tocHeadingPath: /** @type {number[] | undefined} */ (undefined),
       };
 
       if (tab.id === activeTabId && this.editor?.syntaxTree?.treeCursor) {
@@ -800,15 +758,14 @@ class App {
           this.editor.buildMarkdownLine.bind(this.editor),
           this.editor.getPrefixLength.bind(this.editor),
         );
-        entry.cursorPath = this.editor.syntaxTree.getPathToCursor();
+        entry.cursorPath = this.editor.syntaxTree.getPathToCursor() ?? undefined;
         entry.scrollTop = this.scrollContainer ? this.scrollContainer.scrollTop : 0;
         const tocId =
           this.toc?.lockedHeadingId ??
-          /** @type {HTMLElement|null} */ (this.toc?.container.querySelector(`.toc-active`))
-            ?.dataset?.nodeId ??
-          null;
+          /** @type {HTMLElement} */ (this.toc?.container.querySelector(`.toc-active`))?.dataset
+            ?.nodeId;
         if (tocId && this.editor.syntaxTree) {
-          entry.tocHeadingPath = this.editor.syntaxTree.getPathToNode(tocId);
+          entry.tocHeadingPath = this.editor.syntaxTree.getPathToNode(tocId) ?? undefined;
         }
       } else {
         // Background tab — read from cached document state
@@ -817,10 +774,10 @@ class App {
           entry.cursorOffset = state.cursorOffset;
           entry.contentHash = state.contentHash;
           entry.scrollTop = state.scrollTop ?? 0;
-          entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? null;
-          const bgTocId = state.tocActiveHeadingId ?? null;
+          entry.cursorPath = state.syntaxTree?.getPathToCursor() ?? undefined;
+          const bgTocId = state.tocActiveHeadingId;
           if (bgTocId && state.syntaxTree) {
-            entry.tocHeadingPath = state.syntaxTree.getPathToNode(bgTocId);
+            entry.tocHeadingPath = state.syntaxTree.getPathToNode(bgTocId) ?? undefined;
           }
         }
       }
@@ -876,7 +833,7 @@ class App {
 
     try {
       const result = await window.electronAPI.getSetting(`tocVisible`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         this.toc?.setVisible(!!result.value);
       }
     } catch {
@@ -903,7 +860,7 @@ class App {
 
     try {
       const result = await window.electronAPI.getSetting(`ensureLocalPaths`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.ensureLocalPaths = !!result.value;
         }
@@ -914,7 +871,7 @@ class App {
 
     try {
       const result = await window.electronAPI.getSetting(`detailsClosed`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.detailsClosed = !!result.value;
         }
@@ -925,7 +882,7 @@ class App {
 
     try {
       const result = await window.electronAPI.getSetting(`enableStyleElements`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         if (this.editor) {
           this.editor.enableStyleElements = !!result.value;
         }
@@ -946,7 +903,7 @@ class App {
       setContent: async (content) => {
         await this.editor?.loadMarkdown(content);
       },
-      getViewMode: () => this.editor?.getViewMode() ?? `source`,
+      getViewMode: () => this.editor?.viewMode ?? `writing`,
       setViewMode: async (/** @type {string} */ mode) => {
         await this.editor?.setViewMode(/** @type {ViewMode} */ (mode));
         this.toolbar?.setViewMode(mode);
@@ -967,7 +924,7 @@ class App {
     /** @type {any} */ (window).__flushOpenFiles = () => {
       if (this.cursorDebounce) {
         clearTimeout(this.cursorDebounce);
-        this.cursorDebounce = null;
+        this.cursorDebounce = undefined;
       }
       return this.notifyOpenFiles();
     };
@@ -975,7 +932,7 @@ class App {
     // Expose file path and cursor info as globals so integration tests
     // (and other tooling) can inspect editor state.
     Object.defineProperty(window, `__editorFilePath`, {
-      get: () => this.editor?.currentFilePath ?? null,
+      get: () => this.editor?.currentFilePath,
       set: (v) => {
         if (this.editor) this.editor.currentFilePath = v;
       },
@@ -983,7 +940,7 @@ class App {
     });
 
     Object.defineProperty(window, `__editorCursorNodeId`, {
-      get: () => this.editor?.syntaxTree?.treeCursor?.nodeId ?? null,
+      get: () => this.editor?.syntaxTree?.treeCursor?.nodeId,
       configurable: true,
     });
 
@@ -1020,7 +977,7 @@ class App {
 
     switch (method) {
       case `file:new`:
-        await this.createNewTab(null, ``);
+        await this.createNewTab(undefined, ``);
         break;
       case `file:save`:
         this.menuHandler.handleSave();
@@ -1034,13 +991,13 @@ class App {
       case `edit:redo`:
         await this.editor.redo();
         break;
-      case `view:source`:
-        await this.editor.setViewMode(`source`);
-        this.toolbar?.setViewMode(`source`);
-        break;
       case `view:writing`:
         await this.editor.setViewMode(`writing`);
         this.toolbar?.setViewMode(`writing`);
+        break;
+      case `view:source2`:
+        await this.editor.setViewMode(`source2`);
+        this.toolbar?.setViewMode(`source2`);
         break;
       case `document:getContent`:
         // Response would be handled via IPC

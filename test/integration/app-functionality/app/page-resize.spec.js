@@ -11,7 +11,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { closeApp, launchApp, setSourceView, setWritingView } from '../../test-utils.js';
+import { closeApp, launchApp, setSource2View, setWritingView } from '../../test-utils.js';
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -69,8 +69,8 @@ test(`resize handles are visible in writing mode`, async () => {
   await expect(right).toBeAttached();
 });
 
-test(`resize handles are visible in source mode`, async () => {
-  await setSourceView(page);
+test(`resize handles are visible in source2 mode`, async () => {
+  await setSource2View(page);
   const left = page.locator(`.editor-resize-handle--left`);
   const right = page.locator(`.editor-resize-handle--right`);
   await expect(left).toBeAttached();

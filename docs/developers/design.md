@@ -26,9 +26,12 @@ src/web/scripts/editor/
 ├── range-operations.js    # RangeOperations — selection range deletion, Ctrl+A
 ├── content-types/         # Image, link, table, code-block modals and helpers
 ├── edit-operations/       # Per-action edit logic (backspace, delete, enter, insert)
+├── formatters/            # View-mode-specific formatting
+│   ├── source2-formatter.js  # Textarea-based formatting for source2 mode
+│   └── tree-formatter.js     # Tree-based formatting for writing mode
 ├── handlers/              # Clipboard, event, input, keyboard, menu handlers
 ├── managers/              # Cursor, selection, undo, persistence managers
-├── renderers/             # Source + writing renderers
+├── renderers/             # Source + writing + source2 renderers
 └── syntax-highlighter/    # Per-language syntax highlighting
 ```
 
@@ -202,7 +205,9 @@ test/
     │       ├── superscript-button.spec.js
     │       ├── table.spec.js
     │       ├── toolbar-active.spec.js
-    │       └── toolbar-tooltip.spec.js
+    │       ├── toolbar-tooltip.spec.js
+    │       ├── source2-toolbar.spec.js
+    │       └── source2-hotkeys.spec.js
     └── user-interaction/
         ├── content/
         │   ├── backspace-after-html-block.spec.js
@@ -227,7 +232,9 @@ test/
             ├── paste.spec.js
             ├── range-handling.spec.js
             ├── select-all.spec.js
-            └── source-view-editing.spec.js
+            ├── source-view-editing.spec.js
+            ├── source2-cursor-position.spec.js
+            └── source2-roundtrip.spec.js
 ```
 
 ## Coding Conventions
@@ -316,6 +323,7 @@ class Editor {
         this.parser = new DFAParser();
         this.syntaxTree = null;
         this.sourceRenderer = new SourceRenderer(this);
+        this.sourceRendererV2 = new SourceRendererV2(this);
         this.writingRenderer = new WritingRenderer(this);
         this.undoManager = new UndoManager();
 
@@ -329,6 +337,20 @@ class Editor {
         this.eventHandler = new EventHandler(this);
         this.imageHelper = new ImageHelper(this);
         this.linkHelper = new LinkHelper(this);
+
+        // Formatters (accessed via getFormatter())
+        this.treeFormatter = new TreeFormatter(this);
+        this.source2Formatter = new Source2Formatter(this);
+    }
+
+    /**
+     * Returns the view-mode-specific formatter.
+     * @returns {Formatter}
+     */
+    getFormatter() {
+        return this.viewMode === `source2`
+            ? this.source2Formatter
+            : this.treeFormatter;
     }
 
     loadMarkdown(markdown) {

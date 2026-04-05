@@ -7,23 +7,18 @@
 
 import { SyntaxNode } from '../../../../../parsers/old/syntax-node.js';
 import { ImageModal } from './image-modal.js';
+import { ImageHelperData } from '../../types.js';
 
 /**
  * Manages image-related operations for the editor.
  */
-export class ImageHelper {
+export class ImageHelper extends ImageHelperData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /**
-     * Lazily-created image modal for click-to-edit in writing mode.
-     * @type {ImageModal|null}
-     */
-    this.imageModal = null;
   }
 
   /**
@@ -117,7 +112,7 @@ export class ImageHelper {
         if (currentNode.type === `paragraph` && currentNode.content === ``) {
           siblings.splice(idx, 1, imageNode);
           imageNode.parent = currentNode.parent;
-          currentNode.parent = null;
+          currentNode.parent = undefined;
           renderHints = { added: [imageNode.id], removed: [currentNode.id] };
         } else {
           // Insert after current node

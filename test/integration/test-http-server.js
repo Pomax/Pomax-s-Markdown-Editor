@@ -72,6 +72,7 @@ export async function startServer(PORT = 0) {
  */
 export async function stopServer(server) {
   if (server) {
+    server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
   }
 }

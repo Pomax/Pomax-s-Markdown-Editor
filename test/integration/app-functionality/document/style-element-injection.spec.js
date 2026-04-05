@@ -15,7 +15,6 @@ import {
   defocusEditor,
   launchApp,
   loadContent,
-  setSourceView,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -72,7 +71,7 @@ test.describe(`style element injection`, () => {
     // The heading should NOT have the red color applied.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).not.toBe(`rgb(255, 0, 0)`);
   });
@@ -99,7 +98,7 @@ test.describe(`style element injection`, () => {
     // The heading should now have the red color applied.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).toBe(`rgb(255, 0, 0)`);
   });
@@ -142,44 +141,9 @@ test.describe(`style element injection`, () => {
     // The heading color should revert.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).not.toBe(`rgb(255, 0, 0)`);
-  });
-
-  test(`source view shows the style block as editable text regardless of preference`, async () => {
-    // Enable style injection.
-    await page.evaluate(() => {
-      window.electronAPI?.setSetting(`enableStyleElements`, true);
-      document.dispatchEvent(
-        new CustomEvent(`content:settingsChanged`, {
-          detail: { detailsClosed: false, enableStyleElements: true },
-        }),
-      );
-    });
-    await page.waitForTimeout(200);
-
-    // Switch to source view.
-    await setSourceView(page);
-    await page.waitForTimeout(200);
-
-    // The <style> tag should be visible as text content.
-    const styleTagText = page.locator(`#editor .md-html-tag`, {
-      hasText: `<style>`,
-    });
-    await expect(styleTagText).toBeVisible();
-
-    // The raw CSS line should be visible as text.
-    const rawLine = page.locator(`#editor .md-html-raw`, {
-      hasText: `.md-heading1`,
-    });
-    await expect(rawLine).toBeVisible();
-
-    // No injected <style> elements should exist in source view.
-    const injectedCount = await page.evaluate(
-      () => document.querySelectorAll(`[data-injected-style="true"]`).length,
-    );
-    expect(injectedCount).toBe(0);
   });
 
   test(`syntax tree is not affected by the style injection preference`, async () => {

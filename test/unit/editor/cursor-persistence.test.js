@@ -176,10 +176,10 @@ describe(`absoluteOffsetToCursor`, () => {
     assert.equal(cursor.offset, 5);
   });
 
-  it(`returns null for empty tree`, () => {
+  it(`returns undefined for empty tree`, () => {
     const tree = makeTree();
     const cursor = absoluteOffsetToCursor(tree, 0, getPrefixLength);
-    assert.equal(cursor, null);
+    assert.equal(cursor, undefined);
   });
 });
 

@@ -2,6 +2,233 @@ import { tokenizeInline } from './inline-tokenizer.js';
 import { SyntaxNode } from './syntax-node.js';
 
 /**
+ * Computes the Levenshtein distance between two strings using a
+ * single-row DP approach.
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function charDistance(a, b) {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  if (a.length > b.length) {
+    const tmp = a;
+    a = b;
+    b = tmp;
+  }
+  const m = a.length;
+  const n = b.length;
+  let row = Array.from({ length: m + 1 }, (_, i) => i);
+  for (let j = 1; j <= n; j++) {
+    let prev = j;
+    for (let i = 1; i <= m; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const val = Math.min(prev + 1, row[i] + 1, row[i - 1] + cost);
+      row[i - 1] = prev;
+      prev = val;
+    }
+    row[m] = prev;
+  }
+  return row[m];
+}
+
+/**
+ * Computes the Levenshtein distance between two arrays using a
+ * full DP matrix.  Elements are compared with strict equality.
+ * @param {string[]} a
+ * @param {string[]} b
+ * @returns {number}
+ */
+function arrayLevenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+/**
+ * Returns a 0–1 similarity score between two strings.  1 means
+ * identical, 0 means completely different.  For strings both
+ * exceeding 10 000 characters, falls back to a cheaper line-level
+ * comparison instead of character-level Levenshtein.
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+export function contentSimilarity(a, b) {
+  if (a.length === 0 && b.length === 0) return 1;
+  if (a.length > 10_000 && b.length > 10_000) {
+    const aLines = a.split(`\n`);
+    const bLines = b.split(`\n`);
+    const maxLen = Math.max(aLines.length, bLines.length);
+    if (maxLen === 0) return 1;
+    return 1 - arrayLevenshtein(aLines, bLines) / maxLen;
+  }
+  const maxLen = Math.max(a.length, b.length);
+  return 1 - charDistance(a, b) / maxLen;
+}
+
+/**
+ * Matches children from an old node list to children from a new node
+ * list.  Returns a Map where each key is a new child that was matched
+ * and each value is the corresponding original child.
+ *
+ * Pass 1 finds exact matches (same type + identical toMarkdown()).
+ * Pass 2 finds fuzzy matches among remaining same-type candidates
+ * using contentSimilarity, with tiebreakers for html-block tagName
+ * and list-item indent.
+ *
+ * @param {SyntaxNode[]} oldChildren
+ * @param {SyntaxNode[]} newChildren
+ * @returns {Map<SyntaxNode, SyntaxNode>}
+ */
+export function matchChildren(oldChildren, newChildren) {
+  /** @type {Map<SyntaxNode, SyntaxNode>} */
+  const matches = new Map();
+  /** @type {Set<number>} */
+  const claimedOld = new Set();
+  /** @type {Set<number>} */
+  const matchedNew = new Set();
+
+  for (let ni = 0; ni < newChildren.length; ni++) {
+    const nc = newChildren[ni];
+    const ncMd = nc.toMarkdown();
+    for (let oi = 0; oi < oldChildren.length; oi++) {
+      if (claimedOld.has(oi)) continue;
+      const oc = oldChildren[oi];
+      if (oc.type === nc.type && oc.toMarkdown() === ncMd) {
+        matches.set(nc, oc);
+        claimedOld.add(oi);
+        matchedNew.add(ni);
+        break;
+      }
+    }
+  }
+
+  for (let ni = 0; ni < newChildren.length; ni++) {
+    if (matchedNew.has(ni)) continue;
+    const nc = newChildren[ni];
+    const ncMd = nc.toMarkdown();
+    let bestOi = -1;
+    let bestScore = -1;
+    let bestTiebreak = false;
+    for (let oi = 0; oi < oldChildren.length; oi++) {
+      if (claimedOld.has(oi)) continue;
+      const oc = oldChildren[oi];
+      if (oc.type !== nc.type) continue;
+      const score = contentSimilarity(oc.toMarkdown(), ncMd);
+      let tiebreak = false;
+      if (nc.type === `html-block`) {
+        tiebreak = oc.attributes.tagName === nc.attributes.tagName;
+      } else if (nc.type === `list-item`) {
+        tiebreak = oc.attributes.indent === nc.attributes.indent;
+      }
+      if (score > bestScore || (score === bestScore && tiebreak && !bestTiebreak)) {
+        bestOi = oi;
+        bestScore = score;
+        bestTiebreak = tiebreak;
+      }
+    }
+    if (bestOi !== -1) {
+      matches.set(nc, oldChildren[bestOi]);
+      claimedOld.add(bestOi);
+    }
+  }
+
+  return matches;
+}
+
+/**
+ * Copies state from `newNode` to `oldNode` while preserving `oldNode.id`.
+ * For inline-containing types, the content setter triggers
+ * `buildInlineChildren()`. For `html-block` nodes with block-level
+ * children, recursively matches and updates children.
+ *
+ * @param {SyntaxNode} oldNode
+ * @param {SyntaxNode} newNode
+ */
+export function updateMatchedNode(oldNode, newNode) {
+  if (oldNode.content !== newNode.content) {
+    oldNode.content = newNode.content;
+  }
+
+  if (!attributesEqual(oldNode.attributes, newNode.attributes)) {
+    const savedDetailsOpen = oldNode.attributes.detailsOpen;
+    oldNode.attributes = { ...newNode.attributes };
+    if (savedDetailsOpen !== undefined) {
+      oldNode.attributes.detailsOpen = savedDetailsOpen;
+    }
+  }
+
+  if (oldNode.startLine !== newNode.startLine) {
+    oldNode.startLine = newNode.startLine;
+  }
+  if (oldNode.endLine !== newNode.endLine) {
+    oldNode.endLine = newNode.endLine;
+  }
+
+  if (oldNode.type === `html-block`) {
+    if (newNode.children.length > 0) {
+      const childMatches = matchChildren(oldNode.children, newNode.children);
+      const result = [];
+      let changed = false;
+      for (const nc of newNode.children) {
+        const matched = childMatches.get(nc);
+        if (matched) {
+          updateMatchedNode(matched, nc);
+          if (matched.parent !== oldNode) {
+            matched.parent = oldNode;
+          }
+          result.push(matched);
+          if (!changed && matched !== oldNode.children[result.length - 1]) {
+            changed = true;
+          }
+        } else {
+          if (nc.parent !== oldNode) {
+            nc.parent = oldNode;
+          }
+          result.push(nc);
+          changed = true;
+        }
+      }
+      if (changed || result.length !== oldNode.children.length) {
+        oldNode.children = result;
+      }
+    } else if (oldNode.children.length > 0) {
+      oldNode.children = [];
+    }
+  }
+}
+
+/**
+ * Shallow-compares two attribute objects for equality.
+ * @param {Record<string, any>} a
+ * @param {Record<string, any>} b
+ * @returns {boolean}
+ */
+function attributesEqual(a, b) {
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
+/**
  * Node types whose content contains inline formatting and should be
  * modelled as inline child nodes (text, bold, italic, link, etc.).
  * @type {Set<string>}
@@ -41,7 +268,7 @@ export class SyntaxTree {
    * @param {SyntaxNode} node - The node to add
    */
   appendChild(node) {
-    node.parent = null;
+    node.parent = undefined;
     this.children.push(node);
   }
 
@@ -54,7 +281,7 @@ export class SyntaxTree {
     const index = this.children.indexOf(node);
     if (index !== -1) {
       this.children.splice(index, 1);
-      node.parent = null;
+      node.parent = undefined;
       return true;
     }
     return false;
@@ -505,7 +732,16 @@ export class SyntaxTree {
       lines.push(child.toMarkdown());
     }
 
-    return lines.join(`\n\n`);
+    if (lines.length === 0) return ``;
+
+    const parts = [lines[0]];
+    for (let i = 1; i < lines.length; i++) {
+      const prev = this.children[i - 1];
+      const curr = this.children[i];
+      const sep = prev.type === `list-item` && curr.type === `list-item` ? `\n` : `\n\n`;
+      parts.push(sep + lines[i]);
+    }
+    return parts.join(``);
   }
 
   /**
@@ -696,5 +932,41 @@ export class SyntaxTree {
       children = children[index].children;
     }
     return null;
+  }
+
+  /**
+   * Performs structural diffing between this tree and a newly parsed tree,
+   * updating this tree's children to match `newTree` while preserving node
+   * identity (IDs) for matched nodes. Does not touch `treeCursor` — the
+   * caller handles cursor restoration.
+   *
+   * @param {SyntaxTree} newTree
+   */
+  updateUsing(newTree) {
+    const matches = matchChildren(this.children, newTree.children);
+    const result = [];
+    let changed = false;
+    for (const nc of newTree.children) {
+      const matched = matches.get(nc);
+      if (matched) {
+        updateMatchedNode(matched, nc);
+        if (matched.parent !== undefined) {
+          matched.parent = undefined;
+        }
+        result.push(matched);
+        if (!changed && matched !== this.children[result.length - 1]) {
+          changed = true;
+        }
+      } else {
+        if (nc.parent !== undefined) {
+          nc.parent = undefined;
+        }
+        result.push(nc);
+        changed = true;
+      }
+    }
+    if (changed || result.length !== this.children.length) {
+      this.children = result;
+    }
   }
 }

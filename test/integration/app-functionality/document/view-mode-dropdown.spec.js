@@ -1,7 +1,7 @@
 /**
  * @fileoverview Integration tests for the view-mode toggle button in the toolbar.
- * Verifies the toggle has a label, defaults to "Writing View", switches the
- * editor between source and writing modes, and stays in sync when the
+ * Verifies the toggle has a label, defaults to "Writing View", cycles through
+ * writing → source → source2 → writing, and stays in sync when the
  * view mode is changed externally via the menu/IPC.
  */
 
@@ -15,7 +15,6 @@ import {
   launchApp,
   loadContent,
   projectRoot,
-  setSourceView,
 } from '../../test-utils.js';
 
 const readmePath = path.join(projectRoot, `README.md`);
@@ -47,34 +46,14 @@ test(`view mode toggle defaults to Writing View`, async () => {
   await expect(toggle).toHaveText(`Writing View`);
 });
 
-test(`clicking toggle switches editor to source mode`, async () => {
-  // Load content so we have a heading to test against.
-  await loadContent(page, readmeContent);
-
-  const toggle = page.locator(`.toolbar-view-mode-toggle`);
-
-  // Click to switch to source mode.
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
-
-  await expect(toggle).toHaveText(`Source View`);
-
-  // The editor's data-view-mode attribute should reflect the change.
-  const editor = page.locator(`#editor`);
-  await expect(editor).toHaveAttribute(`data-view-mode`, `source`);
-
-  // In source mode, headings always show their `#` syntax.
-  const firstLine = page.locator(`#editor [data-node-id]`).first();
-  const text = await firstLine.innerText();
-  expect(text).toContain(`# Pomax's Markdown Editor`);
-});
-
-test(`clicking toggle again switches editor back to writing mode`, async () => {
-  // Set up: load content and switch to source mode first.
+test(`clicking toggle from source2 switches back to writing mode`, async () => {
+  // Set up: ensure we are in source2 mode.
   await loadContent(page, readmeContent);
   const toggle = page.locator(`.toolbar-view-mode-toggle`);
-  await setSourceView(page);
+  await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
+  await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
 
-  // Click to switch back to writing mode.
+  // Click to advance from source2 to writing.
   await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
 
   await expect(toggle).toHaveText(`Writing View`);
@@ -100,14 +79,13 @@ test(`toggle stays in sync when view mode changes via menu`, async () => {
   await page.locator(`#editor[data-view-mode="writing"]`).waitFor();
   await expect(toggle).toHaveText(`Writing View`);
 
-  // Switch to source programmatically (simulating a menu action).
-  await page.evaluate(() => window.editorAPI?.setViewMode(`source`));
-  await page.locator(`#editor[data-view-mode="source"]`).waitFor();
+  // Switch to source2 programmatically (simulating a menu action).
+  await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
+  await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
 
-  // The toggle should reflect the new mode.
-  await expect(toggle).toHaveText(`Source View`);
+  await expect(toggle).toHaveText(`Source2 View`);
 
-  // Switch back programmatically.
+  // Switch back to writing programmatically.
   await page.evaluate(() => window.editorAPI?.setViewMode(`writing`));
   await page.locator(`#editor[data-view-mode="writing"]`).waitFor();
 

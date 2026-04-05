@@ -3,37 +3,23 @@
  * Provides element-specific formatting buttons.
  */
 
+import { LinkModal } from '../../editor/content-types/link/link-modal.js';
 import { TableModal } from '../../editor/content-types/table/table-modal.js';
 import { ToolbarButton } from './toolbar-button.js';
+import { ToolbarData } from '../../editor/types.js';
 
 /**
  * Toolbar component for the markdown editor.
  */
-export class Toolbar {
+export class Toolbar extends ToolbarData {
   /**
    * @param {HTMLElement} container - The toolbar container element
    * @param {Editor} editor - The editor instance
    */
   constructor(container, editor) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {Editor} */
     this.editor = editor;
-
-    /** @type {HTMLElement|null} */
-    this.toolbarElement = null;
-
-    /** @type {ToolbarButton[]} */
-    this.buttons = [];
-
-    /** @type {HTMLButtonElement|null} */
-    this.viewModeToggle = null;
-
-    /** @type {TableModal|null} */
-    this.tableModal = null;
-
-    /** @type {ButtonConfig[]} */
     this.buttonConfigs = this.getButtonConfigs();
   }
 
@@ -49,6 +35,7 @@ export class Toolbar {
         label: `Heading 1`,
         icon: `H1`,
         action: `changeType:heading1`,
+        shortcut: `Mod+Alt+1`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -65,6 +52,7 @@ export class Toolbar {
         label: `Heading 2`,
         icon: `H2`,
         action: `changeType:heading2`,
+        shortcut: `Mod+Alt+2`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -81,6 +69,7 @@ export class Toolbar {
         label: `Heading 3`,
         icon: `H3`,
         action: `changeType:heading3`,
+        shortcut: `Mod+Alt+3`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -97,6 +86,7 @@ export class Toolbar {
         label: `Paragraph`,
         icon: `¶`,
         action: `changeType:paragraph`,
+        shortcut: `Mod+Alt+0`,
         applicableTo: [
           `heading1`,
           `heading2`,
@@ -113,6 +103,7 @@ export class Toolbar {
         label: `Quote`,
         icon: `"`,
         action: `changeType:blockquote`,
+        shortcut: `Mod+Shift+Q`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `list-item`],
       },
       {
@@ -120,6 +111,7 @@ export class Toolbar {
         label: `Code Block`,
         icon: `</>`,
         action: `changeType:code-block`,
+        shortcut: `Mod+Shift+C`,
         applicableTo: [`paragraph`, `list-item`],
       },
       {
@@ -127,6 +119,7 @@ export class Toolbar {
         label: `Image`,
         icon: `🖼`,
         action: `image:insert`,
+        shortcut: `Mod+Shift+I`,
         applicableTo: [`paragraph`, `image`, `list-item`],
       },
       {
@@ -134,6 +127,7 @@ export class Toolbar {
         label: `Table`,
         icon: `▦`,
         action: `table:insert`,
+        shortcut: `Mod+Shift+T`,
         applicableTo: [`paragraph`, `table`, `list-item`],
       },
       {
@@ -141,6 +135,7 @@ export class Toolbar {
         label: `Bullet List`,
         icon: `•`,
         action: `list:unordered`,
+        shortcut: `Mod+Shift+B`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -158,6 +153,7 @@ export class Toolbar {
         label: `Numbered List`,
         icon: `1.`,
         action: `list:ordered`,
+        shortcut: `Mod+Shift+N`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -175,6 +171,7 @@ export class Toolbar {
         label: `Checklist`,
         icon: `☑`,
         action: `list:checklist`,
+        shortcut: `Mod+Shift+X`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -199,6 +196,7 @@ export class Toolbar {
         label: `Bold`,
         icon: `B`,
         action: `format:bold`,
+        shortcut: `Mod+B`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -216,6 +214,7 @@ export class Toolbar {
         label: `Italic`,
         icon: `I`,
         action: `format:italic`,
+        shortcut: `Mod+I`,
         applicableTo: [
           `paragraph`,
           `heading1`,
@@ -233,6 +232,7 @@ export class Toolbar {
         label: `Strikethrough`,
         icon: `S̶`,
         action: `format:strikethrough`,
+        shortcut: `Mod+Shift+-`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -240,6 +240,7 @@ export class Toolbar {
         label: `Subscript`,
         icon: `ₓ`,
         action: `format:subscript`,
+        shortcut: `Mod+Shift+↓`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -247,6 +248,7 @@ export class Toolbar {
         label: `Superscript`,
         icon: `ˣ`,
         action: `format:superscript`,
+        shortcut: `Mod+Shift+↑`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
@@ -254,13 +256,15 @@ export class Toolbar {
         label: `Inline Code`,
         icon: `\``,
         action: `format:code`,
+        shortcut: `Mod+\``,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
       {
         id: `link`,
         label: `Link`,
         icon: `🔗`,
-        action: `format:link`,
+        action: `link:insert`,
+        shortcut: `Mod+K`,
         applicableTo: [`paragraph`, `heading1`, `heading2`, `heading3`, `blockquote`, `list-item`],
       },
     ];
@@ -316,7 +320,7 @@ export class Toolbar {
     );
 
     // Initial state
-    this.updateButtonStates(null);
+    this.updateButtonStates(undefined);
   }
 
   /**
@@ -353,8 +357,14 @@ export class Toolbar {
    */
   static VIEW_MODE_LABELS = {
     writing: `Writing View`,
-    source: `Source View`,
+    source2: `Source2 View`,
   };
+
+  /**
+   * The order in which modes cycle when the toggle button is clicked.
+   * @type {ViewMode[]}
+   */
+  static VIEW_MODE_CYCLE = [`writing`, `source2`];
 
   /**
    * File-button definitions: id, label, and click handler.
@@ -420,11 +430,13 @@ export class Toolbar {
     button.className = `toolbar-view-mode-toggle`;
     button.setAttribute(`aria-label`, `Toggle view mode`);
 
-    const currentMode = this.editor.getViewMode();
+    const currentMode = this.editor.viewMode;
     button.textContent = Toolbar.VIEW_MODE_LABELS[currentMode] ?? currentMode;
 
     button.addEventListener(`click`, async () => {
-      const newMode = this.editor.getViewMode() === `writing` ? `source` : `writing`;
+      const cycle = Toolbar.VIEW_MODE_CYCLE;
+      const currentIndex = cycle.indexOf(/** @type {ViewMode} */ (this.editor.viewMode));
+      const newMode = cycle[(currentIndex + 1) % cycle.length];
       await this.editor.setViewMode(/** @type {ViewMode} */ (newMode));
       button.textContent = Toolbar.VIEW_MODE_LABELS[newMode] ?? newMode;
     });
@@ -451,36 +463,65 @@ export class Toolbar {
    * @param {ButtonConfig} config - The button configuration
    */
   async handleButtonClick(config) {
+    const formatter = this.editor.getFormatter();
     const [actionType, actionValue] = config.action.split(`:`);
 
     switch (actionType) {
       case `changeType`:
-        this.editor.changeElementType(actionValue);
+        formatter.changeElementType(actionValue);
         break;
       case `format`:
-        this.editor.applyFormat(actionValue);
+        formatter.applyFormat(actionValue);
         break;
       case `list`:
-        await this.editor.toggleList(
+        await formatter.toggleList(
           /** @type {'unordered' | 'ordered' | 'checklist'} */ (actionValue),
         );
         break;
+      case `link`:
+        await this.handleLinkAction(formatter);
+        break;
       case `image`:
-        this.handleImageAction();
+        await this.handleImageAction(formatter);
         break;
       case `table`:
-        this.handleTableAction();
+        await this.handleTableAction(formatter);
         break;
     }
+  }
+
+  /**
+   * Handles the link button action.
+   * Opens the link modal, pre-populated with the selected text or
+   * the word under the cursor as the link text.
+   * @param {Formatter} formatter
+   */
+  async handleLinkAction(formatter) {
+    if (!this.linkModal) {
+      this.linkModal = new LinkModal();
+    }
+
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
+
+    // Pre-fill the modal with selected text or word under cursor.
+    const prefill = formatter.getLinkPrefill ? formatter.getLinkPrefill() : {};
+    const result = await this.linkModal.open(prefill);
+    if (!result) return;
+
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    if (formatter.insertOrUpdateLink) formatter.insertOrUpdateLink(result.text, result.url);
   }
 
   /**
    * Handles the image button action.
    * If the cursor is on an image node, opens the modal for editing.
    * Otherwise opens it for insertion.
+   * @param {Formatter} formatter
    */
-  async handleImageAction() {
+  async handleImageAction(formatter) {
     const imageModal = this.editor.getImageModal();
+
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
 
     // Check if cursor is on an image node
     const currentNode = this.editor.getCurrentBlockNode();
@@ -521,7 +562,8 @@ export class Toolbar {
       src = await this.editor.toRelativeImagePath(src);
     }
 
-    this.editor.insertOrUpdateImage(result.alt, src, result.href, result.style);
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    formatter.insertOrUpdateImage(result.alt, src, result.href, result.style);
   }
 
   /**
@@ -569,24 +611,24 @@ export class Toolbar {
    * Handles the table button action.
    * If the cursor is on a table node, opens the modal pre-populated for editing.
    * Otherwise opens it for insertion.
+   * @param {Formatter} formatter
    */
-  async handleTableAction() {
+  async handleTableAction(formatter) {
     if (!this.tableModal) {
       this.tableModal = new TableModal();
     }
 
-    const currentNode = this.editor.getCurrentBlockNode();
-    /** @type {TableData|null} */
-    let existing = null;
+    if (formatter.saveCursorPosition) formatter.saveCursorPosition();
 
-    if (currentNode?.type === `table`) {
-      existing = TableModal.parseTableContent(currentNode.content);
-    }
+    const currentNode = this.editor.getCurrentBlockNode();
+    const existing =
+      currentNode?.type === `table` ? TableModal.parseTableContent(currentNode.content) : undefined;
 
     const result = await this.tableModal.open(existing);
     if (!result) return;
 
-    this.editor.insertOrUpdateTable(result);
+    if (formatter.restoreCursorPosition) formatter.restoreCursorPosition();
+    formatter.insertOrUpdateTable(result);
   }
 
   /**
@@ -629,16 +671,25 @@ export class Toolbar {
    * to determine block-level state (heading, list, etc.) and collect
    * the set of active inline formats along the way.
    *
-   * @param {SyntaxNode|null} node - The current node
+   * @param {SyntaxNode | undefined} node - The current node
    */
   updateButtonStates(node) {
+    // In source2 mode there is no syntax tree — enable all buttons.
+    if (this.editor.viewMode === `source2`) {
+      for (const button of this.buttons) {
+        button.setEnabled(true);
+        button.setActive(false);
+      }
+      return;
+    }
+
     // Walk from the (potentially inline) node up to its block parent,
     // collecting every inline format type encountered on the way.
     /** @type {Set<string>} */
     const activeFormats = new Set();
     let blockNode = node;
     if (node?.isInlineNode()) {
-      /** @type {SyntaxNode|null} */
+      /** @type {SyntaxNode | undefined} */
       let walk = node;
       while (walk?.isInlineNode()) {
         const buttons = Toolbar.INLINE_TYPE_TO_BUTTONS[walk.type];

@@ -6,11 +6,12 @@
 import { defineConfig, devices } from "@playwright/test";
 import os from "os"; // Import the OS module
 
+const CI_RUN = process.env.GITHUB_ACTIONS;
 const platform = os.platform();
 
 const config = {
   retries: 0,
-  timeout: 30_000,
+  timeout: CI_RUN ? 30_000 : 5_000,
   workers: 8,
 };
 

@@ -80,21 +80,21 @@ const electronAPI = {
     // ========== View Operations ==========
 
     /**
-     * Switches to source view mode.
-     * @returns {Promise<{success: boolean}>}
-     */
-    setSourceView: () => ipcRenderer.invoke('view:source'),
-
-    /**
      * Switches to writing view mode.
      * @returns {Promise<{success: boolean}>}
      */
     setWritingView: () => ipcRenderer.invoke('view:writing'),
 
     /**
+     * Switches to source 2 view mode.
+     * @returns {Promise<{success: boolean}>}
+     */
+    setSource2View: () => ipcRenderer.invoke('view:source2'),
+
+    /**
      * Sends the current list of open files to the main process so the
      * View menu can be rebuilt.
-     * @param {Array<{id: string, filePath: string|null, active: boolean}>} files
+     * @param {Array<{id: string, filePath: string | undefined, active: boolean}>} files
      * @returns {Promise<{success: boolean}>}
      */
     notifyOpenFiles: (files) => ipcRenderer.invoke('view:openFilesChanged', files),

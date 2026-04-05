@@ -28,7 +28,7 @@ declare module 'better-sqlite3' {
 /**
  * View mode of the editor.
  */
-type ViewMode = 'source' | 'writing';
+type ViewMode = 'source2' | 'writing';
 
 /**
  * Tree-based cursor position mapped to syntax tree coordinates.
@@ -44,10 +44,10 @@ interface TreeCursor {
      *  relative to the block, not the inline). */
     offset: number;
     /** If set, cursor is on an html-block container's opening or closing tag
-     *  line (source view only). */
+     *  line (source2 view only). */
     tagPart?: 'opening' | 'closing';
-    /** Character offset within the syntax prefix (e.g. `- [ ] `, `## `)
-     *  when the cursor is inside the `.md-syntax` span in source view.
+    /** Character offset within the syntax prefix (e.g. `- [ ] `, `## `).
+     *  Used for source2↔writing view cursor conversion.
      *  When set, `offset` is 0. */
     prefixOffset?: number;
     /** Row index for table cell editing (0 = header). */
@@ -86,6 +86,20 @@ interface TocHeading {
     level: number;
     /** Plain-text heading content. */
     text: string;
+}
+
+/**
+ * Data passed between view-mode switch phases (leave → transition → enter).
+ */
+interface ViewSwitchData {
+    /** Absolute character offset of the cursor in the markdown source. */
+    absoluteCursorOffset: number | undefined;
+    /** Pixel distance from the caret to the top of the scroll container. */
+    savedCaretTop: number | undefined;
+    /** Node ID used as a scroll anchor across the switch. */
+    anchorNodeId: string | undefined;
+    /** Pixel offset of the anchor node from the top of the scroll container. */
+    savedOffsetFromTop: number | undefined;
 }
 
 /**
@@ -128,12 +142,12 @@ interface CodeLanguageData {
 interface DocumentState {
     /** The markdown content. */
     content: string;
-    /** Full file path or null for untitled. */
-    filePath: string | null;
+    /** Full file path or undefined for untitled. */
+    filePath?: string;
     /** Whether there are unsaved changes. */
     modified: boolean;
     /** Cursor position. */
-    cursor: TreeCursor | null;
+    cursor?: TreeCursor;
     /** Absolute character offset in markdown source. */
     cursorOffset: number;
     /** CRC32 hash of the markdown content. */
@@ -141,11 +155,11 @@ interface DocumentState {
     /** The parsed syntax tree. */
     syntaxTree: any;
     /** Active text selection range. */
-    treeRange: TreeRange | null;
+    treeRange?: TreeRange;
     /** Scroll position of the scroll container. */
     scrollTop: number;
     /** The active ToC heading node ID. */
-    tocActiveHeadingId: string | null;
+    tocActiveHeadingId?: string;
     /** Undo history. */
     undoStack: any[];
     /** Redo history. */
@@ -188,13 +202,12 @@ interface ElectronAPI {
     toRelativeImagePath(imagePath: string, documentPath: string): Promise<string>;
     getPathForFile(file: File): string;
     executeAPICommand(command: string, params: object): Promise<any>;
-    setSourceView(): Promise<{ success: boolean }>;
     setWritingView(): Promise<{ success: boolean }>;
     changeElementType(elementType: string): Promise<{ success: boolean; message?: string }>;
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
-    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
+    notifyOpenFiles(files: Array<{ id: string; filePath?: string; label: string; active: boolean }>): Promise<{ success: boolean }>;
 }
 
 /**
@@ -265,6 +278,8 @@ interface ButtonConfig {
     action: string;
     /** Element types this button applies to. */
     applicableTo?: string[];
+    /** Keyboard shortcut in platform-agnostic notation (e.g. "Mod+B"). */
+    shortcut?: string;
 }
 
 /**
@@ -275,8 +290,8 @@ interface TabInfo {
     id: string;
     /** Display label (filename). */
     label: string;
-    /** Full file path, or null for untitled. */
-    filePath: string | null;
+    /** Full file path, or undefined for untitled. */
+    filePath?: string;
     /** Whether the tab has unsaved changes. */
     modified: boolean;
     /** Whether the tab is currently active. */
@@ -384,8 +399,10 @@ interface Change {
  * Configuration for a keyboard shortcut.
  */
 interface ShortcutConfig {
-    /** The key code. */
+    /** The key value (event.key). */
     key: string;
+    /** The physical key code (event.code), used when Shift transforms the key character. */
+    code?: string;
     /** Whether Ctrl is required. */
     ctrl?: boolean;
     /** Whether Shift is required. */
@@ -471,7 +488,7 @@ type InlineTokenType = 'text' | 'bold-open' | 'bold-close' | 'italic-open' | 'it
     | 'strikethrough-open' | 'strikethrough-close' | 'code'
     | 'link-open' | 'link-close' | 'link-href'
     | 'image'
-    | 'html-open' | 'html-close';
+    | 'html-open' | 'html-close' | 'html-void' | 'html-entity';
 
 /**
  * A single inline token.
@@ -483,8 +500,10 @@ interface InlineToken {
     raw: string;
     /** Inner content (for code spans / text). */
     content?: string;
-    /** HTML tag name (for html-open / html-close). */
+    /** HTML tag name (for html-open / html-close / html-void). */
     tag?: string;
+    /** HTML attributes (for html-open / html-void). */
+    attrs?: Record<string, string>;
     /** Link URL (for link-href). */
     href?: string;
     /** Alt text (for image tokens). */
@@ -512,6 +531,8 @@ interface InlineSegment {
     src?: string;
     /** HTML tag name (for html inline elements). */
     tag?: string;
+    /** HTML attributes (for html inline elements). */
+    attrs?: Record<string, string>;
     /** Child segments for containers. */
     children?: InlineSegment[];
 }
@@ -555,6 +576,32 @@ type EditOperations = import('./web/scripts/editor/edit-operations/index.js').Ed
  * Modal dialog for image insertion/editing.
  */
 type ImageModal = import('./web/scripts/editor/content-types/image/image-modal.js').ImageModal;
+
+/**
+ * View-mode-specific formatter.
+ * The toolbar and editor delegate formatting operations to the formatter
+ * returned by `editor.getFormatter()`, which varies by view mode.
+ */
+interface Formatter {
+    /** Applies an inline format (bold, italic, strikethrough, code, subscript, superscript, link). */
+    applyFormat(format: string): void;
+    /** Changes the block type of the current element (heading1, paragraph, blockquote, code-block, etc.). */
+    changeElementType(elementType: string): void;
+    /** Toggles list formatting on the current node. */
+    toggleList(kind: 'unordered' | 'ordered' | 'checklist'): Promise<void>;
+    /** Inserts or updates an image at the cursor. */
+    insertOrUpdateImage(alt: string, src: string, href: string, style?: string): void;
+    /** Inserts or updates a table at the cursor. */
+    insertOrUpdateTable(tableData: TableData): void;
+    /** Inserts or updates a link at the cursor (source2 only). */
+    insertOrUpdateLink?(text: string, url: string): void;
+    /** Returns prefill data for the link modal (source2 only). */
+    getLinkPrefill?(): Partial<LinkData>;
+    /** Saves the textarea cursor position before a modal steals focus (source2 only). */
+    saveCursorPosition?(): void;
+    /** Restores the previously saved cursor position (source2 only). */
+    restoreCursorPosition?(): void;
+}
 
 interface Window {
     editorAPI?: EditorAPI;

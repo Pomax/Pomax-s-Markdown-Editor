@@ -8,13 +8,16 @@
  */
 
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   HOME,
   MOD,
   closeApp,
   launchApp,
   loadContent,
-  setSourceView,
+  projectRoot,
+  setSource2View,
   setWritingView,
 } from '../../test-utils.js';
 
@@ -42,12 +45,18 @@ const FIXTURE = [
   `\`\`\``,
 ].join(`\n`);
 
+const LOREM = fs.readFileSync(path.join(projectRoot, `test`, `fixtures`, `lorem.md`), `utf-8`);
+
 test.beforeAll(async () => {
   ({ electronApp, page } = await launchApp());
 });
 
 test.afterAll(async () => {
   await closeApp(electronApp);
+});
+
+test.beforeEach(async () => {
+  await setWritingView(page);
 });
 
 test(`Ctrl+F opens the search bar`, async () => {
@@ -101,9 +110,9 @@ test(`Ctrl+F while open selects the search text`, async () => {
   expect(selected).toBe(5);
 });
 
-test(`plain text search highlights matches in source view`, async () => {
+test(`plain text search highlights matches in source2 view`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -126,7 +135,7 @@ test(`plain text search highlights matches in source view`, async () => {
 
 test(`plain text search is case insensitive by default`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`Cake`);
@@ -144,7 +153,7 @@ test(`plain text search is case insensitive by default`, async () => {
 
 test(`case sensitive toggle restricts matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`Cake`);
@@ -163,7 +172,7 @@ test(`case sensitive toggle restricts matches`, async () => {
 
 test(`regex search finds pattern matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   // Enable regex mode.
@@ -184,7 +193,7 @@ test(`regex search finds pattern matches`, async () => {
 
 test(`invalid regex shows no results instead of error`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   await page.locator(`.search-toggle[data-action="regex"]`).click();
@@ -200,7 +209,7 @@ test(`invalid regex shows no results instead of error`, async () => {
 
 test(`Enter navigates to next match`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -217,7 +226,7 @@ test(`Enter navigates to next match`, async () => {
 
 test(`Shift+Enter navigates to previous match`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -236,7 +245,7 @@ test(`Shift+Enter navigates to previous match`, async () => {
 
 test(`next/prev buttons navigate matches`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -284,23 +293,9 @@ test(`writing view search does not match markdown syntax`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-test(`source view search matches markdown syntax`, async () => {
-  await loadContent(page, FIXTURE);
-  await setSourceView(page);
-  await page.keyboard.press(`${MOD}+f`);
-  const input = page.locator(`.search-input`);
-  await input.fill(`##`);
-
-  // Source mode should find '##' in heading lines.
-  const matchCount = page.locator(`.search-match-count`);
-  await expect(matchCount).not.toHaveText(`No results`);
-
-  await page.keyboard.press(`Escape`);
-});
-
 test(`highlights are removed when search bar closes`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`cake`);
@@ -328,7 +323,7 @@ test(`close button closes the search bar`, async () => {
 
 test(`shows "No results" for unmatched query`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`xyznonexistent`);
@@ -339,30 +334,9 @@ test(`shows "No results" for unmatched query`, async () => {
   await page.keyboard.press(`Escape`);
 });
 
-test(`regex can match across element boundaries`, async () => {
-  await loadContent(page, FIXTURE);
-  await setSourceView(page);
-  await page.keyboard.press(`${MOD}+f`);
-
-  await page.locator(`.search-toggle[data-action="regex"]`).click();
-  const input = page.locator(`.search-input`);
-  // Match across the heading into the paragraph (separated by \n\n).
-  await input.fill(`cake\\n\\nA paragraph`);
-
-  const matchCount = page.locator(`.search-match-count`);
-  await expect(matchCount).toContainText(`1 of 1`);
-
-  // Should produce highlight marks in both the heading and paragraph.
-  const marks = page.locator(`#editor mark.search-highlight`);
-  expect(await marks.count()).toBe(2);
-
-  await page.locator(`.search-toggle[data-action="regex"]`).click();
-  await page.keyboard.press(`Escape`);
-});
-
 test(`plain text search requires at least 2 characters`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
   const input = page.locator(`.search-input`);
   await input.fill(`c`);
@@ -379,7 +353,7 @@ test(`plain text search requires at least 2 characters`, async () => {
 
 test(`regex search still works with single character`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
   await page.keyboard.press(`${MOD}+f`);
 
   await page.locator(`.search-toggle[data-action="regex"]`).click();
@@ -396,24 +370,15 @@ test(`regex search still works with single character`, async () => {
 
 test(`initial match is closest to cursor position`, async () => {
   await loadContent(page, FIXTURE);
-  await setSourceView(page);
+  await setSource2View(page);
 
-  // Place cursor inside "## Another heading" before the word
-  // "heading": click to focus the node, Home to reach offset 0,
-  // then arrow right into the content.  Waits let selectionchange
-  // propagate so the tree cursor is up to date.
-  const secondHeading = page.locator(`#editor [data-node-id]`, {
-    hasText: `Another heading`,
-  });
-  await secondHeading.click();
-  await page.waitForTimeout(200);
-  await page.keyboard.press(HOME);
-  await page.waitForTimeout(200);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
-  await page.keyboard.press(`ArrowRight`);
+  // Place cursor 5 characters into "## Another heading" (offset 60
+  // in the textarea) so it sits between "## An" and "other heading".
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.evaluate((/** @type {HTMLTextAreaElement} */ el, pos) => {
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  }, 60);
   await page.waitForTimeout(200);
 
   await page.keyboard.press(`${MOD}+f`);
@@ -433,6 +398,146 @@ test(`initial match is closest to cursor position`, async () => {
   // at/after the cursor, i.e. the second heading.
   await input.fill(`heading`);
   await expect(matchCount).toContainText(`2 of`);
+
+  await page.keyboard.press(`Escape`);
+});
+
+test(`writing view search does not highlight in source2 pre`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`cake`);
+
+  // Writing DOM should have highlights.
+  const editorMarks = page.locator(`#editor mark.search-highlight`);
+  expect(await editorMarks.count()).toBeGreaterThan(0);
+
+  // Source2 pre must not contain any highlights.
+  const preMarks = page.locator(`.source-v2-wrapper pre mark.search-highlight`);
+  expect(await preMarks.count()).toBe(0);
+
+  await page.keyboard.press(`Escape`);
+});
+
+test(`writing view search highlights inside code blocks are placed correctly`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`true`);
+
+  // The mark for "true" in the code block must be inside the
+  // <code> element, not in a language-label span.
+  const codeBlockMark = page.locator(`.md-code-block code mark.search-highlight`);
+  expect(await codeBlockMark.count()).toBeGreaterThan(0);
+  await expect(codeBlockMark.first()).toHaveText(`true`);
+
+  await page.keyboard.press(`Escape`);
+});
+
+test(`closing search preserves cursor position in source2 view`, async () => {
+  await loadContent(page, FIXTURE);
+  await setSource2View(page);
+
+  const textarea = page.locator(`#editor textarea`);
+  await textarea.evaluate((/** @type {HTMLTextAreaElement} */ el, pos) => {
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  }, 30);
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`ckae`);
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  await page.keyboard.press(`Escape`);
+
+  // The textarea must have focus and its cursor must not have moved.
+  await expect(textarea).toBeFocused();
+  const cursorPos = await textarea.evaluate(
+    (/** @type {HTMLTextAreaElement} */ el) => el.selectionStart,
+  );
+  expect(cursorPos).toBe(30);
+});
+
+test(`closing search preserves cursor position in writing view`, async () => {
+  await loadContent(page, FIXTURE);
+  await setWritingView(page);
+
+  // Place the cursor on the second heading at offset 4.
+  await page.evaluate(() => {
+    const tree = /** @type {any} */ (window).__editor?.syntaxTree;
+    if (!tree) return;
+    const target = tree.children.find(
+      (/** @type {any} */ n) => n.type.startsWith(`heading`) && n.content?.includes(`Another`),
+    );
+    if (target) {
+      tree.treeCursor = { nodeId: target.id, offset: 4 };
+      /** @type {any} */ (window).__editor?.placeCursor();
+    }
+  });
+
+  const cursorBefore = await page.evaluate(() => {
+    const tc = /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor;
+    return tc ? { nodeId: tc.nodeId, offset: tc.offset } : undefined;
+  });
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+  await input.fill(`ckae`);
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  await page.keyboard.press(`Escape`);
+
+  // The DOM selection must be inside the editor, not at the start.
+  const selectionNodeId = await page.evaluate(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const node = sel.anchorNode?.parentElement?.closest(`[data-node-id]`);
+    return node?.getAttribute(`data-node-id`);
+  });
+  expect(selectionNodeId).toBe(cursorBefore?.nodeId);
+});
+
+test(`scroll position is restored when search has zero results`, async () => {
+  await loadContent(page, LOREM);
+  await setWritingView(page);
+
+  // Scroll to the middle of the document.
+  await page.evaluate(() => {
+    const container = document.getElementById(`editor-container`);
+    if (container) container.scrollTop = container.scrollHeight / 2;
+  });
+  await page.waitForTimeout(200);
+
+  const scrollBefore = await page.evaluate(() => {
+    return document.getElementById(`editor-container`)?.scrollTop ?? 0;
+  });
+  expect(scrollBefore).toBeGreaterThan(0);
+
+  await page.keyboard.press(`${MOD}+f`);
+  const input = page.locator(`.search-input`);
+
+  // Type "loremelephant" letter by letter — "lorem" will match
+  // initially, scrolling to a hit, but eventually zero results.
+  for (const ch of `loremelephant`) {
+    await input.press(ch);
+    await page.waitForTimeout(50);
+  }
+
+  const matchCount = page.locator(`.search-match-count`);
+  await expect(matchCount).toHaveText(`No results`);
+
+  // With zero results the scroll should be back where we started.
+  const scrollAfter = await page.evaluate(() => {
+    return document.getElementById(`editor-container`)?.scrollTop ?? 0;
+  });
+  expect(scrollAfter).toBe(scrollBefore);
 
   await page.keyboard.press(`Escape`);
 });

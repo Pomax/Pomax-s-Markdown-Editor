@@ -18,8 +18,8 @@ const __dirname = path.dirname(__filename);
 
 export const projectRoot = path.join(__dirname, `..`, `..`);
 
-/** Standard viewport: 800 wide × 1132 tall (A4 portrait ratio). */
-export const VIEWPORT = { width: 800, height: 1132 };
+/** Standard viewport: 1920×1280 (typical desktop). */
+export const VIEWPORT = { width: 1920, height: 1280 };
 
 /**
  * Platform-aware modifier key: Meta on macOS, Control everywhere else.
@@ -27,6 +27,12 @@ export const VIEWPORT = { width: 800, height: 1132 };
  */
 const isMac = process.platform === `darwin`;
 export const MOD = isMac ? `Meta` : `Control`;
+
+/**
+ * Platform-aware modifier label for tooltip assertions.
+ * Matches the display text produced by `formatShortcut()` in the renderer.
+ */
+export const MOD_LABEL = isMac ? `⌘` : `Ctrl`;
 
 /**
  * Platform-aware Home key: Meta+ArrowLeft on macOS, Home everywhere else.
@@ -99,8 +105,16 @@ export async function loadContent(page, fixtureContent) {
   await page.evaluate((content) => {
     window.editorAPI?.setContent(content);
   }, fixtureContent);
-  // Wait for the editor to re-render.
-  await page.waitForSelector(`#editor [data-node-id]`);
+  // Wait for the editor to settle — the selector depends on the active view.
+  const isSource2 = await page
+    .locator(`#editor textarea`)
+    .isVisible()
+    .catch(() => false);
+  if (isSource2) {
+    await page.locator(`#editor textarea`).waitFor({ state: `visible` });
+  } else {
+    await page.waitForSelector(`#editor [data-node-id]`);
+  }
 }
 
 /**
@@ -157,19 +171,6 @@ export async function clickQuerySelector(page, qs) {
 }
 
 /**
- * Switch the editor to source view by clicking the toolbar toggle.
- * If already in source view, this is a no-op.
- *
- * @param {import('@playwright/test').Page} page
- */
-export async function setSourceView(page) {
-  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
-  if (current === `source`) return;
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
-  await page.locator(`#editor[data-view-mode="source"]`).waitFor();
-}
-
-/**
  * Close an Electron app with a timeout fallback.
  *
  * `electronApp.close()` can hang on CI when the Electron process is
@@ -211,14 +212,38 @@ export async function resetPage(page) {
 }
 
 /**
- * Switch the editor to writing view by clicking the toolbar toggle.
+ * Switch the editor to writing view via the editor API.
  * If already in writing view, this is a no-op.
  *
  * @param {import('@playwright/test').Page} page
  */
 export async function setWritingView(page) {
   const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
-  if (current !== `source`) return;
-  await clickQuerySelector(page, `.toolbar-view-mode-toggle`);
+  if (current === `writing`) return;
+  await page.evaluate(() => window.editorAPI?.setViewMode(`writing`));
   await page.locator(`#editor[data-view-mode="writing"]`).waitFor();
+}
+
+/**
+ * Switch the editor to source2 view via the editor API.
+ * If already in source2 view, this is a no-op.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function setSource2View(page) {
+  const current = await page.locator(`#editor`).getAttribute(`data-view-mode`);
+  if (current === `source2`) return;
+  await page.evaluate(() => window.editorAPI?.setViewMode(`source2`));
+  await page.locator(`#editor[data-view-mode="source2"]`).waitFor();
+}
+
+/**
+ * Returns the raw markdown text of a specific line in source2 view.
+ * @param {import('@playwright/test').Page} pg
+ * @param {number} index - 0-based line index.
+ * @returns {Promise<string>}
+ */
+export async function getSourceLineText(pg, index) {
+  const value = await pg.locator(`#editor textarea`).inputValue();
+  return value.split(`\n`)[index] ?? ``;
 }
