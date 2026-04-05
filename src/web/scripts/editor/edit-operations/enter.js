@@ -11,8 +11,8 @@ export function handleEnterKey(ops) {
 
   // If there is a non-collapsed selection, delete it first, then
   // split at the resulting cursor position.
-  /** @type {string|null} */
-  let rangeDeleteBefore = null;
+  /** @type {string | undefined} */
+  let rangeDeleteBefore;
   /** @type {string[]} */
   let rangeRemovedIds = [];
   if (ops.editor.treeRange) {

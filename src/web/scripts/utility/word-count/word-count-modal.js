@@ -53,7 +53,7 @@ function stripInlineCode(text) {
 
 /**
  * Counts words in a syntax tree.
- * @param {SyntaxTree | null} syntaxTree
+ * @param {SyntaxTree} [syntaxTree]
  * @returns {WordCountResult}
  */
 export function getWordCounts(syntaxTree) {
@@ -83,13 +83,11 @@ export function getWordCounts(syntaxTree) {
 /**
  * A modal dialog that displays the word count of the current document.
  */
-export class WordCountModal {
-  constructor() {
-    /** @type {HTMLDialogElement|null} */
-    this.dialog = null;
+import { WordCountModalData } from '../../editor/types.js';
 
-    /** @type {boolean} */
-    this.built = false;
+export class WordCountModal extends WordCountModalData {
+  constructor() {
+    super();
   }
 
   /**
@@ -140,7 +138,7 @@ export class WordCountModal {
 
   /**
    * Opens the modal, displaying counts from the given syntax tree.
-   * @param {SyntaxTree | null} syntaxTree
+   * @param {SyntaxTree} [syntaxTree]
    */
   open(syntaxTree) {
     this.build();

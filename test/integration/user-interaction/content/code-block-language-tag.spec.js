@@ -171,9 +171,9 @@ test.describe(`Code-block language tag dialog`, () => {
     await clickInEditor(page, page.locator(`#editor .md-code-block .md-content`));
     // Read the cursor offset wherever the click landed
     const offsetBefore = await page.evaluate(() => {
-      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? null;
+      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset;
     });
-    expect(offsetBefore).not.toBeNull();
+    expect(offsetBefore).toBeDefined();
     // Open the language dialog and change the language
     await expect(page.locator(`#editor [data-lang].top`)).toBeVisible();
     await page.locator(`#editor [data-lang].top`).click({ force: true });
@@ -208,9 +208,9 @@ test.describe(`Code-block language tag dialog`, () => {
 
     // Read treeCursor.offset before opening the dialog.
     const offsetBefore = await page.evaluate(() => {
-      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? null;
+      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset;
     });
-    expect(offsetBefore).not.toBeNull();
+    expect(offsetBefore).toBeDefined();
     expect(offsetBefore).toBeGreaterThan(0);
 
     // Open the language dialog and change the language.
@@ -221,7 +221,7 @@ test.describe(`Code-block language tag dialog`, () => {
 
     // Read treeCursor.offset after the dialog closes.
     const offsetAfter = await page.evaluate(() => {
-      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset ?? null;
+      return /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor?.offset;
     });
     expect(offsetAfter).toBe(offsetBefore);
   });
@@ -242,10 +242,10 @@ test.describe(`Code-block language tag dialog`, () => {
     // Read treeRange before opening the dialog.
     const rangeBefore = await page.evaluate(() => {
       const editor = /** @type {any} */ (window).__editor;
-      if (!editor?.treeRange) return null;
+      if (!editor?.treeRange) return;
       return { ...editor.treeRange };
     });
-    expect(rangeBefore).not.toBeNull();
+    expect(rangeBefore).toBeDefined();
     expect(rangeBefore.startOffset).not.toBe(rangeBefore.endOffset);
 
     // Open the language dialog and change the language.
@@ -257,7 +257,7 @@ test.describe(`Code-block language tag dialog`, () => {
     // Read treeRange after the dialog closes.
     const rangeAfter = await page.evaluate(() => {
       const editor = /** @type {any} */ (window).__editor;
-      if (!editor?.treeRange) return null;
+      if (!editor?.treeRange) return;
       return { ...editor.treeRange };
     });
     expect(rangeAfter).toEqual(rangeBefore);

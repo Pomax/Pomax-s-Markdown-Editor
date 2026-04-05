@@ -6,16 +6,17 @@
 /// <reference path="../../../../types.d.ts" />
 
 import { rawOffsetToRenderedOffset, renderedOffsetToRawOffset } from '../offset-mapping.js';
+import { CursorManagerData } from '../types.js';
 
 /**
  * Manages cursor synchronization between the DOM and the syntax tree.
  */
-export class CursorManager {
+export class CursorManager extends CursorManagerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 
@@ -50,14 +51,14 @@ export class CursorManager {
 
     // If the selection is collapsed there is no range.
     if (selection.isCollapsed) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 
     // Map the end (focus) position to tree coordinates.
     const endInfo = this.mapDOMPositionToTree(range.endContainer, range.endOffset);
     if (!endInfo) {
-      if (!preserveRange) this.editor.treeRange = null;
+      if (!preserveRange) this.editor.treeRange = undefined;
       return;
     }
 
@@ -80,13 +81,13 @@ export class CursorManager {
    *
    * @param {Node} domNode - The DOM node the position is in
    * @param {number} domOffset - The offset within `domNode`
-   * @returns {{ cursor: TreeCursor } | null}
+   * @returns {{ cursor: TreeCursor } | undefined}
    */
   mapDOMPositionToTree(domNode, domOffset) {
-    /** @type {string|null} */
-    let inlineNodeId = null;
+    /** @type {string | undefined} */
+    let inlineNodeId;
 
-    /** @type {Node|null} */
+    /** @type {Node | undefined} */
     let el = domNode;
     while (el && el !== this.editor.container) {
       if (el.nodeType === Node.ELEMENT_NODE) {
@@ -99,7 +100,7 @@ export class CursorManager {
           // record its id and keep walking to find the block parent.
           if (node?.isInlineNode()) {
             if (!inlineNodeId) inlineNodeId = nodeId;
-            el = el.parentNode;
+            el = el.parentNode ?? undefined;
             continue;
           }
 
@@ -132,9 +133,9 @@ export class CursorManager {
           return { cursor };
         }
       }
-      el = el.parentNode;
+      el = el.parentNode ?? undefined;
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -276,8 +277,9 @@ export class CursorManager {
     const blockId =
       this.editor.syntaxTree.treeCursor.blockNodeId ?? this.editor.syntaxTree.treeCursor.nodeId;
 
-    /** @type {Element|null} */
-    const nodeElement = this.editor.container.querySelector(`[data-node-id="${blockId}"]`);
+    /** @type {Element | undefined} */
+    const nodeElement =
+      this.editor.container.querySelector(`[data-node-id="${blockId}"]`) ?? undefined;
     if (!nodeElement) return;
 
     // Table cell cursor placement
@@ -390,11 +392,11 @@ export class CursorManager {
    *
    * @param {string} nodeId
    * @param {number} offset
-   * @returns {{ node: Node, offset: number } | null}
+   * @returns {{ node: Node, offset: number } | undefined}
    */
   resolveOffsetInDOM(nodeId, offset) {
     const nodeElement = this.editor.container.querySelector(`[data-node-id="${nodeId}"]`);
-    if (!nodeElement) return null;
+    if (!nodeElement) return undefined;
 
     const contentEl = nodeElement.querySelector(`.md-content`) ?? nodeElement;
 
@@ -425,7 +427,7 @@ export class CursorManager {
     if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
       return { node: lastChild, offset: lastChild.textContent?.length ?? 0 };
     }
-    return null;
+    return undefined;
   }
 
   /** @type {Set<string>} */

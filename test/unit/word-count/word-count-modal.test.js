@@ -9,8 +9,8 @@ import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
 import { getWordCounts } from '../../../src/web/scripts/utility/word-count/word-count-modal.js';
 
 describe(`getWordCounts`, () => {
-  it(`should return zeros for a null syntax tree`, () => {
-    const result = getWordCounts(null);
+  it(`should return zeros for an undefined syntax tree`, () => {
+    const result = getWordCounts();
     assert.strictEqual(result.total, 0);
     assert.strictEqual(result.excludingCode, 0);
   });

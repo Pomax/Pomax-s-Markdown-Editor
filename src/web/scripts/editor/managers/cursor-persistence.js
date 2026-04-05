@@ -120,7 +120,7 @@ export function cursorToAbsoluteOffset(tree, cursor, buildMarkdownLine, getPrefi
  * @param {SyntaxTree} tree
  * @param {number} absoluteOffset
  * @param {(type: string, attrs?: NodeAttributes) => number} getPrefixLength
- * @returns {TreeCursor|null} The cursor, or null if offset is out of range.
+ * @returns {TreeCursor | undefined} The cursor, or undefined if offset is out of range.
  */
 export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
   let pos = 0;
@@ -128,7 +128,7 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
   /**
    * @param {SyntaxNode[]} nodes
    * @param {string} separator
-   * @returns {TreeCursor|null}
+   * @returns {TreeCursor | undefined}
    */
   function walk(nodes, separator) {
     for (let i = 0; i < nodes.length; i++) {
@@ -210,7 +210,7 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
 
       pos += md.length;
     }
-    return null;
+    return undefined;
   }
 
   const cursor = walk(tree.children, `\n\n`);
@@ -221,5 +221,5 @@ export function absoluteOffsetToCursor(tree, absoluteOffset, getPrefixLength) {
   if (last) {
     return { nodeId: last.id, offset: last.content.length };
   }
-  return null;
+  return undefined;
 }

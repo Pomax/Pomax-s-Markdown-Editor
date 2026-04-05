@@ -1,6 +1,6 @@
 /**
  * Extracts a filename from a full file path.
- * @param {string|null} filePath
+ * @param {string} [filePath]
  * @returns {string}
  */
 function getFileName(filePath) {
@@ -91,28 +91,18 @@ function createCloseButton() {
   return btn;
 }
 
+import { TabBarData } from '../../editor/types.js';
+
 /**
  * Tab bar for switching between open files.
  */
-export class TabBar {
+export class TabBar extends TabBarData {
   /**
    * @param {HTMLElement} container - The tab bar container element
    */
   constructor(container) {
-    /** @type {HTMLElement} */
+    super();
     this.container = container;
-
-    /** @type {TabInfo[]} */
-    this.tabs = [];
-
-    /** @type {string|null} */
-    this.activeTabId = null;
-
-    /** @type {((tabId: string) => void)|null} */
-    this.onTabSelect = null;
-
-    /** @type {((tabId: string) => void)|null} */
-    this.onTabClose = null;
   }
 
   /**
@@ -127,7 +117,7 @@ export class TabBar {
   /**
    * Adds a tab to the bar.
    * @param {string} id - Unique tab identifier
-   * @param {string|null} filePath - Full file path, or null for untitled
+   * @param {string} [filePath] - Full file path, or undefined for untitled
    * @param {boolean} [active=true] - Whether to make this the active tab
    */
   addTab(id, filePath, active = true) {
@@ -175,7 +165,7 @@ export class TabBar {
   /**
    * Updates a tab's file path and label.
    * @param {string} id - Tab identifier
-   * @param {string|null} filePath - New file path
+   * @param {string} [filePath] - New file path
    */
   updateTabPath(id, filePath) {
     const tab = this.tabs.find((t) => t.id === id);

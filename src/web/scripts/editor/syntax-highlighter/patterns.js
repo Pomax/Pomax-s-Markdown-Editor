@@ -81,10 +81,10 @@ export function defineLang({
  * @param {RegExp} pattern
  * @param {string} code
  * @param {number} pos
- * @returns {string|null}
+ * @returns {string | undefined}
  */
 export function tryMatch(pattern, code, pos) {
   pattern.lastIndex = pos;
   const m = pattern.exec(code);
-  return m ? m[0] : null;
+  return m ? m[0] : undefined;
 }

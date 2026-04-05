@@ -59,7 +59,7 @@ async function typeAndGetCursor(pg, text) {
   // Read the cursor position and line text content from the DOM.
   const result = await pg.evaluate(() => {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
+    if (!sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
     const node = range.startContainer;
@@ -70,7 +70,7 @@ async function typeAndGetCursor(pg, text) {
     while (el && !el.dataset.nodeId) {
       el = el.parentElement;
     }
-    if (!el) return null;
+    if (!el) return;
 
     // Compute the character offset from the start of the line's
     // text content up to the cursor position.

@@ -169,7 +169,7 @@ test(`clicking checkbox in writing view toggles checked state`, async () => {
 
   // Use mousedown guard approach: get bounding box and use mouse steps
   const box = await checkbox.boundingBox();
-  expect(box).not.toBeNull();
+  expect(box).toBeDefined();
   const x =
     /** @type {NonNullable<typeof box>} */ (box).x +
     /** @type {NonNullable<typeof box>} */ (box).width / 2;

@@ -6,24 +6,18 @@
 /// <reference path="../../../types.d.ts" />
 
 import { SyntaxNode } from '../../../parsers/old/syntax-node.js';
+import { RangeOperationsData } from './types.js';
 
 /**
  * Handles selection-range operations on the syntax tree.
  */
-export class RangeOperations {
+export class RangeOperations extends RangeOperationsData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /**
-     * Tracks the current select-all cycling level.
-     * 0 = no select-all active, 1 = node, 2 = parent group, 3 = document.
-     * @type {number}
-     */
-    this.selectAllLevel = 0;
   }
 
   /**
@@ -69,17 +63,17 @@ export class RangeOperations {
    * After deletion the cursor is placed at the join point and
    * `editor.treeRange` is cleared.
    *
-   * @returns {{ before: string, hints: { updated?: string[], added?: string[], removed?: string[] } } | null}
-   *     The markdown snapshot before the edit and render hints, or null
+   * @returns {{ before: string, hints: { updated?: string[], added?: string[], removed?: string[] } } | undefined}
+   *     The markdown snapshot before the edit and render hints, or undefined
    *     if there was no range to delete.
    */
   deleteSelectedRange() {
-    if (!this.editor.treeRange || !this.editor.syntaxTree) return null;
+    if (!this.editor.treeRange || !this.editor.syntaxTree) return undefined;
 
     const { startNodeId, startOffset, endNodeId, endOffset } = this.editor.treeRange;
     const startNode = this.editor.syntaxTree.findNodeById(startNodeId);
     const endNode = this.editor.syntaxTree.findNodeById(endNodeId);
-    if (!startNode || !endNode) return null;
+    if (!startNode || !endNode) return undefined;
 
     const before = this.editor.syntaxTree.toMarkdown();
 
@@ -91,7 +85,7 @@ export class RangeOperations {
         nodeId: startNode.id,
         offset: startOffset,
       };
-      this.editor.treeRange = null;
+      this.editor.treeRange = undefined;
       return { before, hints: { updated: [startNode.id] } };
     }
 
@@ -101,7 +95,7 @@ export class RangeOperations {
     const endIdx = siblings.indexOf(endNode);
 
     // Safety: if nodes are not in the same sibling list, bail.
-    if (startIdx === -1 || endIdx === -1) return null;
+    if (startIdx === -1 || endIdx === -1) return undefined;
 
     // Ensure correct ordering (startIdx should be < endIdx).
     // The DOM selection direction is always start < end in document
@@ -125,7 +119,7 @@ export class RangeOperations {
     const removedIds = [];
     for (let i = firstIdx + 1; i <= lastIdx; i++) {
       removedIds.push(siblings[i].id);
-      siblings[i].parent = null;
+      siblings[i].parent = undefined;
     }
     // Remove them from the siblings array.
     siblings.splice(firstIdx + 1, lastIdx - firstIdx);
@@ -134,7 +128,7 @@ export class RangeOperations {
       nodeId: firstNode.id,
       offset: firstOffset,
     };
-    this.editor.treeRange = null;
+    this.editor.treeRange = undefined;
     return { before, hints: { updated: [firstNode.id], removed: removedIds } };
   }
 

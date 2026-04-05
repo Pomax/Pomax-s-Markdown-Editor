@@ -482,7 +482,7 @@ test(`closing search preserves cursor position in writing view`, async () => {
 
   const cursorBefore = await page.evaluate(() => {
     const tc = /** @type {any} */ (window).__editor?.syntaxTree?.treeCursor;
-    return tc ? { nodeId: tc.nodeId, offset: tc.offset } : null;
+    return tc ? { nodeId: tc.nodeId, offset: tc.offset } : undefined;
   });
 
   await page.keyboard.press(`${MOD}+f`);
@@ -497,9 +497,9 @@ test(`closing search preserves cursor position in writing view`, async () => {
   // The DOM selection must be inside the editor, not at the start.
   const selectionNodeId = await page.evaluate(() => {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
+    if (!sel || sel.rangeCount === 0) return;
     const node = sel.anchorNode?.parentElement?.closest(`[data-node-id]`);
-    return node?.getAttribute(`data-node-id`) ?? null;
+    return node?.getAttribute(`data-node-id`);
   });
   expect(selectionNodeId).toBe(cursorBefore?.nodeId);
 });

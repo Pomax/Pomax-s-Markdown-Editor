@@ -63,7 +63,7 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -81,7 +81,6 @@ async function dblclickWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );
@@ -210,10 +209,10 @@ test.describe(`Cursor position after italic`, () => {
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
+      if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
-      if (!line) return null;
+      if (!line) return;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
       let node = walker.nextNode();
@@ -227,10 +226,9 @@ test.describe(`Cursor position after italic`, () => {
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
       }
-      return null;
     });
 
-    expect(cursorInfo).not.toBeNull();
+    expect(cursorInfo).toBeDefined();
     expect(cursorInfo?.collapsed).toBe(true);
     // "text1 text1" = 11 chars
     expect(cursorInfo?.offset).toBe(11);
@@ -246,10 +244,10 @@ test.describe(`Cursor position after italic`, () => {
 
     const cursorInfo = await page.evaluate(() => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return null;
+      if (!sel || sel.rangeCount === 0) return;
       const range = sel.getRangeAt(0);
       const line = range.startContainer.parentElement?.closest(`[data-node-id]`);
-      if (!line) return null;
+      if (!line) return;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       let offset = 0;
       let node = walker.nextNode();
@@ -263,10 +261,9 @@ test.describe(`Cursor position after italic`, () => {
         offset += node.textContent?.length ?? 0;
         node = walker.nextNode();
       }
-      return null;
     });
 
-    expect(cursorInfo).not.toBeNull();
+    expect(cursorInfo).toBeDefined();
     expect(cursorInfo?.collapsed).toBe(true);
     expect(cursorInfo?.offset).toBe(5);
   });
@@ -295,7 +292,7 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
       } else {
         startIdx = text.lastIndexOf(targetWord);
       }
-      if (startIdx === -1) return null;
+      if (startIdx === -1) return;
 
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       let offset = 0;
@@ -313,7 +310,6 @@ async function clickInsideWord(pg, lineLocator, word, which = `first`) {
         offset += nodeLen;
         node = walker.nextNode();
       }
-      return null;
     },
     [word, which],
   );

@@ -30,7 +30,7 @@ test(`Copy File Path is disabled when no file is open`, async () => {
     const menu = Menu.getApplicationMenu();
     const fileMenu = menu?.items.find((i) => i.label === `File`);
     const item = fileMenu?.submenu?.items.find((i) => i.label === `Copy File Path`);
-    return item?.enabled ?? null;
+    return item?.enabled;
   });
 
   expect(enabled).toBe(false);

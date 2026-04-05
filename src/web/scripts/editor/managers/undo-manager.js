@@ -1,32 +1,11 @@
+import { UndoManagerData } from '../types.js';
+
 /**
  * Manages undo/redo history with unlimited capacity.
  */
-export class UndoManager {
+export class UndoManager extends UndoManagerData {
   constructor() {
-    /**
-     * Stack of changes for undo.
-     * @type {Change[]}
-     */
-    this.undoStack = [];
-
-    /**
-     * Stack of changes for redo.
-     * @type {Change[]}
-     */
-    this.redoStack = [];
-
-    /**
-     * Minimum time between recorded changes (ms).
-     * Used to batch rapid changes together.
-     * @type {number}
-     */
-    this.batchTimeout = 300;
-
-    /**
-     * Timestamp of the last recorded change.
-     * @type {number}
-     */
-    this.lastChangeTime = 0;
+    super();
   }
 
   /**
@@ -58,11 +37,11 @@ export class UndoManager {
 
   /**
    * Undoes the last change.
-   * @returns {Change|null} The undone change, or null if nothing to undo
+   * @returns {Change | undefined} The undone change, or undefined if nothing to undo
    */
   undo() {
     if (this.undoStack.length === 0) {
-      return null;
+      return undefined;
     }
 
     const change = this.undoStack.pop();
@@ -70,16 +49,16 @@ export class UndoManager {
       this.redoStack.push(change);
       return change;
     }
-    return null;
+    return undefined;
   }
 
   /**
    * Redoes the last undone change.
-   * @returns {Change|null} The redone change, or null if nothing to redo
+   * @returns {Change | undefined} The redone change, or undefined if nothing to redo
    */
   redo() {
     if (this.redoStack.length === 0) {
-      return null;
+      return undefined;
     }
 
     const change = this.redoStack.pop();
@@ -87,7 +66,7 @@ export class UndoManager {
       this.undoStack.push(change);
       return change;
     }
-    return null;
+    return undefined;
   }
 
   /**

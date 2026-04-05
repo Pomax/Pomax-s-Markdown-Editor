@@ -60,25 +60,14 @@ const DEFAULT_DETAILS_CLOSED = false;
  */
 const DEFAULT_ENABLE_STYLE_ELEMENTS = false;
 
+import { PreferencesModalData } from '../../editor/types.js';
+
 /**
  * A modal dialog for editing application preferences.
  */
-export class PreferencesModal {
+export class PreferencesModal extends PreferencesModalData {
   constructor() {
-    /** @type {HTMLDialogElement|null} */
-    this.dialog = null;
-
-    /** @type {boolean} */
-    this.built = false;
-
-    /** @type {boolean} */
-    this.linkTopBottom = false;
-
-    /** @type {boolean} */
-    this.linkLeftRight = false;
-
-    /** @type {boolean} */
-    this.linkAll = false;
+    super();
   }
 
   /**
@@ -470,8 +459,8 @@ export class PreferencesModal {
 
     const bodyRect = body.getBoundingClientRect();
     const links = dialog.querySelectorAll(`.preferences-nav-link`);
-    /** @type {Element|null} */
-    let closest = null;
+    /** @type {Element | undefined} */
+    let closest;
     let closestDist = Number.POSITIVE_INFINITY;
 
     for (const link of links) {
@@ -567,9 +556,9 @@ export class PreferencesModal {
   /**
    * Expands a hex color string to its full 7-character form.
    * Accepts `#rgb` (3-digit shorthand) and `#rrggbb` (full form).
-   * Returns the expanded string or `null` if the input is not a valid hex color.
+   * Returns the expanded string or `undefined` if the input is not a valid hex color.
    * @param {string} value
-   * @returns {string|null}
+   * @returns {string | undefined}
    */
   expandHex(value) {
     if (/^#[0-9a-f]{6}$/i.test(value)) {
@@ -579,7 +568,7 @@ export class PreferencesModal {
       const [, r, g, b] = value;
       return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
     }
-    return null;
+    return;
   }
 
   /**
@@ -784,7 +773,7 @@ export class PreferencesModal {
 
     try {
       const result = await window.electronAPI.getSetting(`tocVisible`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         return !!result.value;
       }
     } catch {
@@ -822,7 +811,7 @@ export class PreferencesModal {
 
     try {
       const result = await window.electronAPI.getSetting(`ensureLocalPaths`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         return !!result.value;
       }
     } catch {
@@ -841,7 +830,7 @@ export class PreferencesModal {
 
     try {
       const result = await window.electronAPI.getSetting(`detailsClosed`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         return !!result.value;
       }
     } catch {
@@ -860,7 +849,7 @@ export class PreferencesModal {
 
     try {
       const result = await window.electronAPI.getSetting(`enableStyleElements`);
-      if (result.success && result.value !== undefined && result.value !== null) {
+      if (result.success && result.value !== undefined) {
         return !!result.value;
       }
     } catch {

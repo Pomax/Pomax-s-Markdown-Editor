@@ -268,7 +268,7 @@ export class SyntaxTree {
    * @param {SyntaxNode} node - The node to add
    */
   appendChild(node) {
-    node.parent = null;
+    node.parent = undefined;
     this.children.push(node);
   }
 
@@ -281,7 +281,7 @@ export class SyntaxTree {
     const index = this.children.indexOf(node);
     if (index !== -1) {
       this.children.splice(index, 1);
-      node.parent = null;
+      node.parent = undefined;
       return true;
     }
     return false;
@@ -950,16 +950,16 @@ export class SyntaxTree {
       const matched = matches.get(nc);
       if (matched) {
         updateMatchedNode(matched, nc);
-        if (matched.parent !== null) {
-          matched.parent = null;
+        if (matched.parent !== undefined) {
+          matched.parent = undefined;
         }
         result.push(matched);
         if (!changed && matched !== this.children[result.length - 1]) {
           changed = true;
         }
       } else {
-        if (nc.parent !== null) {
-          nc.parent = null;
+        if (nc.parent !== undefined) {
+          nc.parent = undefined;
         }
         result.push(nc);
         changed = true;

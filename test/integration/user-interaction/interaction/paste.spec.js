@@ -123,7 +123,7 @@ test.describe(`Paste in writing view`, () => {
 
     const nodeType = await page.evaluate(() => {
       const tree = /** @type {any} */ (window).__editor?.syntaxTree;
-      if (!tree) return null;
+      if (!tree) return;
       return tree.children[0]?.type;
     });
     expect(nodeType).toBe(`heading1`);

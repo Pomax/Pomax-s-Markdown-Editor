@@ -89,6 +89,20 @@ interface TocHeading {
 }
 
 /**
+ * Data passed between view-mode switch phases (leave → transition → enter).
+ */
+interface ViewSwitchData {
+    /** Absolute character offset of the cursor in the markdown source. */
+    absoluteCursorOffset: number | undefined;
+    /** Pixel distance from the caret to the top of the scroll container. */
+    savedCaretTop: number | undefined;
+    /** Node ID used as a scroll anchor across the switch. */
+    anchorNodeId: string | undefined;
+    /** Pixel offset of the anchor node from the top of the scroll container. */
+    savedOffsetFromTop: number | undefined;
+}
+
+/**
  * Data for a link insertion or edit.
  */
 interface LinkData {
@@ -128,12 +142,12 @@ interface CodeLanguageData {
 interface DocumentState {
     /** The markdown content. */
     content: string;
-    /** Full file path or null for untitled. */
-    filePath: string | null;
+    /** Full file path or undefined for untitled. */
+    filePath?: string;
     /** Whether there are unsaved changes. */
     modified: boolean;
     /** Cursor position. */
-    cursor: TreeCursor | null;
+    cursor?: TreeCursor;
     /** Absolute character offset in markdown source. */
     cursorOffset: number;
     /** CRC32 hash of the markdown content. */
@@ -141,11 +155,11 @@ interface DocumentState {
     /** The parsed syntax tree. */
     syntaxTree: any;
     /** Active text selection range. */
-    treeRange: TreeRange | null;
+    treeRange?: TreeRange;
     /** Scroll position of the scroll container. */
     scrollTop: number;
     /** The active ToC heading node ID. */
-    tocActiveHeadingId: string | null;
+    tocActiveHeadingId?: string;
     /** Undo history. */
     undoStack: any[];
     /** Redo history. */
@@ -193,7 +207,7 @@ interface ElectronAPI {
     applyFormat(format: string): Promise<{ success: boolean; message?: string }>;
     undo(): Promise<{ success: boolean; message?: string }>;
     redo(): Promise<{ success: boolean; message?: string }>;
-    notifyOpenFiles(files: Array<{ id: string; filePath: string | null; label: string; active: boolean }>): Promise<{ success: boolean }>;
+    notifyOpenFiles(files: Array<{ id: string; filePath?: string; label: string; active: boolean }>): Promise<{ success: boolean }>;
 }
 
 /**
@@ -276,8 +290,8 @@ interface TabInfo {
     id: string;
     /** Display label (filename). */
     label: string;
-    /** Full file path, or null for untitled. */
-    filePath: string | null;
+    /** Full file path, or undefined for untitled. */
+    filePath?: string;
     /** Whether the tab has unsaved changes. */
     modified: boolean;
     /** Whether the tab is currently active. */

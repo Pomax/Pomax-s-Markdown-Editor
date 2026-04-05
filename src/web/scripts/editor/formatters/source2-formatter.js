@@ -152,30 +152,28 @@ function applyTextareaEdit(
   textarea.selectionEnd = cursorEnd;
 }
 
+import { Source2FormatterData } from '../types.js';
+
 /**
  * Formatter that operates on the textarea's text and selection directly.
  * Used for `source2` view mode.
  * @implements {Formatter}
  */
-export class Source2Formatter {
+export class Source2Formatter extends Source2FormatterData {
   /**
-   * @param {import('../renderers/source-renderer-v2.js').SourceRendererV2} renderer
+   * @param {import('../renderers/source/index.js').SourceRendererV2} renderer
    */
   constructor(renderer) {
-    /** @type {import('../renderers/source-renderer-v2.js').SourceRendererV2} */
+    super();
     this.renderer = renderer;
-    /** @type {number} */
-    this.savedSelectionStart = 0;
-    /** @type {number} */
-    this.savedSelectionEnd = 0;
   }
 
   /**
    * Returns the textarea element.
-   * @returns {HTMLTextAreaElement|null}
+   * @returns {HTMLTextAreaElement | undefined}
    */
   getTextarea() {
-    return this.renderer.textarea;
+    return this.renderer.textarea ?? undefined;
   }
 
   /**
@@ -422,14 +420,14 @@ export class Source2Formatter {
 
   /**
    * Finds the word surrounding the given position using \b boundaries.
-   * Returns null if the cursor is not on a word character.
+   * Returns undefined if the cursor is not on a word character.
    * @param {string} text
    * @param {number} pos
-   * @returns {{ start: number, end: number } | null}
+   * @returns {{ start: number, end: number } | undefined}
    */
   getWordAtPosition(text, pos) {
     if (pos >= text.length || /\W/.test(text[pos])) {
-      if (pos === 0 || /\W/.test(text[pos - 1])) return null;
+      if (pos === 0 || /\W/.test(text[pos - 1])) return undefined;
     }
 
     let start = pos;
@@ -437,7 +435,7 @@ export class Source2Formatter {
     let end = pos;
     while (end < text.length && /\w/.test(text[end])) end++;
 
-    return start < end ? { start, end } : null;
+    return start < end ? { start, end } : undefined;
   }
 
   /**

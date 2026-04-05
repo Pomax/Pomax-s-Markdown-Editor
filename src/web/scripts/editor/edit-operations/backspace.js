@@ -163,7 +163,7 @@ export async function handleBackspace(ops) {
           const lastChildLen = lastChild.content.length;
           lastChild.content += node.content;
           siblings.splice(idx, 1);
-          node.parent = null;
+          node.parent = undefined;
           ops.editor.syntaxTree.treeCursor = {
             nodeId: lastChild.id,
             offset: lastChildLen,
@@ -173,7 +173,7 @@ export async function handleBackspace(ops) {
           const prevLen = prev.content.length;
           prev.content += node.content;
           siblings.splice(idx, 1);
-          node.parent = null;
+          node.parent = undefined;
           ops.editor.syntaxTree.treeCursor = {
             nodeId: prev.id,
             offset: prevLen,

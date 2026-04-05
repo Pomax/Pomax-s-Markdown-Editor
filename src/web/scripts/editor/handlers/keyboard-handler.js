@@ -1,19 +1,16 @@
+import { KeyboardHandlerData } from '../types.js';
+
 /**
  * Handles keyboard shortcuts for the editor.
  */
-export class KeyboardHandler {
+export class KeyboardHandler extends KeyboardHandlerData {
   /**
    * @param {Editor} editor - The editor instance
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /** @type {ShortcutConfig[]} */
     this.shortcuts = this.getShortcuts();
-
-    /** @type {((event: KeyboardEvent) => void)|null} */
-    this.keydownHandler = null;
   }
 
   /**
@@ -74,7 +71,7 @@ export class KeyboardHandler {
   destroy() {
     if (this.keydownHandler) {
       document.removeEventListener(`keydown`, this.keydownHandler);
-      this.keydownHandler = null;
+      this.keydownHandler = undefined;
     }
   }
 
@@ -101,7 +98,7 @@ export class KeyboardHandler {
   /**
    * Finds a shortcut that matches the keyboard event.
    * @param {KeyboardEvent} event - The keyboard event
-   * @returns {ShortcutConfig|null}
+   * @returns {ShortcutConfig | undefined}
    */
   findMatchingShortcut(event) {
     for (const shortcut of this.shortcuts) {
@@ -109,7 +106,7 @@ export class KeyboardHandler {
         return shortcut;
       }
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -157,8 +154,8 @@ export class KeyboardHandler {
       return;
     }
 
-    const button = /** @type {HTMLElement|null} */ (
-      document.querySelector(`.toolbar-button[data-button-id="${actionValue}"]`)
+    const button = /** @type {HTMLElement | undefined} */ (
+      document.querySelector(`.toolbar-button[data-button-id="${actionValue}"]`) ?? undefined
     );
     if (button) {
       button.click();

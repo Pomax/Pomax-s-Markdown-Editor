@@ -60,10 +60,10 @@ test(`pressing Enter after summary text and typing " a a" preserves leading spac
   const readParagraph = () =>
     page.evaluate(() => {
       const details = document.querySelector(`#editor .html-details`);
-      if (!details) return null;
+      if (!details) return;
       // The new paragraph is the one that is currently focused.
       const para = details.querySelector(`.md-paragraph[data-has-focus]`);
-      return para ? para.textContent : null;
+      return para ? para.textContent : undefined;
     });
 
   // Type each character and verify the content after every keystroke

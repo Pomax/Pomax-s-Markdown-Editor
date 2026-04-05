@@ -71,7 +71,7 @@ test.describe(`style element injection`, () => {
     // The heading should NOT have the red color applied.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).not.toBe(`rgb(255, 0, 0)`);
   });
@@ -98,7 +98,7 @@ test.describe(`style element injection`, () => {
     // The heading should now have the red color applied.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).toBe(`rgb(255, 0, 0)`);
   });
@@ -141,7 +141,7 @@ test.describe(`style element injection`, () => {
     // The heading color should revert.
     const headingColor = await page.evaluate(() => {
       const h = document.querySelector(`#editor .md-heading1`);
-      return h ? getComputedStyle(h).color : null;
+      return h ? getComputedStyle(h).color : undefined;
     });
     expect(headingColor).not.toBe(`rgb(255, 0, 0)`);
   });

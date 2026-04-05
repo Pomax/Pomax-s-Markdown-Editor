@@ -157,8 +157,8 @@ function attachDrag(editorRef, handle, side, otherHandle) {
   let startLeftX = 0;
   /** @type {number} Right-handle starting X (viewport) at mousedown */
   let startRightX = 0;
-  /** @type {number|null} Pending rAF id */
-  let rafId = null;
+  /** @type {number | undefined} Pending rAF id */
+  let rafId;
   /** @type {number} Last mouse X seen during this drag */
   let lastMouseX = 0;
 
@@ -179,10 +179,10 @@ function attachDrag(editorRef, handle, side, otherHandle) {
   const onMouseMove = (e) => {
     e.preventDefault();
     lastMouseX = e.clientX;
-    if (rafId !== null) return; // coalesce into one frame
+    if (rafId !== undefined) return; // coalesce into one frame
 
     rafId = requestAnimationFrame(() => {
-      rafId = null;
+      rafId = undefined;
 
       const newWidth = getNewWidth();
 
@@ -201,9 +201,9 @@ function attachDrag(editorRef, handle, side, otherHandle) {
   };
 
   const onMouseUp = () => {
-    if (rafId !== null) {
+    if (rafId !== undefined) {
       cancelAnimationFrame(rafId);
-      rafId = null;
+      rafId = undefined;
     }
     handle.classList.remove(`dragging`);
     document.body.style.cursor = ``;

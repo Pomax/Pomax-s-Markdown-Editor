@@ -19,15 +19,17 @@ const HTML_OPEN_RE = /<([a-z][a-z0-9]*)\b[^>]*>/gi;
  */
 const HTML_CLOSE_RE = /<\/([a-z][a-z0-9]*)\s*>/gi;
 
+import { ClipboardHandlerData } from '../types.js';
+
 /**
  * Handles clipboard operations (cut, copy) for the editor.
  */
-export class ClipboardHandler {
+export class ClipboardHandler extends ClipboardHandlerData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
   }
 

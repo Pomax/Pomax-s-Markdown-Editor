@@ -274,14 +274,14 @@ describe(`SyntaxTree.updateUsing`, () => {
     assert.strictEqual(oldTree.children[1].id, indent1Id);
   });
 
-  it(`sets parent to null on all result children`, async () => {
+  it(`sets parent to undefined on all result children`, async () => {
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(README);
 
     oldTree.updateUsing(newTree);
 
     for (const child of oldTree.children) {
-      assert.strictEqual(child.parent, null);
+      assert.strictEqual(child.parent, undefined);
     }
   });
 

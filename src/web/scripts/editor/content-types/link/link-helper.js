@@ -7,23 +7,18 @@
 /// <reference path="../../../../../types.d.ts" />
 
 import { LinkModal } from './link-modal.js';
+import { LinkHelperData } from '../../types.js';
 
 /**
  * Manages link-editing operations for the editor.
  */
-export class LinkHelper {
+export class LinkHelper extends LinkHelperData {
   /**
    * @param {Editor} editor
    */
   constructor(editor) {
-    /** @type {Editor} */
+    super();
     this.editor = editor;
-
-    /**
-     * Lazily-created link modal for click-to-edit in writing mode.
-     * @type {LinkModal|null}
-     */
-    this.linkModal = null;
   }
 
   /**
