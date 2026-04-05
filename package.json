@@ -1,6 +1,6 @@
 {
   "name": "markdown-editor",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A professional markdown editor with syntactic tree parsing and WYSIWYG editing",
   "main": "src/electron/main.js",
   "type": "module",
