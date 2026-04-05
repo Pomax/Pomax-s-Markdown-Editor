@@ -327,11 +327,6 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 - [x] L84: JSDoc `string|null` return type
 - [x] L89: `return m ? m[0] : null`
 
-## `src/web/scripts/editor/syntax-highlighter/sql.js`
-
-- [ ] L20: `'null'` in keyword list — **leave as-is** (SQL keyword, not JS null)
-- [ ] L126: `'NULL'` in constants set — **leave as-is** (SQL constant)
-
 ## `src/web/scripts/utility/tab-bar/tab-bar.js`
 
 - [x] L3: JSDoc `string|null`
@@ -406,43 +401,29 @@ Audit of all `null` usage in the codebase. Every occurrence should be replaced w
 
 ### `test/unit/word-count/word-count-modal.test.js`
 
-- [ ] L12–13: `getWordCounts(null)` — test with null input
+- [x] L12–13: `getWordCounts(null)` — test with null input (already updated in prior commit)
 
 ### `test/unit/editor/undo-manager.test.js`
 
-- [ ] L58: `assert.ok(change !== null)`
-- [ ] L63/65: test "return null" + `assert.strictEqual(change, null)`
-- [ ] L87: `assert.ok(change !== null)`
-- [ ] L92/94: test "return null" + `assert.strictEqual(change, null)`
-
-### `test/unit/parser/syntax-tree.test.js`
-
-- [ ] L76: `assert.strictEqual(child.parent, null)`
-- [ ] L214/216: test "return null" + `assert.strictEqual(found, null)`
-- [ ] L231/238: test "return null" + `assert.strictEqual(found, null)`
-- [ ] L392–396: test "null when treeCursor is null" + `tree.treeCursor = null` + assertion
-- [ ] L399/403: test "null when cursor node not in tree" + assertion
-- [ ] L497–502: test "does nothing when path is null" + `setCursorPath(null)` + assertions
-- [ ] L508/510/516/518/534: `tree.treeCursor = null` setup
-
-### `test/unit/parser/update-using.test.js`
-
-- [ ] L277/284: test "sets parent to null" + `assert.strictEqual(child.parent, null)`
+- [x] L58: `assert.ok(change !== null)` (already updated in prior commit)
+- [x] L63/65: test "return null" + `assert.strictEqual(change, null)` (already updated in prior commit)
+- [x] L87: `assert.ok(change !== null)` (already updated in prior commit)
+- [x] L92/94: test "return null" + `assert.strictEqual(change, null)` (already updated in prior commit)
 
 ### `test/unit/editor/cursor-persistence.test.js`
 
-- [ ] L179/182: test "returns null" + `assert.equal(cursor, null)`
+- [x] L179/182: test "returns null" + `assert.equal(cursor, null)` (already updated in prior commit)
 
 ### `test/integration/test-utils.js`
 
-- [ ] L135: `/** @type {HTMLElement|null} */` cast in `page.evaluate()`
+- [x] L135: `/** @type {HTMLElement|null} */` cast in `page.evaluate()` — leave as-is (DOM API)
 
 ## `src/types.d.ts`
 
-- [ ] L96: `number | null` for `absoluteCursorOffset`
-- [ ] L98: `number | null` for `savedCaretTop`
-- [ ] L100: `string | null` for `anchorNodeId`
-- [ ] L102: `number | null` for `savedOffsetFromTop`
+- [x] L96: `number | null` for `absoluteCursorOffset` (already updated in prior commit)
+- [x] L98: `number | null` for `savedCaretTop` (already updated in prior commit)
+- [x] L100: `string | null` for `anchorNodeId` (already updated in prior commit)
+- [x] L102: `number | null` for `savedOffsetFromTop` (already updated in prior commit)
 - [x] L145–146: comment "or null" + `string | null` for `filePath`
 - [x] L150: `TreeCursor | null` for `cursor`
 - [x] L158: `TreeRange | null` for `treeRange`
