@@ -65,18 +65,21 @@
       "!src/**/*.d.ts"
     ],
     "win": {
-      "target": "portable",
+      "target": "dir",
       "icon": null
     },
     "mac": {
-      "target": "dmg",
+      "target": "dir",
       "category": "public.app-category.productivity"
     },
     "linux": {
-      "target": "AppImage",
+      "target": "dir",
       "category": "Office"
     },
     "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ],
     "npmRebuild": true,
     "removePackageScripts": true
   }

@@ -26,7 +26,7 @@
 
 ### New Features
 
-- **Bold-italic formatting (`***text***`)**: The inline tokenizer now supports `***` as an atomic bold-italic delimiter. `***word***` renders as bold-italic (`<strong><em>…</em></strong>`) in focused view. Four or more consecutive asterisks (`****`+) are treated as plain text.
+- **Bold-italic formatting (`\***text**\*`)**: The inline tokenizer now supports `***` as an atomic bold-italic delimiter. `***word***` renders as bold-italic (`<strong><em>…</em></strong>`) in focused view. Four or more consecutive asterisks (`****`+) are treated as plain text.
 
 ### Bug Fixes
 
@@ -36,14 +36,6 @@
 
 - **DFA parser is the sole parser**: The regex-based `MarkdownParser` has been removed. The DFA parser (`dfa-parser.js` / `dfa-tokenizer.js`) is now the only parsing pipeline. The parser-switching UI in preferences and the `setParser()` API have been removed. (#69)
 - **Dead code removal**: Deleted `markdown-parser.js` and its test file `markdown-parser.test.js`. Updated all doc references to point to the DFA parser.
-
-### Testing & CI
-
-- **Bold-italic unit tests**: 5 new unit tests for the inline tokenizer covering `***` token output, tree building, and `****`+ plain-text handling.
-- **Bold-italic integration tests**: 4 new integration tests for typing `***word***` and `****` delimiters, verifying cursor position and rendered output.
-- **DFA parser HR tests updated**: 4 horizontal rule unit tests updated to include the required trailing newline in test inputs.
-
----
 
 ## v1.6.0
 
@@ -65,16 +57,6 @@
 - **Per-tab document state expanded**: `_documentStates` now tracks `tocActiveHeadingId` for ToC heading persistence across tab switches, and `cursorPath`/`tocHeadingPath` for session restore across app restarts.
 - **`SyntaxNode.toBareText()`**: New method returns visible plain text with all formatting syntax stripped (heading prefixes, emphasis delimiters, link URLs, image syntax, etc.). Used by the search system for focused-view matching.
 
-### Testing & CI
-
-- **Search integration tests**: 427-line test suite covering plain text search, regex search, case sensitivity, match navigation, cursor-relative initial match, and re-highlight after re-render.
-- **Session save/restore tests**: Three integration tests — flushing saves `cursorPath`, flushing saves `tocHeadingPath`, and a full two-phase close-and-reopen restore test. All use `waitForFunction` polling instead of `waitForTimeout`.
-- **Cursor sync tests**: Integration tests verifying tree cursor synchronization with DOM selection across editing, tab switching, and view mode changes.
-- **DFA parser unit tests**: 700+ lines of unit tests covering block-level parsing, list handling, code blocks, HTML blocks, and edge cases.
-- **SyntaxTree unit tests**: New unit tests for `toBareText()`, `getPathToCursor()`/`setCursorPath()`, and `getPathToNode()`/`getNodeAtPath()`.
-
----
-
 ## v1.5.0
 
 ### New Features
@@ -93,16 +75,6 @@
 ### Improvements
 
 - **Editor refactor**: `editor.js` was split into focused manager classes — `EditOperations`, `InputHandler`, `EventHandler`, `CursorManager`, `RangeOperations`, `ClipboardHandler`, `SelectionManager`, `ImageHelper`, `LinkHelper`, and `UndoManager` — reducing the main file from ~2000 lines to a thin orchestration layer.
-
-### Testing & CI
-
-- **List integration tests**: 14 tests covering toolbar toggle, Enter continuation, empty-item exit, ordered numbering, list type switching, multi-line paste, and CRLF handling. Platform-aware keys for macOS CI compatibility.
-- **Select-all integration tests**: 11 tests covering cycling for paragraphs, headings, and list items, click reset, and empty-element removal for paragraphs, headings, list items, blockquotes, and full-document delete.
-- **ToC highlight tests**: Integration tests verifying scroll-based heading highlight and active link centring in the sidebar.
-- **Cursor delimiter tests**: Integration tests verifying cursor position after typing inline formatting delimiters.
-- **Cursor scroll tests**: Integration tests verifying the editor scrolls off-screen nodes into view when the cursor moves to them.
-
----
 
 ## v1.4.0
 
@@ -125,18 +97,6 @@
 - **`rewriteImagePaths` uses incremental render**: After the initial full render, asynchronous image-path rewriting incrementally updates only the affected image nodes instead of triggering a second full render.
 - **BaseModal refactor**: Image, link, and table modals now extend a shared `BaseModal` class that handles dialog creation, focus trapping, open/close lifecycle, and keyboard dismissal.
 
-### Testing & CI
-
-- **Comprehensive toolbar button tests**: New integration test suites for bold, italic, strikethrough, subscript, and superscript buttons covering selection-based formatting, collapsed-cursor word detection, and toggle-off behaviour.
-- **Range handling tests**: 540+ line integration test suite covering type-over-selection, backspace/delete with selection, cross-node deletion, Ctrl+A, cut, copy, and paste.
-- **Page resize tests**: Integration tests verifying drag handles appear only in focused mode, dragging changes page width, and the new width persists to settings.
-- **HTML image tests**: Integration tests for `<img>` tag parsing, rendering in both view modes, style field editing in the modal, and style round-trip.
-- **Additional integration tests**: New or expanded suites for link single-click, ToC scroll positioning, underscore emphasis rendering, view-mode switching, and view-mode dropdown sync.
-- **Tokenizer-based offset mapping**: Replaced regex-based cursor offset mapping with the inline tokenizer, fixing inline HTML cursor positioning.
-- **CI resilience**: Electron launch retries (up to 3 attempts) for transient CI timeouts; lint fixes across the codebase.
-
----
-
 ## v1.3.0
 
 ### New Features
@@ -155,15 +115,6 @@
 
 - **Table cell inline formatting**: Table cells now render inline markdown and HTML formatting (bold, italic, code, etc.) instead of displaying raw text.
 
-### Testing & CI
-
-- **Extensive integration test coverage**: New integration tests for code-block entry, table cell editing, image click-to-edit, link click-to-edit, linked-image click-to-edit, and inline HTML rendering.
-- **Inline tokenizer unit tests**: Unit test suite for the tokenizer covering markdown formatting, HTML tags, code spans, links, and edge cases.
-- **macOS CI stability**: Platform-aware Home/End key sequences in tests (`Meta+ArrowLeft`/`Meta+ArrowRight` on macOS), increased Electron launch timeout to 60s, and reduced worker count to 2 on macOS to prevent flakiness.
-- **CI workflow cleanup**: Removed secondary version script; added `no-ci` label support to skip validation on labelled PRs.
-
----
-
 ## v1.2.0
 
 ### New Features
@@ -175,8 +126,6 @@
 ### Performance
 
 - **Targeted focus updates**: Switching focus between elements in focused view no longer rebuilds the entire DOM. Only the previously focused and newly focused nodes are re-rendered in-place, making focus changes O(1) regardless of document size.
-
----
 
 ## v1.1.0
 
@@ -196,19 +145,10 @@
 - **Backspace/delete at HTML block boundaries**: Backspace at the start of a node after an HTML block and delete at the end of a node before an HTML block are handled correctly in both view modes.
 - **Preferences**: New content setting to control whether `<details>` blocks start open or closed.
 
-### Testing & CI
-
-- **Cross-platform CI**: Added a GitHub Actions validation workflow that runs the full test suite on Windows, macOS, and Linux on every pull request.
-- **Shared test utilities**: Integration tests use a common `test-utils.js` with `launchApp()`, `loadContent()`, and `defocusEditor()` helpers, plus a fixed A4 viewport for deterministic layout.
-- **Test fixtures**: In-repo markdown and image fixtures replace external file dependencies.
-- **Linux CI hardening**: Virtual framebuffer (`xvfb-run`) for headless Electron, `--no-sandbox` for GitHub Actions runners, and entry-script filtering to prevent argv conflicts.
-
 ### Bug Fixes
 
 - **Entry script argv filtering**: `getFilePathFromArgs()` now skips the app's own entry script, fixing a Linux-specific issue where `main.js` was mistakenly loaded as a document.
 - **`bareText` preservation**: Re-parsing a single line inside an HTML block context now preserves the `bareText` flag, preventing summary text from gaining unwanted markdown syntax.
-
----
 
 ## v1.0.0
 
