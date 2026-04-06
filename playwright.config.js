@@ -30,7 +30,7 @@ if (CI_RUN) {
     };
   } else if (platform === `win32`) {
     overrides = {
-      retriest: 2,
+      retries: 2,
       timeout: 30_000,
       workers: 2,
     };
