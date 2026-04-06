@@ -89,7 +89,9 @@ describe(`SyntaxTree.updateUsing`, () => {
   });
 
   it(`assigns a fresh ID to an inserted node while preserving others`, async () => {
-    const insertionPoint = `## Current version: v1.7.0`;
+    const versionMatch = README.match(/^## Current version: .+$/m);
+    assert.ok(versionMatch, `README must contain a "## Current version:" heading`);
+    const insertionPoint = versionMatch[0];
     const insertedSection = `## What's New\n\nThis section was just added with **bold** emphasis and a [link](https://example.com).`;
     const editedReadme = replaceFirst(
       README,
