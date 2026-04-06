@@ -11,7 +11,6 @@
 - **File menu reorganization**: "Word Count" and "Copy File Path" are now grouped under a **File → Utilities** submenu. "Restructure" has its own section after "Close".
 - **Updated About dialog**: The About box now displays the application version (from `package.json`), a short description, and a "Visit GitHub" button that opens the repository in the default browser.
 
-
 ## v2.1.0
 
 ### New Features
