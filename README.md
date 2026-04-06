@@ -22,6 +22,8 @@ Note: Linux users will need to mark the executable as executable after unpacking
 
 Previous versions can be found over on the [Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest) page.
 
+Alternatively, of course, you can just clone the repo and use `npm start` with all the dependencies installed.
+
 ## Eww, Electron?
 
 Sorry, did you not have 8+GB if RAM and 1TB+ of disk space? Stop pretending you care about Electron, you care about whether the tools are useful or not. Yes, it's dumb that 2 MB of resources needs 100MB of UI runner, but on the other hand, it's literally a browser, and have you looked at what browsers need to support these days? Can you even _count_ the number of web APIs? =P
