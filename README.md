@@ -4,19 +4,21 @@ A GitHub-flavoured markdown editor built using the web stack, running in Electro
 
 ![A screenshot of the editor](./screenshot-1.png)
 
-## Current version: v2.1.0
+## Current version: v2.1.2
 
 See the [release log](./RELEASE_LOG.md) for what's new in this version.
 
 ### Downloads
 
-This editor is released as a standalone, installer-free executable for Windows, MacOS, and Linux. The current download links are:
+This editor is released as a standalone, installer-free executable for Windows, MacOS, and Linux, packaged as a zip file.
 
-- Windows exe: [Markdown.Editor.1.7.0.exe](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor.1.7.0.exe)
-- MacOS dmg: [Markdown.Editor-1.7.0-arm64.dmg](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0-arm64.dmg)
-- Linux AppImage: [Markdown.Editor-1.7.0.AppImage](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v1.7.0/Markdown.Editor-1.7.0.AppImage)
+The current download links are:
 
-Note: Linux users will need to mark the AppImage as executable before first run: `chmod +x Markdown.Editor-1.7.0.AppImage`
+- Windows: [Markdown-Editor-2.1.2-win.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-win.zip)
+- MacOS: [Markdown-Editor-2.1.2-mac-arm64.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-mac-arm64.zip)
+- Linux: [Markdown-Editor-2.1.2-linux.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-linux.zip)
+
+Note: Linux users will need to mark the executable as executable after unpacking: `chmod +x "Markdown Editor/markdown-editor"`
 
 Previous versions can be found over on the [Releases](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/latest) page.
 

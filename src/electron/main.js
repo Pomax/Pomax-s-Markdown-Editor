@@ -412,6 +412,9 @@ async function restoreOpenFiles(window, entries) {
   menuBuilder.refreshMenu();
 }
 
+// Run with unlimited memory — must be set before the app is ready
+app.commandLine.appendSwitch(`js-flags`, `--max-old-space-size=0`);
+
 // Electron app lifecycle events
 app.whenReady().then(async () => {
   // Initialize settings before creating the window so saved bounds are available
@@ -465,8 +468,5 @@ app.on(`window-all-closed`, () => {
   settings.close();
   app.quit();
 });
-
-// Run with unlimited memory
-app.commandLine.appendSwitch(`js-flags`, `--max-old-space-size=0`);
 
 export { mainWindow, fileManager };
