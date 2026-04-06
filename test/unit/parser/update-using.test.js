@@ -3,13 +3,13 @@
  * Uses the real DFA parser and README.md as a representative document.
  */
 
-import assert from 'node:assert';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { describe, it } from 'node:test';
-import { SyntaxNode } from '../../../src/parsers/old/syntax-node.js';
-import { parser } from '../../../src/parsers/old/dfa-parser.js';
-import { SyntaxTree } from '../../../src/parsers/old/syntax-tree.js';
+import assert from "node:assert";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it } from "node:test";
+import { SyntaxNode } from "../../../src/parsers/old/syntax-node.js";
+import { parser } from "../../../src/parsers/old/dfa-parser.js";
+import { SyntaxTree } from "../../../src/parsers/old/syntax-tree.js";
 
 const README = readFileSync(resolve(`README.md`), `utf-8`);
 
@@ -34,7 +34,9 @@ function collectIds(tree) {
 function replaceFirst(source, target, replacement) {
   const index = source.indexOf(target);
   if (index === -1) return source;
-  return source.slice(0, index) + replacement + source.slice(index + target.length);
+  return (
+    source.slice(0, index) + replacement + source.slice(index + target.length)
+  );
 }
 
 /**
@@ -72,7 +74,9 @@ describe(`SyntaxTree.updateUsing`, () => {
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(editedReadme);
 
-    const editedOldIndex = oldTree.children.findIndex((c) => c.content === originalLine);
+    const editedOldIndex = oldTree.children.findIndex(
+      (c) => c.content === originalLine,
+    );
     const editedNodeId = oldTree.children[editedOldIndex].id;
     const originalIds = collectIds(oldTree);
 
@@ -90,7 +94,10 @@ describe(`SyntaxTree.updateUsing`, () => {
 
   it(`assigns a fresh ID to an inserted node while preserving others`, async () => {
     const versionMatch = README.match(/^## Current version: .+$/m);
-    assert.ok(versionMatch, `README must contain a "## Current version:" heading`);
+    assert.ok(
+      versionMatch,
+      `README must contain a "## Current version:" heading`,
+    );
     const insertionPoint = versionMatch[0];
     const insertedSection = `## What's New\n\nThis section was just added with **bold** emphasis and a [link](https://example.com).`;
     const editedReadme = replaceFirst(
@@ -124,15 +131,22 @@ describe(`SyntaxTree.updateUsing`, () => {
     const oldTree = await parser.parse(README);
     const newTree = await parser.parse(editedReadme);
 
-    const removedIndex = oldTree.children.findIndex((c) => c.content === lineToRemove);
-    const survivingIds = collectIds(oldTree).filter((_, i) => i !== removedIndex);
+    const removedIndex = oldTree.children.findIndex(
+      (c) => c.content === lineToRemove,
+    );
+    const survivingIds = collectIds(oldTree).filter(
+      (_, i) => i !== removedIndex,
+    );
 
     oldTree.updateUsing(newTree);
 
     assert.strictEqual(oldTree.children.length, newTree.children.length);
     const updatedIds = collectIds(oldTree);
     for (const id of survivingIds) {
-      assert.ok(updatedIds.includes(id), `surviving ID ${id} not found after update`);
+      assert.ok(
+        updatedIds.includes(id),
+        `surviving ID ${id} not found after update`,
+      );
     }
   });
 
@@ -152,7 +166,10 @@ describe(`SyntaxTree.updateUsing`, () => {
 
     const updatedIds = collectIds(oldTree);
     for (const id of updatedIds) {
-      assert.ok(originalIds.has(id), `unexpected fresh ID after reordering: ${id}`);
+      assert.ok(
+        originalIds.has(id),
+        `unexpected fresh ID after reordering: ${id}`,
+      );
     }
     assert.strictEqual(oldTree.toMarkdown(), newTree.toMarkdown());
   });
@@ -163,11 +180,18 @@ describe(`SyntaxTree.updateUsing`, () => {
     const headingNode = oldTree.children.find(
       (c) => c.type === `heading2` && c.content === headingContent,
     );
-    assert.ok(headingNode, `expected to find heading2 node with content "${headingContent}"`);
+    assert.ok(
+      headingNode,
+      `expected to find heading2 node with content "${headingContent}"`,
+    );
     const headingId = headingNode.id;
     const originalIds = collectIds(oldTree);
 
-    const editedReadme = replaceFirst(README, `## ${headingContent}`, headingContent);
+    const editedReadme = replaceFirst(
+      README,
+      `## ${headingContent}`,
+      headingContent,
+    );
     const newTree = await parser.parse(editedReadme);
 
     oldTree.updateUsing(newTree);
@@ -175,13 +199,19 @@ describe(`SyntaxTree.updateUsing`, () => {
     const paragraphNode = oldTree.children.find(
       (c) => c.type === `paragraph` && c.content === headingContent,
     );
-    assert.ok(paragraphNode, `expected a paragraph node with the former heading content`);
+    assert.ok(
+      paragraphNode,
+      `expected a paragraph node with the former heading content`,
+    );
     assert.notStrictEqual(paragraphNode.id, headingId);
 
     const unchangedOriginals = originalIds.filter((id) => id !== headingId);
     const updatedIds = collectIds(oldTree);
     for (const id of unchangedOriginals) {
-      assert.ok(updatedIds.includes(id), `unchanged node ID ${id} not preserved`);
+      assert.ok(
+        updatedIds.includes(id),
+        `unchanged node ID ${id} not preserved`,
+      );
     }
   });
 
@@ -318,7 +348,10 @@ describe(`SyntaxTree.updateUsing`, () => {
     oldTree.updateUsing(newTree);
 
     assert.strictEqual(oldTree.children[0].children[0].id, oldChildId);
-    assert.strictEqual(oldTree.children[0].children[0].content, updatedChildContent);
+    assert.strictEqual(
+      oldTree.children[0].children[0].content,
+      updatedChildContent,
+    );
   });
 
   it(`matches duplicate identical nodes to distinct originals`, async () => {
@@ -365,7 +398,11 @@ describe(`SyntaxTree.updateUsing`, () => {
     oldTree.updateUsing(newTree);
 
     const idsAfter = collectIds(oldTree);
-    assert.strictEqual(idsAfter.length, idsBefore.length, `node count must not change`);
+    assert.strictEqual(
+      idsAfter.length,
+      idsBefore.length,
+      `node count must not change`,
+    );
     for (let i = 0; i < idsBefore.length; i++) {
       assert.strictEqual(
         idsAfter[i],

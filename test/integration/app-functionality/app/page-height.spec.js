@@ -39,13 +39,11 @@ test(`editor page height grows when content exceeds initial min-height`, async (
   const initialHeight = await editor.evaluate((el) => /** @type {HTMLElement} */ (el).offsetHeight);
   expect(initialHeight).toBeGreaterThan(0);
 
-  // Type enough lines to exceed the initial page height.
-  // Each Enter creates a new paragraph line.
+  // Paste enough lines to exceed the initial page height.
   const lineCount = 80;
-  for (let i = 0; i < lineCount; i++) {
-    await page.keyboard.type(`Line ${i + 1}`);
-    await page.keyboard.press(`Enter`);
-  }
+  const lines = Array.from({ length: lineCount }, (_, i) => `Line ${i + 1}`).join(`\n`);
+  await page.evaluate((text) => navigator.clipboard.writeText(text), lines);
+  await page.keyboard.press(`${process.platform === `darwin` ? `Meta` : `Control`}+v`);
 
   // The editor height should now be greater than the initial min-height
   const expandedHeight = await editor.evaluate(

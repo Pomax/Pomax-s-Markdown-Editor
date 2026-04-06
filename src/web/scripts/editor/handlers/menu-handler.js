@@ -87,6 +87,9 @@ export class MenuHandler extends MenuHandlerData {
       case `session:restore`:
         document.dispatchEvent(new CustomEvent(`session:restore`, { detail: args[0] }));
         break;
+      case `file:restructureHeadings`:
+        this.editor.restructureHeadings();
+        break;
       case `element:changeType`:
         this.handleChangeType(args[0]);
         break;
