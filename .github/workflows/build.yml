@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: brew install 7zip
       - run: npm ci
       - run: npm run dist:mac
       - uses: actions/upload-artifact@v4
@@ -46,6 +47,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: sudo apt-get install -y 7zip
       - run: npm ci
       - run: npm run dist:linux
       - uses: actions/upload-artifact@v4

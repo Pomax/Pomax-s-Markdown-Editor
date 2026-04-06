@@ -15,8 +15,6 @@ const dist = join(root, `dist`);
 const pkg = JSON.parse(readFileSync(join(root, `package.json`), `utf-8`));
 const version = pkg.version;
 
-const isWindows = process.platform === `win32`;
-
 for (const entry of readdirSync(dist)) {
   const full = join(dist, entry);
   const isDir = statSync(full).isDirectory();
@@ -27,11 +25,7 @@ for (const entry of readdirSync(dist)) {
     const renamed = join(dist, folderName);
     renameSync(full, renamed);
     const zipName = `Markdown-Editor-${version}-${platform}.zip`;
-    if (isWindows) {
-      execSync(`tar -a -cf "${zipName}" "${folderName}"`, { cwd: dist });
-    } else {
-      execSync(`zip -r "${zipName}" "${folderName}"`, { cwd: dist });
-    }
+    execSync(`7z a -mx=9 "${zipName}" "${folderName}"`, { cwd: dist });
     rmSync(renamed, { recursive: true, force: true });
     console.log(`  created ${zipName}`);
     continue;
