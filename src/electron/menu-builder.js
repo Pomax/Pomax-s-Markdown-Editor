@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { BrowserWindow, Menu, clipboard, dialog } from 'electron';
+import { BrowserWindow, Menu, app, clipboard, dialog, shell } from 'electron';
 import { settings } from './settings-manager.js';
 
 /**
@@ -87,17 +87,31 @@ export class MenuBuilder {
         },
         { type: `separator` },
         {
-          label: `Word Count`,
-          click: () => this.sendMenuAction(`file:wordCount`),
+          label: `Restructure`,
+          submenu: [
+            {
+              label: `Headings`,
+              click: () => this.sendMenuAction(`file:restructureHeadings`),
+            },
+          ],
         },
         {
-          label: `Copy File Path`,
-          enabled: !!this.fileManager.currentFilePath,
-          click: () => {
-            if (this.fileManager.currentFilePath) {
-              clipboard.writeText(this.fileManager.currentFilePath);
-            }
-          },
+          label: `Utilities`,
+          submenu: [
+            {
+              label: `Word Count`,
+              click: () => this.sendMenuAction(`file:wordCount`),
+            },
+            {
+              label: `Copy File Path`,
+              enabled: !!this.fileManager.currentFilePath,
+              click: () => {
+                if (this.fileManager.currentFilePath) {
+                  clipboard.writeText(this.fileManager.currentFilePath);
+                }
+              },
+            },
+          ],
         },
         { type: `separator` },
         {
@@ -705,17 +719,26 @@ export class MenuBuilder {
 
   /**
    * Handles the About menu action.
-   * Shows a modal dialog with placeholder text.
+   * Shows a dialog with version info and a link to the GitHub repo.
    */
-  handleAbout() {
+  async handleAbout() {
     if (!this.window) return;
 
-    dialog.showMessageBox(this.window, {
+    const version = app.getVersion();
+    const repoURL = `https://github.com/Pomax/Pomax-s-Markdown-Editor`;
+
+    const { response } = await dialog.showMessageBox(this.window, {
       type: `info`,
       title: `About Markdown Editor`,
-      message: `Markdown Editor`,
-      detail: `Work in progress`,
-      buttons: [`OK`],
+      message: `Pomax's Markdown Editor v${version}`,
+      detail: `This is a free, public domain open source markdown editor.\n\nVisit ${repoURL} for more information`,
+      buttons: [`Visit GitHub`, `OK`],
+      defaultId: 1,
+      cancelId: 1,
     });
+
+    if (response === 0) {
+      shell.openExternal(repoURL);
+    }
   }
 }

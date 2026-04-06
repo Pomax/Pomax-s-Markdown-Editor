@@ -1140,6 +1140,45 @@ export class Editor extends EditorData {
   }
 
   /**
+   * Promotes all headings so that the top-most level becomes `#`.
+   * E.g. if the shallowest heading is `###`, every heading loses two
+   * leading `#` characters.
+   */
+  restructureHeadings() {
+    if (!this.syntaxTree) return;
+
+    const headingRe = /^heading(\d)$/;
+    const headings = [];
+    for (const node of this.syntaxTree.children) {
+      const m = headingRe.exec(node.type);
+      if (m) headings.push({ node, level: Number(m[1]) });
+    }
+
+    if (headings.length === 0) return;
+
+    const minLevel = Math.min(...headings.map((h) => h.level));
+    if (minLevel === 1) return;
+
+    const before = this.getMarkdown();
+    const shift = minLevel - 1;
+    const updatedIds = [];
+
+    for (const { node, level } of headings) {
+      this.syntaxTree.changeNodeType(node, `heading${level - shift}`);
+      updatedIds.push(node.id);
+    }
+
+    this.undoManager.recordChange({
+      type: `restructureHeadings`,
+      before,
+      after: this.getMarkdown(),
+    });
+
+    this.renderNodesAndPlaceCursor({ updated: updatedIds });
+    this.setUnsavedChanges(true);
+  }
+
+  /**
    * Sets whether there are unsaved changes.
    * @param {boolean} hasChanges
    */

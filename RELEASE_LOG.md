@@ -1,5 +1,16 @@
 # Release Log
 
+## v2.2.0
+
+### New Features
+
+- **Restructure Headings (File → Restructure → Headings)**: Promotes all headings in the document so the top-most heading level becomes `#`. For example, a document whose shallowest headings are `###` will have every heading promoted by two levels. The operation is recorded as a single undo step.
+
+### Improvements
+
+- **File menu reorganization**: "Word Count" and "Copy File Path" are now grouped under a **File → Utilities** submenu. "Restructure" has its own section after "Close".
+- **Updated About dialog**: The About box now displays the application version (from `package.json`), a short description, and a "Visit GitHub" button that opens the repository in the default browser.
+
 ## v2.1.0
 
 ### New Features

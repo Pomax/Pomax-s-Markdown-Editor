@@ -29,7 +29,8 @@ test(`Copy File Path is disabled when no file is open`, async () => {
   const enabled = await electronApp.evaluate(({ Menu }) => {
     const menu = Menu.getApplicationMenu();
     const fileMenu = menu?.items.find((i) => i.label === `File`);
-    const item = fileMenu?.submenu?.items.find((i) => i.label === `Copy File Path`);
+    const utilities = fileMenu?.submenu?.items.find((i) => i.label === `Utilities`);
+    const item = utilities?.submenu?.items.find((i) => i.label === `Copy File Path`);
     return item?.enabled;
   });
 
@@ -50,7 +51,8 @@ test(`Copy File Path copies the active file path to the clipboard`, async () => 
   await electronApp.evaluate(({ Menu }) => {
     const menu = Menu.getApplicationMenu();
     const fileMenu = menu?.items.find((i) => i.label === `File`);
-    const item = fileMenu?.submenu?.items.find((i) => i.label === `Copy File Path`);
+    const utilities = fileMenu?.submenu?.items.find((i) => i.label === `Utilities`);
+    const item = utilities?.submenu?.items.find((i) => i.label === `Copy File Path`);
     item?.click();
   });
 

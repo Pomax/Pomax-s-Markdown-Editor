@@ -4,7 +4,7 @@ A GitHub-flavoured markdown editor built using the web stack, running in Electro
 
 ![A screenshot of the editor](./screenshot-1.png)
 
-## Current version: v2.1.2
+## Current version: v2.2.0
 
 See the [release log](./RELEASE_LOG.md) for what's new in this version.
 
@@ -14,9 +14,9 @@ This editor is released as a standalone, installer-free executable for Windows, 
 
 The current download links are:
 
-- Windows: [Markdown-Editor-2.1.2-win.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-win.zip)
-- MacOS: [Markdown-Editor-2.1.2-mac-arm64.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-mac-arm64.zip)
-- Linux: [Markdown-Editor-2.1.2-linux.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.1.2/Markdown-Editor-2.1.2-linux.zip)
+- Windows: [Markdown-Editor-2.2.0-win.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.2.0/Markdown-Editor-2.2.0-win.zip)
+- MacOS: [Markdown-Editor-2.2.0-mac-arm64.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.2.0/Markdown-Editor-2.2.0-mac-arm64.zip)
+- Linux: [Markdown-Editor-2.2.0-linux.zip](https://github.com/Pomax/Pomax-s-Markdown-Editor/releases/download/v2.2.0/Markdown-Editor-2.2.0-linux.zip)
 
 Note: Linux users will need to mark the executable as executable after unpacking: `chmod +x "Markdown Editor/markdown-editor"`
 
