@@ -16,10 +16,11 @@ const config = {
 };
 
 if (CI_RUN) {
-  let overrides = {};
+  let overrides = {
+    retries: 1,
+  };
   if (platform === `darwin`) {
     overrides = {
-      retries: 1,
       timeout: 60_000,
       workers: 2,
     };
@@ -30,7 +31,6 @@ if (CI_RUN) {
     };
   } else if (platform === `win32`) {
     overrides = {
-      retries: 2,
       timeout: 30_000,
       workers: 2,
     };
