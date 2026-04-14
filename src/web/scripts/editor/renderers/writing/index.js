@@ -54,7 +54,7 @@ export class WritingRenderer extends WritingRendererData {
     // Use the tree cursor (the canonical cursor position) to determine
     // which node is focused, rather than the selection manager which
     // may be stale when switching view modes.
-    const currentNodeId = this.editor.getBlockNodeId();
+    const currentNodeId = this.editor.getFocusedNodeId();
 
     // Clear and rebuild content
     container.innerHTML = ``;
@@ -126,7 +126,7 @@ export class WritingRenderer extends WritingRendererData {
     const tree = this.editor.syntaxTree;
     if (!tree) return;
 
-    const currentNodeId = this.editor.getBlockNodeId();
+    const currentNodeId = this.editor.getFocusedNodeId();
 
     // 1. Remove DOM elements for deleted nodes.
     for (const nodeId of removed) {
@@ -675,7 +675,7 @@ export class WritingRenderer extends WritingRendererData {
     this.applyHtmlAttributes(container, attrs.openingTag || ``);
 
     // Determine which child (if any) is focused
-    const currentNodeId = this.editor.getBlockNodeId();
+    const currentNodeId = this.editor.getFocusedNodeId();
 
     for (const child of node.children) {
       const childFocused = child.id === currentNodeId;
@@ -724,7 +724,7 @@ export class WritingRenderer extends WritingRendererData {
     // Copy any extra attributes from the original opening tag
     this.applyHtmlAttributes(element, attrs.openingTag || ``);
 
-    const currentNodeId = this.editor.getBlockNodeId();
+    const currentNodeId = this.editor.getFocusedNodeId();
 
     // Split children into summary child and body children
     /** @type {SyntaxNode | undefined} */

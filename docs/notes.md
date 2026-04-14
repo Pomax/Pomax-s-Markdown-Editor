@@ -211,6 +211,16 @@ code that opens a modal from within the editor must:
    `queueMicrotask` to suppress the async `selectionchange` that the
    placement itself triggers.
 
+### Focus/defocus in writing mode
+
+The `focused` CSS class on the `#editor` container tracks whether the editor has DOM focus.
+
+- **Blur** (`handleBlur`): removes the `focused` class, then re-renders the previously focused node as unfocused (e.g. code blocks switch from plain text to syntax-highlighted). Sets `blurredByEditor = true` so the next focus cycle knows to re-render the node back. Modal and toolbar blurs bail early and never set the flag.
+- **Focus** (`handleFocus`): restores the `focused` class. Does NOT re-render — that would destroy the DOM before `handleClick`/`handleSelectionChange` can read the browser selection.
+- **Refocus re-render**: the `blurredByEditor` flag is consumed by `handleClick` or `handleSelectionChange` to force a re-render even when the block ID hasn't changed, switching the node back to its focused DOM (e.g. code blocks back to plain text for editing).
+- **Container padding click**: `#editor-container` has a mousedown listener that calls `container.blur()` when the click target is the container itself (i.e. the click landed on padding, not on the contenteditable editor).
+- **Highlight CSS**: the focused-line background highlight (`.writing-view.focused [data-node-id][data-has-focus]`) is scoped to the `.focused` class, so it disappears on blur via CSS alone with no re-render needed.
+
 ### Backspace/delete at html-block boundaries
 
 - **Backspace at offset 0** when the previous sibling is an html-block
@@ -368,4 +378,5 @@ content, set view mode) rather than depending on prior tests. Module-level
   `.html-summary`, `.dropdown` classes. The summary content and body divs are targeted positionally (`.html-summary > div` and `.html-details > div:not(.html-summary)`).
 - Collapse is achieved via `.html-details:not([data-open]) > div:not(.html-summary) { display: none; }`.
 - Checklist items use `.md-list-item input[type="checkbox"]` for styling. They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
+- The focused-line highlight (`.writing-view.focused [data-node-id][data-has-focus]`) is scoped to the `.focused` class on the editor container, so it disappears when the editor loses DOM focus without requiring a re-render.
 - `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

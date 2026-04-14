@@ -305,6 +305,7 @@ WYSIWYG-style display:
 - Hides syntax when not focused
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
 - Reveals raw markdown syntax on element focus (click to edit)
+- On defocus (click outside the editor page), nodes revert to their unfocused presentation (e.g. code blocks switch from plain text back to syntax-highlighted); clicking back in re-renders the node as focused and restores the cursor
 - Supports click-to-focus on non-text elements like images and horizontal rules
 - **Code-block language tags**: renders two `<span data-lang>` elements (top-right and bottom-right) showing the language (or a dim "lang" placeholder when empty). Bottom tag only visible when the block has >= 20 lines (`.tall` class). Mousedown guard prevents caret movement; click opens the `CodeLanguageModal` via `EventHandler._openCodeLanguageModal()`.
 

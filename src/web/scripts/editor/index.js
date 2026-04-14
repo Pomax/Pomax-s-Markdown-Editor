@@ -139,6 +139,16 @@ export class Editor extends EditorData {
 
     this.attachContainerListeners();
 
+    // Clicking the padding area around the editor (inside
+    // #editor-container but outside #editor) doesn't move focus
+    // away from the contenteditable, so blur never fires.
+    // Explicitly blur when that happens.
+    this.container.parentElement?.addEventListener(`mousedown`, (event) => {
+      if (event.target === this.container.parentElement) {
+        this.container.blur();
+      }
+    });
+
     document.addEventListener(
       `selectionchange`,
       this.eventHandler.handleSelectionChange.bind(this.eventHandler),
@@ -194,6 +204,16 @@ export class Editor extends EditorData {
   getBlockNodeId() {
     if (!this.syntaxTree?.treeCursor) return undefined;
     return this.syntaxTree.treeCursor.blockNodeId ?? this.syntaxTree.treeCursor.nodeId;
+  }
+
+  /**
+   * Returns the focused block node ID, or undefined when the editor
+   * does not have DOM focus.
+   * @returns {string | undefined}
+   */
+  getFocusedNodeId() {
+    if (!this.container.classList.contains(`focused`)) return undefined;
+    return this.getBlockNodeId();
   }
 
   /**

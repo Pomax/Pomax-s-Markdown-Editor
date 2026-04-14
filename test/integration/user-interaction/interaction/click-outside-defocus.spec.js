@@ -3,20 +3,22 @@
  *
  * In writing mode all nodes render as WYSIWYG (formatted output, no
  * raw markdown syntax).  When the user clicks outside the editor the editor
- * should blur (handleBlur fires) and clear its active node.
+ * should blur (handleBlur fires) and clear its active node highlight.
+ *
+ * All defocus actions use real mouse clicks on the #editor-container
+ * padding, not synthetic blur() calls.
  */
 
 import { expect, test } from '@playwright/test';
 import {
   clickInEditor,
   closeApp,
-  defocusEditor,
   launchApp,
   loadContent,
   setWritingView,
 } from '../../test-utils.js';
 
-const markdown = `# My Heading\n\nA paragraph of text.`;
+const markdown = "# My Heading\n\nA paragraph of text.\n\n\```js\nconst x = 1;\n```";
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -32,88 +34,114 @@ test.afterAll(async () => {
   await closeApp(electronApp);
 });
 
+/**
+ * Clicks the #editor-container padding (outside #editor) using real
+ * mouse coordinates.
+ * @param {import('@playwright/test').Page} pg
+ */
+async function clickEditorContainerPadding(pg) {
+  const containerBox = await pg.locator(`#editor-container`).boundingBox();
+  const editorBox = await pg.locator(`#editor`).boundingBox();
+  if (!containerBox || !editorBox) throw new Error(`could not get bounding boxes`);
+  const x = editorBox.x + editorBox.width + (containerBox.x + containerBox.width - editorBox.x - editorBox.width) / 2;
+  const y = containerBox.y + containerBox.height / 2;
+  await pg.mouse.click(x, y);
+  await pg.waitForTimeout(200);
+}
+
+/**
+ * Returns the computed background-color of a locator's element.
+ * @param {import('@playwright/test').Locator} locator
+ * @returns {Promise<string>}
+ */
+async function getComputedBg(locator) {
+  return locator.evaluate((el) => getComputedStyle(el).backgroundColor);
+}
+
 test(`loading content gives the editor DOM focus so defocus works without a prior click`, async () => {
-  // This simulates the startup scenario: the app restores a file via
-  // loadMarkdown, which sets the treeCursor to the first node and
-  // renders.  Without an explicit container.focus() in loadMarkdown,
-  // the first node *looks* focused but the editor never received real
-  // DOM focus — so blurring would be a no-op.
   await loadContent(page, markdown);
   await setWritingView(page);
 
-  // Verify the editor has actual DOM focus (not just a visual cursor).
   const hasFocus = await page.evaluate(() => {
     return document.activeElement === document.querySelector(`#editor`);
   });
   expect(hasFocus, `editor should have DOM focus after loadContent`).toBe(true);
 
-  // In WYSIWYG mode the heading never shows the raw `#` prefix.
   const heading = page.locator(`#editor [data-node-id]`).first();
   const focusedText = await heading.innerText();
   expect(focusedText).not.toContain(`#`);
   expect(focusedText).toContain(`My Heading`);
 
-  // Blur — this must actually fire handleBlur because the editor
-  // had real focus.  The heading should still show formatted text.
-  await defocusEditor(page);
+  await clickEditorContainerPadding(page);
 
   const defocusedText = await page.locator(`#editor [data-node-id]`).first().innerText();
   expect(defocusedText).not.toContain(`#`);
   expect(defocusedText).toContain(`My Heading`);
 });
 
-test(`clicking outside the editor preserves active-node highlight in writing mode`, async () => {
-  // Load content and switch to writing view.
+test(`clicking a node gives it a focus highlight, clicking outside clears it`, async () => {
   await loadContent(page, markdown);
   await setWritingView(page);
 
-  // Click on the heading to make it the active node.
   const heading = page.locator(`#editor [data-node-id]`).first();
   await clickInEditor(page, heading);
   await page.waitForTimeout(200);
 
-  // In WYSIWYG mode the heading shows formatted text, not raw syntax.
-  const focusedText = await heading.innerText();
-  expect(focusedText).not.toContain(`#`);
-  expect(focusedText).toContain(`My Heading`);
+  const focusedBg = await getComputedBg(heading);
+  expect(focusedBg).not.toBe(`rgba(0, 0, 0, 0)`);
 
-  // The heading should have the data-has-focus attribute.
-  await expect(heading).toHaveAttribute(`data-has-focus`, ``);
+  await clickEditorContainerPadding(page);
 
-  // Blur the editor (simulates clicking the editor-container padding
-  // or switching to another app).
-  await defocusEditor(page);
+  const defocusedBg = await getComputedBg(page.locator(`#editor [data-node-id]`).first());
+  expect(defocusedBg).toBe(`rgba(0, 0, 0, 0)`);
+});
 
-  // The active node should retain its data-has-focus attribute — blur does
-  // not clear tree state or re-render.
-  const focusedNodes = page.locator(`#editor [data-has-focus]`);
-  expect(await focusedNodes.count()).toBe(1);
+test(`clicking back into a node after defocus restores focus highlight`, async () => {
+  await loadContent(page, markdown);
+  await setWritingView(page);
 
-  // The heading should still show its formatted text.
-  const firstLine = page.locator(`#editor [data-node-id]`).first();
-  const defocusedText = await firstLine.innerText();
-  expect(defocusedText).not.toContain(`#`);
-  expect(defocusedText).toContain(`My Heading`);
+  const heading = page.locator(`#editor [data-node-id]`).first();
+  await clickInEditor(page, heading);
+  await page.waitForTimeout(200);
+  await clickEditorContainerPadding(page);
+
+  await clickInEditor(page, page.locator(`#editor [data-node-id]`).first());
+  await page.waitForTimeout(200);
+
+  const refocusedBg = await getComputedBg(page.locator(`#editor [data-node-id]`).first());
+  expect(refocusedBg).not.toBe(`rgba(0, 0, 0, 0)`);
+});
+
+test(`code block keeps syntax highlighting after defocus`, async () => {
+  await loadContent(page, markdown);
+  await setWritingView(page);
+
+  const codeBlock = page.locator(`#editor [data-node-id]`).nth(2);
+  await clickInEditor(page, codeBlock);
+  await page.waitForTimeout(200);
+
+  await clickEditorContainerPadding(page);
+
+  const refetchedBlock = page.locator(`#editor [data-node-id]`).nth(2);
+  await expect(refetchedBlock).not.toHaveAttribute(`data-has-focus`, ``);
+
+  const highlightSpans = refetchedBlock.locator(`[class^="sh-"]`);
+  expect(await highlightSpans.count()).toBeGreaterThan(0);
 });
 
 test(`clicking back into the editor after defocus restores cursor`, async () => {
-  // Set up: load content, switch to writing view, and defocus.
   await loadContent(page, markdown);
   await setWritingView(page);
-  await defocusEditor(page);
+  await clickEditorContainerPadding(page);
 
-  // Click on the paragraph (second line) to re-focus.
   const paragraph = page.locator(`#editor [data-node-id]`).nth(1);
   await clickInEditor(page, paragraph);
   await page.waitForTimeout(200);
 
-  // The paragraph should now be the active node.  The heading (first
-  // line) should still be unfocused and hide its `#` prefix.
   const headingText = await page.locator(`#editor [data-node-id]`).first().innerText();
   expect(headingText).not.toContain(`#`);
   expect(headingText).toContain(`My Heading`);
 
-  // The paragraph should show its content (no special syntax to hide).
   const paraText = await paragraph.innerText();
   expect(paraText).toContain(`A paragraph of text.`);
 });

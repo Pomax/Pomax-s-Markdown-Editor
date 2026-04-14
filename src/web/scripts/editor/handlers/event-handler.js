@@ -184,7 +184,14 @@ export class EventHandler extends EventHandlerData {
       const nodesToUpdate = [newBlockId];
       if (oldBlockId) nodesToUpdate.push(oldBlockId);
       this.editor.lastRenderedNodeId = newNodeId;
+      this.blurredByEditor = false;
       this.editor.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
+    } else if (this.blurredByEditor) {
+      this.blurredByEditor = false;
+      this.editor.lastRenderedNodeId = newNodeId;
+      if (newBlockId) {
+        this.editor.renderNodesAndPlaceCursor({ updated: [newBlockId] });
+      }
     } else {
       this.editor.lastRenderedNodeId = newNodeId;
     }
@@ -361,10 +368,10 @@ export class EventHandler extends EventHandlerData {
    *  @param {FocusEvent} event
    */
   handleBlur(event) {
+    const related = /** @type {HTMLElement | undefined} */ (event.relatedTarget ?? undefined);
     // When focus moves to a modal dialog (link / image / table edit),
     // preserve the tree cursor and the focused-node rendering so they
     // can be seamlessly restored when the modal closes.
-    const related = /** @type {HTMLElement | undefined} */ (event.relatedTarget ?? undefined);
     if (related?.closest?.(`dialog`)) {
       this.blurredByModal = true;
       return;
@@ -377,7 +384,17 @@ export class EventHandler extends EventHandlerData {
       return;
     }
 
+    const previousNodeId = this.editor.getBlockNodeId();
     this.editor.container.classList.remove(`focused`);
+
+    // Re-render the previously focused node so it reverts to its
+    // unfocused presentation (e.g. syntax-highlighted code blocks).
+    // Set blurredByEditor so the next focus/click/selectionchange
+    // cycle knows to re-render the node back to its focused form.
+    if (this.editor.viewMode === `writing` && previousNodeId) {
+      this.editor.renderNodes({ updated: [previousNodeId] });
+      this.blurredByEditor = true;
+    }
   }
 
   /** Handles selection change events. */
@@ -430,6 +447,7 @@ export class EventHandler extends EventHandlerData {
         const nodesToUpdate = [newBlockId];
         if (oldBlockId) nodesToUpdate.push(oldBlockId);
         this.editor.lastRenderedNodeId = newNodeId;
+        this.blurredByEditor = false;
         this.editor.renderNodes({ updated: nodesToUpdate });
         this.editor.placeCursor();
 
@@ -455,6 +473,14 @@ export class EventHandler extends EventHandlerData {
             this.openCodeLanguageModal(node);
           }
         }
+      } else if (this.blurredByEditor && this.editor.viewMode === `writing` && newBlockId) {
+        // The editor just regained focus on the same block it had before.
+        // Re-render so the node switches back to its focused DOM
+        // (e.g. code blocks go from syntax-highlighted to plain text).
+        this.blurredByEditor = false;
+        this.editor.lastRenderedNodeId = newNodeId;
+        this.editor.renderNodes({ updated: [newBlockId] });
+        this.editor.placeCursor();
       } else {
         this.editor.lastRenderedNodeId = newNodeId;
       }
