@@ -565,8 +565,9 @@ See `docs/api/README.md` for full API documentation.
 
 ## Build & CI
 
-- **Local builds**: `npm run dist:win`, `dist:mac`, `dist:linux`
+- **Local builds**: `npm run build` lints and runs `scripts/build-executable.js` for the current platform; `npm run dist:win`, `dist:mac`, `dist:linux` run the same script for a named platform
 - **CI**: GitHub Actions workflow (`.github/workflows/build.yml`) builds all three platforms on push to `main`
-- **Packaging**: `electron-builder` creates standalone executables (portable `.exe`, `.dmg`, `AppImage`)
+- **Packaging**: `electron-builder` creates standalone executables (a self-extracting `.exe` driven by `scripts/launcher.nsi` that unpacks once per package hash into `%LOCALAPPDATA%\markdown-editor\<version>` and starts directly on later runs, `.dmg`, `AppImage`); only the `en-US` locale is shipped, and `src/**/node_modules` and `better-sqlite3`'s C sources are excluded
+- **Startup metrics**: `--log` makes the main process write `startup.log` (stage timings since process start, plus renderer paint and load timings) to the user data folder
 - **Native modules**: `better-sqlite3` is rebuilt per-platform via `@electron/rebuild`
 - **Artifacts**: Published as GitHub Releases

@@ -18,7 +18,7 @@ import {
   setWritingView,
 } from '../../test-utils.js';
 
-const markdown = "# My Heading\n\nA paragraph of text.\n\n\```js\nconst x = 1;\n```";
+const markdown = `# My Heading\n\nA paragraph of text.\n\n\`\`\`js\nconst x = 1;\n\`\`\``;
 
 /** @type {import('@playwright/test').ElectronApplication} */
 let electronApp;
@@ -43,7 +43,10 @@ async function clickEditorContainerPadding(pg) {
   const containerBox = await pg.locator(`#editor-container`).boundingBox();
   const editorBox = await pg.locator(`#editor`).boundingBox();
   if (!containerBox || !editorBox) throw new Error(`could not get bounding boxes`);
-  const x = editorBox.x + editorBox.width + (containerBox.x + containerBox.width - editorBox.x - editorBox.width) / 2;
+  const x =
+    editorBox.x +
+    editorBox.width +
+    (containerBox.x + containerBox.width - editorBox.x - editorBox.width) / 2;
   const y = containerBox.y + containerBox.height / 2;
   await pg.mouse.click(x, y);
   await pg.waitForTimeout(200);
