@@ -10,70 +10,6 @@ import { settings } from './settings-manager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
- * Whether startup metrics are written to the startup log.
- * Enabled by passing `--log` on the command line.
- * @type {boolean}
- */
-const logStartup = process.argv.includes(`--log`);
-
-/**
- * Epoch time in milliseconds at which this process started.
- * @type {number}
- */
-const processStart = Date.now() - process.uptime() * 1000;
-
-/**
- * Whether the startup log has been truncated for this run.
- * @type {boolean}
- */
-let startupLogStarted = false;
-
-/**
- * Appends a startup metric to `startup.log` in the user data folder: the
- * milliseconds since process start, followed by the stage name. The log is
- * truncated on the first mark of a run. Does nothing unless `--log` was given.
- * @param {string} stage - Name of the startup stage reached
- * @param {number} [at] - Epoch time in milliseconds of the stage; defaults to now
- */
-function markStartup(stage, at = Date.now()) {
-  if (!logStartup) return;
-  const line = `${String(Math.round(at - processStart)).padStart(6)} ms  ${stage}\n`;
-  const logPath = path.join(app.getPath(`userData`), `startup.log`);
-  if (startupLogStarted) {
-    fs.appendFileSync(logPath, line);
-  } else {
-    fs.writeFileSync(logPath, line);
-    startupLogStarted = true;
-  }
-}
-
-/**
- * Logs the renderer's navigation, paint and load timings as startup metrics,
- * converted to the main process's timeline.
- * @param {BrowserWindow} window - The window whose renderer is measured
- */
-async function markRendererTimings(window) {
-  if (!logStartup) return;
-  const timings = await window.webContents.executeJavaScript(`({
-    timeOrigin: performance.timeOrigin,
-    paints: performance.getEntriesByType("paint").map((e) => [e.name, e.startTime]),
-    navigation: performance
-      .getEntriesByType("navigation")
-      .map((e) => [e.domContentLoadedEventEnd, e.loadEventEnd]),
-  })`);
-  markStartup(`renderer navigation start`, timings.timeOrigin);
-  for (const [name, startTime] of timings.paints) {
-    markStartup(`renderer ${name}`, timings.timeOrigin + startTime);
-  }
-  for (const [domContentLoaded, load] of timings.navigation) {
-    markStartup(`renderer DOMContentLoaded`, timings.timeOrigin + domContentLoaded);
-    markStartup(`renderer load`, timings.timeOrigin + load);
-  }
-}
-
-markStartup(`main module evaluated`);
-
 /** @type {BrowserWindow | undefined} */
 let mainWindow;
 
@@ -222,23 +158,14 @@ function createWindow() {
     mainWindow.maximize();
   }
 
-  markStartup(`window created`);
   mainWindow.loadFile(path.join(__dirname, `..`, `web`, `index.html`));
-  markStartup(`load started`);
 
   const win = mainWindow;
 
-  win.webContents.once(`did-finish-load`, () => {
-    markStartup(`did-finish-load`);
-  });
-
   win.once(`ready-to-show`, () => {
-    markStartup(`ready-to-show`);
     if (!process.env.TESTING) {
       win.show();
-      markStartup(`window shown`);
     }
-    setTimeout(() => markRendererTimings(win), 1500);
   });
 
   // Persist window bounds on move/resize (debounced)
@@ -410,7 +337,6 @@ async function loadFileFromPath(window, filePath) {
  * @param {Array<{filePath: string, active: boolean, cursorOffset?: number, contentHash?: number, scrollTop?: number, cursorPath?: number[], tocHeadingPath?: number[]}>} entries
  */
 async function restoreOpenFiles(window, entries) {
-  markStartup(`restore start`);
   // Read all files up-front, dropping any that can no longer be loaded
   /** @type {Array<{filePath: string, content: string, active: boolean, cursorOffset: number, contentHash: number, scrollTop: number, cursorPath?: number[], tocHeadingPath?: number[]}>} */
   const loaded = [];
@@ -484,7 +410,6 @@ async function restoreOpenFiles(window, entries) {
   }
 
   menuBuilder.refreshMenu();
-  markStartup(`restore done`);
 }
 
 // Run with unlimited memory — must be set before the app is ready
@@ -492,10 +417,8 @@ app.commandLine.appendSwitch(`js-flags`, `--max-old-space-size=0`);
 
 // Electron app lifecycle events
 app.whenReady().then(async () => {
-  markStartup(`app ready`);
   // Initialize settings before creating the window so saved bounds are available
   settings.initialize();
-  markStartup(`settings initialized`);
 
   // Expose internals for integration tests so they can trigger
   // saveOpenFiles / restoreOpenFiles without bypassing the normal flow.
@@ -510,7 +433,6 @@ app.whenReady().then(async () => {
 
   const window = createWindow();
   await initialize(window);
-  markStartup(`main initialized`);
 
   // If a file path was passed on the command line, load it once the
   // renderer has finished initialising.  Otherwise, reopen the file

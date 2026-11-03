@@ -181,9 +181,6 @@ npm run dist:linux  # Linux AppImage
 The packaged app ships only the `en-US` Chromium locale and leaves out any `node_modules` folder under `src/` and the C sources of `better-sqlite3`; see the `build` section of `package.json`.
 
 The Windows `.exe` is built from `scripts/launcher.nsi`. The first time a given build runs it unpacks the app into `%LOCALAPPDATA%\markdown-editor\<version>` and writes a `.ready` marker there containing the hash of the embedded app package; every later run finds a matching marker and starts the unpacked app directly. A build with a different package hash, including a rebuild of the same version, removes the older folders before unpacking.
-
-To see where startup time goes, run the app (or the `.exe`) with `--log`. The main process then writes `startup.log` to the user data folder (`%APPDATA%\markdown-editor` on Windows) with one line per startup stage, in milliseconds since process start, including the renderer's navigation, paint and load timings.
-
 Output goes to `dist/`. The GitHub Actions workflow (`.github/workflows/build.yml`) builds all three platforms automatically on every push to `main` and publishes them as a GitHub Release.
 
 ## Development Workflow
