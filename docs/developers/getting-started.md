@@ -20,10 +20,11 @@ cd markdown-editor
 ### 2. Install Dependencies
 
 ```sh
-npm install
+npm install --ignore-scripts
+npm run setup
 ```
 
-This also runs `electron-builder install-app-deps` via the `postinstall` script, which rebuilds native modules (e.g. `better-sqlite3`) against the installed Electron version.
+Dependency install scripts are not run. `npm run setup` installs what they would have: it downloads the Electron binary, rebuilds native modules (e.g. `better-sqlite3`) against the installed Electron version, and installs the Playwright Firefox browser used by the integration tests. Run it again after any reinstall of `node_modules`.
 
 ### 3. Run the Application
 
@@ -128,10 +129,7 @@ node --test test/unit/parser/dfa-parser.test.js
 
 ### Integration Tests
 
-First, install Playwright Firefox browser (one time):
-```sh
-npx playwright install firefox
-```
+The Playwright Firefox browser is installed by `npm run setup`.
 
 Run integration tests:
 ```sh
@@ -282,9 +280,9 @@ import { MyClass } from './my-class.js';  // .js is required
 
 ### Native module errors after Electron upgrade
 
-Rebuild native dependencies:
+Download the matching Electron binary and rebuild native dependencies:
 ```sh
-npx electron-builder install-app-deps
+npm run setup
 ```
 
 ### Changes not reflected in the app

@@ -17,7 +17,7 @@
     "lint:format": "biome format --write src test scripts",
     "lint:quotes": "eslint --fix -c backticks.config.js",
     "lint:typing": "tsc -p jsconfig.json",
-    "postinstall": "playwright install firefox --with-deps && electron-builder install-app-deps",
+    "setup": "node node_modules/electron/install.js && electron-builder install-app-deps && playwright install firefox --with-deps",
     "start": "electron .",
     "test": "npm run lint && npm run test:unit && npm run test:integration && npm run test:cleanup",
     "test:cleanup": "rm -rf test-results",
@@ -49,7 +49,8 @@
   "overrides": {
     "ajv": "^6.14.0",
     "minimatch": "^10.2.4",
-    "tar": "^7.5.8"
+    "tar": "^7.5.8",
+    "yauzl": "^3.4.0"
   },
   "engines": {
     "node": ">=22"

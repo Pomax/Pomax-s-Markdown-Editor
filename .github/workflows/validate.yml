@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-      - run: npm ci && npx playwright install firefox --with-deps && npm test
+      - run: npm ci --ignore-scripts && npm run setup && npm test
 
   test-macos:
     needs: check-label
@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-      - run: npm ci && npx playwright install firefox --with-deps && npm test
+      - run: npm ci --ignore-scripts && npm run setup && npm test
 
   test-linux:
     needs: check-label
@@ -43,5 +43,5 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-      - run: npm ci && npx playwright install firefox --with-deps
+      - run: npm ci --ignore-scripts && npm run setup
       - run: xvfb-run --auto-servernum npm test
