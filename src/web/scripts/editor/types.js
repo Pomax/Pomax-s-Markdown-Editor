@@ -120,6 +120,10 @@ export class EventHandlerData {
   blurredByModal = false;
   /** @type {boolean} */
   blurredByEditor = false;
+  /** @type {boolean} */
+  pointerIsDown = false;
+  /** @type {boolean} */
+  blurPending = false;
 }
 
 export class KeyboardHandlerData {

@@ -153,6 +153,15 @@ export class Editor extends EditorData {
       `selectionchange`,
       this.eventHandler.handleSelectionChange.bind(this.eventHandler),
     );
+
+    const handlePointerUp = this.eventHandler.handlePointerUp.bind(this.eventHandler);
+    document.addEventListener(
+      `pointerdown`,
+      this.eventHandler.handlePointerDown.bind(this.eventHandler),
+      true,
+    );
+    document.addEventListener(`pointerup`, handlePointerUp, true);
+    document.addEventListener(`pointercancel`, handlePointerUp, true);
   }
 
   /**

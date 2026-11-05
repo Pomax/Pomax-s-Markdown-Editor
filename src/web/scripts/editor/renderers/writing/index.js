@@ -377,12 +377,11 @@ export class WritingRenderer extends WritingRendererData {
     const attrs = /** @type {NodeAttributes} */ (node.attributes);
     const language = attrs.language || ``;
 
-    // Language tag spans — always rendered so the user can click
+    // Language tag spans are always rendered so the user can click
     // to set or change the language even when none is set yet.
-    // The mousedown guard (preventDefault + stopPropagation) prevents
-    // the browser from moving the caret, which would fire
-    // selectionchange → re-render → destroy the span before click
-    // arrives, and would overwrite the user's cursor offset.
+    // The mousedown guard (preventDefault + stopPropagation) keeps the
+    // browser from moving the caret, which would overwrite the user's
+    // cursor offset.
     const tagTop = document.createElement(`span`);
     tagTop.className = `top`;
     tagTop.dataset.lang = ``;
@@ -464,7 +463,7 @@ export class WritingRenderer extends WritingRendererData {
         checkbox.setAttribute(`checked`, `checked`);
       }
 
-      // mousedown guard: prevent caret movement and selectionchange re-render
+      // mousedown guard: prevent caret movement
       checkbox.addEventListener(`mousedown`, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -752,10 +751,7 @@ export class WritingRenderer extends WritingRendererData {
       triangle.setAttribute(`role`, `button`);
       triangle.setAttribute(`aria-label`, isOpen ? `Collapse` : `Expand`);
       // Intercept mousedown to prevent the browser from moving the
-      // caret into the details body.  Without this, mousedown fires
-      // before click, the caret moves, selectionchange triggers a
-      // full re-render (destroying this element), and the click
-      // handler never runs on the live DOM.
+      // caret into the details body.
       triangle.addEventListener(`mousedown`, (e) => {
         e.preventDefault();
         e.stopPropagation();
