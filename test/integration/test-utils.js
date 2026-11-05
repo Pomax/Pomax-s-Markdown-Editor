@@ -143,12 +143,21 @@ export async function defocusEditor(page) {
  * `locator.click()` dispatches a synthetic event that skips the real
  * browser event sequence (mousedown → selectionchange → mouseup → click).
  * This helper gets the bounding box and fires a real `page.mouse.click()`
- * at the element's centre so the full event chain fires.
+ * at the element's centre so the full event chain fires.  An image is
+ * first given time to finish loading (or fail), so its box is final.
  *
  * @param {import('@playwright/test').Page} page
  * @param {import('@playwright/test').Locator} locator
  */
 export async function clickInEditor(page, locator) {
+  await locator.evaluate((el) =>
+    el instanceof HTMLImageElement && !el.complete
+      ? new Promise((resolve) => {
+          el.addEventListener(`load`, resolve, { once: true });
+          el.addEventListener(`error`, resolve, { once: true });
+        })
+      : undefined,
+  );
   const box = await locator.boundingBox();
   if (!box) throw new Error(`clickInEditor: element not visible`);
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

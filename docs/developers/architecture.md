@@ -305,6 +305,7 @@ WYSIWYG-style display:
 - Hides syntax when not focused
 - Shows formatted output (rendered images, tables, horizontal rules, etc.)
 - Reveals raw markdown syntax on element focus (click to edit)
+- On defocus (click outside the editor page), nodes revert to their unfocused presentation (e.g. code blocks switch from plain text back to syntax-highlighted); clicking back in re-renders the node as focused and restores the cursor
 - Supports click-to-focus on non-text elements like images and horizontal rules
 - **Code-block language tags**: renders two `<span data-lang>` elements (top-right and bottom-right) showing the language (or a dim "lang" placeholder when empty). Bottom tag only visible when the block has >= 20 lines (`.tall` class). Mousedown guard prevents caret movement; click opens the `CodeLanguageModal` via `EventHandler._openCodeLanguageModal()`.
 
@@ -564,8 +565,7 @@ See `docs/api/README.md` for full API documentation.
 
 ## Build & CI
 
-- **Local builds**: `npm run dist:win`, `dist:mac`, `dist:linux`
+- **Local builds**: `npm run build` lints and runs `scripts/build-executable.js` for the current platform; `npm run dist:win`, `dist:mac`, `dist:linux` run the same script for a named platform
 - **CI**: GitHub Actions workflow (`.github/workflows/build.yml`) builds all three platforms on push to `main`
-- **Packaging**: `electron-builder` creates standalone executables (portable `.exe`, `.dmg`, `AppImage`)
-- **Native modules**: `better-sqlite3` is rebuilt per-platform via `@electron/rebuild`
+- **Packaging**: `electron-builder` creates standalone executables (a self-extracting `.exe` driven by `scripts/launcher.nsi` that unpacks once per package hash into `%LOCALAPPDATA%\markdown-editor\<version>` and starts directly on later runs, `.dmg`, `AppImage`); only the `en-US` locale is shipped, and `src/**/node_modules` and `better-sqlite3`'s C sources are excluded- **Native modules**: `better-sqlite3` is rebuilt per-platform via `@electron/rebuild`
 - **Artifacts**: Published as GitHub Releases

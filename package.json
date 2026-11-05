@@ -5,19 +5,19 @@
   "main": "src/electron/main.js",
   "type": "module",
   "scripts": {
-    "build": "npm run lint && electron-builder --publish never && node scripts/clean-dist.js",
+    "build": "npm run lint && node scripts/build-executable.js",
     "cleanup": "rm -rf test-results",
     "docs": "node scripts/generate-api-docs.js",
-    "dist:linux": "electron-builder --linux --publish never && node scripts/clean-dist.js",
-    "dist:mac": "electron-builder --mac --publish never && node scripts/clean-dist.js",
-    "dist:win": "electron-builder --win --publish never && node scripts/clean-dist.js",
+    "dist:linux": "node scripts/build-executable.js --linux",
+    "dist:mac": "node scripts/build-executable.js --mac",
+    "dist:win": "node scripts/build-executable.js --win",
     "lint": "npm run lint:codestyle && npm run lint:format && npm run lint:typing && npm run lint:codestyle",
     "lint:codestyle": "npm run lint:comments && npm run lint:quotes",
     "lint:comments": "node scripts/lint-comments.js",
     "lint:format": "biome format --write src test scripts",
     "lint:quotes": "eslint --fix -c backticks.config.js",
     "lint:typing": "tsc -p jsconfig.json",
-    "postinstall": "playwright install firefox --with-deps && electron-builder install-app-deps",
+    "setup": "node node_modules/electron/install.js && electron-builder install-app-deps && playwright install firefox --with-deps",
     "start": "electron .",
     "test": "npm run lint && npm run test:unit && npm run test:integration && npm run test:cleanup",
     "test:cleanup": "rm -rf test-results",
@@ -35,21 +35,22 @@
   "devDependencies": {
     "@biomejs/biome": "^1.5.0",
     "@electron/rebuild": "^4.0.3",
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.64.1",
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
     "eslint": "^10.0.3",
     "jsdom": "^28.1.0",
+    "lucide-static": "^0.563.0",
     "typescript": "^5.3.0"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
-    "lucide-static": "^0.563.0"
+    "better-sqlite3": "^12.11.1"
   },
   "overrides": {
     "ajv": "^6.14.0",
     "minimatch": "^10.2.4",
-    "tar": "^7.5.8"
+    "tar": "^7.5.8",
+    "yauzl": "^3.4.0"
   },
   "engines": {
     "node": ">=22"
@@ -58,15 +59,26 @@
     "appId": "com.pomax.markdown-editor",
     "productName": "Markdown Editor",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "scripts"
     },
     "files": [
       "src/**/*",
-      "!src/**/*.d.ts"
+      "!src/**/*.d.ts",
+      "!src/**/node_modules/**",
+      "!node_modules/better-sqlite3/deps/**",
+      "!node_modules/better-sqlite3/src/**"
+    ],
+    "electronLanguages": [
+      "en-US"
     ],
     "win": {
       "target": "dir",
       "icon": null
+    },
+    "nsis": {
+      "script": "launcher.nsi",
+      "differentialPackage": false
     },
     "mac": {
       "target": "dir",

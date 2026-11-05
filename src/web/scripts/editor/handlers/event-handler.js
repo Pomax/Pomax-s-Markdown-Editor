@@ -22,10 +22,68 @@ export class EventHandler extends EventHandlerData {
   }
 
   /**
-   * Captures the anchor element (if any) under the pointer at mousedown
-   * time.  A selectionchange between mousedown and click may re-render
-   * the node and destroy the <a>, so we stash a reference while it still
-   * exists in the DOM.
+   * Records that the primary pointer is down.  While it is down, focus
+   * and cursor changes update state only.
+   * @param {PointerEvent} event
+   */
+  handlePointerDown(event) {
+    if (event.button === 0) this.pointerIsDown = true;
+  }
+
+  /**
+   * Presents the active block once the pointer is released, after the
+   * click belonging to this release has been dispatched.
+   */
+  handlePointerUp() {
+    if (!this.pointerIsDown) return;
+    this.pointerIsDown = false;
+    setTimeout(() => this.updateActiveBlock());
+  }
+
+  /**
+   * Re-renders the blocks whose focused presentation no longer matches
+   * the editor's focus and tree cursor.  Does nothing while the pointer
+   * is down or while the selection is not collapsed.
+   */
+  updateActiveBlock() {
+    const editor = this.editor;
+    if (this.pointerIsDown || editor.viewMode !== `writing`) return;
+
+    if (!editor.container.classList.contains(`focused`)) {
+      if (!this.blurPending) return;
+      this.blurPending = false;
+      const blockId = editor.getBlockNodeId();
+      if (blockId) {
+        editor.renderNodes({ updated: [blockId] });
+        this.blurredByEditor = true;
+      }
+      return;
+    }
+
+    if (document.activeElement !== editor.container) return;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+
+    const newNodeId = editor.syntaxTree?.treeCursor?.nodeId;
+    const newBlockId = editor.resolveBlockId(newNodeId);
+    const oldBlockId = editor.resolveBlockId(editor.lastRenderedNodeId);
+    editor.lastRenderedNodeId = newNodeId;
+    if (!newBlockId) return;
+
+    if (newBlockId !== oldBlockId) {
+      this.blurredByEditor = false;
+      editor.renderNodesAndPlaceCursor({
+        updated: oldBlockId ? [newBlockId, oldBlockId] : [newBlockId],
+      });
+    } else if (this.blurredByEditor) {
+      this.blurredByEditor = false;
+      editor.renderNodesAndPlaceCursor({ updated: [newBlockId] });
+    }
+  }
+
+  /**
+   * Captures the anchor element and language tag (if any) under the
+   * pointer at mousedown time.
    * @param {MouseEvent} event
    */
   handleMouseDown(event) {
@@ -47,9 +105,10 @@ export class EventHandler extends EventHandlerData {
   }
 
   /**
-   * Handles click events — syncs tree cursor from wherever the user clicked.
-   * In writing view, re-renders when the cursor moves to a different node
-   * so the source-syntax decoration follows the cursor.
+   * Handles click events: syncs the tree cursor from wherever the user
+   * clicked, and opens the image, link or language modal when one of
+   * those was clicked.  The active block is re-rendered on pointer up,
+   * by updateActiveBlock.
    * @param {MouseEvent} event
    */
   async handleClick(event) {
@@ -93,9 +152,7 @@ export class EventHandler extends EventHandlerData {
     // is not a text node, so syncing would fall through to the
     // data-node-id fallback and overwrite treeCursor.offset with 0,
     // losing the user's cursor position inside the code content.
-    // The tag may no longer be in the DOM (selectionchange can re-render
-    // the code block between mousedown and click), so fall back to the
-    // reference captured in handleMouseDown.
+    // Falls back to the reference captured in handleMouseDown.
     if (this.editor.viewMode === `writing`) {
       const langTag =
         (event.target instanceof HTMLElement &&
@@ -150,9 +207,7 @@ export class EventHandler extends EventHandlerData {
 
     // In writing view, clicking a link prevents navigation and opens
     // the edit modal so the user can change the text or URL.
-    // The anchor may no longer be in the DOM (selectionchange can
-    // re-render the node between mousedown and click), so fall back
-    // to the reference captured in handleMouseDown.
+    // Falls back to the reference captured in handleMouseDown.
     if (this.editor.viewMode === `writing`) {
       const anchor =
         (event.target instanceof HTMLElement && event.target.tagName === `A` && event.target) ||
@@ -169,24 +224,6 @@ export class EventHandler extends EventHandlerData {
         }
         return;
       }
-    }
-
-    // In writing view the active node shows raw markdown syntax, so we
-    // must re-render whenever the cursor moves to a different block.
-    // Compare block parents of the old and new node IDs — moving
-    // between inline children inside the same block should not
-    // trigger a re-render.
-    const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
-    const newBlockId = this.editor.resolveBlockId(newNodeId);
-    const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
-
-    if (this.editor.viewMode === `writing` && newBlockId && newBlockId !== oldBlockId) {
-      const nodesToUpdate = [newBlockId];
-      if (oldBlockId) nodesToUpdate.push(oldBlockId);
-      this.editor.lastRenderedNodeId = newNodeId;
-      this.editor.renderNodesAndPlaceCursor({ updated: nodesToUpdate });
-    } else {
-      this.editor.lastRenderedNodeId = newNodeId;
     }
   }
 
@@ -361,10 +398,10 @@ export class EventHandler extends EventHandlerData {
    *  @param {FocusEvent} event
    */
   handleBlur(event) {
+    const related = /** @type {HTMLElement | undefined} */ (event.relatedTarget ?? undefined);
     // When focus moves to a modal dialog (link / image / table edit),
     // preserve the tree cursor and the focused-node rendering so they
     // can be seamlessly restored when the modal closes.
-    const related = /** @type {HTMLElement | undefined} */ (event.relatedTarget ?? undefined);
     if (related?.closest?.(`dialog`)) {
       this.blurredByModal = true;
       return;
@@ -378,6 +415,8 @@ export class EventHandler extends EventHandlerData {
     }
 
     this.editor.container.classList.remove(`focused`);
+    this.blurPending = true;
+    this.updateActiveBlock();
   }
 
   /** Handles selection change events. */
@@ -410,54 +449,7 @@ export class EventHandler extends EventHandlerData {
 
       this.editor.syncCursorFromDOM({ preserveRange: !fromEditor });
       this.editor.selectionManager.updateFromDOM();
-
-      // When the user is extending a selection (non-collapsed), skip
-      // the writing-mode re-render — re-rendering would destroy the
-      // in-progress DOM selection and place a collapsed cursor.
-      const selection = window.getSelection();
-      if (selection && !selection.isCollapsed) return;
-
-      // In writing view the active node shows raw markdown syntax, so we
-      // must re-render whenever the cursor moves to a different block.
-      // Compare block parents of the old and new node IDs — moving
-      // between inline children inside the same block should not
-      // trigger a re-render.
-      const newNodeId = this.editor.syntaxTree?.treeCursor?.nodeId;
-      const newBlockId = this.editor.resolveBlockId(newNodeId);
-      const oldBlockId = this.editor.resolveBlockId(this.editor.lastRenderedNodeId);
-
-      if (this.editor.viewMode === `writing` && newBlockId && newBlockId !== oldBlockId) {
-        const nodesToUpdate = [newBlockId];
-        if (oldBlockId) nodesToUpdate.push(oldBlockId);
-        this.editor.lastRenderedNodeId = newNodeId;
-        this.editor.renderNodes({ updated: nodesToUpdate });
-        this.editor.placeCursor();
-
-        // If the user mousedown'd on an <a> and selectionchange moved
-        // focus to a different node, the re-render above destroyed the
-        // <a> so the browser will never fire a click event.  Open the
-        // link modal now instead.
-        if (this.mouseDownAnchor) {
-          const anchor = /** @type {HTMLAnchorElement} */ (this.mouseDownAnchor);
-          this.mouseDownAnchor = undefined;
-          const node = this.editor.getCurrentBlockNode();
-          if (node) {
-            this.editor.linkHelper.openLinkModalForNode(node, anchor);
-          }
-        }
-
-        // Same pattern for language-tag spans: the re-render
-        // destroyed the span so the browser won't fire click.
-        if (this.mouseDownLanguageTag) {
-          this.mouseDownLanguageTag = undefined;
-          const node = this.editor.getCurrentBlockNode();
-          if (node?.type === `code-block`) {
-            this.openCodeLanguageModal(node);
-          }
-        }
-      } else {
-        this.editor.lastRenderedNodeId = newNodeId;
-      }
+      this.updateActiveBlock();
     }
   }
 

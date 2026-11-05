@@ -53,10 +53,11 @@ You can obviously just run this project from source if you want. It's just a web
 ### Installation
 
 ```sh
-npm install
+npm install --ignore-scripts
+npm run setup
 ```
 
-You will also need to run a one-time `npx playwright install firefox --with-deps` to ensure you can run the integration tests.
+`npm run setup` downloads the Electron binary, rebuilds `better-sqlite3` for Electron, and installs the Playwright Firefox browser used by the integration tests.
 
 ### Running the Application
 

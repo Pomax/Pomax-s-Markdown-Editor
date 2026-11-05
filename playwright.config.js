@@ -42,7 +42,7 @@ export default defineConfig({
   ...config,
   testDir: `./test/integration`,
   testMatch: `**/*.spec.js`,
-  fullyParallel: true,
+  fullyParallel: false,
   reporter: `list`,
   projects: [
     {

@@ -1,27 +1,16 @@
-
 ## Playwright Pitfalls
 
 ### Synthetic vs. real clicks
 
-`locator.click()` dispatches a synthetic event that **skips** the real
-browser event sequence. A real human click fires:
+`locator.click()` dispatches a synthetic event that **skips** the real browser event sequence. A real human click fires:
 
     mousedown → (selectionchange) → mouseup → click
 
-If the editor re-renders on `selectionchange` (it does — see
-`handleSelectionChange` in `event-handler.js`), the DOM element that received
-`mousedown` may be destroyed before `click` fires. A synthetic
-`locator.click()` won't reproduce this because it skips `selectionchange`.
+The editor defers every active-block re-render while the pointer is down and runs it on pointer up, after `click` has been dispatched (`updateActiveBlock` in `event-handler.js`), so the element that received `mousedown` is still in the DOM when `click` fires. A synthetic `locator.click()` skips `selectionchange`, so it cannot catch a regression that re-renders on pointer down.
 
-**Whenever a test needs to click an interactive element inside the editor
-(e.g., the disclosure triangle), use `page.mouse.click(x, y)` with
-coordinates obtained from `locator.boundingBox()`.** This produces the
-real event sequence and will catch bugs that `locator.click()` hides.
+**Whenever a test needs to click an interactive element inside the editor (e.g., the disclosure triangle), use `page.mouse.click(x, y)` with coordinates obtained from `locator.boundingBox()`.** This produces the real event sequence and will catch bugs that `locator.click()` hides.
 
-Even `page.mouse.click()` may not be enough — Playwright can fire the
-full sequence so fast that `selectionchange` never gets a chance to
-interleave. To faithfully reproduce real-user timing, break the click
-into discrete steps with a small delay:
+Even `page.mouse.click()` may not be enough — Playwright can fire the full sequence so fast that `selectionchange` never gets a chance to interleave. To faithfully reproduce real-user timing, break the click into discrete steps with a small delay:
 
 ```js
 await page.mouse.move(x, y);
@@ -30,16 +19,11 @@ await page.waitForTimeout(100); // let selectionchange fire
 await page.mouse.up();
 ```
 
-This is the only reliable way to reproduce bugs where `selectionchange`
-triggers a re-render that destroys the element before `click` fires.
+This is the only reliable way to catch a regression where `selectionchange` re-renders the element before `click` fires.
 
 ### `scrollHeight` and `min-height`
 
-The editor has `min-height: calc(var(--page-max-width) * 1.414)` (A4 aspect
-ratio). For small documents the content height is smaller than the
-min-height, so `scrollHeight` will **not change** when content is
-collapsed/hidden. Measure the bounding rect of the specific element you
-care about instead.
+The editor has `min-height: calc(var(--page-max-width) * 1.414)` (A4 aspect ratio). For small documents the content height is smaller than the min-height, so `scrollHeight` will **not change** when content is collapsed/hidden. Measure the bounding rect of the specific element you care about instead.
 
 ### Locator specificity
 
@@ -50,19 +34,11 @@ Selectors like `locator('#editor [data-node-id]', { hasText: 'foo' })` can match
 ### Editing model
 
 - The **parse tree** (`SyntaxTree`) is the single source of truth.
-- The DOM is **never** the source of truth; all mutations go through the
-  tree, then the renderer rebuilds the DOM.
+- The DOM is **never** the source of truth; all mutations go through the tree, then the renderer rebuilds the DOM.
 - There are two render paths:
-  - `fullRender()` — clears the entire container and rebuilds every node
-    from scratch. Used for initial load, view-mode switches, and a few
-    special cases. All event handlers on DOM elements are lost.
-  - `renderNodes()` / `renderNodesAndPlaceCursor()` — **incremental**:
-    only the specific nodes listed in the `hints` object are replaced,
-    added, or removed. Event handlers on untouched elements survive.
-    Both the source renderer and writing renderer support this path.
-- In **source2 mode**, editing happens in a plain `<textarea>` — no per-node
-  DOM elements. On switch back to writing, the textarea content is parsed
-  into a new tree and merged via `updateUsing()` to preserve node identity.
+  - `fullRender()` — clears the entire container and rebuilds every node from scratch. Used for initial load, view-mode switches, and a few special cases. All event handlers on DOM elements are lost.
+  - `renderNodes()` / `renderNodesAndPlaceCursor()` — **incremental**: only the specific nodes listed in the `hints` object are replaced, added, or removed. Event handlers on untouched elements survive. Both the source renderer and writing renderer support this path.
+- In **source2 mode**, editing happens in a plain `<textarea>` — no per-node DOM elements. On switch back to writing, the textarea content is parsed into a new tree and merged via `updateUsing()` to preserve node identity.
 - Most editing operations use the incremental path.
 
 ### Tab switching vs. session restore
@@ -96,14 +72,7 @@ The `#toolbar-container` uses CSS grid with three named areas: `left`, `center`,
 
 ### `data-node-id` scoping
 
-Every rendered block element in the editor gets a `data-node-id` attribute
-matching its syntax-tree node ID. In writing mode, inline formatting elements
-(`<strong>`, `<em>`, etc.) also carry `data-node-id` for their inline child
-nodes. The ToC sidebar **also** sets `data-node-id` on its `<a>` link
-elements (same IDs). Any query like
-`document.querySelector('[data-node-id="…"]')` may match the ToC link
-or an inline element instead of the block editor element. **Always** scope
-queries to the editor container: `this.editor.container.querySelector(…)`.
+Every rendered block element in the editor gets a `data-node-id` attribute matching its syntax-tree node ID. In writing mode, inline formatting elements (`<strong>`, `<em>`, etc.) also carry `data-node-id` for their inline child nodes. The ToC sidebar **also** sets `data-node-id` on its `<a>` link elements (same IDs). Any query like `document.querySelector('[data-node-id="…"]')` may match the ToC link or an inline element instead of the block editor element. **Always** scope queries to the editor container: `this.editor.container.querySelector(…)`.
 
 ### Cursor model
 
@@ -123,8 +92,7 @@ syntaxTree.treeCursor = {
 - `nodeId` — the id of the SyntaxNode that has focus. When the cursor is inside inline formatting (bold, italic, etc.) in writing mode, this points to the **inline child** node. Otherwise it points to the block-level node.
 - `blockNodeId` — the id of the enclosing block-level node. Only set when `nodeId` is an inline child (set by `mapDOMPositionToTree`). When absent, `nodeId` is itself the block node.
 - `offset` — character offset within the **block node's** raw `content` string (always relative to the block, never to the inline child).
-- `tagPart` — `'opening'` or `'closing'` when the cursor is on an
-  HTML tag line in source view.
+- `tagPart` — `'opening'` or `'closing'` when the cursor is on an HTML tag line in source view.
 - `cellRow` / `cellCol` — row and column indices when editing a table cell.
 
 **Convenience methods on `Editor`:**
@@ -160,15 +128,9 @@ html-block (type: 'html-block', tagName: 'details')
   └── paragraph                          ← "better"
 ```
 
-- An html-element with exactly one paragraph child is rendered as a
-  collapsed single line (e.g., `<summary>text</summary>`) in both
-  `toMarkdown()` and source view. No special flag is needed — the
-  structural condition (`children.length === 1 && type === 'paragraph'`)
-  is sufficient.
+- An html-element with exactly one paragraph child is rendered as a collapsed single line (e.g., `<summary>text</summary>`) in both `toMarkdown()` and source view. No special flag is needed — the structural condition (`children.length === 1 && type === 'paragraph'`) is sufficient.
 - In **source view**, each line is rendered independently; the opening tag, child lines, and closing tag are separate `[data-node-id]` elements.
-- In **writing view**, the `<details>` block is rendered as a **fake
-  disclosure widget** using `<div>` elements (never a real `<details>`
-  element — the native element caused too many quirks):
+- In **writing view**, the `<details>` block is rendered as a **fake disclosure widget** using `<div>` elements (never a real `<details>` element — the native element caused too many quirks):
 
   ```
   div.html-element.html-details[data-node-id]([data-open])
@@ -181,76 +143,54 @@ html-block (type: 'html-block', tagName: 'details')
       div.md-paragraph[data-node-id]
   ```
 
-- Collapse/expand state is stored as `node.runtime.detailsOpen`
-  (runtime-only — not serialized to markdown).
-- Default open/closed state is controlled by a user preference
-  (`detailsClosed` setting in the Content preferences section).
+- Collapse/expand state is stored as `node.runtime.detailsOpen` (runtime-only — not serialized to markdown).
+- Default open/closed state is controlled by a user preference (`detailsClosed` setting in the Content preferences section).
 
 ### The `mousedown` guard
 
-Interactive elements inside the editor (like the disclosure triangle,
-checklist checkboxes, and code-block language tag spans) must intercept
-**`mousedown`** with `preventDefault()` + `stopPropagation()`. Without
-this, `mousedown` moves the caret, which fires `selectionchange`, which
-triggers a full re-render that destroys the element before `click` arrives.
+Interactive elements inside the editor (like the disclosure triangle, checklist checkboxes, and code-block language tag spans) intercept **`mousedown`** with `preventDefault()` + `stopPropagation()` so the press does not move the caret into or around them.
 
 ### Dialog state save/restore
 
-When a dialog steals focus from the editor (e.g. the code-language modal
-opened by clicking a language tag), the focus loss triggers
-`selectionchange` which corrupts `treeCursor` and nulls `treeRange`. Any
-code that opens a modal from within the editor must:
+When a dialog steals focus from the editor (e.g. the code-language modal opened by clicking a language tag), the focus loss triggers `selectionchange` which corrupts `treeCursor` and nulls `treeRange`. Any code that opens a modal from within the editor must:
 
-1. **Save** both `treeCursor` (shallow copy) and `treeRange` (shallow copy
-   or null) **before** calling `modal.open()`.
-2. **Restore** both after the dialog closes (whether accepted or cancelled)
-   and after any `recordAndRender` call.
-3. Call `placeSelection()` (if there was a range) or `placeCursor()` (if
-   collapsed) to rebuild the DOM selection from the restored tree state.
-4. Set `isRendering = true` around the placement call and clear it via
-   `queueMicrotask` to suppress the async `selectionchange` that the
-   placement itself triggers.
+1. **Save** both `treeCursor` (shallow copy) and `treeRange` (shallow copy or null) **before** calling `modal.open()`.
+2. **Restore** both after the dialog closes (whether accepted or cancelled) and after any `recordAndRender` call.
+3. Call `placeSelection()` (if there was a range) or `placeCursor()` (if collapsed) to rebuild the DOM selection from the restored tree state.
+4. Set `isRendering = true` around the placement call and clear it via `queueMicrotask` to suppress the async `selectionchange` that the placement itself triggers.
+
+### Focus/defocus in writing mode
+
+The `focused` CSS class on the `#editor` container tracks whether the editor has DOM focus.
+
+- **Blur** (`handleBlur`): removes the `focused` class and sets `blurPending`. `updateActiveBlock` then re-renders the previously focused node as unfocused (e.g. code blocks switch from plain text to syntax-highlighted) and sets `blurredByEditor = true` so the next focus cycle knows to re-render the node back. When the blur comes from a pointer press, that re-render waits until pointer up. Modal and toolbar blurs bail early and never set the flags.
+- **Focus** (`handleFocus`): restores the `focused` class. Does NOT re-render, because that would destroy the DOM before `handleClick`/`handleSelectionChange` can read the browser selection.
+- **Refocus re-render**: the `blurredByEditor` flag is consumed by `updateActiveBlock` to force a re-render even when the block ID hasn't changed, switching the node back to its focused DOM (e.g. code blocks back to plain text for editing).
+- **Pointer down**: `pointerdown`/`pointerup` listeners on `document` track whether the primary pointer is down. While it is, `handleSelectionChange` and `handleBlur` only update cursor and focus state. `updateActiveBlock` runs on pointer up, after `click`, and does nothing while the selection is non-collapsed, so a drag selection is never re-rendered.
+- **Container padding click**: `#editor-container` has a mousedown listener that calls `container.blur()` when the click target is the container itself (i.e. the click landed on padding, not on the contenteditable editor).
+- **Highlight CSS**: the focused-line background highlight (`.writing-view.focused [data-node-id][data-has-focus]`) is scoped to the `.focused` class, so it disappears on blur via CSS alone with no re-render needed.
 
 ### Backspace/delete at html-block boundaries
 
-- **Backspace at offset 0** when the previous sibling is an html-block
-  container: source view → no-op; writing view → merge into the last child
-  of the html-block.
-- **Delete at end of node** when the next sibling is an html-block
-  container: source view → no-op; writing view → merge the first child of
-  the html-block into the current node.
+- **Backspace at offset 0** when the previous sibling is an html-block container: source view → no-op; writing view → merge into the last child of the html-block.
+- **Delete at end of node** when the next sibling is an html-block container: source view → no-op; writing view → merge the first child of the html-block into the current node.
 
 ## Settings System
 
-- **Main process**: `SettingsManager` persists settings in SQLite via
-  `better-sqlite3`. A module-level singleton `settings` is exported from
-  `settings-manager.js` — import it directly anywhere in the main process
-  instead of passing instances through constructors.
-- **Renderer**: communicates via `window.electronAPI.getSetting(key)` /
-  `setSetting(key, value)` (IPC bridge in `preload.cjs`).
-- **Preferences modal**: `PreferencesModal` class with sidebar nav sections.
-  Dispatches custom events (e.g., `content:settingsChanged`) when settings
-  are saved.
-- **App wiring**: `app.js` listens for settings events and applies them to
-  the editor instance, then calls `render()`.
+- **Main process**: `SettingsManager` persists settings in SQLite via `better-sqlite3`. A module-level singleton `settings` is exported from `settings-manager.js` — import it directly anywhere in the main process instead of passing instances through constructors.
+- **Renderer**: communicates via `window.electronAPI.getSetting(key)` / `setSetting(key, value)` (IPC bridge in `preload.cjs`).
+- **Preferences modal**: `PreferencesModal` class with sidebar nav sections. Dispatches custom events (e.g., `content:settingsChanged`) when settings are saved.
+- **App wiring**: `app.js` listens for settings events and applies them to the editor instance, then calls `render()`.
 
 ### Reload
 
-`Help → Reload` (`Ctrl+Shift+R`) does **not** touch the database. It calls
-`webContents.reloadIgnoringCache()` to reload the front-end (HTML, CSS, JS),
-then runs the same startup sequence: reads settings from the DB, restores
-open files from disk based on the persisted `openFiles` list. Unsaved changes
-and untitled documents do not survive a reload.
+`Help → Reload` (`Ctrl+Shift+R`) does **not** touch the database. It calls `webContents.reloadIgnoringCache()` to reload the front-end (HTML, CSS, JS), then runs the same startup sequence: reads settings from the DB, restores open files from disk based on the persisted `openFiles` list. Unsaved changes and untitled documents do not survive a reload.
 
 ## Playwright Workers
 
-- The Playwright config sets `fullyParallel: true` and `workers: 8` on
-  Windows (2 on macOS, 4 on Linux). Tests within a single spec file run
-  in parallel across workers.
-- Each worker gets its own `beforeAll` / `afterAll`, so shared resources
-  like HTTP servers are spun up per-worker (each on its own port).
-- When running a single spec file, Playwright will still use up to 8
-  workers to parallelize the tests inside it.
+- The Playwright config sets `fullyParallel: true` and `workers: 8` on Windows (2 on macOS, 4 on Linux). Tests within a single spec file run in parallel across workers.
+- Each worker gets its own `beforeAll` / `afterAll`, so shared resources like HTTP servers are spun up per-worker (each on its own port).
+- When running a single spec file, Playwright will still use up to 8 workers to parallelize the tests inside it.
 
 ## Range Handling (Selection)
 
@@ -262,8 +202,7 @@ TreeRange = { startNodeId, startOffset, endNodeId, endOffset }
 
 - Populated by `syncCursorFromDOM()` when the DOM selection is non-collapsed.
 - `null` when the selection is collapsed (i.e., just a caret).
-- Used by `deleteSelectedRange()`, `getSelectedMarkdown()`, and all input
-  handlers that must respect an active selection.
+- Used by `deleteSelectedRange()`, `getSelectedMarkdown()`, and all input handlers that must respect an active selection.
 
 **Selection preservation (`editorInteractionPending`)**:
 
@@ -281,39 +220,26 @@ Rebuilds the DOM selection from `editor.treeRange`. Called by `setViewMode()` af
 
 ### `deleteSelectedRange()`
 
-Returns `{ before, hints }` where `before` is the pre-edit tree snapshot and
-`hints` is `{ updated: string[], removed?: string[] }`. Handles:
+Returns `{ before, hints }` where `before` is the pre-edit tree snapshot and `hints` is `{ updated: string[], removed?: string[] }`. Handles:
 
 - **Same-node**: substring removal within a single node.
-- **Cross-node**: trims start/end nodes, splices out intermediates, merges
-  the end-node remainder into the start node.
+- **Cross-node**: trims start/end nodes, splices out intermediates, merges the end-node remainder into the start node.
 
-**Critical**: when `deleteSelectedRange()` is called as a *sub-step* of
-another operation (e.g., `insertTextAtCursor`, `handleEnterKey`), the caller
-must propagate `hints.removed` into the final render hints. Failing to do
-so causes stale DOM nodes to remain after re-render.
+**Critical**: when `deleteSelectedRange()` is called as a _sub-step_ of another operation (e.g., `insertTextAtCursor`, `handleEnterKey`), the caller must propagate `hints.removed` into the final render hints. Failing to do so causes stale DOM nodes to remain after re-render.
 
 ### `handleSelectAll()` (Ctrl+A)
 
-Context-restricted: selects only the content of the currently focused node,
-not the entire document.
+Context-restricted: selects only the content of the currently focused node, not the entire document.
 
 ### Cut / Copy / Paste
 
-- `handleCut` and `handleCopy` (in `clipboard-handler.js`) call
-  `event.preventDefault()` and write raw markdown to `clipboardData`
-  so it round-trips correctly.
+- `handleCut` and `handleCopy` (in `clipboard-handler.js`) call `event.preventDefault()` and write raw markdown to `clipboardData` so it round-trips correctly.
 - `handleCut` then calls `deleteSelectedRange()` to remove selected content.
 - Paste goes through `insertTextAtCursor` which handles range deletion first.
 
 ### `mapDOMPositionToTree(domNode, domOffset)`
 
-Extracted helper that maps a single DOM position (node + offset) to tree
-coordinates `{ nodeId, blockNodeId, offset }`. Called twice by `syncCursorFromDOM()` for
-anchor and focus positions. When the cursor is inside an inline formatting
-element (one with `data-node-id` whose node returns `isInlineNode() === true`),
-the method records the inline node's id as `nodeId`, continues walking up
-to find the block parent for `blockNodeId` and offset computation.
+Extracted helper that maps a single DOM position (node + offset) to tree coordinates `{ nodeId, blockNodeId, offset }`. Called twice by `syncCursorFromDOM()` for anchor and focus positions. When the cursor is inside an inline formatting element (one with `data-node-id` whose node returns `isInlineNode() === true`), the method records the inline node's id as `nodeId`, continues walking up to find the block parent for `blockNodeId` and offset computation.
 
 ## Playwright Lessons
 
@@ -324,31 +250,32 @@ Keyboard-based selection (Shift+ArrowDown) and mouse drag do not work reliably f
 ```js
 async function setCrossNodeSelection(page, startText, startOff, endText, endOff) {
   // 1. Click inside the editor to ensure focus
-  const startLine = page.locator('[data-node-id]', { hasText: startText }).first();
+  const startLine = page.locator("[data-node-id]", { hasText: startText }).first();
   await startLine.click();
 
   // 2. Set DOM Range + treeRange programmatically
-  await page.evaluate(({ sText, sOff, eText, eOff }) => {
-    const editor = document.getElementById('editor');
-    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
-    let startNode, endNode;
-    while (walker.nextNode()) {
-      if (!startNode && walker.currentNode.textContent.includes(sText))
-        startNode = walker.currentNode;
-      if (walker.currentNode.textContent.includes(eText))
-        endNode = walker.currentNode;
-    }
-    const range = document.createRange();
-    range.setStart(startNode, sOff);
-    range.setEnd(endNode, eOff);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+  await page.evaluate(
+    ({ sText, sOff, eText, eOff }) => {
+      const editor = document.getElementById("editor");
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+      let startNode, endNode;
+      while (walker.nextNode()) {
+        if (!startNode && walker.currentNode.textContent.includes(sText)) startNode = walker.currentNode;
+        if (walker.currentNode.textContent.includes(eText)) endNode = walker.currentNode;
+      }
+      const range = document.createRange();
+      range.setStart(startNode, sOff);
+      range.setEnd(endNode, eOff);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
 
-    // Set treeRange directly since syncCursorFromDOM may not fire reliably
-    const api = window.__editor;
-    api.syncCursorFromDOM();
-  }, { sText: startText, sOff: startOff, eText: endText, eOff: endOff });
+      // Set treeRange directly since syncCursorFromDOM may not fire reliably
+      const api = window.__editor;
+      api.syncCursorFromDOM();
+    },
+    { sText: startText, sOff: startOff, eText: endText, eOff: endOff },
+  );
 }
 ```
 
@@ -356,16 +283,13 @@ async function setCrossNodeSelection(page, startText, startOff, endText, endOff)
 
 ### Test self-containment for fullyParallel
 
-With `fullyParallel: true`, tests within a single spec file may run in any
-order across different workers. Every test must set up its own state (load
-content, set view mode) rather than depending on prior tests. Module-level
-`page` variables are instantiated per-worker, not shared across tests.
+With `fullyParallel: true`, tests within a single spec file may run in any order across different workers. Every test must set up its own state (load content, set view mode) rather than depending on prior tests. Module-level `page` variables are instantiated per-worker, not shared across tests.
 
 ## CSS Conventions
 
 - Editor styles are in `src/web/styles/editor.css`.
-- The fake details widget uses `.html-details`, `[data-open]`,
-  `.html-summary`, `.dropdown` classes. The summary content and body divs are targeted positionally (`.html-summary > div` and `.html-details > div:not(.html-summary)`).
+- The fake details widget uses `.html-details`, `[data-open]`, `.html-summary`, `.dropdown` classes. The summary content and body divs are targeted positionally (`.html-summary > div` and `.html-details > div:not(.html-summary)`).
 - Collapse is achieved via `.html-details:not([data-open]) > div:not(.html-summary) { display: none; }`.
 - Checklist items use `.md-list-item input[type="checkbox"]` for styling. They render with `display: block` and `list-style-type: none` so the checkbox replaces the bullet.
+- The focused-line highlight (`.writing-view.focused [data-node-id][data-has-focus]`) is scoped to the `.focused` class on the editor container, so it disappears when the editor loses DOM focus without requiring a re-render.
 - `.writing-view .md-list-item[data-has-focus]` unsets `margin-left`, `padding-left`, `margin-right`, and `padding-right` to prevent the general focused-line padding shift from visually misaligning list items.

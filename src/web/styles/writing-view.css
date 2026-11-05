@@ -3,8 +3,8 @@
  */
 
 .writing-view {
-  /* Focused-line highlight */
-  [data-node-id][data-has-focus] {
+  /* Focused-line highlight — only visible when the editor has DOM focus */
+  &.focused [data-node-id][data-has-focus] {
     background-color: rgba(13, 110, 253, 0.05);
     border-radius: 4px;
   }
